@@ -2,6 +2,18 @@ import numpy as np
 import cadquery as cq
 import os
 
+from OCP.BRepAlgoAPI import (
+    BRepAlgoAPI_Common,
+    BRepAlgoAPI_Fuse,
+    BRepAlgoAPI_Cut,
+    BRepAlgoAPI_BooleanOperation,
+    BRepAlgoAPI_Splitter,
+    BRepAlgoAPI_BuilderAlgo,
+)
+
+from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+
+
 def rotateEuler(object,center,psi,theta,phi) :
     
     u = np.array([0., 0., 1.])
@@ -313,6 +325,35 @@ def periodic(object,rve):
 
 
     return periodic_object
-    
 
+def fuse_parts(solids, retain_edges):
+            
+    occ_Solids = solids[0].wrapped
+
+    for i in range(1, len(solids)):
+        fuse = BRepAlgoAPI_Fuse(occ_Solids, solids[i].wrapped)
+        occ_Solids = fuse.Shape()
+
+    if retain_edges == True:
+        return cq.Solid(occ_Solids)
+    else:
+        upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
+        upgrader.Build();
+        fixed = upgrader.Shape();
+
+        return cq.Solid(fixed)
+
+def cut_parts(solids):
+    phase_cut=[]
+    to_cuts=[]
+    phase_cut.append(solids[-1])
+    for i in range(len(solids)-1, 0, -1):
+        occ_Solids = solids[i-1].wrapped
+        to_cuts.append(solids[i])
+        to_cut = fuse_parts(to_cuts, False)
+        cut = BRepAlgoAPI_Cut(occ_Solids, to_cut.wrapped)
+        phase_cut.append(cq.Solid(cut.Shape()))
+    return phase_cut[::-1]
+    
+    
 
