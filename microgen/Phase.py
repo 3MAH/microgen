@@ -8,7 +8,7 @@ from microgen.Ellipsoid import *
 from microgen.Bar import *
 from microgen.Rve import *
 
-class phase:
+class BasicGeometry:
 
     def __init__(self,number,shape,xc,yc,zc,psi,theta,phi,param_geom,path_data):
         self.number=number
@@ -25,38 +25,31 @@ class phase:
         self.center=np.array([self.xc,self.yc,self.zc])
         self.angle=np.array([self.psi,self.theta,self.phi])
         self.name=self.shape+str(self.number)
-        self.pcount=0
 
     def __cmp__(self, other):
         return cmp(self.number, other.number)
-
-    def add_pcount(self):
-        self.pcount = self.pcount+1
-
-    def rem_pcount(self):
-        self.pcount = self.pcount-1
     
 #----------GENERATE PHASES----------------------------------------------------------------------------------
 
     def generate(self,rve):
 
         if self.shape == 'cylinder' :
-            objet = cylinder(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
-            objet = objet.create_cylinder()
+            geometry = cylinder(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
+            cqshape = geometry.create_cylinder()
         if self.shape == 'bar' :
-            objet = bar(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
-            objet = objet.create_bar()
+            geometry = bar(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
+            cqshape = geometry.create_bar()
         if self.shape == 'sphere' :
-            objet = sphere(self.center,self.param_geom[0],self.number)
-            objet = objet.create_sphere()
+            geometry = sphere(self.center,self.param_geom[0],self.number)
+            cqshape = geometry.create_sphere()
         if self.shape == 'ellipsoid' :
-            objet = ellipsoid(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
-            objet = objet.create_ellipsoid()
+            geometry = ellipsoid(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+            cqshape = geometry.create_ellipsoid()
 #        if self.shape == 'tpms' :
-#            objet = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
-#            objet = objet.create_tpms(self.path_data,rve)
+#            geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+#            cqshape = geometry.create_tpms(self.path_data,rve)
 
-        self.cqshape = objet
+        return cq.Shape(cqshape.val().wrapped)
 
 def read_phases(path_data,phases_file,phases):
 

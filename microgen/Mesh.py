@@ -5,60 +5,163 @@ import sys
 
 gmsh.initialize()
 
-def Mesh(MeshFile, Size, Order=1):
+def Mesh(MeshFile, ListPhases, Size, Order=1):
+
+    flatListPhases = [phase for phase_list in ListPhases for phase in phase_list]
+    NbTags = len(flatListPhases)
+    ListTagsNb = [len(phase_list) for phase_list in ListPhases]
+
+    print(NbTags)
+    print(ListTagsNb)
+    FlatListTags = list(range(1,NbTags+1,1))
+    print(FlatListTags)
+    
+    ListTags = []
+    index = 0
+    for i, phase_list in enumerate(ListPhases):
+        temp = []
+        for j, phase in enumerate(phase_list):
+            index = index+1
+            temp.append(index)
+        ListTags.append(temp)
+    print(ListTags)
+        
+    ListDimTags = [(3, tag) for tag in FlatListTags]
+    print(ListDimTags)
 
     ToMesh = gmsh.model.occ.importShapes(MeshFile, highestDimOnly = True)
-    gmsh.model.occ.synchronize()
+    print(ToMesh)
     
-    # get all elementary entities in the model
+#    #get all elementary entities in the model
     entities = gmsh.model.getEntities()
-    print(len(entities))
-
-    for e in entities:
-        print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
-        # get the mesh nodes for each elementary entity
-        nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(e[0], e[1])
-        # get the mesh elements for each elementary entity
-        elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(e[0], e[1])
-        # count number of elements
-        numElem = sum(len(i) for i in elemTags)
-        print(" - mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
-              " elements")
-        boundary = gmsh.model.getBoundary([e])
-        print(" - boundary entities " + str(boundary))
-        partitions = gmsh.model.getPartitions(e[0], e[1])
-        if len(partitions):
-            print(" - Partition tag(s): " + str(partitions) + " - parent entity " +
-                  str(gmsh.model.getParent(e[0], e[1])))
-        for t in elemTypes:
-            name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(
-                t)
-            print(" - Element type: " + name + ", order " + str(order) + " (" +
-                  str(numv) + " nodes in param coord: " + str(parv) + ")")
-
+#    print(len(entities))
+#
+#    for e in entities:
+#        print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
+#        # get the mesh nodes for each elementary entity
+#        nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(e[0], e[1])
+#        # get the mesh elements for each elementary entity
+#        elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(e[0], e[1])
+#        # count number of elements
+#        numElem = sum(len(i) for i in elemTags)
+#        print(" - mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
+#              " elements")
+#        boundary = gmsh.model.getBoundary([e])
+#        print(" - boundary entities " + str(boundary))
+#        partitions = gmsh.model.getPartitions(e[0], e[1])
+#        if len(partitions):
+#            print(" - Partition tag(s): " + str(partitions) + " - parent entity " +
+#                  str(gmsh.model.getParent(e[0], e[1])))
+#        for t in elemTypes:
+#            name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(
+#                t)
+#            print(" - Element type: " + name + ", order " + str(order) + " (" +
+#                  str(numv) + " nodes in param coord: " + str(parv) + ")")
     
     eps=1.e-3
-    p = gmsh.model.getBoundary(ToMesh, False, False, True)  # Get all points
-    p = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, 1 + eps, 1 + eps, 1 + eps,-1)
+    if len(ListDimTags) > 1:
+        print(ListDimTags[:-1])
+        print(ListDimTags[-1])
+        outDimTags, outDimTagsMap = gmsh.model.occ.fragment(ListDimTags[:-1], [ListDimTags[-1]])
+    print(outDimTags)
+    print(outDimTagsMap)
+#    ent = gmsh.model.getEntities(3)
+#    print(ent)
+#    gmsh.model.occ.healShapes()
+    gmsh.model.occ.synchronize()
+
+        
+#    print(a)
+#    print(len(a))
+#    gmsh.model.occ.fuse([(3, 3)], [(3, 4)])
+#    gmsh.model.occ.fuse([(3, 5)], [(3, 6)])
+
+    for i, tag in enumerate(ListTags):
+        print(i)
+        print(type(i))
+        ps_i = gmsh.model.addPhysicalGroup(3, tag)
+        gmsh.model.setPhysicalName(3, ps_i, 'Mat' + str(i))
+
+    #gmsh.model.mesh.setSize(gmsh.model.getEntities(0), Size)
+    #p = gmsh.model.getBoundary(ToMesh, False, False, True)  # Get all points
+    p = gmsh.model.getEntities()
+#    print(p)
+    
     gmsh.model.mesh.setSize(p, Size)
-
-    gmsh.model.addPhysicalGroup(3, [1, 2], 5)
-#    gmsh.model.addPhysicalGroup(3, [3, 4], 6)
-
     gmsh.model.mesh.setOrder(Order)
     gmsh.model.mesh.generate(3)
+    gmsh.option.setNumber("Mesh.MshFileVersion", 2)
     gmsh.write("Mesh.msh")
     gmsh.finalize()
 
 
-def MeshPeriodic(MeshFile, Size, Order=1):
-    ToMesh = gmsh.model.occ.importShapes('compound.step')
-    gmsh.model.occ.synchronize()
+def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
+
+    flatListPhases = [phase for phase_list in ListPhases for phase in phase_list]
+    NbTags = len(flatListPhases)
+    ListTagsNb = [len(phase_list) for phase_list in ListPhases]
+
+    print(NbTags)
+    print(ListTagsNb)
+    FlatListTags = list(range(1,NbTags+1,1))
+    print(FlatListTags)
+
+    ListTags = []
+    index = 0
+    for i, phase_list in enumerate(ListPhases):
+        temp = []
+        for j, phase in enumerate(phase_list):
+            index = index+1
+            temp.append(index)
+        ListTags.append(temp)
+    print(ListTags)
+        
+    ListDimTags = [(3, tag) for tag in FlatListTags]
+    print(ListDimTags)
+
+    ToMesh = gmsh.model.occ.importShapes(MeshFile, highestDimOnly = True)
+    print(ToMesh)
+
+    #    #get all elementary entities in the model
+    entities = gmsh.model.getEntities()
+    #    print(len(entities))
+    #
+    #    for e in entities:
+    #        print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
+    #        # get the mesh nodes for each elementary entity
+    #        nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(e[0], e[1])
+    #        # get the mesh elements for each elementary entity
+    #        elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(e[0], e[1])
+    #        # count number of elements
+    #        numElem = sum(len(i) for i in elemTags)
+    #        print(" - mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
+    #              " elements")
+    #        boundary = gmsh.model.getBoundary([e])
+    #        print(" - boundary entities " + str(boundary))
+    #        partitions = gmsh.model.getPartitions(e[0], e[1])
+    #        if len(partitions):
+    #            print(" - Partition tag(s): " + str(partitions) + " - parent entity " +
+    #                  str(gmsh.model.getParent(e[0], e[1])))
+    #        for t in elemTypes:
+    #            name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(
+    #                t)
+    #            print(" - Element type: " + name + ", order " + str(order) + " (" +
+    #                  str(numv) + " nodes in param coord: " + str(parv) + ")")
 
     eps=1.e-3
-    p = gmsh.model.getBoundary(ToMesh, False, False, True)  # Get all points
-    p = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, 1 + eps, 1 + eps, 1 + eps,-1)
-    gmsh.model.mesh.setSize(p, Size)
+    if len(ListDimTags) > 1:
+        outDimTags, outDimTagsMap = gmsh.model.occ.fragment(ListDimTags[:-1], [ListDimTags[-1]])
+    gmsh.model.occ.synchronize()
+
+    for i, tag in enumerate(ListTags):
+        print(i)
+        print(type(i))
+        ps_i = gmsh.model.addPhysicalGroup(3, tag)
+        gmsh.model.setPhysicalName(3, ps_i, 'Mat' + str(i))
+
+#    p = gmsh.model.getBoundary(ToMesh, False, False, True)  # Get all points
+    p = gmsh.model.getEntities()
+#    print(p)
 
     # We now identify corresponding surfaces on the left and right sides of the
     # geometry automatically.
@@ -135,5 +238,6 @@ def MeshPeriodic(MeshFile, Size, Order=1):
 
     gmsh.model.mesh.generate(3)
     gmsh.model.mesh.setOrder(Order)
-    gmsh.write("MeshPeriodic.msh2")
+    gmsh.option.setNumber("Mesh.MshFileVersion", 2)
+    gmsh.write("MeshPeriodic.msh")
     gmsh.finalize()

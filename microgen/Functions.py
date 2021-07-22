@@ -36,34 +36,32 @@ def remove_empty_lines(filename):
         lines = filter(lambda x: x.strip(), lines)
         filehandle.writelines(lines)
 
-def periodic(object,rve):
-	
+def periodic(cqshape,rve):
+
+    wk_plane = cq.Workplane().add(cqshape.Solids())
     periodic_object = []
+    plist=[0,0,0,0,0,0]
+    pcount=0
  
-    #création de vecteurs de translation des copies de test
-    tx=np.array([-rve.dx/2.0,3.0*rve.dx/2.0,rve.dx/2.0,rve.dx/2.0,rve.dx/2.0,rve.dx/2.0])
-    ty=np.array([rve.dy/2.0,rve.dy/2.0,-rve.dy/2.0,3.0*rve.dy/2.0,rve.dy/2.0,rve.dy/2.0])
-    tz=np.array([rve.dz/2.0,rve.dz/2.0,rve.dz/2.0,rve.dz/2.0,-rve.dz/2.0,3.0*rve.dz/2.0])
-	
-	#parcours des inclusions
-    if object.shape!='matrix':
-        plist=[0,0,0,0,0,0]
-        phase_perios_test = []
+#    #création de vecteurs de translation des copies de test
+#    tx=np.array([-rve.dx/2.0,3.0*rve.dx/2.0,rve.dx/2.0,rve.dx/2.0,rve.dx/2.0,rve.dx/2.0])
+#    ty=np.array([rve.dy/2.0,rve.dy/2.0,-rve.dy/2.0,3.0*rve.dy/2.0,rve.dy/2.0,rve.dy/2.0])
+#    tz=np.array([rve.dz/2.0,rve.dz/2.0,rve.dz/2.0,rve.dz/2.0,-rve.dz/2.0,3.0*rve.dz/2.0])
+#
+#    #création des vecteurs de translation des copies définitives
+#    x_faces = {'1':0.,'2':rve.dx,'3':0.,'4':0.,'5':0.,'6':0.}
+#    y_faces = {'1':0.,'2':0.,'3':0.,'4':rve.dy,'5':0.,'6':0.}
+#    z_faces = {'1':0.,'2':0.,'3':0,'4':0.,'5':0.,'6':rve.dz}
+#
+#    x_edges = {'13':0.,'14':0.,'15':0,'16':0,'23':rve.dx,'24':rve.dx,'25':rve.dx,'26':rve.dx,'35':0.,'36':0.,'45':0.,'46':0.}
+#    y_edges = {'13':0.,'14':rve.dy,'15':0.,'16':0.,'23':0,'24':rve.dy,'25':0.,'26':0.,'35':0,'36':0.,'45':rve.dy,'46':rve.dy}
+#    z_edges = {'13':0.,'14':0.,'15':0.,'16':rve.dz,'23':0.,'24': 0.,'25':0.,'26':rve.dz,'35':0,'36':rve.dz,'45':0.,'46': rve.dz}
+#
+#    x_corners = {'135':0.,'136':0.,'145':0,'146':0,'235':rve.dx,'236':rve.dx,'245':rve.dx,'246':rve.dx}
+#    y_corners = {'135':0.,'136':0.,'145':rve.dy,'146':rve.dz,'235':0.,'236':0.,'245':rve.dy,'246':rve.dx}
+#    z_corners = {'135':0.,'136':rve.dz,'145':0,'146':rve.dz,'235':0.,'236':rve.dz,'245':0.,'246':rve.dx}
 
-	#création des vecteurs de translation des copies définitives
-    x_faces = {'1':0.,'2':rve.dx,'3':0.,'4':0.,'5':0.,'6':0.}
-    y_faces = {'1':0.,'2':0.,'3':0.,'4':rve.dy,'5':0.,'6':0.}
-    z_faces = {'1':0.,'2':0.,'3':0,'4':0.,'5':0.,'6':rve.dz}
-	
-    x_edges = {'13':0.,'14':0.,'15':0,'16':0,'23':rve.dx,'24':rve.dx,'25':rve.dx,'26':rve.dx,'35':0.,'36':0.,'45':0.,'46':0.}
-    y_edges = {'13':0.,'14':rve.dy,'15':0.,'16':0.,'23':0,'24':rve.dy,'25':0.,'26':0.,'35':0,'36':0.,'45':rve.dy,'46':rve.dy}
-    z_edges = {'13':0.,'14':0.,'15':0.,'16':rve.dz,'23':0.,'24': 0.,'25':0.,'26':rve.dz,'35':0,'36':rve.dz,'45':0.,'46': rve.dz}
-		
-    x_corners = {'135':0.,'136':0.,'145':0,'146':0,'235':rve.dx,'236':rve.dx,'245':rve.dx,'246':rve.dx}
-    y_corners = {'135':0.,'136':0.,'145':rve.dy,'146':rve.dz,'235':0.,'236':0.,'245':rve.dy,'246':rve.dx}
-    z_corners = {'135':0.,'136':rve.dz,'145':0,'146':rve.dz,'235':0.,'236':rve.dz,'245':0.,'246':rve.dx}
-
-	#creation de faces de coupe
+    #creation de faces de coupe
     Plane_xm = cq.Face.makePlane(basePnt = (0, 0, 0), dir = (-1, 0, 0))
     Plane_xp = cq.Face.makePlane(basePnt = (rve.dx, 0, 0), dir = (1, 0, 0))
     Plane_ym = cq.Face.makePlane(basePnt = (0, 0, 0), dir = (0, -1, 0))
@@ -71,33 +69,33 @@ def periodic(object,rve):
     Plane_zm = cq.Face.makePlane(basePnt = (0, 0, 0), dir = (0, 0, -1))
     Plane_zp = cq.Face.makePlane(basePnt = (0, 0, rve.dz), dir = (0, 0, 1))
 #
-	#Test des partitions
-    Partition_xm = object.cqshape.split(cq.Workplane().add(Plane_xm))
-    Partition_xp = object.cqshape.split(cq.Workplane().add(Plane_xp))
-    Partition_ym = object.cqshape.split(cq.Workplane().add(Plane_ym))
-    Partition_yp = object.cqshape.split(cq.Workplane().add(Plane_yp))
-    Partition_zm = object.cqshape.split(cq.Workplane().add(Plane_zm))
-    Partition_zp = object.cqshape.split(cq.Workplane().add(Plane_zp))
+    #Test des partitions
+    Partition_xm = wk_plane.split(cq.Workplane().add(Plane_xm))
+    Partition_xp = wk_plane.split(cq.Workplane().add(Plane_xp))
+    Partition_ym = wk_plane.split(cq.Workplane().add(Plane_ym))
+    Partition_yp = wk_plane.split(cq.Workplane().add(Plane_yp))
+    Partition_zm = wk_plane.split(cq.Workplane().add(Plane_zm))
+    Partition_zp = wk_plane.split(cq.Workplane().add(Plane_zp))
     
     Partition=[Partition_xm.solids().all(), Partition_xp.solids().all(), Partition_ym.solids().all(), Partition_yp.solids().all(), Partition_zm.solids().all(), Partition_zp.solids().all()]
 
     for i in range (0,6):
         if len(Partition[i]) > 1:
             plist[i]=1
-            object.add_pcount()
+            pcount=pcount+1
 
     for i in range(0,3):
         if plist[i*2] + plist[i*2+1] == 2:
             plist[i*2] = 0
-            object.rem_pcount()
+            pcount=pcount-1
             plist[i*2+1] = 0
-            object.rem_pcount()
+            pcount=pcount-1
 
     print(plist)
 
-    if object.pcount==0: #inclusion ne dépasse pas du cube
-        periodic_object.append(object.cqshape.solids().intersect(rve.Box))
-    elif object.pcount==1:
+    if pcount==0: #inclusion ne dépasse pas du cube
+        periodic_object.append(cqshape.solids().intersect(rve.Box))
+    elif pcount==1:
         if plist[0] == 1:
             periodic_object.append(Partition_xm.solids(">X").intersect(rve.Box))
             periodic_object.append(Partition_xm.solids("<X").translate((rve.dx,0,0)).intersect(rve.Box))
@@ -116,7 +114,7 @@ def periodic(object,rve):
         if plist[5] == 1:
             periodic_object.append(Partition_zp.solids("<Z").intersect(rve.Box))
             periodic_object.append(Partition_zp.solids(">Z").translate((0,0,-rve.dz)).intersect(rve.Box))
-    elif object.pcount==2:
+    elif pcount==2:
         ed=''
         for k in range(len(plist)):
             if plist[k]==1:
@@ -210,7 +208,7 @@ def periodic(object,rve):
             periodic_object.append(Partition_ypz.solids("<Z").translate((0,-rve.dy,0)).intersect(rve.Box))
             periodic_object.append(Partition_ypz.solids(">Z").translate((0,-rve.dy,-rve.dz)).intersect(rve.Box))
 
-    elif object.pcount==3: #inclusion sur un coin
+    elif pcount==3: #inclusion sur un coin
         #détection du coin concerné
         co=''
         for k in range(len(plist)):
@@ -323,37 +321,126 @@ def periodic(object,rve):
             periodic_object.append(Partition_xmymz.solids("<Z").translate((-rve.dx,-rve.dy,0)).intersect(rve.Box))
             periodic_object.append(Partition_xmymz.solids(">Z").translate((-rve.dx,-rve.dy,-rve.dz)).intersect(rve.Box))
 
+    
+    occ_solids_list = [s.val().Solids() for s in periodic_object]
+    flat_list = [item.copy() for sublist in occ_solids_list for item in sublist]
+    to_fuse = [cq.Shape(s.wrapped) for s in flat_list]
+    return_object_periodic = fuse_parts(to_fuse, False)
+    return (return_object_periodic[0].copy(), flat_list)
 
-    return periodic_object
+def fuse_parts(CqShapeList, retain_edges):
+          
+#    occ_solids_list = (s.Solids() for s in CqShapeList)
+#    for cqshape in CqShapeList:
 
-def fuse_parts(solids, retain_edges):
-            
-    occ_Solids = solids[0].wrapped
+    occ_solids_list = [s.Solids() for s in CqShapeList]
+#    print("occ_solids_list = ", occ_solids_list)
+#    flat_list = [item for sublist in occ_solids_list for item in sublist]
+    
+ #   print("flat_list = ", flat_list)
 
-    for i in range(1, len(solids)):
-        fuse = BRepAlgoAPI_Fuse(occ_Solids, solids[i].wrapped)
+    occ_Solids = CqShapeList[0].wrapped
+    for i in range(1, len(CqShapeList)):
+        fuse = BRepAlgoAPI_Fuse(occ_Solids, CqShapeList[i].wrapped)
         occ_Solids = fuse.Shape()
 
     if retain_edges == True:
-        return cq.Solid(occ_Solids)
+        return (cq.Shape(occ_Solids), occ_solids_list)
     else:
         upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
-        upgrader.Build();
-        fixed = upgrader.Shape();
+        upgrader.Build()
+        fixed = upgrader.Shape()
+        occ_solids_list = [[cq.Solid(fixed)]]
 
-        return cq.Solid(fixed)
+        return (cq.Shape(fixed), occ_solids_list)
 
-def cut_parts(solids):
-    phase_cut=[]
-    to_cuts=[]
-    phase_cut.append(solids[-1])
-    for i in range(len(solids)-1, 0, -1):
-        occ_Solids = solids[i-1].wrapped
-        to_cuts.append(solids[i])
-        to_cut = fuse_parts(to_cuts, False)
-        cut = BRepAlgoAPI_Cut(occ_Solids, to_cut.wrapped)
-        phase_cut.append(cq.Solid(cut.Shape()))
-    return phase_cut[::-1]
+#def cut_parts(CqShapeList):
+#
+#    print('inside cut')
+#    phase_cut = []
+#    phase_cut.append(CqShapeList[0].copy())
+#    cut_objtemp = CqShapeList[0].copy()
+#    upgrader = ShapeUpgrade_UnifySameDomain(cut_objtemp.wrapped, True, True, True)
+#    upgrader.Build()
+#    cut_obj = cq.Shape(upgrader.Shape())
+#
+#    for shape in CqShapeList[1::]:
+#        print('tatayoyo')
+#
+#        SolidsCut = []
+#        for s in shape.Solids():
+#            sCut = s.wrapped
+#            for t in cut_obj.Solids():
+#                cut = BRepAlgoAPI_Cut(sCut, t.wrapped)
+#                sCut = cut.Shape()
+#            SolidsCut.append(cq.Shape(cut.Shape()))
+#        cutted = fuse_parts(SolidsCut, False)
+#        phase_cut.append(cutted[0])
+#
+#        fuse = BRepAlgoAPI_Fuse(cut_obj.wrapped, shape.wrapped)
+#        fused = fuse.Shape()
+#        upgrader = ShapeUpgrade_UnifySameDomain(fused, True, True, True)
+#        upgrader.Build()
+#        cut_obj = cq.Shape(upgrader.Shape())
+#
+#    occ_solids_list = [s.Solids() for s in phase_cut]
+#    print(phase_cut)
+#    print(occ_solids_list)
+#    print('outside cut')
+#
+#    return (phase_cut, occ_solids_list)
+
+def cut_parts(CqShapeList, reverseOrder = True):
+    phase_cut = []
+    if(reverseOrder == True):
+        CqShapeList_inv = CqShapeList[::-1]
+    else:
+        CqShapeList_inv = CqShapeList
+#    print(CqShapeList)
+#    print(CqShapeList_inv)
+
+    cut_obj = CqShapeList_inv[0].copy()
+    phase_cut.append(cut_obj)
+
+    for shape in CqShapeList_inv[1::]:
+        copy = shape.copy()
+        cut = BRepAlgoAPI_Cut(copy.wrapped, cut_obj.wrapped)
+        phase_cut.append(cq.Shape(cut.Shape()))
+
+        fuse = BRepAlgoAPI_Fuse(cut_obj.wrapped, shape.wrapped)
+        fused = fuse.Shape()
+        upgrader = ShapeUpgrade_UnifySameDomain(fused, True, True, True)
+        upgrader.Build()
+        cut_obj = cq.Shape(upgrader.Shape())
+
+    phase_cut.reverse()
+
+    occ_solids_list = [s.Solids() for s in phase_cut]
+    print(phase_cut)
+    print(occ_solids_list)
+    print('outside cut')
+
+    return (phase_cut, occ_solids_list)
+
+
+#def cut_parts(CqShapeList):
+#
+#    phase_cut = []
+#    occ_Solids = CqShapeList[-1].copy()
+#    phase_cut.append(CqShapeList[-1])
+#
+#    for s in CqShapeList[-2::-1]:
+#        print('s', s)
+#        cut = BRepAlgoAPI_Cut(s.wrapped, occ_Solids.wrapped)
+#        phase_cut.append(cq.Shape(cut.Shape()))
+#
+#        fuse = BRepAlgoAPI_Fuse(occ_Solids.wrapped, s.wrapped)
+#        occ_Solids = fuse.Shape()
+#        upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
+#        upgrader.Build()
+#        occ_Solids = cq.Shape(upgrader.Shape())
+#
+#    print('phase_cut', phase_cut)
+#    occ_solids_list = [s.Solids() for s in phase_cut[::-1]]
+#    return (phase_cut[::-1], occ_solids_list)
     
-    
-

@@ -60,51 +60,35 @@ phases_perio = []
 n=len(xc)
 for i in range (0,n):
     param_geom=[a1[i],a2[i]]
-    elem = phase(number[i],shape[i],xc[i],yc[i],zc[i],psi[i],theta[i],phi[i],param_geom,'')
-    elem.generate(Revel)
-    phases.append(elem)
-
-#if periodicity==1:
-#    for phase_elem in phases:
-#        periodic(Revel,phase_elem)
-#else:
-#    for phase_elem in phases:
-#        non_periodic(Revel,phase_elem)
+    elem = BasicGeometry(number[i],shape[i],xc[i],yc[i],zc[i],psi[i],theta[i],phi[i],param_geom,'')
+    phases.append(elem.generate(Revel))
 
 for phase_elem in phases:
+    print(phase_elem)
     p_phase = periodic(phase_elem,Revel)
+    print(p_phase)
     phases_perio.append(p_phase)
 
-#solids = []
-#for phase_list in phases_perio:
-#    for phase in phase_list:
-#        solids.append(phase.val())
+print(phases_perio)
 
-sections = []
-for phase_list in phases_perio:
-    solids = []
-    for phase in phase_list:
-        solids.append(phase.val())
-    section = fuse_parts(solids, False)
-    sections.append(section)
+phases_cut = cut_parts([s[0] for s in phases_perio], False)
+compound = cq.Compound.makeCompound(phases_cut[0])
 
-#sections_cut = cut_parts(sections)
-#print(sections_cut)
-flat_list = [phase for phase_list in phases_perio for phase in phase_list]
-print(len(flat_list))
-#final_solid = fuse_parts(sections_cut, True)
-final_solid = fuse_parts(sections, False)
+#phases_cut = cut_parts(phases)
+#compound = cq.Compound.makeCompound(phases_cut[0])
 
-#compound = cq.Compound.makeCompound(sections)
-#compound = cq.Compound.makeCompound(sections_cut)
-
-cq.exporters.export(final_solid, 'compound.step')
-#cq.exporters.export(compound, 'compound.step')
+#cq.exporters.export(final_solid[0], 'compound.step')
 
 #cq.Compound.exportBrep(final_solid, 'compound.brep')
 #cq.Compound.exportBrep(compound, 'compound.brep')
 
+cq.exporters.export(compound, 'compound.step')
+#Mesh('compound.step', phases_cut[1], 0.03, 1)
+MeshPeriodic('compound.step', phases_cut[1], 0.03, 1)
 
-#Mesh('compound.step', 0.1, 2)
-MeshPeriodic('compound.step', 0.04, 2)
+#cq.exporters.export(compound, 'compound.step')
+#Mesh('compound.step', [s[1] for s in phases_perio], 0.05, 1)
+
+
+#MeshPeriodic('compound.step', 0.04, 2)
 
