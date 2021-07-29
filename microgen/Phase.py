@@ -6,6 +6,8 @@ from microgen.Sphere import *
 from microgen.Cylinder import *
 from microgen.Ellipsoid import *
 from microgen.Bar import *
+from microgen.Tpms import *
+from microgen.Voronoi import *
 from microgen.Rve import *
 
 class BasicGeometry:
@@ -45,10 +47,16 @@ class BasicGeometry:
         if self.shape == 'ellipsoid' :
             geometry = ellipsoid(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
             cqshape = geometry.create_ellipsoid()
+        if self.shape == 'tpms' :
+            geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+            cqshape = geometry.create_tpms(self.path_data,rve)
+        if self.shape == 'voronoi' :
+            geometry = voronoi(self.param_geom,self.number)
+            cqshape = geometry.create_voronoi()
+            
 #        if self.shape == 'tpms' :
 #            geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
 #            cqshape = geometry.create_tpms(self.path_data,rve)
-
         return cq.Shape(cqshape.val().wrapped)
 
 def read_phases(path_data,phases_file,phases):

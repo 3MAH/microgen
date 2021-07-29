@@ -1,7 +1,8 @@
-import gmsh
 import math
 import os
 import sys
+import numpy as np
+import gmsh
 
 gmsh.initialize()
 
@@ -58,7 +59,6 @@ def Mesh(MeshFile, ListPhases, Size, Order=1):
 #            print(" - Element type: " + name + ", order " + str(order) + " (" +
 #                  str(numv) + " nodes in param coord: " + str(parv) + ")")
     
-    eps=1.e-3
     if len(ListDimTags) > 1:
         print(ListDimTags[:-1])
         print(ListDimTags[-1])
@@ -95,7 +95,7 @@ def Mesh(MeshFile, ListPhases, Size, Order=1):
     gmsh.finalize()
 
 
-def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
+def MeshPeriodic(MeshFile, rve, ListPhases, Size, Order=1):
 
     flatListPhases = [phase for phase_list in ListPhases for phase in phase_list]
     NbTags = len(flatListPhases)
@@ -148,7 +148,8 @@ def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
     #            print(" - Element type: " + name + ", order " + str(order) + " (" +
     #                  str(numv) + " nodes in param coord: " + str(parv) + ")")
 
-    eps=1.e-3
+    size_box = np.min(np.array([rve.dx, rve.dy, rve.dz]))
+    eps=1.e-3*size_box
     if len(ListDimTags) > 1:
         outDimTags, outDimTagsMap = gmsh.model.occ.fragment(ListDimTags[:-1], [ListDimTags[-1]])
     gmsh.model.occ.synchronize()
@@ -167,9 +168,9 @@ def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
     # geometry automatically.
 
     #We get all the entities on the Xm
-    translation = [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    translation = [1, 0, 0, rve.dx, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
     sxmin = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, eps,
-    1 + eps, 1 + eps, 2)
+    rve.dy + eps, rve.dy + eps, 2)
 
     for i in sxmin:
         # Then we get the bounding box of each left surface
@@ -190,9 +191,9 @@ def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
                 gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
 
     #We get all the entities on the Ym
-    translation = [1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1]
-    symin = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, 1 + eps,
-                                                eps, 1 + eps, 2)
+    translation = [1, 0, 0, 0, 0, 1, 0, rve.dy, 0, 0, 1, 0, 0, 0, 0, 1]
+    symin = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, rve.dx + eps,
+                                                eps, rve.dz + eps, 2)
 
     for i in symin:
         # Then we get the bounding box of each left surface
@@ -213,9 +214,9 @@ def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
                 gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
 
     #We get all the entities on the Zm
-    translation = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1]
-    szmin = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, 1 + eps,
-                                                1 + eps, eps, 2)
+    translation = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, rve.dz, 0, 0, 0, 1]
+    szmin = gmsh.model.getEntitiesInBoundingBox(0 - eps, -eps, -eps, rve.dx + eps,
+                                                rve.dy + eps, eps, 2)
                                             
     for i in szmin:
         # Then we get the bounding box of each left surface
@@ -236,6 +237,8 @@ def MeshPeriodic(MeshFile, ListPhases, Size, Order=1):
                     and abs(zmin2 - zmin) < eps and abs(zmax2 - zmax) < eps):
                 gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
 
+    p = gmsh.model.getEntities()
+    gmsh.model.mesh.setSize(p, Size)
     gmsh.model.mesh.generate(3)
     gmsh.model.mesh.setOrder(Order)
     gmsh.option.setNumber("Mesh.MshFileVersion", 2)

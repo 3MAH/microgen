@@ -18,15 +18,15 @@ path_data = dir + '/'
 #section_file = 'Nsections_diamond.dat'
 #Ngeomphase_file = 'test_scaffbrid.dat'
 #section_file = 'Nsections_scaffbrid.dat'
-#Ngeomphase_file = 'test_electrospin.dat'
+Ngeomphase_file = 'test_electrospin.dat'
 #section_file = 'Nsections_electrospin.dat'
 #Ngeomphase_file = 'test_electrospin_mat.dat'
 #section_file = 'Nsections_electrospin_mat.dat'
 #Ngeomphase_file = 'test_spheres.dat'
 #section_file = 'Nsections_spheres.dat'
-Ngeomphase_file = 'test_octet.dat'
+#Ngeomphase_file = 'test_octet.dat'
 #Ngeomphase_file = 'test_octet_slim.dat'
-section_file = 'Nsections_octet.dat'
+#section_file = 'Nsections_octet.dat'
 #Ngeomphase_file = 'test_octet_spheres.dat'
 #section_file = 'Nsections_octet_spheres.dat'
 #Ngeomphase_file = 'test_fibers.dat'
@@ -44,7 +44,7 @@ dt = np.dtype([('number',int),('shape', np.str_, 10), ('xc', np.float64),('yc', 
 number,shape,xc,yc,zc,psi,theta,phi,a1,a2,= np.loadtxt(NPhases_file,dtype=dt, usecols=(0,1,2,3,4,5,6,7,8,9),
                                              skiprows=1,unpack=True, ndmin=1)
    
-sections = read_sections(path_data,section_file)
+#sections = read_sections(path_data,section_file)
 
 #Size of the mesh
 size_mesh = 0.03
@@ -83,8 +83,8 @@ compound = cq.Compound.makeCompound(phases_cut[0])
 #cq.Compound.exportBrep(compound, 'compound.brep')
 
 cq.exporters.export(compound, 'compound.step')
-#Mesh('compound.step', phases_cut[1], 0.03, 1)
-MeshPeriodic('compound.step', phases_cut[1], 0.03, 1)
+Mesh('compound.step', phases_cut[1], 0.03, 1)
+MeshPeriodic('compound.step', Revel, phases_cut[1], 0.03, 1)
 
 #cq.exporters.export(compound, 'compound.step')
 #Mesh('compound.step', [s[1] for s in phases_perio], 0.05, 1)
