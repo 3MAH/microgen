@@ -68,10 +68,9 @@ class tpms :
         final_c = final_c.split(face_cut_m).solids(">X").val()
 
         if(self.type_part == 'sheet'):
-#            to_fuse = [cq.Shape(final_c.wrapped), cq.Shape(final_pp.wrapped), cq.Shape(final_mm.wrapped)]
-#            return_object = fuse_parts(to_fuse, False)
-#            return cq.Workplane().add(return_object[0])
-            return cq.Workplane().add(final_c)
+            to_fuse = [cq.Shape(final_c.wrapped), cq.Shape(final_pp.wrapped), cq.Shape(final_mm.wrapped)]
+            return_object = fuse_parts(to_fuse, False)
+            return cq.Workplane().add(return_object[0])
         elif(self.type_part == 'skeletal'):
             if(self.ske_type == 'plus'):
                 return cq.Workplane().add(final_pm)
