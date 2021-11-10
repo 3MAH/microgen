@@ -37,46 +37,67 @@ class tpms :
 
     def create_tpms(self,path_data,rve) :
     
-        surf_c = TopoDS_Shape()
+        surf_tp = TopoDS_Shape()
+        surf_tm = TopoDS_Shape()
         surf_p = TopoDS_Shape()
         surf_m = TopoDS_Shape()
         stl_reader = StlAPI_Reader()
         if path_data != '':
-#            stl_reader.Read(surf_c, path_data + '/' + 'tpms_center.stl')
+            stl_reader.Read(surf_tp, path_data + '/' + 'tpms_testplus.stl')
+            stl_reader.Read(surf_tm, path_data + '/' + 'tpms_testminus.stl')
             stl_reader.Read(surf_p, path_data + '/' + 'tpms_plus.stl')
             stl_reader.Read(surf_m, path_data + '/' + 'tpms_minus.stl')
         else:
- #           stl_reader.Read(surf_c, 'tpms_center.stl')
+            stl_reader.Read(surf_tp, 'tpms_testplus.stl')
+            stl_reader.Read(surf_tm, 'tpms_testminus.stl')
             stl_reader.Read(surf_p, 'tpms_plus.stl')
             stl_reader.Read(surf_m, 'tpms_minus.stl')
 
-#        face_cut = cq.Face(test)
+        face_cut_tp = cq.Face(surf_tp)
+        face_cut_tm = cq.Face(surf_tm)
         face_cut_p = cq.Face(surf_p)
         face_cut_m = cq.Face(surf_m)
 
         box = cq.Workplane("front").box(rve.dx, rve.dy, rve.dz)
-        #box = box.translate((0.75,0.75,0.75))
-        final_p = box.split(face_cut_p).solids(">X")
-        final_pm = final_p.split(face_cut_m).solids("<X").val()
-        final_pp = final_p.split(face_cut_m).solids(">X").val()
+        
+        boxCut = box.split(face_cut_p)
+        boxCut = boxCut.split(face_cut_m)
 
-        final_m = box.split(face_cut_m).solids("<X")
-        final_mp = final_m.split(face_cut_p).solids(">X").val()
-        final_mm = final_m.split(face_cut_p).solids("<X").val()
+        boxSolids = boxCut.solids().all()
+        boxSolidsSize = boxCut.solids().size()
+        
+        print('boxSolids', boxSolids)
+        print('boxSolidsSize', boxSolidsSize)
+        print('boxCut', boxCut)
 
-        final_c = box.split(face_cut_p).solids("<X")
-        final_c = final_c.split(face_cut_m).solids(">X").val()
+        listSolids = []
+
+        for solid in boxSolids:
+            temp = solid.split(face_cut_tp)
+            temp = temp.split(face_cut_tm)
+            tempSolids = temp.solids().all()
+            tempSize = temp.solids().size()
+            listSolids.append( (tempSize, solid.val()) )
+#            print('tempSolids',tempSolids)
+#            print('tempSize',tempSize)
+
+        sheet = [el[1] for el in listSolids if el[0] > 1]
+        skeletal = [el[1] for el in listSolids if el[0] == 1]
+
+#        sheet = [el[1] for el in listSolids]
+        
+        print('sheet', sheet)
 
         if(self.type_part == 'sheet'):
-            to_fuse = [cq.Shape(final_c.wrapped), cq.Shape(final_pp.wrapped), cq.Shape(final_mm.wrapped)]
-            return_object = fuse_parts(to_fuse, False)
+            to_fuse = [cq.Shape(s.wrapped) for s in sheet]
+            return_object = fuse_parts(to_fuse, True)
             return cq.Workplane().add(return_object[0])
         elif(self.type_part == 'skeletal'):
-            if(self.ske_type == 'plus'):
-                return cq.Workplane().add(final_pm)
-            elif(self.ske_type == 'minus'):
-                return cq.Workplane().add(final_mp)
-            elif(self.ske_type == 'double'):
-                to_fuse = [cq.Shape(final_pm.wrapped), cq.Shape(final_mp.wrapped)]
-                return_object = fuse_parts(to_fuse, False)
-                return cq.Workplane().add(return_object[0])
+#            if(self.ske_type == 'plus'):
+#                return cq.Workplane().add(final_pm)
+#            elif(self.ske_type == 'minus'):
+#                return cq.Workplane().add(final_mp)
+#            elif(self.ske_type == 'double'):
+            to_fuse = [cq.Shape(s.wrapped) for s in skeletal]
+            return_object = fuse_parts(to_fuse, False)
+            return cq.Workplane().add(return_object[0])

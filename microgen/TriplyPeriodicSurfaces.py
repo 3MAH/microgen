@@ -130,31 +130,41 @@ def GenerateTPMS(type_tpms, thickness, rve, sizeMesh=0.05, minFacetAngle=10., ma
     cube = pygalmesh.Cuboid([0, 0, 0], [rve.dx, rve.dy, rve.dz])
 
     if type_tpms == 'gyroid':
-        s_center = Gyroid(0)
+        s_testplus = Gyroid(thickness/2.)
+        s_testminus = Gyroid(-thickness/2.)
         s_plus = Gyroid(thickness)
         s_minus = Gyroid(-1.*thickness)
     elif type_tpms == 'schwarzP':
-        s_center = SchwarzP(0)
+        s_testplus = SchwarzP(thickness/2.)
+        s_testminus = SchwarzP(-thickness/2.)
         s_plus = SchwarzP(thickness)
         s_minus = SchwarzP(-1.*thickness)
     elif type_tpms == 'schwarzD':
-        s_center = SchwarzD(0)
+        s_testplus = SchwarzP(thickness/2.)
+        s_testminus = SchwarzP(-thickness/2.)
         s_plus = SchwarzD(thickness)
         s_minus = SchwarzD(-1.*thickness)
     elif type_tpms == 'neovius':
-        s_center = Neovius(0)
+        s_testplus = Neovius(thickness/2.)
+        s_testminus = Neovius(-thickness/2.)
         s_plus = Neovius(thickness)
         s_minus = Neovius(-1.*thickness)
     else:
         print("Error, the tpms is not recognized")
         return False
 
-    mesh_surf_center = pygalmesh.generate_surface_mesh(s_center,
+    mesh_surf_testplus = pygalmesh.generate_surface_mesh(s_testplus,
         min_facet_angle=minFacetAngle,
         max_radius_surface_delaunay_ball=maxRadius,
         max_facet_distance=sizeMesh,
     )
-    
+
+    mesh_surf_testminus = pygalmesh.generate_surface_mesh(s_testminus,
+        min_facet_angle=minFacetAngle,
+        max_radius_surface_delaunay_ball=maxRadius,
+        max_facet_distance=sizeMesh,
+    )
+
     mesh_surf_plus = pygalmesh.generate_surface_mesh(s_plus,
         min_facet_angle=minFacetAngle,
         max_radius_surface_delaunay_ball=maxRadius,
@@ -168,11 +178,13 @@ def GenerateTPMS(type_tpms, thickness, rve, sizeMesh=0.05, minFacetAngle=10., ma
     )
 
     if path_data != '':
-        mesh_surf_center.write(path_data + '/' + 'tpms_center.stl')
+        mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
+        mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
         mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')
         mesh_surf_minus.write(path_data + '/' + 'tpms_minus.stl')
     else:
-        mesh_surf_center.write('tpms_center.stl')
+        mesh_surf_testplus.write('tpms_testplus.stl')
+        mesh_surf_testminus.write('tpms_testminus.stl')
         mesh_surf_plus.write('tpms_plus.stl')
         mesh_surf_minus.write('tpms_minus.stl')
     
