@@ -63,8 +63,6 @@ def Mesh(MeshFile, ListPhases, Size, Order=1):
         print(ListDimTags[:-1])
         print(ListDimTags[-1])
         outDimTags, outDimTagsMap = gmsh.model.occ.fragment(ListDimTags[:-1], [ListDimTags[-1]])
-    print(outDimTags)
-    print(outDimTagsMap)
 #    ent = gmsh.model.getEntities(3)
 #    print(ent)
 #    gmsh.model.occ.healShapes()

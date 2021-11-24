@@ -87,6 +87,7 @@ class tpms :
 #        sheet = [el[1] for el in listSolids]
         
         print('sheet', sheet)
+        print('skeletal', skeletal)
 
         if(self.type_part == 'sheet'):
             to_fuse = [cq.Shape(s.wrapped) for s in sheet]
