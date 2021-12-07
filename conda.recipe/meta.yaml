@@ -1,0 +1,30 @@
+package:
+  name: microgen
+  version: 1.0.0
+
+source:
+  # git_url: https://github.com/3MAH/microgen.git
+  path: ..
+
+build:
+  noarch: python
+
+requirements:
+  build:
+    - python=3.6
+    - setuptools
+  host:
+    - python=3.6
+    - pip
+  run:
+    - python=3.6
+    - numpy
+    # - freecad
+    - cadquery
+    - gmsh
+    - python-gmsh
+    - pygalmesh
+
+test:
+  imports:
+    - microgen
