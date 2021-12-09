@@ -3,27 +3,25 @@ package:
   version: 1.0.0
 
 source:
-  # git_url: https://github.com/3MAH/microgen.git
-  path: ..
+  git_url: https://github.com/3MAH/microgen.git
 
 build:
   noarch: python
 
 requirements:
   build:
-    - python=3.6
+    - python
     - setuptools
   host:
-    - python=3.6
+    - python
     - pip
   run:
-    - python=3.6
-    - numpy
-    # - freecad
-    - cadquery
+    - python
+    - pygalmesh
     - gmsh
     - python-gmsh
-    - pygalmesh
+    - numpy
+    - cadquery
 
 test:
   imports:
