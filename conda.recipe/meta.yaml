@@ -21,7 +21,7 @@ requirements:
     - gmsh
     - python-gmsh
     - numpy
-    - cadquery
+    - cadquery>=2
 
 test:
   imports:
