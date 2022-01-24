@@ -9,19 +9,13 @@ build:
   noarch: python
 
 requirements:
-  build:
-    - python
-    - setuptools
   host:
     - python
-    - pip
   run:
     - python
-    - pygalmesh
-    - gmsh
+    - cadquery=2
     - python-gmsh
-    - numpy
-    - cadquery>=2
+    - pygalmesh
 
 test:
   imports:
