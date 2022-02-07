@@ -10,6 +10,7 @@ def mmg3d(mesh, output, ls, hsiz):
     if hsiz:
         cmd += " -hsiz " + str(hsiz)
 
+    print(cmd)
     os.system(cmd)
 
 def mmg2d():
