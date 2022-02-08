@@ -4,9 +4,11 @@ package:
 
 source:
   git_url: https://github.com/3MAH/microgen.git
+  git_tag: mmg
 
 build:
   noarch: python
+  string: mmg
 
 requirements:
   host:
@@ -16,6 +18,7 @@ requirements:
     - cadquery=2
     - python-gmsh
     - pygalmesh
+    - mmg
 
 test:
   imports:
