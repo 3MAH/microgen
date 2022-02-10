@@ -390,6 +390,21 @@ def fuse_parts(CqShapeList, retain_edges):
 #
 #    return (phase_cut, occ_solids_list)
 
+def cutPhasesByShape(CqShapeList, cut_obj):
+    phase_cut = []
+
+    for shape in CqShapeList:
+        cut = BRepAlgoAPI_Cut(shape.wrapped, cut_obj.wrapped)
+        if len(cq.Shape(cut.Shape()).Solids()) > 0:
+            phase_cut.append(cq.Shape(cut.Shape()))
+
+    occ_solids_list = [s.Solids() for s in phase_cut]
+    print(phase_cut)
+    print(occ_solids_list)
+    print('outside cut')
+
+    return (phase_cut, occ_solids_list)
+
 def cut_parts(CqShapeList, reverseOrder = True):
     phase_cut = []
     if(reverseOrder == True):
@@ -444,3 +459,211 @@ def cut_parts(CqShapeList, reverseOrder = True):
 #    occ_solids_list = [s.Solids() for s in phase_cut[::-1]]
 #    return (phase_cut[::-1], occ_solids_list)
     
+# Ajout MB 07/01/2022
+
+def lanceNeper(filename,nbCell,dimCube):
+    command = "neper -T -n "+str(nbCell)+ " -id 1 -dim 3"
+    command = command + " -domain 'cube(" + str(dimCube[0]) + "," + str(dimCube[1]) + "," + str(dimCube[2]) + ")'"
+    command = command + " -morpho ""gg"" -o " + filename
+    
+    os.system(command)
+    
+
+def parseNeper(filename):
+    
+    # 1ere étape : lecture des coordonées des germes, coordonées des sommets,
+    # labels globaux des sommets pour chaque segment, labels globaux des segments
+    # pour chaque face, labels globaux des faces pour chaque polyèdre à partir
+    # du fichier de tesselation filename.tess généré par NEPER
+    
+    file=filename + '.tess'
+    fid = open(file,'r')
+    
+    flagChercheSeed = False
+    seed = []
+    
+    flagChercheVertex = False
+    vertices = []
+    
+    flagChercheEdges = False
+    edges = []
+    
+    flagChercheFaces = False
+    faces = []
+    iLigneFace = 1
+    
+    flagCherchePolys = False
+    polys = []
+    
+    flagExtraction = False
+    i=0
+    
+
+    for line in fid:
+        
+        if (flagExtraction):
+            if '*' in line:
+                flagExtraction = False
+            else:
+                if i == 1: # Extraction des germes
+                    ligneDecoupee = line.split()
+                    seed.append([float(ligneDecoupee[1]),float(ligneDecoupee[2]),float(ligneDecoupee[3])])
+                if i == 2: # Extraction des sommets
+                    ligneDecoupee = line.split()
+                    vertices.append([int(ligneDecoupee[0]),float(ligneDecoupee[1]),float(ligneDecoupee[2]),float(ligneDecoupee[3])])
+                if i == 3: # Extraction des segments
+                    ligneDecoupee = line.split()
+                    edges.append([int(ligneDecoupee[0]),int(ligneDecoupee[1]),int(ligneDecoupee[2])])
+                if i == 4: # Extraction des faces
+                    if iLigneFace == 1:
+                        tmp = []
+                        tmp.append(int(line.split()[0]))
+                    if iLigneFace == 2:
+                        ligneDecoupee = line.split()
+                        nbEdges = int(ligneDecoupee[0])
+                        for k in range(nbEdges):
+                            tmp.append(int(ligneDecoupee[k+1]))
+                        faces.append(tmp)
+                    if iLigneFace == 4:
+                        iLigneFace = 0
+                        
+                    iLigneFace +=1
+                if i == 5: # Extraction des cellules
+                    tmp = []
+                    ligneDecoupee = line.split()
+                    tmp.append(int(ligneDecoupee[0]))
+                    nbFaces = int(ligneDecoupee[1])
+                    for k in range(nbFaces):
+                        tmp.append(np.abs(int(ligneDecoupee[k+2])))
+                    polys.append(tmp)
+                
+                        
+
+        if '*seed' in line:
+            flagChercheSeed = True
+            i+=1
+            
+        if '**vertex' in line:
+            flagChercheVertex = True
+            i+=1
+            next(fid)
+
+        if '**edge' in line:
+            flagChercheEdges = True
+            i+=1
+            next(fid)
+            
+        if '**face' in line:
+            flagChercheFaces = True
+            i+=1
+            next(fid)
+            
+        if '**polyhedron' in line:
+            flagCherchePolys = True
+            i+=1
+            next(fid)
+            
+        if (flagChercheSeed):
+            flagExtraction = True
+            flagChercheSeed = False
+            
+        if (flagChercheVertex):
+            flagExtraction = True
+            flagChercheVertex = False
+            
+        if (flagChercheEdges):
+            flagExtraction = True
+            flagChercheEdges = False
+
+        if (flagChercheFaces):
+            flagExtraction = True
+            flagChercheFaces = False
+
+        if (flagCherchePolys):
+            flagExtraction = True
+            flagCherchePolys = False
+            
+    fid.close()
+
+    # 2e étape : création d'un objet pour le polycristal ayant une structure semblable
+    # à la sortie de compute_voronoi de la librairie py_voro, compatible avec la définition
+    # des polyèdres de la librairie Microgen
+
+    A = []
+    nbPolys = len(polys)
+    listeSommets=[]
+    listeSommetsOut = []
+    for i in range(nbPolys):
+        voro = {}
+        voro["original"] = seed[i]
+        voro["faces"]=[]
+        listeSommetsPoly = []
+        sommets=[]
+        for facePoly in polys[i][1:]:
+            listeSommetsFace=[]
+            dicVertices = {}
+            dicVertices["vertices"]=[]
+            for segment in faces[facePoly-1][1:]:
+                # Listes des sommets avec numérotation globale et faces associées
+                if edges[np.abs(segment)-1][1] not in listeSommets:
+                    dicFacesAssociees = {}
+                    dicFacesAssociees["cell_associees"]=[facePoly]
+                    listeSommets.append(edges[np.abs(segment)-1][1])
+                    listeSommetsOut.append((edges[np.abs(segment)-1][1],dicFacesAssociees))
+                else:
+                    idx = listeSommets.index(edges[np.abs(segment)-1][1])
+                    if facePoly not in listeSommetsOut[idx][1]["cell_associees"]:
+                        listeSommetsOut[idx][1]["cell_associees"].append(facePoly)
+                    #sommets.append(vertices[edges[np.abs(segment)-1][1]-1][1:])
+                if edges[np.abs(segment)-1][2] not in listeSommets:
+                    dicFacesAssociees = {}
+                    dicFacesAssociees["cell_associees"]=[facePoly]
+                    listeSommets.append(edges[np.abs(segment)-1][2])
+                    listeSommetsOut.append((edges[np.abs(segment)-1][2],dicFacesAssociees))
+                else:
+                    idx = listeSommets.index(edges[np.abs(segment)-1][2])
+                    if facePoly not in listeSommetsOut[idx][1]["cell_associees"]:
+                        listeSommetsOut[idx][1]["cell_associees"].append(facePoly)
+                    #sommets.append(vertices[edges[np.abs(segment)-1][2]-1][1:])
+                
+                # Listes des sommets et de leurs coordonnées avec numérotation locale
+                # à inclure dans voro
+                if segment < 0:
+                    if edges[np.abs(segment)-1][2] not in listeSommetsPoly:
+                        listeSommetsPoly.append(edges[np.abs(segment)-1][2])
+                        sommets.append(vertices[edges[np.abs(segment)-1][2]-1][1:])
+                    if edges[np.abs(segment)-1][2] not in listeSommetsFace:
+                        listeSommetsFace.append(edges[np.abs(segment)-1][2])
+                        dicVertices["vertices"].append(listeSommetsPoly.index(edges[np.abs(segment)-1][2]))
+                    
+                    if edges[np.abs(segment)-1][1] not in listeSommetsPoly:
+                        listeSommetsPoly.append(edges[np.abs(segment)-1][1])
+                        sommets.append(vertices[edges[np.abs(segment)-1][1]-1][1:])
+                    if edges[np.abs(segment)-1][1] not in listeSommetsFace:
+                        listeSommetsFace.append(edges[np.abs(segment)-1][1])
+                        dicVertices["vertices"].append(listeSommetsPoly.index(edges[np.abs(segment)-1][1]))
+
+                if segment > 0:
+                    if edges[np.abs(segment)-1][1] not in listeSommetsPoly:
+                        listeSommetsPoly.append(edges[np.abs(segment)-1][1])
+                        sommets.append(vertices[edges[np.abs(segment)-1][1]-1][1:])
+                    if edges[np.abs(segment)-1][1] not in listeSommetsFace:
+                        listeSommetsFace.append(edges[np.abs(segment)-1][1])
+                        dicVertices["vertices"].append(listeSommetsPoly.index(edges[np.abs(segment)-1][1]))
+                    
+                    if edges[np.abs(segment)-1][2] not in listeSommetsPoly:
+                        listeSommetsPoly.append(edges[np.abs(segment)-1][2])
+                        sommets.append(vertices[edges[np.abs(segment)-1][2]-1][1:])
+                    if edges[np.abs(segment)-1][2] not in listeSommetsFace:
+                        listeSommetsFace.append(edges[np.abs(segment)-1][2])
+                        dicVertices["vertices"].append(listeSommetsPoly.index(edges[np.abs(segment)-1][2]))
+            voro["faces"].append(dicVertices)
+                    
+        voro["vertices"]=sommets
+        A.append(voro)
+        
+
+             
+    return A, seed, listeSommetsOut, edges, faces, polys
+
+# fin ajout
