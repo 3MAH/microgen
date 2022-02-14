@@ -28,40 +28,36 @@ class BasicGeometry:
         self.angle=np.array([self.psi,self.theta,self.phi])
         self.name=self.shape+str(self.number)
 
-        if self.shape == 'cylinder' :
-            self.geometry = cylinder(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
-        if self.shape == 'bar' :
-            self.geometry = bar(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
-        if self.shape == 'sphere' :
-            self.geometry = sphere(self.center,self.param_geom[0],self.number)
-        if self.shape == 'ellipsoid' :
-            self.geometry = ellipsoid(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
-        if self.shape == 'tpms' :
-            self.geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
-        if self.shape == 'voronoi' :
-            self.geometry = voronoi(self.param_geom,self.number)
-
     def __cmp__(self, other):
         return cmp(self.number, other.number)
     
 #----------GENERATE PHASES----------------------------------------------------------------------------------
 
-    def createGeometry(self,rve):
-        if self.shape == 'cylinder' :
-            self.cqshape = self.geometry.create_cylinder()
-        if self.shape == 'bar' :
-            self.cqshape = self.geometry.create_bar()
-        if self.shape == 'sphere' :
-            self.cqshape = self.geometry.create_sphere()
-        if self.shape == 'ellipsoid' :
-            self.cqshape = self.geometry.create_ellipsoid()
-        if self.shape == 'tpms' :
-            self.cqshape = self.geometry.create_tpms(self.path_data,rve)
-        if self.shape == 'voronoi' :
-            self.cqshape = self.geometry.create_voronoi()
-
     def generate(self,rve):
-        return cq.Shape(self.cqshape.val().wrapped)
+
+        if self.shape == 'cylinder' :
+            geometry = cylinder(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
+            cqshape = geometry.create_cylinder()
+        if self.shape == 'bar' :
+            geometry = bar(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
+            cqshape = geometry.create_bar()
+        if self.shape == 'sphere' :
+            geometry = sphere(self.center,self.param_geom[0],self.number)
+            cqshape = geometry.create_sphere()
+        if self.shape == 'ellipsoid' :
+            geometry = ellipsoid(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+            cqshape = geometry.create_ellipsoid()
+        if self.shape == 'tpms' :
+            geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+            cqshape = geometry.create_tpms(self.path_data,rve)
+        if self.shape == 'voronoi' :
+            geometry = voronoi(self.param_geom,self.number)
+            cqshape = geometry.create_voronoi()
+            
+#        if self.shape == 'tpms' :
+#            geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+#            cqshape = geometry.create_tpms(self.path_data,rve)
+        return cq.Shape(cqshape.val().wrapped)
 
 def read_phases(path_data,phases_file,phases):
 
