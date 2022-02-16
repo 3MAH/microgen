@@ -85,7 +85,7 @@ def mmgs(d=None, h=None, m=None, v=None, val=None, default=None,        \
           A=None, ar=None, hausd=None, hgrad=None, hmax=None, hmin=None,\
           hsiz=None, ls=None, noinsert=None, nomove=None, nosurf=None,  \
           noswap=None, nr=None, nreg=None, nsd=None, optim=None, rn=None):
-    cmd = "mmgs_O3"
+    cmd = ["mmgs_O3"]
     if d:
         cmd.append("-d")
     if h:
@@ -158,7 +158,7 @@ def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
           nofem=None, noinsert=None, nomove=None, nosurf=None,   \
           noswap=None, nr=None, nreg=None, nsd=None, optim=None, \
           optimLES=None, opnbdy=None, rmc=None, rn=None):
-    cmd = "mmg3d_O3"
+    cmd = ["mmg3d_O3"]
     if d:
         cmd.append("-d")
     if h:
