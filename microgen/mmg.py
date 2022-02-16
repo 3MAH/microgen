@@ -14,48 +14,63 @@ def mmg2d(d=None, h=None, m=None, v=None, val=None, default=None,        \
     if m:
         if m == True:
             m = ""
-        cmd.append("-m " + str(m))
+        cmd.append("-m")
+        cmd.append(str(m))
     if v:
         if v == True:
             v = 1
-        cmd.append("-v " + str(v))
+        cmd.append("-v")
+        cmd.append(str(v))
     if val:
         cmd.append("-val")
     if default:
         cmd.append("-default")
     if input:
-        cmd.append("-in " + input)
+        cmd.append("-in")
+        cmd.append(input)
     if output:
-        cmd.append("-out " + output)
+        cmd.append("-out")
+        cmd.append(output)
     if solution:
-        cmd.append("-sol " + solution)
+        cmd.append("-sol")
+        cmd.append(solution)
     if metric:
-        cmd.append("-met " + metric)
+        cmd.append("-met")
+        cmd.append(metric)
     if A:
         cmd.append("-A")
     if ar:
-        cmd.append("-ar " + str(ar))
+        cmd.append("-ar")
+        cmd.append(str(ar))
     if hausd:
-        cmd.append("-hausd " + str(hausd))
+        cmd.append("-hausd")
+        cmd.append(str(hausd))
     if hgrad:
-        cmd.append("-hgrad " + str(hgrad))
+        cmd.append("-hgrad")
+        cmd.append(str(hgrad))
     if hmax:
-        cmd.append("-hmax " + str(hmax))
+        cmd.append("-hmax")
+        cmd.append(str(hmax))
     if hmin:
-        cmd.append("-hmin " + str(hmin))
+        cmd.append("-hmin")
+        cmd.append(str(hmin))
     if hsiz:
-        cmd.append("-hsiz " + str(hsiz))
+        cmd.append("-hsiz")
+        cmd.append(str(hsiz))
     if lag or lag == 0:
         if lag == True:
             lag = 0
-        cmd.append("-lag " + str(lag))
+        cmd.append("-lag")
+        cmd.append(str(lag))
     if ls or ls == 0:
         ls_value = ls
         if ls_value == True:
             ls_value = 0
-        cmd.append("-ls " + str(ls_value))
+        cmd.append("-ls")
+        cmd.append(str(ls_value))
     if _3dMedit:
-        cmd.append("-3dMedit " + str(_3dMedit))
+        cmd.append("-3dMedit")
+        cmd.append(str(_3dMedit))
         
     if noinsert:
         cmd.append("-noinsert")
@@ -68,15 +83,18 @@ def mmg2d(d=None, h=None, m=None, v=None, val=None, default=None,        \
     if nr:
         cmd.append("-nr")
     if nreg:
-        cmd.append("-nreg " + str(nreg))
+        cmd.append("-nreg")
+        cmd.append(str(nreg))
     if nsd:
-        cmd.append("-nsd " + str(nsd))
+        cmd.append("-nsd")
+        cmd.append(str(nsd))
     if optim:
         cmd.append("-optim")
     if opnbdy:
         cmd.append("-opnbdy")
     if rmc:
-        cmd.append("-rmc " + str(rmc))
+        cmd.append("-rmc")
+        cmd.append(str(rmc))
 
     subprocess.run(cmd)
 
@@ -93,42 +111,55 @@ def mmgs(d=None, h=None, m=None, v=None, val=None, default=None,        \
     if m:
         if m == True:
             m = ""
-        cmd.append("-m " + str(m))
+        cmd.append("-m")
+        cmd.append(str(m))
     if v:
         if v == True:
             v = 1
-        cmd.append("-v " + str(v))
+        cmd.append("-v")
+        cmd.append(str(v))
     if val:
         cmd.append("-val")
     if default:
         cmd.append("-default")
     if input:
-        cmd.append("-in " + input)
+        cmd.append("-in")
+        cmd.append(input)
     if output:
-        cmd.append("-out " + output)
+        cmd.append("-out")
+        cmd.append(output)
     if solution:
-        cmd.append("-sol " + solution)
+        cmd.append("-sol")
+        cmd.append(solution)
     if metric:
-        cmd.append("-met " + metric)
+        cmd.append("-met")
+        cmd.append(metric)
     if A:
         cmd.append("-A")
     if ar:
-        cmd.append("-ar " + str(ar))
+        cmd.append("-ar")
+        cmd.append(str(ar))
     if hausd:
-        cmd.append("-hausd " + str(hausd))
+        cmd.append("-hausd")
+        cmd.append(str(hausd))
     if hgrad:
-        cmd.append("-hgrad " + str(hgrad))
+        cmd.append("-hgrad")
+        cmd.append(str(hgrad))
     if hmax:
-        cmd.append("-hmax " + str(hmax))
+        cmd.append("-hmax")
+        cmd.append(str(hmax))
     if hmin:
-        cmd.append("-hmin " + str(hmin))
+        cmd.append("-hmin")
+        cmd.append(str(hmin))
     if hsiz:
-        cmd.append("-hsiz " + str(hsiz))
+        cmd.append("-hsiz")
+        cmd.append(str(hsiz))
     if ls or ls == 0:
         ls_value = ls
         if ls_value == True:
             ls_value = 0
-        cmd.append("-ls " + str(ls_value))
+        cmd.append("-ls")
+        cmd.append(str(ls_value))
     if noinsert:
         cmd.append("-noinsert")
     if nomove:
@@ -140,15 +171,16 @@ def mmgs(d=None, h=None, m=None, v=None, val=None, default=None,        \
     if nr:
         cmd.append("-nr")
     if nreg:
-        cmd.append("-nreg " + str(nreg))
+        cmd.append("-nreg")
+        cmd.append(str(nreg))
     if nsd:
-        cmd.append("-nsd " + str(nsd))
+        cmd.append("-nsd")
+        cmd.append(str(nsd))
     if optim:
         cmd.append("-optim")
     if rn:
         cmd.append("-rn")
 
-    print(cmd)
     subprocess.run(cmd)
 
 def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
@@ -166,48 +198,63 @@ def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
     if m:
         if m == True:
             m = ""
-        cmd.append("-m " + str(m))
+        cmd.append("-m")
+        cmd.append(str(m))
     if v:
         if v == True:
             v = 1
-        cmd.append("-v " + str(v))
+        cmd.append("-v")
+        cmd.append(str(v))
     if val:
         cmd.append("-val")
     if default:
         cmd.append("-default")
     if input:
-        cmd.append("-in " + input)
+        cmd.append("-in")
+        cmd.append(input)
     if output:
-        cmd.append("-out " + output)
+        cmd.append("-out")
+        cmd.append(output)
     if solution:
-        cmd.append("-sol " + solution)
+        cmd.append("-sol")
+        cmd.append(solution)
     if metric:
-        cmd.append("-met " + metric)
+        cmd.append("-met")
+        cmd.append(metric)
     if A:
         cmd.append("-A")
     if ar:
-        cmd.append("-ar " + str(ar))
+        cmd.append("-ar")
+        cmd.append(str(ar))
     if octree:
-        cmd.append("-octree " + str(octree))
+        cmd.append("-octree")
+        cmd.append(str(octree))
     if hausd:
-        cmd.append("-hausd " + str(hausd))
+        cmd.append("-hausd")
+        cmd.append(str(hausd))
     if hgrad:
-        cmd.append("-hgrad " + str(hgrad))
+        cmd.append("-hgrad")
+        cmd.append(str(hgrad))
     if hmax:
-        cmd.append("-hmax " + str(hmax))
+        cmd.append("-hmax")
+        cmd.append(str(hmax))
     if hmin:
-        cmd.append("-hmin " + str(hmin))
+        cmd.append("-hmin")
+        cmd.append(str(hmin))
     if hsiz:
-        cmd.append("-hsiz " + str(hsiz))
+        cmd.append("-hsiz")
+        cmd.append(str(hsiz))
     if lag or lag == 0:
         if lag == True:
             lag = 0
-        cmd.append("-lag " + str(lag))
+        cmd.append("-lag")
+        cmd.append(str(lag))
     if ls or ls == 0:
         ls_value = ls
         if ls_value == True:
             ls_value = 0
-        cmd.append("-ls " + str(ls_value))
+        cmd.append("-ls")
+        cmd.append(str(ls_value))
     if nofem:
         cmd.append("-nofem")
     if noinsert:
@@ -221,9 +268,11 @@ def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
     if nr:
         cmd.append("-nr")
     if nreg:
-        cmd.append("-nreg " + str(nreg))
+        cmd.append("-nreg")
+        cmd.append(str(nreg))
     if nsd:
-        cmd.append("-nsd " + str(nsd))
+        cmd.append("-nsd")
+        cmd.append(str(nsd))
     if optim:
         cmd.append("-optim")
     if optimLES:
@@ -231,7 +280,8 @@ def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
     if opnbdy:
         cmd.append("-opnbdy")
     if rmc:
-        cmd.append("-rmc " + str(rmc))
+        cmd.append("-rmc")
+        cmd.append(str(rmc))
     if rn:
         cmd.append("-rn")
 
