@@ -14,7 +14,7 @@ def mmg2d(d=None, h=None, m=None, v=None, val=None, default=None,        \
     if m:
         if m == True:
             m = ""
-        cmd.append("-m " + str(m)))
+        cmd.append("-m " + str(m))
     if v:
         if v == True:
             v = 1

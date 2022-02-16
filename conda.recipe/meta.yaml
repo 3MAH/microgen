@@ -22,3 +22,8 @@ requirements:
 test:
   imports:
     - microgen
+  source_files:
+    - examples/mmg
+  commands:
+    - cd $SRC_DIR/examples/mmg
+    - $PYTHON test_mmg.py
