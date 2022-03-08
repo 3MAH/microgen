@@ -37,6 +37,8 @@ class tpms :
 
     def create_tpms(self,path_data,rve) :
     
+        if rve==None:
+            print("Please add an RVE to generate the TPMS")
         surf_tp = TopoDS_Shape()
         surf_tm = TopoDS_Shape()
         surf_p = TopoDS_Shape()
