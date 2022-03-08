@@ -405,6 +405,17 @@ def cutPhasesByShape(CqShapeList, cut_obj):
 
     return (phase_cut, occ_solids_list)
 
+def cutPhaseByShapeList(phaseToCut, CqShapeList):
+
+    ResultCut = phaseToCut
+    for shape in CqShapeList:
+        cut = BRepAlgoAPI_Cut(ResultCut.wrapped, shape.wrapped)
+        ResultCut = cq.Shape(cut.Shape())
+
+    occ_solids_list = ResultCut.Solids()
+    return (ResultCut, occ_solids_list)
+
+
 def cut_parts(CqShapeList, reverseOrder = True):
     phase_cut = []
     if(reverseOrder == True):
