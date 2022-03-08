@@ -2,8 +2,10 @@ import os
 import numpy as np
 
 from microgen.Functions import *
+from microgen.Box import *
 from microgen.Sphere import *
 from microgen.Cylinder import *
+from microgen.ExtrudedPolygon import *
 from microgen.Ellipsoid import *
 from microgen.Bar import *
 from microgen.Tpms import *
@@ -12,7 +14,7 @@ from microgen.Rve import *
 
 class BasicGeometry:
 
-    def __init__(self,number,shape,xc,yc,zc,psi,theta,phi,param_geom,path_data):
+    def __init__(self,number,shape,xc,yc,zc,psi,theta,phi,param_geom,path_data=None):
         self.number=number
         self.shape=shape
         self.xc=xc
@@ -33,11 +35,17 @@ class BasicGeometry:
     
 #----------GENERATE PHASES----------------------------------------------------------------------------------
 
-    def generate(self,rve):
+    def generate(self,rve=None):
 
+        if self.shape == 'box' :
+            geometry = box(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
+            cqshape = geometry.create_box()
         if self.shape == 'cylinder' :
             geometry = cylinder(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
             cqshape = geometry.create_cylinder()
+        if self.shape == 'extrudedpolygon' :
+            geometry = ExtrudedPolygon(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
+            cqshape = geometry.create_extrudedpolygon()
         if self.shape == 'bar' :
             geometry = bar(self.center,self.angle,self.param_geom[0],self.param_geom[1],self.number)
             cqshape = geometry.create_bar()
