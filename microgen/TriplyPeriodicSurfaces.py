@@ -178,6 +178,7 @@ def GenerateTPMS(type_tpms, thickness, rve, sizeMesh=0.05, minFacetAngle=10., ma
     )
 
     if path_data != '':
+        if not(os.path.isdir(path_data)): os.mkdir(path_data)
         mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
         mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
         mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')
