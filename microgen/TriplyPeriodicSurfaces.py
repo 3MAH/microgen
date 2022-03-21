@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pygalmesh
 
@@ -218,11 +219,12 @@ def generateTPMS(
         max_facet_distance=sizeMesh,
     )
 
-    if path_data != "":
-        mesh_surf_testplus.write(path_data + "/" + "tpms_testplus.stl")
-        mesh_surf_testminus.write(path_data + "/" + "tpms_testminus.stl")
-        mesh_surf_plus.write(path_data + "/" + "tpms_plus.stl")
-        mesh_surf_minus.write(path_data + "/" + "tpms_minus.stl")
+    if path_data != '':
+        if not(os.path.isdir(path_data)): os.mkdir(path_data)
+        mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
+        mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
+        mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')
+        mesh_surf_minus.write(path_data + '/' + 'tpms_minus.stl')
     else:
         mesh_surf_testplus.write("tpms_testplus.stl")
         mesh_surf_testminus.write("tpms_testminus.stl")
