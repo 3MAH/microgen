@@ -3,7 +3,8 @@ package:
   version: 1.0.0
 
 source:
-  git_url: https://github.com/3MAH/microgen.git
+  # git_url: https://github.com/3MAH/microgen.git
+  path: ..
 
 build:
   noarch: python
@@ -13,11 +14,11 @@ requirements:
     - python
   run:
     - python
-    - cadquery=2
+    - cadquery=master
     - python-gmsh
     - pygalmesh
     - mmg
-    - meshio
+    # - meshio
 
 test:
   imports:
