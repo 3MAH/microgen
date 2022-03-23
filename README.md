@@ -13,7 +13,7 @@ If you want to modify the sources you would prefer to install microgen from the 
 
 First, you need to make sure you have all the required dependencies:
 ```
-conda install -c conda-forge -c cadquery -c set3mah python cadquery=2 python-gmsh pygalmesh mmg meshio
+conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg meshio
 ```
 
 Then you can install microgen: 
