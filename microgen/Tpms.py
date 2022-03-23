@@ -20,7 +20,7 @@ class Tpms:
         self.ske_type = ske_type
 
     def createSurfaces(
-        self, type_tpms, rve, thickness, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data
+        self, type_tpms, rve, thickness, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data=""
     ):
         generateTPMS(
             type_tpms,
