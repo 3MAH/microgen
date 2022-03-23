@@ -5,8 +5,6 @@ on: [push]
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
 
     steps:
       - uses: actions/checkout@v2
@@ -17,4 +15,4 @@ jobs:
       - name: Install
         run: |
           conda install python=3.8 cadquery=master python-gmsh pygalmesh mmg
-          python setup.py install
+          sudo python setup.py install
