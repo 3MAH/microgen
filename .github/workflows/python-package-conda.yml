@@ -17,15 +17,15 @@ jobs:
       #    activate-environment: foo
       #    channels: conda-forge, cadquery, set3mah
       #    
-      #- name: Dependencies
-      #  run: |
-      #    conda install python=3.8 cadquery=master python-gmsh pygalmesh mmg
-      #    
-      #- name: Install
-      #  run: |
-      #    sudo python setup.py install
-      #    
-      #- name: Test
-      #  run: | 
-      #    cd examples/mmg
-      #    python test_mmg.py
+      - name: Dependencies
+        run: |
+          conda install -c conda-forge -c cadquery -c set3mah python=3.8 cadquery=master python-gmsh pygalmesh mmg
+          
+      - name: Install
+        run: |
+          python setup.py install
+          
+      - name: Test
+        run: | 
+          cd examples/mmg
+          python test_mmg.py
