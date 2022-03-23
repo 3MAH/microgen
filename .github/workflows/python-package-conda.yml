@@ -8,20 +8,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: foo
-          channels: conda-forge, cadquery, set3mah
-          
-      - name: Dependencies
-        run: |
-          conda install python=3.8 cadquery=master python-gmsh pygalmesh mmg
-          
-      - name: Install
-        run: |
-          sudo python setup.py install
-          
-      - name: Test
-        run: | 
-          cd examples/mmg
-          python test_mmg.py
+      - uses: s-weigand/setup-conda@v1
+      - run: conda --version
+      - run: which python
+      
+      #- uses: conda-incubator/setup-miniconda@v2
+      #  with:
+      #    activate-environment: foo
+      #    channels: conda-forge, cadquery, set3mah
+      #    
+      #- name: Dependencies
+      #  run: |
+      #    conda install python=3.8 cadquery=master python-gmsh pygalmesh mmg
+      #    
+      #- name: Install
+      #  run: |
+      #    sudo python setup.py install
+      #    
+      #- name: Test
+      #  run: | 
+      #    cd examples/mmg
+      #    python test_mmg.py
