@@ -1,4 +1,5 @@
 import os
+import math
 import numpy as np
 import pygalmesh
 
@@ -48,18 +49,16 @@ class Hyperboloid(pygalmesh.DomainBase):
         return [circ0, circ1]
 
 
-class SchwarzP(pygalmesh.DomainBase):
+class SchwarzP(pygalmesh.DomainBase, rve):
     def __init__(self, h):
         super().__init__()
         self.h = h
         self.z0 = 0.0
-        self.z1 = 1.0
-        self.waist_radius = 0.5
+        self.z1 = rve.dz
+        self.waist_radius = sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
 
     def getBoundingSphereSquaredRadius(self):
-        # z_max = max(abs(self.z0), abs(self.z1))
-        # r_max = z_max**2 + self.waist_radius
-        return 1.1
+        return sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
 
     def eval(self, x):
         x2 = np.cos(x[0] * 2 * np.pi)
@@ -68,18 +67,16 @@ class SchwarzP(pygalmesh.DomainBase):
         return x2 + y2 + z2 + self.h
 
 
-class SchwarzD(pygalmesh.DomainBase):
+class SchwarzD(pygalmesh.DomainBase, rve):
     def __init__(self, h):
         super().__init__()
         self.h = h
         self.z0 = 0.0
-        self.z1 = 1.0
-        self.waist_radius = 0.5
+        self.z1 = rve.dz
+        self.waist_radius = sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
 
     def getBoundingSphereSquaredRadius(self):
-        # z_max = max(abs(self.z0), abs(self.z1))
-        # r_max = z_max**2 + self.waist_radius
-        return 1.1
+        return sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
 
     def eval(self, x):
         a = (
@@ -105,18 +102,16 @@ class SchwarzD(pygalmesh.DomainBase):
         return a + b + c + d + self.h
 
 
-class Neovius(pygalmesh.DomainBase):
+class Neovius(pygalmesh.DomainBase, rve):
     def __init__(self, h):
         super().__init__()
         self.h = h
         self.z0 = 0.0
-        self.z1 = 1.0
-        self.waist_radius = 0.5
+        self.z1 = rve.dz
+        self.waist_radius = sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
 
     def getBoundingSphereSquaredRadius(self):
-        # z_max = max(abs(self.z0), abs(self.z1))
-        # r_max = z_max**2 + self.waist_radius
-        return 1.1
+        return sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
 
     def eval(self, x):
         a = 3.0 * (
@@ -132,18 +127,16 @@ class Neovius(pygalmesh.DomainBase):
         return a + b + self.h
 
 
-class Gyroid(pygalmesh.DomainBase):
+class Gyroid(pygalmesh.DomainBase, rve):
     def __init__(self, h):
         super().__init__()
         self.h = h
         self.z0 = 0.0
-        self.z1 = 1.0
-        self.waist_radius = 0.5
+        self.z1 = rve.dz
+        self.waist_radius = sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
 
     def getBoundingSphereSquaredRadius(self):
-        # z_max = max(abs(self.z0), abs(self.z1))
-        # r_max = z_max**2 + self.waist_radius
-        return 1.1
+        return sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
 
     def eval(self, x):
         x2 = np.sin(x[0] * 2 * np.pi) * np.cos(x[1] * 2 * np.pi)
@@ -165,28 +158,28 @@ def generateTPMS(
     path_data="",
 ):
 
-    # cube = pygalmesh.Cuboid([0, 0, 0], [rve.dx, rve.dy, rve.dz])
+    thickness=thickness*np.pi
 
     if type_tpms == "gyroid":
-        s_testplus = Gyroid(thickness / 2.0)
-        s_testminus = Gyroid(-thickness / 2.0)
-        s_plus = Gyroid(thickness)
-        s_minus = Gyroid(-1.0 * thickness)
+        s_testplus = Gyroid(thickness / 4.0)
+        s_testminus = Gyroid(-thickness / 4.0)
+        s_plus = Gyroid(thickness / 2.0)
+        s_minus = Gyroid(-1.0 * thickness / 2.0)
     elif type_tpms == "schwarzP":
-        s_testplus = SchwarzP(thickness / 2.0)
-        s_testminus = SchwarzP(-thickness / 2.0)
-        s_plus = SchwarzP(thickness)
-        s_minus = SchwarzP(-1.0 * thickness)
+        s_testplus = SchwarzP(thickness / 4.0)
+        s_testminus = SchwarzP(-thickness / 4.0)
+        s_plus = SchwarzP(thickness / 2.0)
+        s_minus = SchwarzP(-1.0 * thickness / 2.0)
     elif type_tpms == "schwarzD":
-        s_testplus = SchwarzP(thickness / 2.0)
-        s_testminus = SchwarzP(-thickness / 2.0)
-        s_plus = SchwarzD(thickness)
-        s_minus = SchwarzD(-1.0 * thickness)
+        s_testplus = SchwarzP(thickness / 4.0)
+        s_testminus = SchwarzP(-thickness / 4.0)
+        s_plus = SchwarzD(thickness / 2.0)
+        s_minus = SchwarzD(-1.0 * thickness / 2.0)
     elif type_tpms == "neovius":
-        s_testplus = Neovius(thickness / 2.0)
-        s_testminus = Neovius(-thickness / 2.0)
-        s_plus = Neovius(thickness)
-        s_minus = Neovius(-1.0 * thickness)
+        s_testplus = Neovius(thickness / 4.0)
+        s_testminus = Neovius(-thickness / 4.0)
+        s_plus = Neovius(thickness / 2.0)
+        s_minus = Neovius(-1.0 * thickness / 2.0)
     else:
         print("Error, the tpms is not recognized")
         return False
