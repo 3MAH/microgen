@@ -14,6 +14,7 @@ jobs:
         with:
           activate-environment: foo
           channels: conda-forge, cadquery, set3mah
-      - run: |
-        conda install python=3.8 cadquery=master python-gmsh pygalmesh mmg
-        python setup.py install
+      - name: Install
+        run: |
+          conda install python=3.8 cadquery=master python-gmsh pygalmesh mmg
+          python setup.py install
