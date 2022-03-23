@@ -1,23 +1,50 @@
 import subprocess
 
-def mmg2d(d=None, h=None, m=None, v=None, val=None, default=None,        \
-          input=None, output=None, solution=None, metric=None,           \
-          A=None, ar=None, hausd=None, hgrad=None, hmax=None,            \
-          hmin=None, hsiz=None, lag=None, ls=None, _3dMedit=None,        \
-          noinsert=None, nomove=None, nosurf=None, noswap=None, nr=None, \
-          nreg=None, nsd=None, optim=None, opnbdy=None, rmc=None):
+
+def mmg2d(
+    d=None,
+    h=None,
+    m=None,
+    v=None,
+    val=None,
+    default=None,
+    input=None,
+    output=None,
+    solution=None,
+    metric=None,
+    A=None,
+    ar=None,
+    hausd=None,
+    hgrad=None,
+    hmax=None,
+    hmin=None,
+    hsiz=None,
+    lag=None,
+    ls=None,
+    _3dMedit=None,
+    noinsert=None,
+    nomove=None,
+    nosurf=None,
+    noswap=None,
+    nr=None,
+    nreg=None,
+    nsd=None,
+    optim=None,
+    opnbdy=None,
+    rmc=None,
+):
     cmd = ["mmg2d_O3"]
     if d:
         cmd.append("-d")
     if h:
         cmd.append("-h")
     if m:
-        if m == True:
+        if isinstance(m, bool):
             m = ""
         cmd.append("-m")
         cmd.append(str(m))
     if v:
-        if v == True:
+        if isinstance(v, bool):
             v = 1
         cmd.append("-v")
         cmd.append(str(v))
@@ -58,20 +85,20 @@ def mmg2d(d=None, h=None, m=None, v=None, val=None, default=None,        \
         cmd.append("-hsiz")
         cmd.append(str(hsiz))
     if lag or lag == 0:
-        if lag == True:
+        if isinstance(lag, bool):
             lag = 0
         cmd.append("-lag")
         cmd.append(str(lag))
     if ls or ls == 0:
         ls_value = ls
-        if ls_value == True:
+        if isinstance(ls_value, bool):
             ls_value = 0
         cmd.append("-ls")
         cmd.append(str(ls_value))
     if _3dMedit:
         cmd.append("-3dMedit")
         cmd.append(str(_3dMedit))
-        
+
     if noinsert:
         cmd.append("-noinsert")
     if nomove:
@@ -98,23 +125,48 @@ def mmg2d(d=None, h=None, m=None, v=None, val=None, default=None,        \
 
     subprocess.run(cmd)
 
-def mmgs(d=None, h=None, m=None, v=None, val=None, default=None,        \
-          input=None, output=None, solution=None, metric=None,          \
-          A=None, ar=None, hausd=None, hgrad=None, hmax=None, hmin=None,\
-          hsiz=None, ls=None, noinsert=None, nomove=None, nosurf=None,  \
-          noswap=None, nr=None, nreg=None, nsd=None, optim=None, rn=None):
+
+def mmgs(
+    d=None,
+    h=None,
+    m=None,
+    v=None,
+    val=None,
+    default=None,
+    input=None,
+    output=None,
+    solution=None,
+    metric=None,
+    A=None,
+    ar=None,
+    hausd=None,
+    hgrad=None,
+    hmax=None,
+    hmin=None,
+    hsiz=None,
+    ls=None,
+    noinsert=None,
+    nomove=None,
+    nosurf=None,
+    noswap=None,
+    nr=None,
+    nreg=None,
+    nsd=None,
+    optim=None,
+    rn=None,
+):
     cmd = ["mmgs_O3"]
     if d:
         cmd.append("-d")
     if h:
         cmd.append("-h")
     if m:
-        if m == True:
+        if isinstance(m, bool):
             m = ""
         cmd.append("-m")
         cmd.append(str(m))
     if v:
-        if v == True:
+        if isinstance(v, bool):
             v = 1
         cmd.append("-v")
         cmd.append(str(v))
@@ -156,7 +208,7 @@ def mmgs(d=None, h=None, m=None, v=None, val=None, default=None,        \
         cmd.append(str(hsiz))
     if ls or ls == 0:
         ls_value = ls
-        if ls_value == True:
+        if isinstance(ls_value, bool):
             ls_value = 0
         cmd.append("-ls")
         cmd.append(str(ls_value))
@@ -183,25 +235,54 @@ def mmgs(d=None, h=None, m=None, v=None, val=None, default=None,        \
 
     subprocess.run(cmd)
 
-def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
-          input=None, output=None, solution=None, metric=None,   \
-          A=None, ar=None, octree=None, hausd=None, hgrad=None,  \
-          hmax=None, hmin=None, hsiz=None, lag=None, ls=None,    \
-          nofem=None, noinsert=None, nomove=None, nosurf=None,   \
-          noswap=None, nr=None, nreg=None, nsd=None, optim=None, \
-          optimLES=None, opnbdy=None, rmc=None, rn=None):
+
+def mmg3d(
+    d=None,
+    h=None,
+    m=None,
+    v=None,
+    val=None,
+    default=None,
+    input=None,
+    output=None,
+    solution=None,
+    metric=None,
+    A=None,
+    ar=None,
+    octree=None,
+    hausd=None,
+    hgrad=None,
+    hmax=None,
+    hmin=None,
+    hsiz=None,
+    lag=None,
+    ls=None,
+    nofem=None,
+    noinsert=None,
+    nomove=None,
+    nosurf=None,
+    noswap=None,
+    nr=None,
+    nreg=None,
+    nsd=None,
+    optim=None,
+    optimLES=None,
+    opnbdy=None,
+    rmc=None,
+    rn=None,
+):
     cmd = ["mmg3d_O3"]
     if d:
         cmd.append("-d")
     if h:
         cmd.append("-h")
     if m:
-        if m == True:
+        if isinstance(m):
             m = ""
         cmd.append("-m")
         cmd.append(str(m))
     if v:
-        if v == True:
+        if isinstance(v):
             v = 1
         cmd.append("-v")
         cmd.append(str(v))
@@ -245,13 +326,13 @@ def mmg3d(d=None, h=None, m=None, v=None, val=None, default=None,\
         cmd.append("-hsiz")
         cmd.append(str(hsiz))
     if lag or lag == 0:
-        if lag == True:
+        if isinstance(lag, bool):
             lag = 0
         cmd.append("-lag")
         cmd.append(str(lag))
     if ls or ls == 0:
         ls_value = ls
-        if ls_value == True:
+        if isinstance(ls_value, bool):
             ls_value = 0
         cmd.append("-ls")
         cmd.append(str(ls_value))

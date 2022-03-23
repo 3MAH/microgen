@@ -13,11 +13,10 @@ requirements:
     - python
   run:
     - python
-    - cadquery=2
+    - cadquery=master
     - python-gmsh
     - pygalmesh
     - mmg
-    - meshio
 
 test:
   imports:
