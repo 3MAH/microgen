@@ -27,5 +27,25 @@ jobs:
           
       - name: Test
         run: | 
-          cd examples/mmg
+          SRC_DIR=$(pwd)
+          
+          cd $SRC_DIR/examples/mmg
           python test_mmg.py
+          
+          cd $SRC_DIR/examples/mmg-voro
+          python test-mmg.py
+          
+          cd $SRC_DIR/examples/octetTruss
+          python testOctet.py
+          
+          cd $SRC_DIR/examples/rasterEllipsoid
+          python rasterEllipsoid.py
+          
+          cd $SRC_DIR/examples/rasterGyroid
+          python rasterGyroid.py
+          
+          cd $SRC_DIR/examples/triplyPeriodicMinimalSurfaces
+          python testTPMS.py
+          
+          cd $SRC_DIR/examples/Voronoi
+          python testNeper.py
