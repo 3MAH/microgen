@@ -31,6 +31,68 @@ class BasicGeometry:
         self.angle = np.array([self.psi, self.theta, self.phi])
         self.name = self.shape + str(self.number)
 
+        if self.shape == "box":
+            self.geometry = Box(
+                self.center,
+                self.angle,
+                self.param_geom[0],
+                self.param_geom[1],
+                self.param_geom[2],
+                self.number,
+            )
+        if self.shape == "cylinder":
+            self.geometry = Cylinder(
+                self.center,
+                self.angle,
+                self.param_geom[0],
+                self.param_geom[1],
+                self.number,
+            )
+        if self.shape == "extrudedpolygon":
+            self.geometry = ExtrudedPolygon(
+                self.center,
+                self.angle,
+                self.param_geom[0],
+                self.param_geom[1],
+                self.number,
+            )
+        if self.shape == "bar":
+            self.geometry = Bar(
+                self.center,
+                self.angle,
+                self.param_geom[0],
+                self.param_geom[1],
+                self.number,
+            )
+        if self.shape == "sphere":
+            self.geometry = Sphere(
+                self.center,
+                self.param_geom[0],
+                self.number
+            )
+        if self.shape == "ellipsoid":
+            self.geometry = Ellipsoid(
+                self.center,
+                self.angle,
+                self.param_geom[0],
+                self.param_geom[1],
+                self.param_geom[2],
+                self.number,
+            )
+        if self.shape == "tpms":
+            self.geometry = Tpms(
+                self.center,
+                self.angle,
+                self.param_geom[0],
+                self.param_geom[1],
+                self.number,
+            )
+        if self.shape == "voronoi":
+            self.geometry = Voronoi(
+                self.param_geom,
+                self.number
+            )
+
     def __cmp__(self, other):
         # return cmp(self.number, other.number)
         return (self.number > other.number) - (self.number < other.number) # replacement for cmp function not availbale with Python3
@@ -40,71 +102,22 @@ class BasicGeometry:
     def generate(self, rve=None):
 
         if self.shape == "box":
-            geometry = Box(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.param_geom[2],
-                self.number,
-            )
-            cqshape = geometry.createBox()
+            cqshape = self.geometry.createBox()
         if self.shape == "cylinder":
-            geometry = Cylinder(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.number,
-            )
-            cqshape = geometry.createCylinder()
+            cqshape = self.geometry.createCylinder()
         if self.shape == "extrudedpolygon":
-            geometry = ExtrudedPolygon(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.number,
-            )
-            cqshape = geometry.createExtrudedpolygon()
+            cqshape = self.geometry.createExtrudedpolygon()
         if self.shape == "bar":
-            geometry = Bar(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.number,
-            )
-            cqshape = geometry.createBar()
+            cqshape = self.geometry.createBar()
         if self.shape == "sphere":
-            geometry = Sphere(self.center, self.param_geom[0], self.number)
-            cqshape = geometry.createSphere()
+            cqshape = self.geometry.createSphere()
         if self.shape == "ellipsoid":
-            geometry = Ellipsoid(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.param_geom[2],
-                self.number,
-            )
-            cqshape = geometry.createEllipsoid()
+            cqshape = self.geometry.createEllipsoid()
         if self.shape == "tpms":
-            geometry = Tpms(
-                self.center,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.param_geom[2],
-                self.number,
-            )
-            cqshape = geometry.createTpms(self.path_data, rve)
+            cqshape = self.geometry.createTpms(self.path_data, rve)
         if self.shape == "voronoi":
-            geometry = Voronoi(self.param_geom, self.number)
-            cqshape = geometry.createVoronoi()
+            self.cqshape = geometry.createVoronoi()
 
-        #        if self.shape == 'tpms' :
-        #            geometry = tpms(self.center,self.param_geom[0],self.param_geom[1],self.param_geom[2],self.number)
-        #            cqshape = geometry.create_tpms(self.path_data,rve)
         return cq.Shape(cqshape.val().wrapped)
 
 
