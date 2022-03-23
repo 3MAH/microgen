@@ -14,7 +14,7 @@ jobs:
       
       - name: Dependencies
         run: |
-          conda install -c conda-forge -c cadquery -c set3mah python=3.8 cadquery=master python-gmsh pygalmesh mmg
+          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
           
       - name: Install
         run: |
@@ -28,7 +28,7 @@ jobs:
           python test_mmg.py
           
           cd $SRC_DIR/examples/mmg-voro
-          python test-mmg.py
+          python test_mmg.py
           
           cd $SRC_DIR/examples/octetTruss
           python testOctet.py
