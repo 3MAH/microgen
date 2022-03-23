@@ -13,7 +13,7 @@ from OCP.TopoDS import TopoDS_Shape
 class Tpms:
     def __init__(self, center, angle, type_part, ske_type, n):
         self.center = center
-        self.angle=angle
+        self.angle = angle
         self.number = n
         self.name_part = "tpms" + str(self.number)
         self.type_part = type_part
