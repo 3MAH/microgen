@@ -1,0 +1,46 @@
+name: Python Package using Conda
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: s-weigand/setup-conda@v1
+      - run: conda --version
+      - run: which python
+      
+      - name: Dependencies
+        run: |
+          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
+          
+      - name: Install
+        run: |
+          python setup.py install
+          
+      - name: Test
+        run: | 
+          SRC_DIR=$(pwd)
+          
+          cd $SRC_DIR/examples/mmg
+          python test_mmg.py
+          
+          cd $SRC_DIR/examples/mmg-voro
+          python test_mmg.py
+          
+          cd $SRC_DIR/examples/octetTruss
+          python testOctet.py
+          
+          cd $SRC_DIR/examples/rasterEllipsoid
+          python rasterEllipsoid.py
+          
+          cd $SRC_DIR/examples/rasterGyroid
+          python rasterGyroid.py
+          
+          cd $SRC_DIR/examples/triplyPeriodicMinimalSurfaces
+          python testTPMS.py
+          
+          cd $SRC_DIR/examples/Voronoi
+          python testNeper.py

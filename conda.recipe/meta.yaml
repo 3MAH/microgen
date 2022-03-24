@@ -26,3 +26,21 @@ test:
   commands:
     - cd $SRC_DIR/examples/mmg
     - $PYTHON test_mmg.py
+          
+    - cd $SRC_DIR/examples/mmg-voro
+    - $PYTHON test_mmg.py
+          
+    - cd $SRC_DIR/examples/octetTruss
+    - $PYTHON testOctet.py
+          
+    - cd $SRC_DIR/examples/rasterEllipsoid
+    - $PYTHON rasterEllipsoid.py
+          
+    - cd $SRC_DIR/examples/rasterGyroid
+    - $PYTHON rasterGyroid.py
+          
+    - cd $SRC_DIR/examples/triplyPeriodicMinimalSurfaces
+    - $PYTHON testTPMS.py
+          
+    - cd $SRC_DIR/examples/Voronoi
+    - $PYTHON testNeper.py
