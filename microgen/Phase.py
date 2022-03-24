@@ -9,7 +9,7 @@ from microgen.ExtrudedPolygon import ExtrudedPolygon
 from microgen.Ellipsoid import Ellipsoid
 from microgen.Bar import Bar
 from microgen.Tpms import Tpms
-from microgen.Voronoi import Voronoi
+from microgen.Polyhedra import Polyhedra
 
 
 class BasicGeometry:
@@ -87,8 +87,8 @@ class BasicGeometry:
                 self.param_geom[1],
                 self.number,
             )
-        if self.shape == "voronoi":
-            self.geometry = Voronoi(
+        if self.shape == "polyhedra":
+            self.geometry = Polyhedra(
                 self.param_geom,
                 self.number
             )
@@ -115,8 +115,8 @@ class BasicGeometry:
             cqshape = self.geometry.createEllipsoid()
         if self.shape == "tpms":
             cqshape = self.geometry.createTpms(self.path_data, rve)
-        if self.shape == "voronoi":
-            self.cqshape = geometry.createVoronoi()
+        if self.shape == "polyhedra":
+            cqshape = self.geometry.createPolyhedra()
 
         return cq.Shape(cqshape.val().wrapped)
 
