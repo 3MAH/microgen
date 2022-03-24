@@ -54,4 +54,4 @@ compound = cq.Compound.makeCompound(phases_cut[0])
 
 cq.exporters.export(compound, 'compound.step')
 # mesh('compound.step', phases_cut[1], 0.03, 1)
-meshPeriodic('compound.step', revel, phases_cut[1], 0.03, 1)
+meshPeriodic(mesh_file='compound.step', rve=revel, listPhases=phases_cut[1], size=0.03, order=1)
