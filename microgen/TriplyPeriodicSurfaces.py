@@ -2,7 +2,6 @@ import os
 import math
 import numpy as np
 import pygalmesh
-from microgen.Rve import Rve
 
 
 class Hyperboloid(pygalmesh.DomainBase):
@@ -56,8 +55,10 @@ class SchwarzP(pygalmesh.DomainBase):
         self.h = h
         self.z0 = 0.0
         self.z1 = rve.dz
-        self.waist_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -75,8 +76,10 @@ class SchwarzD(pygalmesh.DomainBase):
         self.h = h
         self.z0 = 0.0
         self.z1 = rve.dz
-        self.waist_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -104,14 +107,17 @@ class SchwarzD(pygalmesh.DomainBase):
         )
         return a + b + c + d + self.h
 
+
 class Neovius(pygalmesh.DomainBase):
     def __init__(self, rve, h):
         super().__init__()
         self.h = h
         self.z0 = 0.0
         self.z1 = rve.dz
-        self.waist_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -136,8 +142,10 @@ class Gyroid(pygalmesh.DomainBase):
         self.h = h
         self.z0 = 0.0
         self.z1 = rve.dz
-        self.waist_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5*rve.dx)**2 + (0.5*rve.dy)**2 + (0.5*rve.dz**2))*1.1
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -162,7 +170,7 @@ def generateTPMS(
     path_data="",
 ):
 
-    thickness=thickness*np.pi
+    thickness = thickness * np.pi
 
     if type_tpms == "gyroid":
         s_testplus = Gyroid(rve, thickness / 4.0)
@@ -217,7 +225,8 @@ def generateTPMS(
     )
 
     if path_data != '':
-        if not(os.path.isdir(path_data)): os.mkdir(path_data)
+        if not os.path.isdir(path_data):
+            os.mkdir(path_data)
         mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
         mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
         mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')

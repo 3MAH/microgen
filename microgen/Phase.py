@@ -9,7 +9,7 @@ from microgen.ExtrudedPolygon import ExtrudedPolygon
 from microgen.Ellipsoid import Ellipsoid
 from microgen.Bar import Bar
 from microgen.Tpms import Tpms
-from microgen.Polyhedra import Polyhedra
+from microgen.Polyhedron import Polyhedron
 
 
 class BasicGeometry:
@@ -87,15 +87,15 @@ class BasicGeometry:
                 self.param_geom[1],
                 self.number,
             )
-        if self.shape == "polyhedra":
-            self.geometry = Polyhedra(
+        if self.shape == "polyhedron":
+            self.geometry = Polyhedron(
                 self.param_geom,
                 self.number
             )
 
     def __cmp__(self, other):
         # return cmp(self.number, other.number)
-        return (self.number > other.number) - (self.number < other.number) # replacement for cmp function not availbale with Python3
+        return (self.number > other.number) - (self.number < other.number)  # replacement for cmp function not availbale with Python3
 
     # ----------GENERATE PHASES----------------------------------------------------------------------------------
 
@@ -115,8 +115,8 @@ class BasicGeometry:
             cqshape = self.geometry.createEllipsoid()
         if self.shape == "tpms":
             cqshape = self.geometry.createTpms(self.path_data, rve)
-        if self.shape == "polyhedra":
-            cqshape = self.geometry.createPolyhedra()
+        if self.shape == "polyhedron":
+            cqshape = self.geometry.createPolyhedron()
 
         return cq.Shape(cqshape.val().wrapped)
 

@@ -7,5 +7,4 @@ setup(name='microgen',
       description='Microstructure generation',
       author='3MAH',
       url='https://github.com/3MAH/microgen',
-      packages=['microgen'],
-     )
+      packages=['microgen'])

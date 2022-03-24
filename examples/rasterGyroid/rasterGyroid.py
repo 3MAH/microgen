@@ -1,28 +1,26 @@
-import os
-import sys
-import numpy as np
 import cadquery as cq
-import gmsh
-from microgen import *
+from microgen import Rve, BasicGeometry, rasterShapeList, mesh
 
-#Size of the mesh
+# Size of the mesh
 size_mesh = 0.03
 a = 1.0
 b = 1.0
 c = 1.0
 
 periodicity = 0
-Revel = Rve(a,b,c,size_mesh)
+revel = Rve(a, b, c, size_mesh)
 listPhases = []
 
-elem = BasicGeometry(0,'tpms',0.5,0.5,0.5,0.,0.,0.,['skeletal','na'],'data')
-skeletal = elem.generate(Revel)
+elem = BasicGeometry(number=0, shape='tpms',
+                     xc=0.5, yc=0.5, zc=0.5,
+                     psi=0., theta=0., phi=0.,
+                     param_geom=['skeletal', 'na'], path_data='data')
+skeletal = elem.generate(revel)
 
 cq.exporters.export(skeletal, 'skeletal.step')
-raster = rasterShapeList([skeletal],Revel,[5,5,5])
+raster = rasterShapeList(cqShapeList=[skeletal], rve=revel, grid=[5, 5, 5])
 
 compound = cq.Compound.makeCompound(raster[0])
 cq.exporters.export(compound, 'compound.step')
 
-mesh('compound.step', raster[1], size_mesh, 1)
-
+mesh(mesh_file='compound.step', listPhases=raster[1], size=size_mesh, order=1)

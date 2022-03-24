@@ -1028,7 +1028,7 @@ def cutPhaseByShapeList(phaseToCut, cqShapeList):
     return (ResultCut, occ_solids_list)
 
 
-def cutParts(cqShapeList, reverseOrder = True):
+def cutParts(cqShapeList, reverseOrder=True):
     phase_cut = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
@@ -1060,11 +1060,12 @@ def cutParts(cqShapeList, reverseOrder = True):
 
     return (phase_cut, occ_solids_list)
 
-def rasterShapeList(CqShapeList,rve,grid):
 
-    occ_solids_list=[]
+def rasterShapeList(cqShapeList, rve, grid):
 
-    for cqshape in CqShapeList:
+    occ_solids_list = []
+
+    for cqshape in cqShapeList:
         wk_plane = cq.Workplane().add(cqshape.Solids())
         xgrid = np.linspace(0.0, rve.dx, num=grid[0])
         ygrid = np.linspace(0.0, rve.dy, num=grid[1])
@@ -1073,21 +1074,21 @@ def rasterShapeList(CqShapeList,rve,grid):
         np.delete(ygrid, 0)
         np.delete(zgrid, 0)
         for i in xgrid:
-            Plane_x = cq.Face.makePlane(basePnt = (i, 0, 0), dir = (1, 0, 0))
+            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
         for j in ygrid:
-            Plane_y = cq.Face.makePlane(basePnt = (0, j, 0), dir = (0, 1, 0))
+            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
         for k in zgrid:
-            Plane_z = cq.Face.makePlane(basePnt = (0, 0, k), dir = (0, 0, 1))
+            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
 
         occ_solids_list.append(wk_plane.val().Solids())
-    
+
     flat_list = [item for sublist in occ_solids_list for item in sublist]
     volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
     center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
-    return (flat_list, occ_solids_list, volume_list,center_list)
+    return (flat_list, occ_solids_list, volume_list, center_list)
 
 # def cut_parts(CqShapeList):
 #

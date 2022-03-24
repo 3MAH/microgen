@@ -1,28 +1,26 @@
-import os
-import sys
-import numpy as np
 import cadquery as cq
-import gmsh
-from microgen import *
+from microgen import Rve, BasicGeometry, rasterShapeList, mesh
 
-#Size of the mesh
+# Size of the mesh
 size_mesh = 0.03
 a = 1.0
 b = 1.0
 c = 1.0
 
 periodicity = 0
-Revel = Rve(a,b,c,size_mesh)
+revel = Rve(a, b, c, size_mesh)
 listPhases = []
 
-elem = BasicGeometry(101,'ellipsoid', 0., 0.5, 0.5, 0, 0, 0, [0.15, 0.31, 0.4], '')
-elli = elem.generate(Revel)
+elem = BasicGeometry(number=101, shape='ellipsoid',
+                     xc=0., yc=0.5, zc=0.5,
+                     psi=0, theta=0, phi=0,
+                     param_geom=[0.15, 0.31, 0.4], path_data='')
+elli = elem.generate(rve=revel)
 
 cq.exporters.export(elli, 'ellipsoid.step')
-raster = rasterShapeList([elli],Revel,[5,5,5])
+raster = rasterShapeList(cqShapeList=[elli], rve=revel, grid=[5, 5, 5])
 
 compound = cq.Compound.makeCompound(raster[0])
 cq.exporters.export(compound, 'compound.step')
 
-mesh('compound.step', raster[1], size_mesh, 1)
-
+mesh(mesh_file='compound.step', listPhases=raster[1], size=size_mesh, order=1)
