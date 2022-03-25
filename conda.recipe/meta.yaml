@@ -14,7 +14,7 @@ requirements:
   run:
     - python
     - cadquery=master
-    - python-gmsh
+    - python-gmsh=4.8
     - pygalmesh
     - mmg
 
@@ -30,8 +30,8 @@ test:
     - cd $SRC_DIR/examples/mmg-voro
     - $PYTHON test_mmg.py
           
-    # - cd $SRC_DIR/examples/octetTruss
-    # - $PYTHON testOctet.py
+    - cd $SRC_DIR/examples/octetTruss
+    - $PYTHON testOctet.py
           
     - cd $SRC_DIR/examples/rasterEllipsoid
     - $PYTHON rasterEllipsoid.py

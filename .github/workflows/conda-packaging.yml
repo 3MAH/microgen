@@ -24,3 +24,4 @@ jobs:
         subDir: 'conda.recipe'
         channels: 'conda-forge -c cadquery -c set3mah'
         AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
+        publish: 'true'
