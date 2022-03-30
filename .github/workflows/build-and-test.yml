@@ -11,7 +11,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
-          activate-environment: test
+          # activate-environment: test
       
       - name: Dependencies
         shell: bash -l {0}
@@ -19,10 +19,12 @@ jobs:
           conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
           
       - name: Install
+        shell: bash -l {0}
         run: |
           python setup.py install
           
       - name: Test
+        shell: bash -l {0}
         run: | 
           SRC_DIR=$(pwd)
           
