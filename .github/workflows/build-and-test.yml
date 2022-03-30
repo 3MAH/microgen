@@ -14,6 +14,7 @@ jobs:
           activate-environment: test
       
       - name: Dependencies
+        shell: bash -l {0}
         run: |
           conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
           
