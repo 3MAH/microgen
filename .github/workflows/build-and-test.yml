@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: Build and Test
 
 on: [push]
 
@@ -11,12 +11,11 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
-          # activate-environment: test
       
       - name: Dependencies
         shell: bash -l {0}
         run: |
-          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
+          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh=4.8 pygalmesh mmg
           
       - name: Install
         shell: bash -l {0}

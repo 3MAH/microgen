@@ -1,17 +1,20 @@
 name: Test Conda package
 
-on: [push]
+on: 
+  workflow_dispatch:
 
 jobs:
-  build-linux:
+  test-linux:
     name: Linux
-    runs-on: "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
-          # activate-environment: test
 
       - name: Install
         shell: bash -l {0}
