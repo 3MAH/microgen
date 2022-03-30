@@ -1,26 +1,22 @@
-name: Python Package using Conda
+name: Test Conda package
 
 on: [push]
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
-
+    name: Linux
+    runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
           activate-environment: test
-      
-      - name: Dependencies
-        run: |
-          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
-          
+
       - name: Install
         run: |
-          python setup.py install
-          
+          conda install -c conda-forge -c cadquery -c set3mah microgen
+        
       - name: Test
         run: | 
           SRC_DIR=$(pwd)

@@ -14,14 +14,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  Build package:
+    name: Build
+    runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v2
-    - name: publish-to-conda
-      uses: paskino/conda-package-publish-action@master
-      with:
-        subDir: 'conda.recipe'
-        channels: 'conda-forge -c cadquery -c set3mah'
-        AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
-        publish: 'true'
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+      - name: Conda build
+        run: |
+          conda install conda-build conda-verify anaconda-client
+          conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
+          anaconda upload noarch/*.tar.bz2 --force --token ${{ secrets.ANACONDA_TOKEN }}
