@@ -15,7 +15,7 @@ jobs:
       - name: Dependencies
         run: |
           conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg
-          
+
       - name: Install
         run: |
           python setup.py install
