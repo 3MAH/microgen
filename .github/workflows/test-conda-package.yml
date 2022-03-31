@@ -1,27 +1,26 @@
-name: Build and Test
+name: Test conda package
 
-on: [push]
+on: 
+  workflow_dispatch:
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-
+  test-linux:
+    name: Linux
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
-      
-      - name: Dependencies
-        shell: bash -l {0}
-        run: |
-          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh=4.8 pygalmesh mmg
-          
+
       - name: Install
         shell: bash -l {0}
         run: |
-          python setup.py install
-          
+          conda install -c conda-forge -c cadquery -c set3mah microgen
+        
       - name: Test
         shell: bash -l {0}
         run: | 

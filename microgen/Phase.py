@@ -85,6 +85,7 @@ class BasicGeometry:
                 self.angle,
                 self.param_geom[0],
                 self.param_geom[1],
+                self.param_geom[2],
                 self.number,
             )
         if self.shape == "polyhedron":

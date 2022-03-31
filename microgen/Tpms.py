@@ -11,20 +11,21 @@ from OCP.TopoDS import TopoDS_Shape
 
 
 class Tpms:
-    def __init__(self, center, angle, type_part, ske_type, n):
+    def __init__(self, center, angle, type_surface, type_part, thickness, n):
         self.center = center
         self.angle = angle
         self.number = n
         self.name_part = "tpms" + str(self.number)
+        self.type_surface = type_surface
         self.type_part = type_part
-        self.ske_type = ske_type
+        self.thickness = thickness
 
     def createSurfaces(
-        self, type_tpms, rve, thickness, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data=""
+        self, rve, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data=""
     ):
         generateTPMS(
-            type_tpms,
-            thickness,
+            self.type_surface,
+            self.thickness,
             rve,
             sizeMesh,
             minFacetAngle,
