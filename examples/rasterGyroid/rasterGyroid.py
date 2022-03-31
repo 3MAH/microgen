@@ -14,7 +14,7 @@ listPhases = []
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5, zc=0.5,
                      psi=0., theta=0., phi=0.,
-                     param_geom=['skeletal', 'na'], path_data='data')
+                     param_geom=['gyroid', 'skeletal', 0.3], path_data='data')
 skeletal = elem.generate(revel)
 
 cq.exporters.export(skeletal, 'skeletal.step')
