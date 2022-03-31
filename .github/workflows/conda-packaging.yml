@@ -4,17 +4,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  Build_package:
-    name: Build
+  Linux:
+    name: Linux
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
-      - name: Conda build
+      - name: Conda build for Linux
         shell: bash -l {0}
         run: |
-          conda install conda-build conda-verify anaconda-client
+          conda install conda-build anaconda-client
+          conda config --set anaconda_upload yes
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
-          anaconda upload noarch/*.tar.bz2 --force -t ${{ secrets.ANACONDA_TOKEN }}
+          anaconda upload noarch/*.tar.bz2 --token ${{ secrets.ANACONDA_TOKEN }}
