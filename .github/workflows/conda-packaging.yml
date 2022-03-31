@@ -13,6 +13,7 @@ jobs:
         with:
           miniconda-version: "latest"
       - name: Conda build
+        shell: bash -l {0}
         run: |
           conda install conda-build conda-verify anaconda-client
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
