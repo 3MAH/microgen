@@ -37,7 +37,7 @@ listPeriodicPhases = []
 n = len(xc)
 
 for i in range(0, n):
-    param_geom = [a1[i], a2[i]]
+    param_geom = {"radius": a1[i], "height": a2[i]}
     elem = BasicGeometry(number[i], shape[i],
                          xc[i], yc[i], zc[i],
                          psi[i], theta[i], phi[i],

@@ -14,7 +14,10 @@ listPhases = []
 elem = BasicGeometry(number=101, shape='ellipsoid',
                      xc=0., yc=0.5, zc=0.5,
                      psi=0, theta=0, phi=0,
-                     param_geom=[0.15, 0.31, 0.4], path_data='')
+                     param_geom={"a1": 0.15, 
+                                 "a2": 0.31, 
+                                 "a3": 0.4},
+                     path_data='')
 elli = elem.generate(rve=revel)
 
 cq.exporters.export(elli, 'ellipsoid.step')

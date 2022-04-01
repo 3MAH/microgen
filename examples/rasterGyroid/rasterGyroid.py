@@ -9,13 +9,15 @@ c = 1.0
 
 periodicity = 0
 revel = Rve(a, b, c, size_mesh)
-listPhases = []
 
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5, zc=0.5,
                      psi=0., theta=0., phi=0.,
-                     param_geom=['gyroid', 'skeletal', 0.3], path_data='data')
-skeletal = elem.generate(revel)
+                     param_geom={"type_surface": 'gyroid', 
+                                 "type_part": 'skeletal', 
+                                 "thickness": 0.3}, 
+                     path_data='data')
+skeletal = elem.generate(rve=revel)
 
 cq.exporters.export(skeletal, 'skeletal.step')
 raster = rasterShapeList(cqShapeList=[skeletal], rve=revel, grid=[5, 5, 5])

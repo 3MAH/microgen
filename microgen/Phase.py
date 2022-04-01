@@ -33,65 +33,65 @@ class BasicGeometry:
 
         if self.shape == "box":
             self.geometry = Box(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.param_geom[2],
-                self.number,
+                center=self.center,
+                angle=self.angle,
+                a1=self.param_geom["a1"],
+                a2=self.param_geom["a2"],
+                a3=self.param_geom["a3"],
+                number=self.number,
             )
         if self.shape == "cylinder":
             self.geometry = Cylinder(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.number,
+                center=self.center,
+                angle=self.angle,
+                radius=self.param_geom["radius"],
+                height=self.param_geom["height"],
+                number=self.number,
             )
         if self.shape == "extrudedpolygon":
             self.geometry = ExtrudedPolygon(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.number,
+                center=self.center,
+                angle=self.angle,
+                listCorners=self.param_geom["listCorners"],
+                height=self.param_geom["height"],
+                number=self.number,
             )
         if self.shape == "bar":
             self.geometry = Bar(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.number,
+                center=self.center,
+                angle=self.angle,
+                height=self.param_geom["height"],
+                radius=self.param_geom["radius"],
+                number=self.number,
             )
         if self.shape == "sphere":
             self.geometry = Sphere(
-                self.center,
-                self.param_geom[0],
-                self.number
+                center=self.center,
+                radius=self.param_geom["radius"],
+                number=self.number
             )
         if self.shape == "ellipsoid":
             self.geometry = Ellipsoid(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.param_geom[2],
-                self.number,
+                center=self.center,
+                angle=self.angle,
+                a1=self.param_geom["a1"],
+                a2=self.param_geom["a2"],
+                a3=self.param_geom["a3"],
+                number=self.number,
             )
         if self.shape == "tpms":
             self.geometry = Tpms(
-                self.center,
-                self.angle,
-                self.param_geom[0],
-                self.param_geom[1],
-                self.param_geom[2],
-                self.number,
+                center=self.center,
+                angle=self.angle,
+                type_surface=self.param_geom["type_surface"],
+                type_part=self.param_geom["type_part"],
+                thickness=self.param_geom["thickness"],
+                number=self.number,
             )
         if self.shape == "polyhedron":
             self.geometry = Polyhedron(
-                self.param_geom,
-                self.number
+                dic=self.param_geom,
+                number=self.number
             )
 
     def __cmp__(self, other):
