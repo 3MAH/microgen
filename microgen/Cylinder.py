@@ -12,7 +12,6 @@ class Cylinder:
         self.height = height
         self.number = number
         self.name_part = "cylinder" + str(self.number)
-        print(self.radius, self.height)
 
     def createCylinder(self):
         cylinder = (

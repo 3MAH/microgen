@@ -31,8 +31,6 @@ class BasicGeometry:
         self.angle = np.array([self.psi, self.theta, self.phi])
         self.name = self.shape + str(self.number)
 
-        print(self.number, self.shape, self.param_geom)
-
         if self.shape == "box":
             self.geometry = Box(
                 center=self.center,
@@ -46,8 +44,8 @@ class BasicGeometry:
             self.geometry = Cylinder(
                 center=self.center,
                 angle=self.angle,
-                radius=self.param_geom["radius"],
                 height=self.param_geom["height"],
+                radius=self.param_geom["radius"],
                 number=self.number,
             )
         if self.shape == "extrudedpolygon":
