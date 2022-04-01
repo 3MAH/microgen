@@ -11,10 +11,10 @@ from OCP.TopoDS import TopoDS_Shape
 
 
 class Tpms:
-    def __init__(self, center, angle, type_surface, type_part, thickness, n):
+    def __init__(self, center, angle, type_surface, type_part, thickness, number):
         self.center = center
         self.angle = angle
-        self.number = n
+        self.number = number
         self.name_part = "tpms" + str(self.number)
         self.type_surface = type_surface
         self.type_part = type_part
