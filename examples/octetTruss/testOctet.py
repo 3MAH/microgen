@@ -37,19 +37,20 @@ listPeriodicPhases = []
 n = len(xc)
 
 for i in range(0, n):
-    param_geom = {"radius": a1[i], "height": a2[i]}
-    elem = BasicGeometry(number[i], shape[i],
-                         xc[i], yc[i], zc[i],
-                         psi[i], theta[i], phi[i],
-                         param_geom, path_data='')
+    elem = BasicGeometry(number=number[i], shape=shape[i],
+                         xc=xc[i], yc=yc[i], zc=zc[i],
+                         psi=psi[i], theta=theta[i], phi=phi[i],
+                         param_geom={"radius": a1[i], 
+                                     "height": a2[i]},
+                         path_data='')
     listPhases.append(elem.generate())
 
 for phase_elem in listPhases:
     print(phase_elem)
-    periodicPhase = periodic(phase_elem, revel)
+    periodicPhase = periodic(cqshape=phase_elem, rve=revel)
     listPeriodicPhases.append(periodicPhase)
 
-phases_cut = cutParts([s[0] for s in listPeriodicPhases], False)
+phases_cut = cutParts(cqShapeList=[s[0] for s in listPeriodicPhases], reverseOrder=False)
 compound = cq.Compound.makeCompound(phases_cut[0])
 
 cq.exporters.export(compound, 'compound.step')

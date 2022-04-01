@@ -31,6 +31,8 @@ class BasicGeometry:
         self.angle = np.array([self.psi, self.theta, self.phi])
         self.name = self.shape + str(self.number)
 
+        print(self.number, self.shape, self.param_geom)
+
         if self.shape == "box":
             self.geometry = Box(
                 center=self.center,
