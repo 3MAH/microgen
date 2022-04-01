@@ -13,9 +13,9 @@ revel = Rve(a, b, c, size_mesh)
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5, zc=0.5,
                      psi=0., theta=0., phi=0.,
-                     param_geom={"type_surface": 'gyroid', 
-                                 "type_part": 'skeletal', 
-                                 "thickness": 0.3}, 
+                     param_geom={"type_surface": 'gyroid',
+                                 "type_part": 'skeletal',
+                                 "thickness": 0.3},
                      path_data='data')
 skeletal = elem.generate(rve=revel)
 

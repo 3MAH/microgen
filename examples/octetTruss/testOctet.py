@@ -40,7 +40,7 @@ for i in range(0, n):
     elem = BasicGeometry(number=number[i], shape=shape[i],
                          xc=xc[i], yc=yc[i], zc=zc[i],
                          psi=psi[i], theta=theta[i], phi=phi[i],
-                         param_geom={"height": a1[i], 
+                         param_geom={"height": a1[i],
                                      "radius": a2[i]},
                          path_data='')
     listPhases.append(elem.generate())
