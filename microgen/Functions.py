@@ -937,20 +937,20 @@ def periodic(cqshape, rve):
     return (return_object_periodic[0].copy(), flat_list)
 
 
-def fuseParts(CqShapeList, retain_edges):
+def fuseParts(cqShapeList, retain_edges):
 
-    #    occ_solids_list = (s.Solids() for s in CqShapeList)
-    #    for cqshape in CqShapeList:
+    #    occ_solids_list = (s.Solids() for s in cqShapeList)
+    #    for cqshape in cqShapeList:
 
-    occ_solids_list = [s.Solids() for s in CqShapeList]
+    occ_solids_list = [s.Solids() for s in cqShapeList]
     #    print("occ_solids_list = ", occ_solids_list)
     #    flat_list = [item for sublist in occ_solids_list for item in sublist]
 
     #   print("flat_list = ", flat_list)
 
-    occ_Solids = CqShapeList[0].wrapped
-    for i in range(1, len(CqShapeList)):
-        fuse = BRepAlgoAPI_Fuse(occ_Solids, CqShapeList[i].wrapped)
+    occ_Solids = cqShapeList[0].wrapped
+    for i in range(1, len(cqShapeList)):
+        fuse = BRepAlgoAPI_Fuse(occ_Solids, cqShapeList[i].wrapped)
         occ_Solids = fuse.Shape()
 
     if retain_edges:
@@ -964,17 +964,17 @@ def fuseParts(CqShapeList, retain_edges):
         return (cq.Shape(fixed), occ_solids_list)
 
 
-# def cut_parts(CqShapeList):
+# def cut_parts(cqShapeList):
 #
 #    print('inside cut')
 #    phase_cut = []
-#    phase_cut.append(CqShapeList[0].copy())
-#    cut_objtemp = CqShapeList[0].copy()
+#    phase_cut.append(cqShapeList[0].copy())
+#    cut_objtemp = cqShapeList[0].copy()
 #    upgrader = ShapeUpgrade_UnifySameDomain(cut_objtemp.wrapped, True, True, True)
 #    upgrader.Build()
 #    cut_obj = cq.Shape(upgrader.Shape())
 #
-#    for shape in CqShapeList[1::]:
+#    for shape in cqShapeList[1::]:
 #        print('tatayoyo')
 #
 #        SolidsCut = []
@@ -1028,14 +1028,14 @@ def cutPhaseByShapeList(phaseToCut, cqShapeList):
     return (ResultCut, occ_solids_list)
 
 
-def cutParts(cqShapeList, reverseOrder=True):
+def cutParts(cqShapeList, reverseOrder = True):
     phase_cut = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
         cqShapeList_inv = cqShapeList
-    #    print(CqShapeList)
-    #    print(CqShapeList_inv)
+    #    print(cqShapeList)
+    #    print(cqShapeList_inv)
 
     cut_obj = cqShapeList_inv[0].copy()
     phase_cut.append(cut_obj)
@@ -1060,10 +1060,9 @@ def cutParts(cqShapeList, reverseOrder=True):
 
     return (phase_cut, occ_solids_list)
 
+def rasterShapeList(cqShapeList,rve,grid):
 
-def rasterShapeList(cqShapeList, rve, grid):
-
-    occ_solids_list = []
+    occ_solids_list=[]
 
     for cqshape in cqShapeList:
         wk_plane = cq.Workplane().add(cqshape.Solids())
@@ -1074,29 +1073,29 @@ def rasterShapeList(cqShapeList, rve, grid):
         np.delete(ygrid, 0)
         np.delete(zgrid, 0)
         for i in xgrid:
-            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
+            Plane_x = cq.Face.makePlane(basePnt = (i, 0, 0), dir = (1, 0, 0))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
         for j in ygrid:
-            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
+            Plane_y = cq.Face.makePlane(basePnt = (0, j, 0), dir = (0, 1, 0))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
         for k in zgrid:
-            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
+            Plane_z = cq.Face.makePlane(basePnt = (0, 0, k), dir = (0, 0, 1))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
 
         occ_solids_list.append(wk_plane.val().Solids())
-
+    
     flat_list = [item for sublist in occ_solids_list for item in sublist]
     volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
     center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
-    return (flat_list, occ_solids_list, volume_list, center_list)
+    return (flat_list, occ_solids_list, volume_list,center_list)
 
-# def cut_parts(CqShapeList):
+# def cut_parts(cqShapeList):
 #
 #    phase_cut = []
-#    occ_Solids = CqShapeList[-1].copy()
-#    phase_cut.append(CqShapeList[-1])
+#    occ_Solids = cqShapeList[-1].copy()
+#    phase_cut.append(cqShapeList[-1])
 #
-#    for s in CqShapeList[-2::-1]:
+#    for s in cqShapeList[-2::-1]:
 #        print('s', s)
 #        cut = BRepAlgoAPI_Cut(s.wrapped, occ_Solids.wrapped)
 #        phase_cut.append(cq.Shape(cut.Shape()))
