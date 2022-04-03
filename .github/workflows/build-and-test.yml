@@ -61,11 +61,10 @@ jobs:
         id: cache
 
       - name: Update environment
-        run: mamba env update -n anaconda-client-env -f environment.yml
+        run: mamba env update -n microgen -f environment.yml
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Install
-        shell: bash -l {0}
         run: python setup.py install
           
       - name: Test
