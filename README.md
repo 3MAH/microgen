@@ -11,9 +11,14 @@ You can now use Microgen!
 
 If you want to modify the sources you would prefer to install microgen from the sources
 
-First, you need to make sure you have all the required dependencies:
+Create a conda environment with all the required dependencies
 ```
-conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh pygalmesh mmg meshio
+conda env create -n environment.yml
+```
+
+Activate the created environment
+```
+conda activate microgen
 ```
 
 Then you can install microgen: 

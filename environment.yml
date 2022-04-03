@@ -1,4 +1,4 @@
-name: my-env
+name: microgen
 
 channels:
   - conda-forge
