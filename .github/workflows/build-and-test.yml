@@ -19,23 +19,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Cache conda
-        uses: actions/cache@v2
-        env:
-          # Increase this value to reset cache if environment.yml has not changed
-          CACHE_NUMBER: 0
-        with:
-          path: ~/conda_pkgs_dir
-          key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('environment.yml') }}
+      # - name: Cache conda
+      #   uses: actions/cache@v2
+      #   env:
+      #     # Increase this value to reset cache if environment.yml has not changed
+      #     CACHE_NUMBER: 0
+      #   with:
+      #     path: ~/conda_pkgs_dir
+      #     key:
+      #       ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+      #       hashFiles('environment.yml') }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
           activate-environment: microgen
           environment-file: environment.yml
-          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+          # use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
           
       # - name: Setup Mambaforge
       #   uses: conda-incubator/setup-miniconda@v2
