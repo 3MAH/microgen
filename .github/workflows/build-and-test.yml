@@ -25,7 +25,8 @@ jobs:
       - name: Dependencies
         shell: bash -l {0}
         run: |
-          conda install -c conda-forge -c cadquery -c set3mah python cadquery=master python-gmsh=4.8 pygalmesh mmg
+          conda env create -f environment.yml
+          conda activate microgen
           
       - name: Install
         shell: bash -l {0}
