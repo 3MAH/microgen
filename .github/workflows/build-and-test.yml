@@ -18,15 +18,55 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniconda-version: "latest"
-          environment-file: environment.yml
+      
+      # - name: Cache conda
+      #   uses: actions/cache@v2
+      #   env:
+      #     # Increase this value to reset cache if environment.yml has not changed
+      #     CACHE_NUMBER: 0
+      #   with:
+      #     path: ~/conda_pkgs_dir
+      #     key:
+      #       ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+      #       hashFiles('environment.yml') }}
+
+      # - uses: conda-incubator/setup-miniconda@v2
+      #   with:
+      #     miniconda-version: "latest"
+      #     activate-environment: microgen
+      #     environment-file: environment.yml
+      #     use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
           
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+            miniforge-variant: Mambaforge
+            miniforge-version: latest
+            activate-environment: microgen
+            use-mamba: true
+
+      - name: Get Date
+        id: get-date
+        run: echo "::set-output name=today::$(/bin/date -u '+%Y%m%d')"
+        shell: bash
+
+      - name: Cache Conda env
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.CONDA }}/envs
+          key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-${{ hashFiles('environment.yml') }}-${{ env.CACHE_NUMBER }}
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        id: cache
+
+      - name: Update environment
+        run: mamba env update -n anaconda-client-env -f environment.yml
+        if: steps.cache.outputs.cache-hit != 'true'
+
       - name: Install
         shell: bash -l {0}
-        run: |
-          python setup.py install
+        run: python setup.py install
           
       - name: Test
         shell: bash -l {0}
