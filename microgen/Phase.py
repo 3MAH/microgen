@@ -7,7 +7,7 @@ from microgen.Sphere import Sphere
 from microgen.Cylinder import Cylinder
 from microgen.ExtrudedPolygon import ExtrudedPolygon
 from microgen.Ellipsoid import Ellipsoid
-from microgen.Bar import Bar
+from microgen.Capsule import Capsule
 from microgen.Tpms import Tpms
 from microgen.Polyhedron import Polyhedron
 
@@ -56,8 +56,8 @@ class BasicGeometry:
                 self.param_geom[1],
                 self.number,
             )
-        if self.shape == "bar":
-            self.geometry = Bar(
+        if self.shape == "capsule":
+            self.geometry = Capsule(
                 self.center,
                 self.angle,
                 self.param_geom[0],
@@ -108,8 +108,8 @@ class BasicGeometry:
             cqshape = self.geometry.createCylinder()
         if self.shape == "extrudedpolygon":
             cqshape = self.geometry.createExtrudedpolygon()
-        if self.shape == "bar":
-            cqshape = self.geometry.createBar()
+        if self.shape == "capsule":
+            cqshape = self.geometry.createCapsule()
         if self.shape == "sphere":
             cqshape = self.geometry.createSphere()
         if self.shape == "ellipsoid":
@@ -147,7 +147,7 @@ def readPhases(path_data, phases_file, phases):
                         nprops_phase = 1
                     elif row_split[1] == "cylinder":
                         nprops_phase = 2
-                    elif row_split[1] == "bar":
+                    elif row_split[1] == "capsule":
                         nprops_phase = 2
                     elif row_split[1] == "ellipsoid":
                         nprops_phase = 3
