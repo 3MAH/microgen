@@ -17,7 +17,7 @@ class BasicGeometry:
         self, number, shape, xc, yc, zc, psi, theta, phi, param_geom, path_data=None
     ):
         self.number = number
-        self.shape = shape
+        self.shape = shape.lower()
         self.xc = xc
         self.yc = yc
         self.zc = zc
@@ -104,20 +104,22 @@ class BasicGeometry:
 
         if self.shape == "box":
             cqshape = self.geometry.createBox()
-        if self.shape == "cylinder":
+        elif self.shape == "cylinder":
             cqshape = self.geometry.createCylinder()
-        if self.shape == "extrudedpolygon":
+        elif self.shape == "extrudedpolygon":
             cqshape = self.geometry.createExtrudedpolygon()
-        if self.shape == "bar":
+        elif self.shape == "bar":
             cqshape = self.geometry.createBar()
-        if self.shape == "sphere":
+        elif self.shape == "sphere":
             cqshape = self.geometry.createSphere()
-        if self.shape == "ellipsoid":
+        elif self.shape == "ellipsoid":
             cqshape = self.geometry.createEllipsoid()
-        if self.shape == "tpms":
+        elif self.shape == "tpms":
             cqshape = self.geometry.createTpms(self.path_data, rve)
-        if self.shape == "polyhedron":
+        elif self.shape == "polyhedron":
             cqshape = self.geometry.createPolyhedron()
+        else:
+            raise ValueError(self.shape + " is not recognised")
 
         return cq.Shape(cqshape.val().wrapped)
 
