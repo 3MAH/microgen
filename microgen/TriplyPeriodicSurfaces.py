@@ -135,7 +135,138 @@ class Neovius(pygalmesh.DomainBase):
         )
         return a + b + self.h
 
+class SchoenIWP(pygalmesh.DomainBase):
+    def __init__(self, rve, h):
+        super().__init__()
+        self.h = h
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
 
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, x):
+        l = 2 * ((np.cos(x[0] * 2 * np.pi)
+            * np.cos(x[1] * 2 * np.pi)) +
+            (np.cos(x[1] * 2 * np.pi)
+			* np.cos(x[2] * 2 * np.pi)) +
+			(np.cos(x[2] * 2 * np.pi)
+			* np.cos(x[0] * 2 * np.pi)) 
+        )
+        m = (np.cos(x[0] * 4 * np.pi) +
+            np.cos(x[1] * 4 * np.pi) +
+            np.cos(x[2] * 4 * np.pi)
+        )
+        return l - m + self.h
+    
+class SchoenFRD(pygalmesh.DomainBase):
+    def __init__(self, rve, h):
+        super().__init__()
+        self.h = h
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, x):
+        a = 4 * ((np.cos(x[0] * 2 * np.pi) *
+                  np.cos(x[1] * 2 * np.pi) *
+                  np.cos(x[2] * 2 * np.pi))
+                )
+        b = ((np.cos(x[0] * 4 * np.pi) * np.cos(x[1] * 4 * np.pi)) +
+             (np.cos(x[1] * 4 * np.pi) * np.cos(x[2] * 4 * np.pi)) +
+             (np.cos(x[2] * 4 * np.pi) * np.cos(x[0] * 4 * np.pi))
+            )
+        return a - b + self.h
+    
+class FischerKochS(pygalmesh.DomainBase):
+    def __init__(self, rve, h):
+        super().__init__()
+        self.h = h
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, x):
+        a = (np.cos(x[0] * 4 * np.pi) *
+             np.sin(x[1] * 2 * np.pi) *
+             np.cos(x[2] * 2 * np.pi)
+            )
+        b = (np.cos(x[0] * 2 * np.pi) *
+             np.cos(x[1] * 4 * np.pi) *
+             np.sin(x[2] * 2 * np.pi)
+            )
+        c = (np.sin(x[0] * 2 * np.pi) *
+             np.cos(x[1] * 2 * np.pi) *
+             np.cos(x[2] * 4 * np.pi)
+            )
+        return a + b + c + self.h
+    
+class PMY(pygalmesh.DomainBase):
+    def __init__(self, rve, h):
+        super().__init__()
+        self.h = h
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, x):
+        a = 2 * ((np.cos(x[0] * 2 * np.pi) *
+                  np.cos(x[1] * 2 * np.pi) *
+                  np.cos(x[2] * 2 * np.pi))
+                )
+        b = (np.sin(x[0] * 4 * np.pi) *
+             np.sin(x[1] * 2 * np.pi)
+            ) 
+        c = (np.sin(x[0] * 2 * np.pi) *
+             np.sin(x[2] * 4 * np.pi)
+            )
+        d = (np.sin(x[1] * 4 * np.pi) *
+             np.sin(x[2] * 2 * np.pi)
+            )
+        return a + b + c + d + self.h
+    
+class HoneyComb(pygalmesh.DomainBase):
+    def __init__(self, rve, h):
+        super().__init__()
+        self.h = h
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, x):
+        a = np.sin(x[0] * 2 * np.pi) * np.cos(x[1] * 2 * np.pi)
+        b = np.sin(x[1] * 2 * np.pi)
+        c = np.cos(x[2] * 2 * np.pi)
+        return a + b + c + self.h
+        
 class Gyroid(pygalmesh.DomainBase):
     def __init__(self, rve, h):
         super().__init__()
@@ -172,7 +303,12 @@ def generateTPMS(
 
     thickness = thickness * np.pi
 
-    if type_tpms == "gyroid":
+    if type_tpms == "honeycomb":
+        s_testplus = HoneyComb(rve, thickness / 4.0)
+        s_testminus = HoneyComb(rve, -thickness / 4.0)
+        s_plus = HoneyComb(rve, thickness / 2.0)
+        s_minus = HoneyComb(rve, -1.0 * thickness / 2.0)    
+    elif type_tpms == "gyroid":
         s_testplus = Gyroid(rve, thickness / 4.0)
         s_testminus = Gyroid(rve, -thickness / 4.0)
         s_plus = Gyroid(rve, thickness / 2.0)
@@ -183,8 +319,8 @@ def generateTPMS(
         s_plus = SchwarzP(rve, thickness / 2.0)
         s_minus = SchwarzP(rve, -1.0 * thickness / 2.0)
     elif type_tpms == "schwarzD":
-        s_testplus = SchwarzP(rve, thickness / 4.0)
-        s_testminus = SchwarzP(rve, -thickness / 4.0)
+        s_testplus = SchwarzD(rve, thickness / 4.0)
+        s_testminus = SchwarzD(rve, -thickness / 4.0)
         s_plus = SchwarzD(rve, thickness / 2.0)
         s_minus = SchwarzD(rve, -1.0 * thickness / 2.0)
     elif type_tpms == "neovius":
@@ -192,6 +328,26 @@ def generateTPMS(
         s_testminus = Neovius(rve, -thickness / 4.0)
         s_plus = Neovius(rve, thickness / 2.0)
         s_minus = Neovius(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "schoenIWP":
+        s_testplus = SchoenIWP(rve, thickness / 4.0)
+        s_testminus = SchoenIWP(rve, -thickness / 4.0)
+        s_plus = SchoenIWP(rve, thickness / 2.0)
+        s_minus = SchoenIWP(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "schoenFRD":
+        s_testplus = SchoenFRD(rve, thickness / 4.0)
+        s_testminus = SchoenFRD(rve, -thickness / 4.0)
+        s_plus = SchoenFRD(rve, thickness / 2.0)
+        s_minus = SchoenFRD(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "fischerKochS":
+        s_testplus = FischerKochS(rve, thickness / 4.0)
+        s_testminus = FischerKochS(rve, -thickness / 4.0)
+        s_plus = FischerKochS(rve, thickness / 2.0)
+        s_minus = FischerKochS(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "pmy":
+        s_testplus = PMY(rve, thickness / 4.0)
+        s_testminus = PMY(rve, -thickness / 4.0)
+        s_plus = PMY(rve, thickness / 2.0)
+        s_minus = PMY(rve, -1.0 * thickness / 2.0)
     else:
         print("Error, the tpms is not recognized")
         return False
