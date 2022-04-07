@@ -5,12 +5,12 @@ import cadquery as cq
 
 
 class Capsule:
-    def __init__(self, center, angle, h, r, n):
+    def __init__(self, center, angle, height, radius, number):
         self.center = center
         self.angle = angle
-        self.radius = r
-        self.height = h
-        self.number = n
+        self.height = height
+        self.radius = radius
+        self.number = number
         self.name_part = "capsule" + str(self.number)
 
     def createCapsule(self):

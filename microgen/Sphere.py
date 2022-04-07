@@ -4,10 +4,10 @@ import cadquery as cq
 
 
 class Sphere:
-    def __init__(self, center, r, n):
+    def __init__(self, center, radius, number):
         self.center = center
-        self.radius = r
-        self.number = n
+        self.radius = radius
+        self.number = number
         self.name_part = "sphere" + str(self.number)
 
     def createSphere(self):
