@@ -108,15 +108,9 @@ class BasicGeometry:
             cqshape = self.geometry.createCylinder()
         elif self.shape.lower() == "extrudedpolygon":
             cqshape = self.geometry.createExtrudedpolygon()
-<<<<<<< HEAD
-        if self.shape == "capsule":
+        elif self.shape.lower() == "capsule":
             cqshape = self.geometry.createCapsule()
-        if self.shape == "sphere":
-=======
-        elif self.shape.lower() == "bar":
-            cqshape = self.geometry.createBar()
         elif self.shape.lower() == "sphere":
->>>>>>> param_geom-dict
             cqshape = self.geometry.createSphere()
         elif self.shape.lower() == "ellipsoid":
             cqshape = self.geometry.createEllipsoid()
@@ -130,84 +124,6 @@ class BasicGeometry:
         return cq.Shape(cqshape.val().wrapped)
 
 
-<<<<<<< HEAD
-def readPhases(path_data, phases_file, phases):
-
-    nphases = 0
-    cnt_phase = 0
-    nprops = []
-    # buf = ""
-    path_inputfile = path_data + phases_file
-    removeEmptyLines(path_inputfile)
-
-    try:
-        fp = open(path_inputfile)
-        for line in enumerate(fp):
-            if line == "\n":
-                nphases -= 1
-            else:
-                row_split = line[1].split()
-                if nphases > 0:
-
-                    nprops_phase = 0
-                    if row_split[1] == "matrix":
-                        nprops_phase = 0
-                    elif row_split[1] == "sphere":
-                        nprops_phase = 1
-                    elif row_split[1] == "cylinder":
-                        nprops_phase = 2
-                    elif row_split[1] == "capsule":
-                        nprops_phase = 2
-                    elif row_split[1] == "ellipsoid":
-                        nprops_phase = 3
-                    elif row_split[1] == "tpms":
-                        nprops_phase = 3
-
-                    nprops.append(nprops_phase)
-                nphases += 1
-    finally:
-        fp.seek(0)
-        fp.close()
-
-    print(path_data)
-    print(phases_file)
-
-    try:
-        fp = open(path_inputfile)
-        for line in enumerate(fp):
-            print(line)
-            if line == "\n":
-                cnt_phase -= 1
-            else:
-                row_split = line[1].split()
-                if cnt_phase > 0:
-
-                    number = int(row_split[0])
-                    shape = row_split[1]
-                    xc = float(row_split[2])
-                    yc = float(row_split[3])
-                    zc = float(row_split[4])
-                    psi = float(row_split[5])
-                    theta = float(row_split[6])
-                    phi = float(row_split[7])
-
-                    props = []
-                    if shape == "tpms":
-                        for prop in range(0, nprops[cnt_phase - 1]):
-                            props.append(row_split[8 + prop])
-                    else:
-                        for prop in range(0, nprops[cnt_phase - 1]):
-                            props.append(float(row_split[8 + prop]))
-
-                    pha = phase(
-                        number, shape, xc, yc, zc, psi, theta, phi, props, path_data
-                    )
-                    phases.append(pha)
-                    print(phases[-1].shape)
-                cnt_phase += 1
-    finally:
-        fp.close()
-=======
 # def readPhases(path_data, phases_file, phases):
 
 #     nphases = 0
@@ -284,4 +200,3 @@ def readPhases(path_data, phases_file, phases):
 #                 cnt_phase += 1
 #     finally:
 #         fp.close()
->>>>>>> param_geom-dict
