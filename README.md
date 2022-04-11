@@ -13,7 +13,7 @@ If you want to modify the sources you would prefer to install microgen from the 
 
 Create a conda environment with all the required dependencies
 ```
-conda env create -n environment.yml
+conda env create -f environment.yml
 ```
 
 Activate the created environment
