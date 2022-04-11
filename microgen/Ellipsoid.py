@@ -5,13 +5,13 @@ import cadquery as cq
 
 
 class Ellipsoid:
-    def __init__(self, center, angle, a1, a2, a3, n):
+    def __init__(self, center, angle, a1, a2, a3, number):
         self.center = center
         self.angle = angle
         self.a1 = a1
         self.a2 = a2
         self.a3 = a3
-        self.number = n
+        self.number = number
         self.name_part = "ellipsoid" + str(self.number)
 
     def createEllipsoid(self):

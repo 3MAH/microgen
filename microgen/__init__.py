@@ -1,6 +1,6 @@
 from .Sphere import *
 from .Cylinder import *
-from .Bar import *
+from .Capsule import *
 from .Ellipsoid import *
 from .Material_functions import *
 from .Material_sections import *
