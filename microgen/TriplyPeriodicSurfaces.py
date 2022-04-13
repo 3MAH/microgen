@@ -1,9 +1,29 @@
 import os
 import math
-import numpy as np
+from numpy import cos, sin, pi, abs
 import pygalmesh
 
 
+class Custom(pygalmesh.DomainBase):
+    def __init__(self, rve, function, h):
+        super().__init__()
+        self.h = h
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.function = function # "cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)"
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return eval(self.function) + self.h
 class Hyperboloid(pygalmesh.DomainBase):
     def __init__(self, max_edge_size_at_feature_edges):
         super().__init__()
@@ -24,11 +44,11 @@ class Hyperboloid(pygalmesh.DomainBase):
 
     def getFeatures(self):
         radius0 = self.z0**2 + self.waist_radius
-        n0 = int(2 * np.pi * radius0 / self.max_edge_size_at_feature_edges)
+        n0 = int(2 * pi * radius0 / self.max_edge_size_at_feature_edges)
         circ0 = [
             [
-                radius0 * np.cos((2 * np.pi * k) / n0),
-                radius0 * np.sin((2 * np.pi * k) / n0),
+                radius0 * cos((2 * pi * k) / n0),
+                radius0 * sin((2 * pi * k) / n0),
                 self.z0,
             ]
             for k in range(n0)
@@ -36,11 +56,11 @@ class Hyperboloid(pygalmesh.DomainBase):
         circ0.append(circ0[0])
 
         radius1 = self.z1**2 + self.waist_radius
-        n1 = int(2 * np.pi * radius1 / self.max_edge_size_at_feature_edges)
+        n1 = int(2 * pi * radius1 / self.max_edge_size_at_feature_edges)
         circ1 = [
             [
-                radius1 * np.cos((2 * np.pi * k) / n1),
-                radius1 * np.sin((2 * np.pi * k) / n1),
+                radius1 * cos((2 * pi * k) / n1),
+                radius1 * sin((2 * pi * k) / n1),
                 self.z1,
             ]
             for k in range(n1)
@@ -64,9 +84,9 @@ class SchwarzP(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        x2 = np.cos(x[0] * 2 * np.pi)
-        y2 = np.cos(x[1] * 2 * np.pi)
-        z2 = np.cos(x[2] * 2 * np.pi)
+        x2 = cos(x[0] * 2 * pi)
+        y2 = cos(x[1] * 2 * pi)
+        z2 = cos(x[2] * 2 * pi)
         return x2 + y2 + z2 + self.h
 
 
@@ -86,24 +106,24 @@ class SchwarzD(pygalmesh.DomainBase):
 
     def eval(self, x):
         a = (
-            np.sin(x[0] * 2 * np.pi)
-            * np.sin(x[1] * 2 * np.pi)
-            * np.sin(x[2] * 2 * np.pi)
+            sin(x[0] * 2 * pi)
+            * sin(x[1] * 2 * pi)
+            * sin(x[2] * 2 * pi)
         )
         b = (
-            np.sin(x[0] * 2 * np.pi)
-            * np.cos(x[1] * 2 * np.pi)
-            * np.cos(x[2] * 2 * np.pi)
+            sin(x[0] * 2 * pi)
+            * cos(x[1] * 2 * pi)
+            * cos(x[2] * 2 * pi)
         )
         c = (
-            np.cos(x[0] * 2 * np.pi)
-            * np.sin(x[1] * 2 * np.pi)
-            * np.cos(x[2] * 2 * np.pi)
+            cos(x[0] * 2 * pi)
+            * sin(x[1] * 2 * pi)
+            * cos(x[2] * 2 * pi)
         )
         d = (
-            np.cos(x[0] * 2 * np.pi)
-            * np.cos(x[1] * 2 * np.pi)
-            * np.sin(x[2] * 2 * np.pi)
+            cos(x[0] * 2 * pi)
+            * cos(x[1] * 2 * pi)
+            * sin(x[2] * 2 * pi)
         )
         return a + b + c + d + self.h
 
@@ -124,14 +144,14 @@ class Neovius(pygalmesh.DomainBase):
 
     def eval(self, x):
         a = 3.0 * (
-            np.cos(x[0] * 2 * np.pi)
-            + np.cos(x[1] * 2 * np.pi)
-            + np.cos(x[2] * 2 * np.pi)
+            cos(x[0] * 2 * pi)
+            + cos(x[1] * 2 * pi)
+            + cos(x[2] * 2 * pi)
         )
         b = 4.0 * (
-            np.cos(x[0] * 2 * np.pi)
-            * np.cos(x[1] * 2 * np.pi)
-            * np.cos(x[2] * 2 * np.pi)
+            cos(x[0] * 2 * pi)
+            * cos(x[1] * 2 * pi)
+            * cos(x[2] * 2 * pi)
         )
         return a + b + self.h
 
@@ -150,16 +170,16 @@ class SchoenIWP(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        l = 2 * ((np.cos(x[0] * 2 * np.pi)
-            * np.cos(x[1] * 2 * np.pi)) +
-            (np.cos(x[1] * 2 * np.pi)
-			* np.cos(x[2] * 2 * np.pi)) +
-			(np.cos(x[2] * 2 * np.pi)
-			* np.cos(x[0] * 2 * np.pi)) 
+        l = 2 * ((cos(x[0] * 2 * pi)
+            * cos(x[1] * 2 * pi)) +
+            (cos(x[1] * 2 * pi)
+			* cos(x[2] * 2 * pi)) +
+			(cos(x[2] * 2 * pi)
+			* cos(x[0] * 2 * pi)) 
         )
-        m = (np.cos(x[0] * 4 * np.pi) +
-            np.cos(x[1] * 4 * np.pi) +
-            np.cos(x[2] * 4 * np.pi)
+        m = (cos(x[0] * 4 * pi) +
+            cos(x[1] * 4 * pi) +
+            cos(x[2] * 4 * pi)
         )
         return l - m + self.h
     
@@ -178,13 +198,13 @@ class SchoenFRD(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        a = 4 * ((np.cos(x[0] * 2 * np.pi) *
-                  np.cos(x[1] * 2 * np.pi) *
-                  np.cos(x[2] * 2 * np.pi))
+        a = 4 * ((cos(x[0] * 2 * pi) *
+                  cos(x[1] * 2 * pi) *
+                  cos(x[2] * 2 * pi))
                 )
-        b = ((np.cos(x[0] * 4 * np.pi) * np.cos(x[1] * 4 * np.pi)) +
-             (np.cos(x[1] * 4 * np.pi) * np.cos(x[2] * 4 * np.pi)) +
-             (np.cos(x[2] * 4 * np.pi) * np.cos(x[0] * 4 * np.pi))
+        b = ((cos(x[0] * 4 * pi) * cos(x[1] * 4 * pi)) +
+             (cos(x[1] * 4 * pi) * cos(x[2] * 4 * pi)) +
+             (cos(x[2] * 4 * pi) * cos(x[0] * 4 * pi))
             )
         return a - b + self.h
     
@@ -203,17 +223,17 @@ class FischerKochS(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        a = (np.cos(x[0] * 4 * np.pi) *
-             np.sin(x[1] * 2 * np.pi) *
-             np.cos(x[2] * 2 * np.pi)
+        a = (cos(x[0] * 4 * pi) *
+             sin(x[1] * 2 * pi) *
+             cos(x[2] * 2 * pi)
             )
-        b = (np.cos(x[0] * 2 * np.pi) *
-             np.cos(x[1] * 4 * np.pi) *
-             np.sin(x[2] * 2 * np.pi)
+        b = (cos(x[0] * 2 * pi) *
+             cos(x[1] * 4 * pi) *
+             sin(x[2] * 2 * pi)
             )
-        c = (np.sin(x[0] * 2 * np.pi) *
-             np.cos(x[1] * 2 * np.pi) *
-             np.cos(x[2] * 4 * np.pi)
+        c = (sin(x[0] * 2 * pi) *
+             cos(x[1] * 2 * pi) *
+             cos(x[2] * 4 * pi)
             )
         return a + b + c + self.h
     
@@ -232,18 +252,18 @@ class PMY(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        a = 2 * ((np.cos(x[0] * 2 * np.pi) *
-                  np.cos(x[1] * 2 * np.pi) *
-                  np.cos(x[2] * 2 * np.pi))
+        a = 2 * ((cos(x[0] * 2 * pi) *
+                  cos(x[1] * 2 * pi) *
+                  cos(x[2] * 2 * pi))
                 )
-        b = (np.sin(x[0] * 4 * np.pi) *
-             np.sin(x[1] * 2 * np.pi)
+        b = (sin(x[0] * 4 * pi) *
+             sin(x[1] * 2 * pi)
             ) 
-        c = (np.sin(x[0] * 2 * np.pi) *
-             np.sin(x[2] * 4 * np.pi)
+        c = (sin(x[0] * 2 * pi) *
+             sin(x[2] * 4 * pi)
             )
-        d = (np.sin(x[1] * 4 * np.pi) *
-             np.sin(x[2] * 2 * np.pi)
+        d = (sin(x[1] * 4 * pi) *
+             sin(x[2] * 2 * pi)
             )
         return a + b + c + d + self.h
     
@@ -262,9 +282,9 @@ class HoneyComb(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        a = np.sin(x[0] * 2 * np.pi) * np.cos(x[1] * 2 * np.pi)
-        b = np.sin(x[1] * 2 * np.pi)
-        c = np.cos(x[2] * 2 * np.pi)
+        a = sin(x[0] * 2 * pi) * cos(x[1] * 2 * pi)
+        b = sin(x[1] * 2 * pi)
+        c = cos(x[2] * 2 * pi)
         return a + b + c + self.h
         
 class Gyroid(pygalmesh.DomainBase):
@@ -282,10 +302,10 @@ class Gyroid(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, x):
-        x2 = np.sin(x[0] * 2 * np.pi) * np.cos(x[1] * 2 * np.pi)
-        y2 = np.sin(x[1] * 2 * np.pi) * np.cos(x[2] * 2 * np.pi)
-        z2 = np.sin(x[2] * 2 * np.pi) * np.cos(x[0] * 2 * np.pi)
-        if np.abs(x[0]) + np.abs(x[1]) + np.abs(x[2]) > 1.0e-8:
+        x2 = sin(x[0] * 2 * pi) * cos(x[1] * 2 * pi)
+        y2 = sin(x[1] * 2 * pi) * cos(x[2] * 2 * pi)
+        z2 = sin(x[2] * 2 * pi) * cos(x[0] * 2 * pi)
+        if abs(x[0]) + abs(x[1]) + abs(x[2]) > 1.0e-8:
             return x2 + y2 + z2 + self.h
         else:
             return 1.0
@@ -299,11 +319,17 @@ def generateTPMS(
     minFacetAngle=10.0,
     maxRadius=0.05,
     path_data="",
+    function=""
 ):
 
-    thickness = thickness * np.pi
+    thickness = thickness * pi
 
-    if type_tpms == "honeycomb":
+    if type_tpms == "custom":
+        s_testplus = Custom(rve, function, thickness / 4.0)
+        s_testminus = Custom(rve, function, -thickness / 4.0)
+        s_plus = Custom(rve, function, thickness / 2.0)
+        s_minus = Custom(rve, function, -1.0 * thickness / 2.0)  
+    elif type_tpms == "honeycomb":
         s_testplus = HoneyComb(rve, thickness / 4.0)
         s_testminus = HoneyComb(rve, -thickness / 4.0)
         s_plus = HoneyComb(rve, thickness / 2.0)

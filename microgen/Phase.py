@@ -87,6 +87,7 @@ class BasicGeometry:
                 type_part=self.param_geom["type_part"],
                 thickness=self.param_geom["thickness"],
                 number=self.number,
+                function=self.param_geom["function"]
             )
         if self.shape.lower() == "polyhedron":
             self.geometry = Polyhedron(
