@@ -1,10 +1,22 @@
 import cadquery as cq
 from microgen import Rve, BasicGeometry
 
+import argparse
+
 surface   = "custom"
 part      = "skeletal"
 thickness = 0.1
-function  = "cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)"
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', '--func', nargs=1, 
+                    help='TPMS custom function (e.g. python custom.py -f "cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)")')
+
+args = parser.parse_args()
+
+# function  = "cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)"
+function = args.func[0]
+print(function)
+
 
 # Size of the mesh
 size_mesh = 0.03
