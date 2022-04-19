@@ -5,12 +5,12 @@ import cadquery as cq
 
 
 class ExtrudedPolygon:
-    def __init__(self, center, angle, listCorners, h, n):
+    def __init__(self, center, angle, listCorners, height, number):
         self.center = center
         self.angle = angle
         self.listCorners = listCorners
-        self.height = h
-        self.number = n
+        self.height = height
+        self.number = number
         self.name_part = "extrudedpolygon" + str(self.number)
 
     def createExtrudedpolygon(self):

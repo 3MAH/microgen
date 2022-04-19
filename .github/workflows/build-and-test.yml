@@ -71,6 +71,9 @@ jobs:
       - name: Test
         shell: bash -l {0}
         run: | 
+
+          pytest --cov=microgen tests
+
           SRC_DIR=$(pwd)
           
           cd $SRC_DIR/examples/mmg

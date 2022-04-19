@@ -1,5 +1,5 @@
 from microgen.Functions import fuseParts
-from microgen.TriplyPeriodicSurfaces import generateTPMS
+from microgen.TriplyPeriodicSurfaces import generateTPMS, is_function_valid
 import cadquery as cq
 
 from OCP.StlAPI import StlAPI_Reader
@@ -102,23 +102,3 @@ class Tpms:
             to_fuse = [cq.Shape(s.wrapped) for s in skeletal]
             return_object = fuseParts(to_fuse, False)
             return cq.Workplane().add(return_object[0])
-
-
-def is_function_valid(function):
-    # removes all valid data and check if invalid data is remaining in given function
-    string = function
-    string = string.replace("cos", "")
-    string = string.replace("sin", "")
-    string = string.replace("pi", "")
-    string = string.replace("x", "")
-    string = string.replace("y", "")
-    string = string.replace("z", "")
-    string = string.replace("*", "")
-    string = string.replace("/", "")
-    string = string.replace("+", "")
-    string = string.replace("-", "")
-    string = string.replace(" ", "")
-    string = string.replace("(", "")
-    string = string.replace(")", "")
-    string = ''.join([i for i in string if not i.isdigit()])
-    return string == ""

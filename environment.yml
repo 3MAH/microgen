@@ -9,4 +9,4 @@ dependencies:
   - python-gmsh=4.8
   - pygalmesh
   - mmg
-  - nptyping
+  - pytest-cov
