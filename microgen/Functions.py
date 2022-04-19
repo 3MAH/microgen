@@ -1028,7 +1028,7 @@ def cutPhaseByShapeList(phaseToCut, cqShapeList):
     return (ResultCut, occ_solids_list)
 
 
-def cutParts(cqShapeList, reverseOrder = True):
+def cutParts(cqShapeList, reverseOrder=True):
     phase_cut = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
@@ -1060,7 +1060,7 @@ def cutParts(cqShapeList, reverseOrder = True):
 
     return (phase_cut, occ_solids_list)
 
-def rasterShapeList(cqShapeList,rve,grid):
+def rasterShapeList(cqShapeList, rve, grid):
 
     occ_solids_list=[]
 

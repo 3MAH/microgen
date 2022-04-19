@@ -11,7 +11,7 @@ from OCP.TopoDS import TopoDS_Shape
 
 
 class Tpms:
-    def __init__(self, center, angle, type_surface, type_part, thickness, number):
+    def __init__(self, center, angle, type_surface, type_part, thickness, number, function=""):
         self.center = center
         self.angle = angle
         self.number = number
@@ -19,6 +19,15 @@ class Tpms:
         self.type_surface = type_surface
         self.type_part = type_part
         self.thickness = thickness
+        self.function = function
+
+        if type_surface == "custom":
+            if function == "":
+                raise ValueError("No given function to evaluate")
+            elif not is_function_valid(function):
+                raise ValueError(function + " function not valid")
+
+
 
     def createSurfaces(
         self, rve, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data=""
@@ -31,6 +40,7 @@ class Tpms:
             minFacetAngle,
             maxRadius,
             path_data,
+            function=self.function
         )
 
     def createTpms(self, path_data, rve):
@@ -92,3 +102,23 @@ class Tpms:
             to_fuse = [cq.Shape(s.wrapped) for s in skeletal]
             return_object = fuseParts(to_fuse, False)
             return cq.Workplane().add(return_object[0])
+
+
+def is_function_valid(function):
+    # removes all valid data and check if invalid data is remaining in given function
+    string = function
+    string = string.replace("cos", "")
+    string = string.replace("sin", "")
+    string = string.replace("pi", "")
+    string = string.replace("x", "")
+    string = string.replace("y", "")
+    string = string.replace("z", "")
+    string = string.replace("*", "")
+    string = string.replace("/", "")
+    string = string.replace("+", "")
+    string = string.replace("-", "")
+    string = string.replace(" ", "")
+    string = string.replace("(", "")
+    string = string.replace(")", "")
+    string = ''.join([i for i in string if not i.isdigit()])
+    return string == ""
