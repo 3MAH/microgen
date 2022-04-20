@@ -102,18 +102,18 @@ def test_shapes():
     #                               param_geom={})
     # shape = elem.generate()
 
-    # elem = microgen.BasicGeometry(number=0, shape='tpms',
-    #                               xc=0.5, yc=0.5, zc=0.5,
-    #                               psi=0, theta=0, phi=0,
-    #                               param_geom={"type_surface": "custom",
-    #                                           "type_part": "skeletal",
-    #                                           "thickness": 0.1,
-    #                                           "function": 'cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)'},
-    #                               path_data='tests/data')
-    # elem.geometry.createSurfaces(rve=rve,
-    #                              sizeMesh=0.03, minFacetAngle=20., maxRadius=0.03,
-    #                              path_data='tests/data')
-    # shape = elem.generate(rve=rve)
+    elem = microgen.BasicGeometry(number=0, shape='tpms',
+                                  xc=0.5, yc=0.5, zc=0.5,
+                                  psi=0, theta=0, phi=0,
+                                  param_geom={"type_surface": "custom",
+                                              "type_part": "skeletal",
+                                              "thickness": 0.1,
+                                              "function": 'cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)'},
+                                  path_data='tests/data')
+    elem.geometry.createSurfaces(rve=rve,
+                                 sizeMesh=0.03, minFacetAngle=20., maxRadius=0.03,
+                                 path_data='tests/data')
+    shape = elem.generate(rve=rve)
 
     elem = microgen.BasicGeometry(number=0, shape='tpms',
                                   xc=0, yc=0, zc=0,
