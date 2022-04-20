@@ -5,21 +5,21 @@ import cadquery as cq
 
 
 class Ellipsoid:
-    def __init__(self, center, angle, a1, a2, a3, number):
+    def __init__(self, center, angle, a_x, a_y, a_z, number):
         self.center = center
         self.angle = angle
-        self.a1 = a1
-        self.a2 = a2
-        self.a3 = a3
+        self.a_x = a_x
+        self.a_y = a_y
+        self.a_z = a_z
         self.number = number
         self.name_part = "ellipsoid" + str(self.number)
 
     def createEllipsoid(self):
         transform_mat = cq.Matrix(
             [
-                [self.a1, 0, 0, self.center[0]],
-                [0, self.a2, 0, self.center[1]],
-                [0, 0, self.a3, self.center[2]],
+                [self.a_x, 0, 0, self.center[0]],
+                [0, self.a_y, 0, self.center[1]],
+                [0, 0, self.a_z, self.center[2]],
             ]
         )
 

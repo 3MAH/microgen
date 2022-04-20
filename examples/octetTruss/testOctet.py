@@ -19,7 +19,7 @@ dt = np.dtype([('number', int), ('shape', np.str_, 10),
                ('psi', np.float64), ('theta', np.float64), ('phi', np.float64),
                ('a1', np.float64), ('a2', np.float64)])
 # précision du type des données
-number, shape, xc, yc, zc, psi, theta, phi, a1, a2, = np.loadtxt(NPhases_file, dtype=dt,
+number, shape, xc, yc, zc, psi, theta, phi, height, radius, = np.loadtxt(NPhases_file, dtype=dt,
                                                                  usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
                                                                  skiprows=1, unpack=True, ndmin=1)
 
@@ -40,8 +40,8 @@ for i in range(0, n):
     elem = BasicGeometry(number=number[i], shape=shape[i],
                          xc=xc[i], yc=yc[i], zc=zc[i],
                          psi=psi[i], theta=theta[i], phi=phi[i],
-                         param_geom={"height": a1[i],
-                                     "radius": a2[i]},
+                         param_geom={"height": height[i],
+                                     "radius": radius[i]},
                          path_data='')
     listPhases.append(elem.generate())
 

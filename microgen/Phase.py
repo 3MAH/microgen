@@ -35,9 +35,9 @@ class BasicGeometry:
             self.geometry = Box(
                 center=self.center,
                 angle=self.angle,
-                a1=self.param_geom["a1"],
-                a2=self.param_geom["a2"],
-                a3=self.param_geom["a3"],
+                dim_x=self.param_geom["dim_x"],
+                dim_y=self.param_geom["dim_y"],
+                dim_z=self.param_geom["dim_z"],
                 number=self.number,
             )
         if self.shape.lower() == "cylinder":
@@ -74,9 +74,9 @@ class BasicGeometry:
             self.geometry = Ellipsoid(
                 center=self.center,
                 angle=self.angle,
-                a1=self.param_geom["a1"],
-                a2=self.param_geom["a2"],
-                a3=self.param_geom["a3"],
+                a_x=self.param_geom["a_x"],
+                a_y=self.param_geom["a_y"],
+                a_z=self.param_geom["a_z"],
                 number=self.number,
             )
         if self.shape.lower() == "tpms":

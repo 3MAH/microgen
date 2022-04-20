@@ -1,10 +1,10 @@
 import numpy as np
 import gmsh
 
-gmsh.initialize()
 
 
 def mesh(mesh_file, listPhases, size, order=1):
+    gmsh.initialize()
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
     nbTags = len(flatListPhases)
@@ -94,6 +94,7 @@ def mesh(mesh_file, listPhases, size, order=1):
 
 
 def meshPeriodic(mesh_file, rve, listPhases, size, order=1):
+    gmsh.initialize()
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
     nbTags = len(flatListPhases)

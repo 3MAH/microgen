@@ -11,7 +11,7 @@ from OCP.TopoDS import TopoDS_Shape
 
 
 class Tpms:
-    def __init__(self, center, angle, type_surface, type_part, thickness, number, function=""):
+    def __init__(self, center, angle, type_surface, type_part, thickness, number, function=None):
         self.center = center
         self.angle = angle
         self.number = number
@@ -22,7 +22,7 @@ class Tpms:
         self.function = function
 
         if type_surface == "custom":
-            if function == "":
+            if function == None:
                 raise ValueError("No given function to evaluate")
             elif not is_function_valid(function):
                 raise ValueError(function + " function not valid")

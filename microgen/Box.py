@@ -6,19 +6,19 @@ import cadquery as cq
 
 
 class Box:
-    def __init__(self, center, angle, a1, a2, a3, number):
+    def __init__(self, center, angle, dim_x, dim_y, dim_z, number):
         self.center = center
         self.angle = angle
-        self.a1 = a1
-        self.a2 = a2
-        self.a3 = a3
+        self.dim_x = dim_x
+        self.dim_y = dim_y
+        self.dim_z = dim_z
         self.number = number
         self.name_part = "box" + str(self.number)
 
     def createBox(self):
         box = (
             cq.Workplane()
-            .box(self.a1, self.a2, self.a3)
+            .box(self.dim_x, self.dim_y, self.dim_z)
             .translate((self.center[0], self.center[1], self.center[2]))
         )
         box = rotateEuler(box, self.center, self.angle[0], self.angle[1], self.angle[2])
