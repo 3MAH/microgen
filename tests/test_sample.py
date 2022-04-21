@@ -97,7 +97,7 @@ def test_shapes():
                                               "height": 0.3})
     shape = elem.generate()
 
-   dic = {'original': [0.107874084791, 0.618217780057, 0.938426948697], 
+    dic = {'original': [0.107874084791, 0.618217780057, 0.938426948697], 
            'faces': [{'vertices': [0, 1, 2, 3, 4]}, 
                      {'vertices': [5, 6, 2, 1, 7, 8]}, 
                      {'vertices': [9, 5, 6, 10, 11]}, 
