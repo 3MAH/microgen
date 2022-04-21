@@ -19,23 +19,23 @@ class BasicGeometry:
         psi, theta, phi, 
         param_geom, path_data=None
     ):
-    """
+        """ DESCRIPTION
 
-    Parameters
-    ----------
-    number : TYPE
-        DESCRIPTION
-    shape : TYPE
-        DESCRIPTION
-    xc, yc, zc : TYPE
-        DESCRIPTION
-    psi, theta, phi : TYPE
-        DESCRIPTION
-    param_geom : TYPE
-        DESCRIPTION
-    path_data : TYPE
-        DESCRIPTION
-    """
+        Parameters
+        ----------
+        number : TYPE
+            DESCRIPTION
+        shape : TYPE
+            DESCRIPTION
+        xc, yc, zc : TYPE
+            DESCRIPTION
+        psi, theta, phi : TYPE
+            DESCRIPTION
+        param_geom : TYPE
+            DESCRIPTION
+        path_data : TYPE
+            DESCRIPTION
+        """
         self.number = number
         self.shape = shape
         self.xc = xc
@@ -133,18 +133,18 @@ class BasicGeometry:
     # ----------GENERATE PHASES----------------------------------------------------------------------------------
 
     def generate(self, rve=None):
-    """
+        """ DESCRIPTION
 
-    Parameters
-    ----------
-    rve : TYPE, optional
-        DESCRIPTION
+        Parameters
+        ----------
+        rve : TYPE, optional
+            DESCRIPTION
 
-    Returns
-    -------
-    cq.Shape(cqshape.val().wrapped) : TYPE
-        DESCRIPTION
-    """
+        Returns
+        -------
+        cq.Shape(cqshape.val().wrapped) : TYPE
+            DESCRIPTION
+        """
 
         if self.shape.lower() == "box":
             cqshape = self.geometry.createBox()

@@ -13,25 +13,25 @@ from OCP.TopoDS import TopoDS_Shape
 class Tpms:
     def __init__(self, center, angle, 
                  type_surface, type_part, thickness, number, function=None):
-    """
+        """ DESCRIPTION
 
-    Parameters
-    ----------
-    center : TYPE
-        DESCRIPTION
-    angle : TYPE
-        DESCRIPTION
-    type_surface : TYPE
-        DESCRIPTION
-    type_part : TYPE
-        DESCRIPTION
-    thickness : TYPE
-        DESCRIPTION
-    number : TYPE
-        DESCRIPTION
-    function : TYPE, optional
-        DESCRIPTION
-    """
+        Parameters
+        ----------
+        center : TYPE
+            DESCRIPTION
+        angle : TYPE
+            DESCRIPTION
+        type_surface : TYPE
+            DESCRIPTION
+        type_part : TYPE
+            DESCRIPTION
+        thickness : TYPE
+            DESCRIPTION
+        number : TYPE
+            DESCRIPTION
+        function : TYPE, optional
+            DESCRIPTION
+        """
         self.center = center
         self.angle = angle
         self.number = number
@@ -52,21 +52,21 @@ class Tpms:
     def createSurfaces(
         self, rve, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data=""
     ):
-    """
+        """ DESCRIPTION
 
-    Parameters
-    ----------
-    rve : TYPE
-        DESCRIPTION
-    sizeMesh : TYPE, optional
-        DESCRIPTION
-    minFacetAngle : TYPE, optional
-        DESCRIPTION
-    maxRadius : TYPE, optional
-        DESCRIPTION
-    path_data : TYPE, optional
-        DESCRIPTION
-    """
+        Parameters
+        ----------
+        rve : TYPE
+            DESCRIPTION
+        sizeMesh : TYPE, optional
+            DESCRIPTION
+        minFacetAngle : TYPE, optional
+            DESCRIPTION
+        maxRadius : TYPE, optional
+            DESCRIPTION
+        path_data : TYPE, optional
+            DESCRIPTION
+        """
         generateTPMS(
             self.type_surface,
             self.thickness,
@@ -79,20 +79,20 @@ class Tpms:
         )
 
     def createTpms(self, path_data, rve):
-    """
+        """ DESCRIPTION
 
-    Parameters
-    ----------
-    path_data : TYPE
-        DESCRIPTION
-    rve : TYPE
-        DESCRIPTION
+        Parameters
+        ----------
+        path_data : TYPE
+            DESCRIPTION
+        rve : TYPE
+            DESCRIPTION
 
-    Returns
-    -------
-    cq.Workplane().add(return_object[0]) : TYPE
-        DESCRIPTION
-    """
+        Returns
+        -------
+        cq.Workplane().add(return_object[0]) : TYPE
+            DESCRIPTION
+        """
 
         if rve is None:
             print("Please add an RVE to generate the TPMS")

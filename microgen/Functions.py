@@ -11,7 +11,7 @@ from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 
 def rotateEuler(object, center, psi, theta, phi):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ def rotateEuler(object, center, psi, theta, phi):
 
 
 def removeEmptyLines(filename):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -78,7 +78,7 @@ def removeEmptyLines(filename):
 
 
 def periodic(cqshape, rve):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -981,7 +981,7 @@ def periodic(cqshape, rve):
 
 
 def fuseParts(cqShapeList, retain_edges):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -1061,7 +1061,7 @@ def fuseParts(cqShapeList, retain_edges):
 
 
 def cutPhasesByShape(cqShapeList, cut_obj):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -1093,7 +1093,7 @@ def cutPhasesByShape(cqShapeList, cut_obj):
 
 
 def cutPhaseByShapeList(phaseToCut, cqShapeList):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -1120,7 +1120,7 @@ def cutPhaseByShapeList(phaseToCut, cqShapeList):
 
 
 def cutParts(cqShapeList, reverseOrder=True):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -1168,7 +1168,7 @@ def cutParts(cqShapeList, reverseOrder=True):
     return (phase_cut, occ_solids_list)
 
 def rasterShapeList(cqShapeList, rve, grid):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -1243,7 +1243,7 @@ def rasterShapeList(cqShapeList, rve, grid):
 
 
 def lanceNeper(filename, nbCell, dimCube):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -1271,7 +1271,7 @@ def lanceNeper(filename, nbCell, dimCube):
 
 
 def parseNeper(filename):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------

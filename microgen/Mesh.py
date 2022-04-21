@@ -4,7 +4,7 @@ import gmsh
 
 
 def mesh(mesh_file, listPhases, size, order=1):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
@@ -107,7 +107,7 @@ def mesh(mesh_file, listPhases, size, order=1):
 
 
 def meshPeriodic(mesh_file, rve, listPhases, size, order=1):
-    """
+    """ DESCRIPTION
 
     Parameters
     ----------
