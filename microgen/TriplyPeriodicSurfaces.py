@@ -292,6 +292,363 @@ class Gyroid(pygalmesh.DomainBase):
             return 1.0
 
 
+class Wolfram_P(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return sin(2*pi*x) + sin(2*pi*y) + sin(2*pi*z) + self.height
+
+
+class Wolfram_iWP(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return cos(2*pi*x)*cos(2*pi*y) + cos(2*pi*y)*cos(2*pi*z) + cos(2*pi*x)*cos(2*pi*z) \
+                - 3 * cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + self.height
+
+
+class Wolfram_P_W(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 4*(cos(2*pi*x)*cos(2*pi*y) + cos(2*pi*y)*cos(2*pi*z) + cos(2*pi*x)*cos(2*pi*z)) - \
+                 3*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + self.height
+
+
+class Wolfram_lindinoid(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 0.5*(sin(2*2*pi*x)*cos(2*pi*y)*sin(2*pi*z) + \
+                    sin(2*2*pi*y)*cos(2*pi*z)*sin(2*pi*x) + \
+                    sin(2*2*pi*z)*cos(2*pi*x)*sin(2*pi*y)) \
+                - 0.5*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
+                       cos(2*2*pi*y)*cos(2*2*pi*z) + \
+                       cos(2*2*pi*z)*cos(2*2*pi*x)) + .15 + self.height
+
+
+class Wolfram_DoubleGyroid(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 2.75*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) + \
+                     sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) + \
+                     sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) - \
+               1*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
+                  cos(2*2*pi*y)*cos(2*2*pi*z) + \
+                  cos(2*2*pi*z)*cos(2*2*pi*x)) + self.height
+
+
+class Wolfram_Gprime(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 5*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) +\
+                  sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) +\ 
+                  sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) +\ 
+               1*(cos(2*2*pi*x)*cos(2*2*pi*y) +\
+                  cos(2*2*pi*y)*cos(2*2*pi*z) +\
+                  cos(2*2*pi*z)*cos(2*2*pi*x)) + self.height
+
+
+
+class Wolfram_DoubleDiamond(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 1*(sin(2*2*pi*x)*sin(2*2*pi*y) + \
+                  sin(2*2*pi*y)*sin(2*2*pi*z) + \
+                  sin(2*2*pi*x)*sin(2*2*pi*z)) + \
+               cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z) + \
+               self.height
+
+
+class Wolfram_Dprime(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return sin(2*pi*x)*sin(2*pi*y)*sin(2*pi*z) + \
+               cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) - \
+               1*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
+                  cos(2*2*pi*y)*cos(2*2*pi*z) + \
+                  cos(2*2*pi*z)*cos(2*2*pi*x)) - 0.4 + self.height
+
+
+
+class Wolfram_DoubleP(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 0.5*(cos(2*pi*x)*cos(2*pi*y) + \
+                    cos(2*pi*y)*cos(2*pi*z) + \
+                    cos(2*pi*z)*cos(2*pi*x)) + \ 
+               0.2*(cos(2*2*pi*x) + \
+                    cos(2*2*pi*y) + \
+                    cos(2*2*pi*z)) + self.height
+
+
+class Wolfram_OCTO(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 4*(cos(2*pi*x)*cos(2*pi*y) + \
+                  cos(2*pi*y)*cos(2*pi*z) + \
+                  cos(2*pi*z)*cos(2*pi*x)) - \
+               2.8*(cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)) + \
+               1*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) \
+               + 1.5 + self.height
+
+
+
+class Wolfram_PN(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 0.6*(cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)) + \
+               0.4*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) + \
+               0.2*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) + \ 
+               0.2*(cos(2*2*pi*x) + cos(2*2*pi*y) + cos(2*2*pi*z)) + \  
+               0.1*(cos(3*2*pi*x) + cos(3*2*pi*y) + cos(3*2*pi*z)) + \
+               0.2*(cos(2*pi*x)*cos(2*pi*y) + \
+                    cos(2*pi*y)*cos(2*pi*z) + \
+                    cos(2*pi*z)*cos(2*pi*x)) + self.height
+
+
+class Wolfram_KP(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 0.6*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) + \ 
+               0.7*(cos(2*pi*x)*cos(2*pi*y) + \
+                    cos(2*pi*y)*cos(2*pi*z) + \
+                    cos(2*pi*z)*cos(2*pi*x)) - \
+               0.9*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) \
+               + 0.4 + self.height
+
+
+class Wolfram_FRD(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 8*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + \
+               1*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) - \ 
+               1*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
+                  cos(2*2*pi*y)*cos(2*2*pi*z) + \
+                  cos(2*2*pi*z)*cos(2*2*pi*x))) \
+                + self.height
+
+
+
+class Wolfram_splitP(pygalmesh.DomainBase):
+    def __init__(self, rve, height):
+        super().__init__()
+        self.height = height
+        self.z0 = 0.0
+        self.z1 = rve.dz
+        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
+                                                        (0.5 * rve.dy) ** 2 +
+                                                        (0.5 * rve.dz) ** 2) * 1.1
+
+    def get_bounding_sphere_squared_radius(self):
+        return self.bounding_sphere_squared_radius
+
+    def eval(self, pos):
+        x = pos[0]
+        y = pos[1]
+        z = pos[2]
+        return 1.1*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) + \
+                    sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) + \
+                    sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) - \
+               0.2*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
+                    cos(2*2*pi*y)*cos(2*2*pi*z) + \
+                    cos(2*2*pi*z)*cos(2*2*pi*x)) - \ 
+               0.4*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) \
+               + self.height
+
+
 def generateTPMS(
     type_tpms,
     thickness,
@@ -355,6 +712,76 @@ def generateTPMS(
         s_testminus = PMY(rve, -thickness / 4.0)
         s_plus = PMY(rve, thickness / 2.0)
         s_minus = PMY(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_P":
+        s_testplus = Wolfram_P(rve, thickness / 4.0)
+        s_testminus = Wolfram_P(rve, -thickness / 4.0)
+        s_plus = Wolfram_P(rve, thickness / 2.0)
+        s_minus = Wolfram_P(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_iWP":
+        s_testplus = Wolfram_iWP(rve, thickness / 4.0)
+        s_testminus = Wolfram_iWP(rve, -thickness / 4.0)
+        s_plus = Wolfram_iWP(rve, thickness / 2.0)
+        s_minus = Wolfram_iWP(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_P_W":
+        s_testplus = Wolfram_P_W(rve, thickness / 4.0)
+        s_testminus = Wolfram_P_W(rve, -thickness / 4.0)
+        s_plus = Wolfram_P_W(rve, thickness / 2.0)
+        s_minus = Wolfram_P_W(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_lindinoid":
+        s_testplus = Wolfram_lindinoid(rve, thickness / 4.0)
+        s_testminus = Wolfram_lindinoid(rve, -thickness / 4.0)
+        s_plus = Wolfram_lindinoid(rve, thickness / 2.0)
+        s_minus = Wolfram_lindinoid(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_DoubleGyroid":
+        s_testplus = Wolfram_DoubleGyroid(rve, thickness / 4.0)
+        s_testminus = Wolfram_DoubleGyroid(rve, -thickness / 4.0)
+        s_plus = Wolfram_DoubleGyroid(rve, thickness / 2.0)
+        s_minus = Wolfram_DoubleGyroid(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_Gprime":
+        s_testplus = Wolfram_Gprime(rve, thickness / 4.0)
+        s_testminus = Wolfram_Gprime(rve, -thickness / 4.0)
+        s_plus = Wolfram_Gprime(rve, thickness / 2.0)
+        s_minus = Wolfram_Gprime(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_DoubleDiamond":
+        s_testplus = Wolfram_DoubleDiamond(rve, thickness / 4.0)
+        s_testminus = Wolfram_DoubleDiamond(rve, -thickness / 4.0)
+        s_plus = Wolfram_DoubleDiamond(rve, thickness / 2.0)
+        s_minus = Wolfram_DoubleDiamond(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_Dprime":
+        s_testplus = Wolfram_Dprime(rve, thickness / 4.0)
+        s_testminus = Wolfram_Dprime(rve, -thickness / 4.0)
+        s_plus = Wolfram_Dprime(rve, thickness / 2.0)
+        s_minus = Wolfram_Dprime(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_DoubleP":
+        s_testplus = Wolfram_DoubleP(rve, thickness / 4.0)
+        s_testminus = Wolfram_DoubleP(rve, -thickness / 4.0)
+        s_plus = Wolfram_DoubleP(rve, thickness / 2.0)
+        s_minus = Wolfram_DoubleP(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_OCTO":
+        s_testplus = Wolfram_OCTO(rve, thickness / 4.0)
+        s_testminus = Wolfram_OCTO(rve, -thickness / 4.0)
+        s_plus = Wolfram_OCTO(rve, thickness / 2.0)
+        s_minus = Wolfram_OCTO(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_PN":
+        s_testplus = Wolfram_PN(rve, thickness / 4.0)
+        s_testminus = Wolfram_PN(rve, -thickness / 4.0)
+        s_plus = Wolfram_PN(rve, thickness / 2.0)
+        s_minus = Wolfram_PN(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_KP":
+        s_testplus = Wolfram_KP(rve, thickness / 4.0)
+        s_testminus = Wolfram_KP(rve, -thickness / 4.0)
+        s_plus = Wolfram_KP(rve, thickness / 2.0)
+        s_minus = Wolfram_KP(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_FRD":
+        s_testplus = Wolfram_FRD(rve, thickness / 4.0)
+        s_testminus = Wolfram_FRD(rve, -thickness / 4.0)
+        s_plus = Wolfram_FRD(rve, thickness / 2.0)
+        s_minus = Wolfram_FRD(rve, -1.0 * thickness / 2.0)
+    elif type_tpms == "Wolfram_splitP":
+        s_testplus = Wolfram_splitP(rve, thickness / 4.0)
+        s_testminus = Wolfram_splitP(rve, -thickness / 4.0)
+        s_plus = Wolfram_splitP(rve, thickness / 2.0)
+        s_minus = Wolfram_splitP(rve, -1.0 * thickness / 2.0)
     else:
         print("Error, the tpms is not recognized")
         return False
