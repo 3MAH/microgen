@@ -14,8 +14,28 @@ from microgen.Polyhedron import Polyhedron
 
 class BasicGeometry:
     def __init__(
-        self, number, shape, xc, yc, zc, psi, theta, phi, param_geom, path_data=None
+        self, number, shape, 
+        xc, yc, zc, 
+        psi, theta, phi, 
+        param_geom, path_data=None
     ):
+    """
+
+    Parameters
+    ----------
+    number : TYPE
+        DESCRIPTION
+    shape : TYPE
+        DESCRIPTION
+    xc, yc, zc : TYPE
+        DESCRIPTION
+    psi, theta, phi : TYPE
+        DESCRIPTION
+    param_geom : TYPE
+        DESCRIPTION
+    path_data : TYPE
+        DESCRIPTION
+    """
         self.number = number
         self.shape = shape
         self.xc = xc
@@ -102,7 +122,7 @@ class BasicGeometry:
 
         if self.shape.lower() == "polyhedron":
             self.geometry = Polyhedron(
-                dic=self.param_geom,
+                dic=self.param_geom["dic"],
                 number=self.number
             )
 
@@ -113,6 +133,18 @@ class BasicGeometry:
     # ----------GENERATE PHASES----------------------------------------------------------------------------------
 
     def generate(self, rve=None):
+    """
+
+    Parameters
+    ----------
+    rve : TYPE, optional
+        DESCRIPTION
+
+    Returns
+    -------
+    cq.Shape(cqshape.val().wrapped) : TYPE
+        DESCRIPTION
+    """
 
         if self.shape.lower() == "box":
             cqshape = self.geometry.createBox()

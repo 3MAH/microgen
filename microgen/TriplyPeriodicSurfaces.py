@@ -302,6 +302,32 @@ def generateTPMS(
     path_data="",
     function=""
 ):
+    """
+
+    Parameters
+    ----------
+    type_tpms : TYPE
+        DESCRIPTION
+    thickness : TYPE
+        DESCRIPTION
+    rve : TYPE
+        DESCRIPTION
+    sizeMesh : TYPE, optional
+        DESCRIPTION
+    minFacetAngle : TYPE, optional
+        DESCRIPTION
+    maxRadius : TYPE, optional
+        DESCRIPTION
+    path_data : TYPE, optional
+        DESCRIPTION
+    function : TYPE, optional
+        DESCRIPTION
+
+    Returns
+    -------
+    bool
+        DESCRIPTION
+    """
 
     thickness = thickness * pi
 

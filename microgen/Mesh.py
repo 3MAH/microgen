@@ -4,6 +4,19 @@ import gmsh
 
 
 def mesh(mesh_file, listPhases, size, order=1):
+    """
+
+    Parameters
+    ----------
+    mesh_file : TYPE
+        DESCRIPTION
+    listPhases : TYPE
+        DESCRIPTION
+    size : TYPE
+        DESCRIPTION
+    order : TYPE, optional
+        DESCRIPTION
+    """
     gmsh.initialize()
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
@@ -94,6 +107,21 @@ def mesh(mesh_file, listPhases, size, order=1):
 
 
 def meshPeriodic(mesh_file, rve, listPhases, size, order=1):
+    """
+
+    Parameters
+    ----------
+    mesh_file : TYPE
+        DESCRIPTION
+    rve : TYPE
+        DESCRIPTION
+    listPhases : TYPE
+        DESCRIPTION
+    size : TYPE
+        DESCRIPTION
+    rve : TYPE, optional
+        DESCRIPTION
+    """
     gmsh.initialize()
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]

@@ -11,6 +11,26 @@ from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 
 def rotateEuler(object, center, psi, theta, phi):
+    """
+
+    Parameters
+    ----------
+    object : TYPE
+        DESCRIPTION
+    center : TYPE
+        DESCRIPTION
+    psi : TYPE
+        DESCRIPTION
+    theta : TYPE
+        DESCRIPTION
+    phi : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    object_r : TYPE
+        DESCRIPTION
+    """
 
     u = np.array([0.0, 0.0, 1.0])
     u = np.array([np.cos(psi * np.pi / 180.0), np.sin(psi * np.pi / 180.0), 0.0])
@@ -39,6 +59,13 @@ def rotateEuler(object, center, psi, theta, phi):
 
 
 def removeEmptyLines(filename):
+    """
+
+    Parameters
+    ----------
+    filename : TYPE
+        DESCRIPTION
+    """
     if not os.path.isfile(filename):
         print("{} does not exist ".format(filename))
         return
@@ -51,6 +78,22 @@ def removeEmptyLines(filename):
 
 
 def periodic(cqshape, rve):
+    """
+
+    Parameters
+    ----------
+    cqshape : TYPE
+        DESCRIPTION
+    rve : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    return_object_periodic[0].copy() : TYPE
+        DESCRIPTION
+    flat_list : TYPE
+        DESCRIPTION
+    """
 
     wk_plane = cq.Workplane().add(cqshape.Solids())
     periodic_object = []
@@ -938,6 +981,22 @@ def periodic(cqshape, rve):
 
 
 def fuseParts(cqShapeList, retain_edges):
+    """
+
+    Parameters
+    ----------
+    cqShapeList : TYPE
+        DESCRIPTION
+    retain_edges : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    cq.Shape(fixed) : TYPE
+        DESCRIPTION
+    occ_solids_list : TYPE
+        DESCRIPTION
+    """
 
     #    occ_solids_list = (s.Solids() for s in cqShapeList)
     #    for cqshape in cqShapeList:
@@ -1002,6 +1061,22 @@ def fuseParts(cqShapeList, retain_edges):
 
 
 def cutPhasesByShape(cqShapeList, cut_obj):
+    """
+
+    Parameters
+    ----------
+    cqShapeList : TYPE
+        DESCRIPTION
+    cut_obj : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    phase_cut : TYPE
+        DESCRIPTION
+    occ_solids_list : TYPE
+        DESCRIPTION
+    """
     phase_cut = []
 
     for shape in cqShapeList:
@@ -1018,6 +1093,22 @@ def cutPhasesByShape(cqShapeList, cut_obj):
 
 
 def cutPhaseByShapeList(phaseToCut, cqShapeList):
+    """
+
+    Parameters
+    ----------
+    phaseToCut : TYPE
+        DESCRIPTION
+    print_cols : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    ResultCut : TYPE
+        DESCRIPTION
+    occ_solids_list : TYPE
+        DESCRIPTION
+    """
 
     ResultCut = phaseToCut
     for shape in cqShapeList:
@@ -1029,6 +1120,22 @@ def cutPhaseByShapeList(phaseToCut, cqShapeList):
 
 
 def cutParts(cqShapeList, reverseOrder=True):
+    """
+
+    Parameters
+    ----------
+    cqShapeList : TYPE
+        DESCRIPTION
+    reverseOrder : TYPE, optional
+        DESCRIPTION
+
+    Returns
+    -------
+    phase_cut : TYPE
+        DESCRIPTION
+    occ_solids_list : TYPE
+        DESCRIPTION
+    """
     phase_cut = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
@@ -1061,6 +1168,28 @@ def cutParts(cqShapeList, reverseOrder=True):
     return (phase_cut, occ_solids_list)
 
 def rasterShapeList(cqShapeList, rve, grid):
+    """
+
+    Parameters
+    ----------
+    cqShapeList : TYPE
+        DESCRIPTION
+    rve : TYPE
+        DESCRIPTION
+    grid : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    flat_list : TYPE
+        DESCRIPTION
+    occ_solids_list : TYPE
+        DESCRIPTION
+    volume_list : TYPE
+        DESCRIPTION
+    center_list : TYPE
+        DESCRIPTION
+    """
 
     occ_solids_list=[]
 
@@ -1087,7 +1216,7 @@ def rasterShapeList(cqShapeList, rve, grid):
     flat_list = [item for sublist in occ_solids_list for item in sublist]
     volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
     center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
-    return (flat_list, occ_solids_list, volume_list,center_list)
+    return (flat_list, occ_solids_list, volume_list, center_list)
 
 # def cut_parts(cqShapeList):
 #
@@ -1114,6 +1243,17 @@ def rasterShapeList(cqShapeList, rve, grid):
 
 
 def lanceNeper(filename, nbCell, dimCube):
+    """
+
+    Parameters
+    ----------
+    filename : TYPE
+        DESCRIPTION
+    nbCell : TYPE
+        DESCRIPTION
+    dimCube : TYPE
+        DESCRIPTION
+    """
     command = "neper -T -n " + str(nbCell) + " -id 1 -dim 3"
     command = (
         command
@@ -1131,6 +1271,28 @@ def lanceNeper(filename, nbCell, dimCube):
 
 
 def parseNeper(filename):
+    """
+
+    Parameters
+    ----------
+    filename : TYPE
+        DESCRIPTION
+
+    Returns
+    -------
+    A : TYPE
+        DESCRIPTION
+    seed : TYPE
+        DESCRIPTION
+    listeSommetsOut : TYPE
+        DESCRIPTION
+    edges : TYPE
+        DESCRIPTION
+    faces : TYPE
+        DESCRIPTION
+    polys : TYPE
+        DESCRIPTION
+    """
 
     # 1ere étape : lecture des coordonées des germes, coordonées des sommets,
     # labels globaux des sommets pour chaque segment, labels globaux des segments
