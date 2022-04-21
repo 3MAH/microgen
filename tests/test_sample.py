@@ -52,7 +52,7 @@ def test_tpms():
 
 
 def test_shapes():
-    rve = microgen.Rve(a=1, b=1, c=1, size_mesh=0.03)
+    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.03)
 
     elem = microgen.BasicGeometry(number=0, shape='ellipsoid',
                                   xc=0, yc=0, zc=0,
