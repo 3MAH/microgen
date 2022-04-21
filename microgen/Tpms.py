@@ -22,7 +22,7 @@ class Tpms:
         self.function = function
 
         if type_surface == "custom":
-            if function == None:
+            if function is None:
                 raise ValueError("No given function to evaluate")
             elif not is_function_valid(function):
                 raise ValueError(function + " function not valid")

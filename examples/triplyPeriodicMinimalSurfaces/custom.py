@@ -25,12 +25,12 @@ c = 1.0
 revel = Rve(a, b, c, size_mesh)
 
 elem = BasicGeometry(number=0, shape='tpms',
-                     xc=0.5  , yc=0.5  , zc=0.5,
-                     psi=0.  , theta=0., phi=0.,
+                     xc=0.5, yc=0.5,   zc=0.5,
+                     psi=0., theta=0., phi=0.,
                      param_geom={"type_surface": 'custom',
-                                 "type_part"   : part,
-                                 "thickness"   : thickness,
-                                 "function"    : function},
+                                 "type_part":    part,
+                                 "thickness":    thickness,
+                                 "function":     function},
                      path_data='data')
 
 
