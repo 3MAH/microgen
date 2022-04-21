@@ -27,9 +27,9 @@ seedList = np.genfromtxt(g, delimiter = '\t')
 
 box = BasicGeometry(number=0,
                     shape='box',
-                    xc=sampleThickness, yc=0, zc=0,
+                    xc=0, yc=0, zc=0,
                     psi=0, theta=0, phi=0,
-                    param_geom={"dim_x": 30,
+                    param_geom={"dim_x": sampleThickness,
                                 "dim_y": 60,
                                 "dim_z": 60})
 
@@ -37,7 +37,7 @@ phases = []
 for seed in seedList:
     poly = BasicGeometry(number=0,
                          shape='extrudedpolygon',
-                         xc=seed[0], yc=seed[1], zc=seed[2],
+                         xc=seed[0] - sampleThickness, yc=seed[1], zc=seed[2],
                          psi=0, theta=0, phi=0,
                          param_geom={"listCorners": [(0, h2 + h/2), (h1, h/2), 
                                                      (h1, -h/2), (0, -h2 - h/2), 
