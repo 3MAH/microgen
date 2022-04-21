@@ -285,9 +285,10 @@ class Gyroid(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
         if abs(x) + abs(y) + abs(z) > 1.0e-8:
-            return sin(2*pi*x)*cos(2*pi*y) + \
-                   sin(2*pi*y)*cos(2*pi*z) + \
-                   sin(2*pi*z)*cos(2*pi*x) + self.height
+            return (sin(2*pi*x)*cos(2*pi*y)
+                   + sin(2*pi*y)*cos(2*pi*z) 
+                   + sin(2*pi*z)*cos(2*pi*x)
+                   + self.height)
         else:
             return 1.0
 
@@ -331,8 +332,10 @@ class Wolfram_iWP(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return cos(2*pi*x)*cos(2*pi*y) + cos(2*pi*y)*cos(2*pi*z) + cos(2*pi*x)*cos(2*pi*z) \
-                - 3 * cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + self.height
+        return cos(2*pi*x)*cos(2*pi*y) + cos(2*pi*y)*cos(2*pi*z) \
+               + cos(2*pi*x)*cos(2*pi*z) \
+               - 3 * cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) \
+               + self.height
 
 
 class Wolfram_P_W(pygalmesh.DomainBase):
@@ -353,8 +356,10 @@ class Wolfram_P_W(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 4*(cos(2*pi*x)*cos(2*pi*y) + cos(2*pi*y)*cos(2*pi*z) + cos(2*pi*x)*cos(2*pi*z)) - \
-                 3*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + self.height
+        return 4*(cos(2*pi*x)*cos(2*pi*y) \
+                  + cos(2*pi*y)*cos(2*pi*z) \
+                  + cos(2*pi*x)*cos(2*pi*z)) - \
+               3*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + self.height
 
 
 class Wolfram_lindinoid(pygalmesh.DomainBase):
@@ -375,12 +380,12 @@ class Wolfram_lindinoid(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 0.5*(sin(2*2*pi*x)*cos(2*pi*y)*sin(2*pi*z) + \
-                    sin(2*2*pi*y)*cos(2*pi*z)*sin(2*pi*x) + \
-                    sin(2*2*pi*z)*cos(2*pi*x)*sin(2*pi*y)) \
-                - 0.5*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
-                       cos(2*2*pi*y)*cos(2*2*pi*z) + \
-                       cos(2*2*pi*z)*cos(2*2*pi*x)) + .15 + self.height
+        return 0.5*(sin(2*2*pi*x)*cos(2*pi*y)*sin(2*pi*z) \
+                    + sin(2*2*pi*y)*cos(2*pi*z)*sin(2*pi*x) \
+                    + sin(2*2*pi*z)*cos(2*pi*x)*sin(2*pi*y)) \
+                - 0.5*(cos(2*2*pi*x)*cos(2*2*pi*y) \
+                       + cos(2*2*pi*y)*cos(2*2*pi*z) \
+                       + cos(2*2*pi*z)*cos(2*2*pi*x)) + .15 + self.height
 
 
 class Wolfram_DoubleGyroid(pygalmesh.DomainBase):
@@ -401,12 +406,12 @@ class Wolfram_DoubleGyroid(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 2.75*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) + \
-                     sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) + \
-                     sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) - \
-               1*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
-                  cos(2*2*pi*y)*cos(2*2*pi*z) + \
-                  cos(2*2*pi*z)*cos(2*2*pi*x)) + self.height
+        return 2.75*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) \
+                     + sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) \
+                     + sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) \
+               - 1*(cos(2*2*pi*x)*cos(2*2*pi*y) \
+                  + cos(2*2*pi*y)*cos(2*2*pi*z) \
+                  + cos(2*2*pi*z)*cos(2*2*pi*x)) + self.height
 
 
 class Wolfram_Gprime(pygalmesh.DomainBase):
@@ -427,12 +432,12 @@ class Wolfram_Gprime(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 5*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) +\
-                  sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) +\ 
-                  sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) +\ 
-               1*(cos(2*2*pi*x)*cos(2*2*pi*y) +\
-                  cos(2*2*pi*y)*cos(2*2*pi*z) +\
-                  cos(2*2*pi*z)*cos(2*2*pi*x)) + self.height
+        return (5*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) 
+                  + sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z)  
+                  + sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x))  
+               + 1*(cos(2*2*pi*x)*cos(2*2*pi*y) 
+                  + cos(2*2*pi*y)*cos(2*2*pi*z) 
+                  + cos(2*2*pi*z)*cos(2*2*pi*x)) + self.height)
 
 
 
@@ -454,11 +459,11 @@ class Wolfram_DoubleDiamond(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 1*(sin(2*2*pi*x)*sin(2*2*pi*y) + \
-                  sin(2*2*pi*y)*sin(2*2*pi*z) + \
-                  sin(2*2*pi*x)*sin(2*2*pi*z)) + \
-               cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z) + \
-               self.height
+        return (1*(sin(2*2*pi*x)*sin(2*2*pi*y) 
+                  + sin(2*2*pi*y)*sin(2*2*pi*z) 
+                  + sin(2*2*pi*x)*sin(2*2*pi*z)) 
+               + cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z) 
+               + self.height)
 
 
 class Wolfram_Dprime(pygalmesh.DomainBase):
@@ -479,11 +484,11 @@ class Wolfram_Dprime(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return sin(2*pi*x)*sin(2*pi*y)*sin(2*pi*z) + \
-               cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) - \
-               1*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
-                  cos(2*2*pi*y)*cos(2*2*pi*z) + \
-                  cos(2*2*pi*z)*cos(2*2*pi*x)) - 0.4 + self.height
+        return (sin(2*pi*x)*sin(2*pi*y)*sin(2*pi*z) 
+               + cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) 
+               - 1*(cos(2*2*pi*x)*cos(2*2*pi*y) 
+                    + cos(2*2*pi*y)*cos(2*2*pi*z) 
+                    + cos(2*2*pi*z)*cos(2*2*pi*x)) - 0.4 + self.height)
 
 
 
@@ -505,12 +510,12 @@ class Wolfram_DoubleP(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 0.5*(cos(2*pi*x)*cos(2*pi*y) + \
-                    cos(2*pi*y)*cos(2*pi*z) + \
-                    cos(2*pi*z)*cos(2*pi*x)) + \ 
-               0.2*(cos(2*2*pi*x) + \
-                    cos(2*2*pi*y) + \
-                    cos(2*2*pi*z)) + self.height
+        return (0.5*(cos(2*pi*x)*cos(2*pi*y) 
+                    + cos(2*pi*y)*cos(2*pi*z) 
+                    + cos(2*pi*z)*cos(2*pi*x))  
+               + 0.2*(cos(2*2*pi*x) 
+                    + cos(2*2*pi*y) 
+                    + cos(2*2*pi*z)) + self.height)
 
 
 class Wolfram_OCTO(pygalmesh.DomainBase):
@@ -531,12 +536,12 @@ class Wolfram_OCTO(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 4*(cos(2*pi*x)*cos(2*pi*y) + \
-                  cos(2*pi*y)*cos(2*pi*z) + \
-                  cos(2*pi*z)*cos(2*pi*x)) - \
-               2.8*(cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)) + \
-               1*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) \
-               + 1.5 + self.height
+        return (4*(cos(2*pi*x)*cos(2*pi*y) 
+                  + cos(2*pi*y)*cos(2*pi*z) 
+                  + cos(2*pi*z)*cos(2*pi*x)) 
+               - 2.8*(cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)) 
+               + 1*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) 
+               + 1.5 + self.height)
 
 
 
@@ -558,14 +563,14 @@ class Wolfram_PN(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 0.6*(cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)) + \
-               0.4*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) + \
-               0.2*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) + \ 
-               0.2*(cos(2*2*pi*x) + cos(2*2*pi*y) + cos(2*2*pi*z)) + \  
-               0.1*(cos(3*2*pi*x) + cos(3*2*pi*y) + cos(3*2*pi*z)) + \
-               0.2*(cos(2*pi*x)*cos(2*pi*y) + \
-                    cos(2*pi*y)*cos(2*pi*z) + \
-                    cos(2*pi*z)*cos(2*pi*x)) + self.height
+        return (0.6*(cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)) 
+               + 0.4*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) 
+               + 0.2*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) 
+               + 0.2*(cos(2*2*pi*x) + cos(2*2*pi*y) + cos(2*2*pi*z))   
+               + 0.1*(cos(3*2*pi*x) + cos(3*2*pi*y) + cos(3*2*pi*z)) 
+               + 0.2*(cos(2*pi*x)*cos(2*pi*y) 
+                      + cos(2*pi*y)*cos(2*pi*z) 
+                      + cos(2*pi*z)*cos(2*pi*x)) + self.height)
 
 
 class Wolfram_KP(pygalmesh.DomainBase):
@@ -586,12 +591,12 @@ class Wolfram_KP(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 0.6*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) + \ 
-               0.7*(cos(2*pi*x)*cos(2*pi*y) + \
-                    cos(2*pi*y)*cos(2*pi*z) + \
-                    cos(2*pi*z)*cos(2*pi*x)) - \
-               0.9*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) \
-               + 0.4 + self.height
+        return (0.6*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z))  
+               + 0.7*(cos(2*pi*x)*cos(2*pi*y) 
+                      + cos(2*pi*y)*cos(2*pi*z) 
+                      + cos(2*pi*z)*cos(2*pi*x)) 
+               - 0.9*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) 
+               + 0.4 + self.height)
 
 
 class Wolfram_FRD(pygalmesh.DomainBase):
@@ -612,12 +617,12 @@ class Wolfram_FRD(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 8*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) + \
-               1*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z)) - \ 
-               1*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
-                  cos(2*2*pi*y)*cos(2*2*pi*z) + \
-                  cos(2*2*pi*z)*cos(2*2*pi*x))) \
-                + self.height
+        return (8*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z) 
+               + 1*(cos(2*2*pi*x)*cos(2*2*pi*y)*cos(2*2*pi*z))  
+               - 1*(cos(2*2*pi*x)*cos(2*2*pi*y) 
+                    + cos(2*2*pi*y)*cos(2*2*pi*z) 
+                    + cos(2*2*pi*z)*cos(2*2*pi*x)) 
+               + self.height)
 
 
 
@@ -639,14 +644,14 @@ class Wolfram_splitP(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return 1.1*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) + \
-                    sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) + \
-                    sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) - \
-               0.2*(cos(2*2*pi*x)*cos(2*2*pi*y) + \
-                    cos(2*2*pi*y)*cos(2*2*pi*z) + \
-                    cos(2*2*pi*z)*cos(2*2*pi*x)) - \ 
-               0.4*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) \
-               + self.height
+        return (1.1*(sin(2*2*pi*x)*sin(2*pi*z)*cos(2*pi*y) 
+                    + sin(2*2*pi*y)*sin(2*pi*x)*cos(2*pi*z) 
+                    + sin(2*2*pi*z)*sin(2*pi*y)*cos(2*pi*x)) 
+               - 0.2*(cos(2*2*pi*x)*cos(2*2*pi*y) 
+                      + cos(2*2*pi*y)*cos(2*2*pi*z) 
+                      + cos(2*2*pi*z)*cos(2*2*pi*x)) 
+               - 0.4*(cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)) 
+               + self.height)
 
 
 def generateTPMS(
