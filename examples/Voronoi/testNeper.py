@@ -22,7 +22,7 @@ for polyhedron in listPolyhedra:
                          yc=polyhedron["original"][1],
                          zc=polyhedron["original"][2],
                          psi=0., theta=0., phi=0.,
-                         param_geom=polyhedron, path_data='')
+                         param_geom={"dic": polyhedron}, path_data='')
     temp = elem.generate()
     phases.append(temp)
 
