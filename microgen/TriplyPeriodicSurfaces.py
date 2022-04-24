@@ -3,6 +3,7 @@ import math
 from numpy import cos, sin, pi, abs
 import pygalmesh
 
+# Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
 class Custom(pygalmesh.DomainBase):
     def __init__(self, rve, function, height):
@@ -300,7 +301,8 @@ def generateTPMS(
     minFacetAngle=10.0,
     maxRadius=0.05,
     path_data="",
-    function=""
+    function="",
+    verbose=False
 ):
     """ DESCRIPTION
 
@@ -385,32 +387,40 @@ def generateTPMS(
         print("Error, the tpms is not recognized")
         return False
 
+    print("mesh_surf_testplus  (1/4)", end="\r")
     mesh_surf_testplus = pygalmesh.generate_surface_mesh(
         s_testplus,
         min_facet_angle=minFacetAngle,
         max_radius_surface_delaunay_ball=maxRadius,
         max_facet_distance=sizeMesh,
+        verbose=verbose,
     )
 
+    print("mesh_surf_testminus (2/4)", end="\r")
     mesh_surf_testminus = pygalmesh.generate_surface_mesh(
         s_testminus,
         min_facet_angle=minFacetAngle,
         max_radius_surface_delaunay_ball=maxRadius,
         max_facet_distance=sizeMesh,
+        verbose=verbose,
     )
 
+    print("mesh_surf_plus      (4/4)", end="\r")
     mesh_surf_plus = pygalmesh.generate_surface_mesh(
         s_plus,
         min_facet_angle=minFacetAngle,
         max_radius_surface_delaunay_ball=maxRadius,
         max_facet_distance=sizeMesh,
+        verbose=verbose,
     )
 
+    print("mesh_surf_minus     (4/4)", end="\r")
     mesh_surf_minus = pygalmesh.generate_surface_mesh(
         s_minus,
         min_facet_angle=minFacetAngle,
         max_radius_surface_delaunay_ball=maxRadius,
         max_facet_distance=sizeMesh,
+        verbose=verbose,
     )
 
     if path_data != '':

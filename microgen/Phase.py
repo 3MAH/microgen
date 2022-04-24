@@ -159,7 +159,7 @@ class BasicGeometry:
         elif self.shape.lower() == "ellipsoid":
             cqshape = self.geometry.createEllipsoid()
         elif self.shape.lower() == "tpms":
-            cqshape = self.geometry.createTpms(self.path_data, rve)
+            cqshape = self.geometry.createTpms(path_data=self.path_data, rve=rve)
         elif self.shape.lower() == "polyhedron":
             cqshape = self.geometry.createPolyhedron()
         else:
