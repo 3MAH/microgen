@@ -1,6 +1,7 @@
 import microgen
 import cadquery as cq
 import numpy as np
+import os
 
 def test_octettruss():
 
@@ -44,6 +45,8 @@ def test_octettruss():
 
     phases_cut = microgen.cutParts(cqShapeList=[s[0] for s in listPeriodicPhases], reverseOrder=False)
     compound = cq.Compound.makeCompound(phases_cut[0])
+
+    os.makedirs('tests/data', exist_ok=True) # if data folder doesn't exist yet
 
     cq.exporters.export(compound, 'tests/data/compound.step')
     microgen.meshPeriodic(mesh_file='tests/data/compound.step', rve=revel, listPhases=phases_cut[1], size=0.03, order=1)
