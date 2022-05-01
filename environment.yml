@@ -5,8 +5,9 @@ channels:
 
 dependencies:
   - python
+  - vtk=9.0.1
   - cadquery=master
-  - python-gmsh=4.8
+  - python-gmsh
   - pygalmesh
   - mmg
   - pytest-cov
