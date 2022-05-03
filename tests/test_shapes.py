@@ -119,4 +119,4 @@ def test_shapes():
     compound = cq.Compound.makeCompound(raster[0])
     cq.exporters.export(compound, 'tests/data/compound.step')
 
-    microgen.mesh(mesh_file='tests/data/compound.step', listPhases=raster[1], size=0.03, order=1)
+    microgen.mesh(mesh_file='tests/data/compound.step', listPhases=raster[1], size=0.03, order=1, output_file="tests/data/compound.msh")

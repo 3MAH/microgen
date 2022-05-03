@@ -53,5 +53,5 @@ denseSample = box.generate()
 sample = cutPhaseByShapeList(phaseToCut=denseSample, cqShapeList=phases)
 
 cq.exporters.export(sample[0], 'poly1.step')
-# mesh(mesh_file='poly1.step', listPhases=[sample[1]], size=0.1, order=1)
+# mesh(mesh_file='poly1.step', listPhases=[sample[1]], size=0.1, order=1, output_mesh='Mesh.msh')
 

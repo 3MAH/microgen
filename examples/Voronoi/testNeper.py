@@ -30,4 +30,4 @@ compound = cq.Compound.makeCompound(phases)
 cq.exporters.export(compound, 'compound.step')
 
 occ_solids_list = [s.Solids() for s in phases]
-mesh(mesh_file='compound.step', listPhases=occ_solids_list, size=size_mesh, order=1)
+mesh(mesh_file='compound.step', listPhases=occ_solids_list, size=size_mesh, order=1, output_file='Mesh.msh')

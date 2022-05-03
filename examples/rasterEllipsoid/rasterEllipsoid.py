@@ -26,4 +26,4 @@ raster = rasterShapeList(cqShapeList=[elli], rve=revel, grid=[5, 5, 5])
 compound = cq.Compound.makeCompound(raster[0])
 cq.exporters.export(compound, 'compound.step')
 
-mesh(mesh_file='compound.step', listPhases=raster[1], size=size_mesh, order=1)
+mesh(mesh_file='compound.step', listPhases=raster[1], size=size_mesh, order=1, output_file='Mesh.msh')

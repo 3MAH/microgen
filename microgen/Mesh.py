@@ -3,7 +3,7 @@ import gmsh
 
 
 
-def mesh(mesh_file, listPhases, size, order=1):
+def mesh(mesh_file, listPhases, size, order=1, output_file="Mesh.msh"):
     """ DESCRIPTION
 
     Parameters
@@ -102,11 +102,11 @@ def mesh(mesh_file, listPhases, size, order=1):
     gmsh.model.mesh.setOrder(order)
     gmsh.model.mesh.generate(3)
     gmsh.option.setNumber("Mesh.MshFileVersion", 2)
-    gmsh.write("Mesh.msh")
+    gmsh.write(output_file)
     gmsh.finalize()
 
 
-def meshPeriodic(mesh_file, rve, listPhases, size, order=1):
+def meshPeriodic(mesh_file, rve, listPhases, size, order=1, output_file="MeshPeriodic.msh"):
     """ DESCRIPTION
 
     Parameters
@@ -320,5 +320,5 @@ def meshPeriodic(mesh_file, rve, listPhases, size, order=1):
     gmsh.model.mesh.generate(3)
     gmsh.model.mesh.setOrder(order)
     gmsh.option.setNumber("Mesh.MshFileVersion", 2)
-    gmsh.write("MeshPeriodic.msh")
+    gmsh.write(output_file)
     gmsh.finalize()
