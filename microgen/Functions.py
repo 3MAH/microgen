@@ -1239,6 +1239,30 @@ def rasterShapeList(cqShapeList, rve, grid):
 #    occ_solids_list = [s.Solids() for s in phase_cut[::-1]]
 #    return (phase_cut[::-1], occ_solids_list)
 
+def repeatGeometry(unit_geom, rve, grid):
+    """ DESCRIPTION
+
+    Parameters
+    ----------
+    unit_geom : TYPE
+        DESCRIPTION
+    rve : TYPE
+        DESCRIPTION
+    grid : TYPE
+        DESCRIPTION
+    """
+
+    xyz_repeat = cq.Assembly()
+    for i_x in range(grid["x"]):
+        for i_y in range(grid["y"]):
+            for i_z in range(grid["z"]):
+                xyz_repeat.add(unit_geom, 
+                               loc=cq.Location(cq.Vector(i_x*rve.dim_x, 
+                                                         i_y*rve.dim_y, 
+                                                         i_z*rve.dim_z)))
+    
+    return xyz_repeat.toCompound()
+
 # Ajout MB 07/01/2022
 
 
