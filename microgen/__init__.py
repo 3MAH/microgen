@@ -5,12 +5,12 @@ from .Capsule import *
 from .Ellipsoid import *
 from .ExtrudedPolygon import *
 from .Polyhedron import *
-from .Material_functions import *
-from .Material_sections import *
+from .Material import *
 from .Mesh import *
-from .Functions import *
+from .Operations import *
+from .Periodic import *
 from .Phase import *
 from .Rve import *
-from .mmg import *
+from .External import *
 from .Tpms import *
 from .TriplyPeriodicSurfaces import *

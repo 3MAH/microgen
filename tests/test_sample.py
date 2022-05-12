@@ -10,7 +10,17 @@ def test_misc():
     
     listPolyhedra, seed, vertices, edges, faces, polys = microgen.parseNeper('examples/Voronoi/test1')
 
-def test_cut():
+    microgen.MatSection(number=0,
+                        name="test",
+                        umat_name="test",
+                        psi_mat=0,
+                        theta_mat=0,
+                        phi_mat=0,
+                        nprops=0,
+                        nstatev=0,
+                        props=[])
+
+def test_operations():
 
     
     elem = microgen.BasicGeometry(number=0, shape='box',
@@ -33,9 +43,12 @@ def test_cut():
 
     microgen.cutPhasesByShape([shape1], shape2)
 
+    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.03)
+    microgen.repeatGeometry(shape1, rve, grid={"x": 2, "y": 2, "z": 2})
 
 
-    # FUNCTIONS
+
+    # EXTERNAL
     # lanceNeper
 
     # MATERIAL

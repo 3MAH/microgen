@@ -1,7 +1,6 @@
 import numpy as np
 import cadquery as cq
 
-from microgen.Functions import removeEmptyLines
 from microgen.Box import Box
 from microgen.Sphere import Sphere
 from microgen.Cylinder import Cylinder
@@ -14,10 +13,10 @@ from microgen.Polyhedron import Polyhedron
 
 class BasicGeometry:
     def __init__(
-        self, number, shape, 
-        xc, yc, zc, 
-        psi, theta, phi, 
-        param_geom, path_data=None
+        self, shape, param_geom, number=0, 
+        xc=0, yc=0, zc=0, 
+        psi=0, theta=0, phi=0,
+        path_data=None
     ):
         """ DESCRIPTION
 

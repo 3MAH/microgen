@@ -1,4 +1,4 @@
-from microgen.Functions import rotateEuler
+from microgen.Operations import rotateEuler
 import cadquery as cq
 
 # ----------ExtrudedPolygon-----------------------------------------------------------------------------------------#

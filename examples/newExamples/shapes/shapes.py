@@ -30,5 +30,5 @@ for shape, param_geom in shapes.items():
     i = i + 1
 
 compound = assembly.toCompound()
-show_object(compound) # run with cq-editor
-# cq.exporters.export(compound, 'compound.stl')
+# show_object(compound) # run with cq-editor
+cq.exporters.export(compound, 'compound.stl')

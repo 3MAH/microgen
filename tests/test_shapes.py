@@ -83,11 +83,13 @@ def test_shapes():
 
 
 
-    elem = microgen.Phase.BasicGeometry(number=0, shape='fake',
+    fake = microgen.Phase.BasicGeometry(number=0, shape='fake',
                                   xc=0.5, yc=0.5, zc=0.5,
                                   psi=0, theta=0, phi=0,
                                   param_geom={"geom": 0})
-    pytest.raises(ValueError, elem.generate)
+    pytest.raises(ValueError, fake.generate)
+
+    microgen.Phase.BasicGeometry.__cmp__(elem, fake)
 
     elem = microgen.BasicGeometry(number=0, shape='tpms',
                                   xc=0.5, yc=0.5, zc=0.5,

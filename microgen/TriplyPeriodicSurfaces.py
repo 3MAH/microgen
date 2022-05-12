@@ -300,7 +300,7 @@ def generateTPMS(
     sizeMesh=0.05,
     minFacetAngle=10.0,
     maxRadius=0.05,
-    path_data="",
+    path_data='.',
     function="",
     verbose=False
 ):
@@ -423,18 +423,12 @@ def generateTPMS(
         verbose=verbose,
     )
 
-    if path_data != '':
-        if not os.path.isdir(path_data):
-            os.mkdir(path_data)
-        mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
-        mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
-        mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')
-        mesh_surf_minus.write(path_data + '/' + 'tpms_minus.stl')
-    else:
-        mesh_surf_testplus.write("tpms_testplus.stl")
-        mesh_surf_testminus.write("tpms_testminus.stl")
-        mesh_surf_plus.write("tpms_plus.stl")
-        mesh_surf_minus.write("tpms_minus.stl")
+    if not os.path.isdir(path_data):
+        os.mkdir(path_data)
+    mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
+    mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
+    mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')
+    mesh_surf_minus.write(path_data + '/' + 'tpms_minus.stl')
 
     return True
 

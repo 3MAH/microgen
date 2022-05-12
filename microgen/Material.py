@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
-# Do not delete the following import lines
+from microgen.Operations import removeEmptyLines
+
 import numpy as np
 
 
@@ -54,3 +55,48 @@ class MatSection:
         self.p0 = (0.0, 0.0, 0.0)
         self.p1 = x2mat.tolist()
         self.p2 = y2mat.tolist()
+
+
+def readSections(path_data, section_file):
+
+    nsections = 0
+    sections = []
+    path_inputfile = path_data + "/" + section_file
+
+    removeEmptyLines(path_inputfile)
+    table_props = []
+
+    try:
+        fp = open(path_inputfile)
+        for line in enumerate(fp):
+            if line != "\n":
+                if nsections > 0:
+                    row_split = line[1].split()
+                    table_props.append(row_split)
+                nsections += 1
+
+    finally:
+        fp.seek(0)
+        fp.close()
+
+    for row_split in table_props:
+        nprops = int(row_split[6])
+        props = []
+        for prop in range(0, nprops):
+            props.append(float(row_split[8 + prop]))
+
+        # sec = msection(number_section,name_section,umat_name,psi_mat,theta_mat,phi_mat,len(props),nstatev,props)
+        sec = MatSection(
+            int(row_split[0]),
+            row_split[1],
+            row_split[2],
+            float(row_split[3]),
+            float(row_split[4]),
+            float(row_split[5]),
+            nprops,
+            int(row_split[7]),
+            props,
+        )
+        sections.append(sec)
+
+    return sections

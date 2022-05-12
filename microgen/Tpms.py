@@ -1,4 +1,4 @@
-from microgen.Functions import fuseParts
+from microgen.Operations import fuseParts
 from microgen.TriplyPeriodicSurfaces import generateTPMS, is_function_valid
 import cadquery as cq
 
@@ -51,7 +51,7 @@ class Tpms:
 
 
     def createSurfaces(
-        self, rve, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data="", verbose=False
+        self, rve, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data='.', verbose=False
     ):
         """ DESCRIPTION
 
@@ -103,24 +103,15 @@ class Tpms:
         surf_p = TopoDS_Shape()
         surf_m = TopoDS_Shape()
         stl_reader = StlAPI_Reader()
-        if path_data != "":
-            if not stl_reader.Read(surf_tp, path_data + "/" + "tpms_testplus.stl"):
-                raise ValueError(path_data + "/" + "tpms_testplus.stl file not found")
-            if not stl_reader.Read(surf_tm, path_data + "/" + "tpms_testminus.stl"):
-                raise ValueError(path_data + "/" + "tpms_testminus.stl file not found")
-            if not stl_reader.Read(surf_p, path_data + "/" + "tpms_plus.stl"):
-                raise ValueError(path_data + "/" + "tpms_plus.stl file not found")
-            if not stl_reader.Read(surf_m, path_data + "/" + "tpms_minus.stl"):
-                raise ValueError(path_data + "/" + "tpms_minus.stl file not found")
-        else:
-            if not stl_reader.Read(surf_tp, "tpms_testplus.stl"):
-                raise ValueError("tpms_testplus.stl file not found")
-            if not stl_reader.Read(surf_tm, "tpms_testminus.stl"):
-                raise ValueError("tpms_testminus.stl file not found")
-            if not stl_reader.Read(surf_p, "tpms_plus.stl"):
-                raise ValueError("tpms_plus.stl file not found")
-            if not stl_reader.Read(surf_m, "tpms_minus.stl"):
-                raise ValueError("tpms_minus.stl file not found")
+        
+        if not stl_reader.Read(surf_tp, path_data + "/" + "tpms_testplus.stl"):
+            raise ValueError(path_data + "/" + "tpms_testplus.stl file not found")
+        if not stl_reader.Read(surf_tm, path_data + "/" + "tpms_testminus.stl"):
+            raise ValueError(path_data + "/" + "tpms_testminus.stl file not found")
+        if not stl_reader.Read(surf_p, path_data + "/" + "tpms_plus.stl"):
+            raise ValueError(path_data + "/" + "tpms_plus.stl file not found")
+        if not stl_reader.Read(surf_m, path_data + "/" + "tpms_minus.stl"):
+             raise ValueError(path_data + "/" + "tpms_minus.stl file not found")
 
         face_cut_tp = cq.Face(surf_tp)
         face_cut_tm = cq.Face(surf_tm)
