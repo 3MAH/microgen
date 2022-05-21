@@ -6,15 +6,14 @@ from OCP.StlAPI import StlAPI_Reader
 
 from OCP.TopoDS import TopoDS_Shape
 
-import os
-
 # ----------TPMS-----------------------------------------------------------------------------------------#
 
 
 class Tpms:
-    def __init__(self, center, angle, 
-                 type_surface, type_part, thickness, number, function=None):
-        """ DESCRIPTION
+    def __init__(
+        self, center, angle, type_surface, type_part, thickness, number, function=None
+    ):
+        """DESCRIPTION
 
         Parameters
         ----------
@@ -45,15 +44,19 @@ class Tpms:
         if type_surface == "custom":
             if function is None:
                 raise ValueError("No given function to evaluate")
-            elif not is_function_valid(function):
+            if not is_function_valid(function):
                 raise ValueError(function + " function not valid")
 
-
-
     def createSurfaces(
-        self, rve, sizeMesh=0.05, minFacetAngle=10, maxRadius=0.05, path_data='.', verbose=False
+        self,
+        rve,
+        sizeMesh=0.05,
+        minFacetAngle=10,
+        maxRadius=0.05,
+        path_data=".",
+        verbose=False,
     ):
-        """ DESCRIPTION
+        """DESCRIPTION
 
         Parameters
         ----------
@@ -81,7 +84,7 @@ class Tpms:
         )
 
     def createTpms(self, path_data, rve):
-        """ DESCRIPTION
+        """DESCRIPTION
 
         Parameters
         ----------
@@ -103,7 +106,7 @@ class Tpms:
         surf_p = TopoDS_Shape()
         surf_m = TopoDS_Shape()
         stl_reader = StlAPI_Reader()
-        
+
         if not stl_reader.Read(surf_tp, path_data + "/" + "tpms_testplus.stl"):
             raise ValueError(path_data + "/" + "tpms_testplus.stl file not found")
         if not stl_reader.Read(surf_tm, path_data + "/" + "tpms_testminus.stl"):
@@ -111,7 +114,7 @@ class Tpms:
         if not stl_reader.Read(surf_p, path_data + "/" + "tpms_plus.stl"):
             raise ValueError(path_data + "/" + "tpms_plus.stl file not found")
         if not stl_reader.Read(surf_m, path_data + "/" + "tpms_minus.stl"):
-             raise ValueError(path_data + "/" + "tpms_minus.stl file not found")
+            raise ValueError(path_data + "/" + "tpms_minus.stl file not found")
 
         face_cut_tp = cq.Face(surf_tp)
         face_cut_tm = cq.Face(surf_tm)
@@ -124,10 +127,9 @@ class Tpms:
         boxCut = boxCut.split(face_cut_m)
 
         boxSolids = boxCut.solids().all()
-        boxSolidsSize = boxCut.solids().size()
 
         # print("boxSolids", boxSolids)
-        # print("boxSolidsSize", boxSolidsSize)
+        # print("boxSolidsSize", boxCut.solids().size())
         # print("boxCut", boxCut)
 
         listSolids = []

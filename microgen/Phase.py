@@ -13,12 +13,19 @@ from microgen.Polyhedron import Polyhedron
 
 class BasicGeometry:
     def __init__(
-        self, shape, param_geom, number=0, 
-        xc=0, yc=0, zc=0, 
-        psi=0, theta=0, phi=0,
-        path_data=None
+        self,
+        shape,
+        param_geom,
+        number=0,
+        xc=0,
+        yc=0,
+        zc=0,
+        psi=0,
+        theta=0,
+        phi=0,
+        path_data=None,
     ):
-        """ DESCRIPTION
+        """DESCRIPTION
 
         Parameters
         ----------
@@ -107,7 +114,7 @@ class BasicGeometry:
                     type_part=self.param_geom["type_part"],
                     thickness=self.param_geom["thickness"],
                     number=self.number,
-                    function=self.param_geom["function"]
+                    function=self.param_geom["function"],
                 )
             else:
                 self.geometry = Tpms(
@@ -116,23 +123,23 @@ class BasicGeometry:
                     type_surface=self.param_geom["type_surface"],
                     type_part=self.param_geom["type_part"],
                     thickness=self.param_geom["thickness"],
-                    number=self.number
+                    number=self.number,
                 )
 
         if self.shape.lower() == "polyhedron":
-            self.geometry = Polyhedron(
-                dic=self.param_geom["dic"],
-                number=self.number
-            )
+            self.geometry = Polyhedron(dic=self.param_geom["dic"], 
+                                       number=self.number)
 
     def __cmp__(self, other):
         # return cmp(self.number, other.number)
-        return (self.number > other.number) - (self.number < other.number)  # replacement for cmp function not availbale with Python3
+        return (self.number > other.number) - (
+            self.number < other.number
+        )  # replacement for cmp function not availbale with Python3
 
-    # ----------GENERATE PHASES----------------------------------------------------------------------------------
+    # ----------GENERATE PHASES------------------------------------------------
 
     def generate(self, rve=None):
-        """ DESCRIPTION
+        """DESCRIPTION
 
         Parameters
         ----------
@@ -158,88 +165,11 @@ class BasicGeometry:
         elif self.shape.lower() == "ellipsoid":
             cqshape = self.geometry.createEllipsoid()
         elif self.shape.lower() == "tpms":
-            cqshape = self.geometry.createTpms(path_data=self.path_data, rve=rve)
+            cqshape = self.geometry.createTpms(path_data=self.path_data,
+                                               rve=rve)
         elif self.shape.lower() == "polyhedron":
             cqshape = self.geometry.createPolyhedron()
         else:
             raise ValueError(self.shape + " is not recognised")
 
         return cq.Shape(cqshape.val().wrapped)
-
-
-# def readPhases(path_data, phases_file, phases):
-
-#     nphases = 0
-#     cnt_phase = 0
-#     nprops = []
-#     # buf = ""
-#     path_inputfile = path_data + phases_file
-#     removeEmptyLines(path_inputfile)
-
-#     try:
-#         fp = open(path_inputfile)
-#         for line in enumerate(fp):
-#             if line == "\n":
-#                 nphases -= 1
-#             else:
-#                 row_split = line[1].split()
-#                 if nphases > 0:
-
-#                     nprops_phase = 0
-#                     if row_split[1] == "matrix":
-#                         nprops_phase = 0
-#                     elif row_split[1] == "sphere":
-#                         nprops_phase = 1
-#                     elif row_split[1] == "cylinder":
-#                         nprops_phase = 2
-#                     elif row_split[1] == "bar":
-#                         nprops_phase = 2
-#                     elif row_split[1] == "ellipsoid":
-#                         nprops_phase = 3
-#                     elif row_split[1] == "tpms":
-#                         nprops_phase = 3
-
-#                     nprops.append(nprops_phase)
-#                 nphases += 1
-#     finally:
-#         fp.seek(0)
-#         fp.close()
-
-#     print(path_data)
-#     print(phases_file)
-
-#     try:
-#         fp = open(path_inputfile)
-#         for line in enumerate(fp):
-#             print(line)
-#             if line == "\n":
-#                 cnt_phase -= 1
-#             else:
-#                 row_split = line[1].split()
-#                 if cnt_phase > 0:
-
-#                     number = int(row_split[0])
-#                     shape = row_split[1]
-#                     xc = float(row_split[2])
-#                     yc = float(row_split[3])
-#                     zc = float(row_split[4])
-#                     psi = float(row_split[5])
-#                     theta = float(row_split[6])
-#                     phi = float(row_split[7])
-
-#                     props = []
-#                     if shape == "tpms":
-#                         for prop in range(0, nprops[cnt_phase - 1]):
-#                             props.append(row_split[8 + prop])
-#                     else:
-#                         for prop in range(0, nprops[cnt_phase - 1]):
-#                             props.append(float(row_split[8 + prop]))
-
-#                     pha = phase(
-#                         number, shape, xc, yc, zc, psi, theta, phi, props, path_data
-#                     )
-#                     phases.append(pha)
-#                     print(phases[-1].shape)
-#                 cnt_phase += 1
-#     finally:
-#         fp.close()

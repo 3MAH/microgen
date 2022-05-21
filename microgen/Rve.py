@@ -4,8 +4,8 @@ import cadquery as cq
 
 class Rve:
     def __init__(self, dim_x, dim_y, dim_z, size_mesh=0.03):
-        """ DESCRIPTION
-        
+        """DESCRIPTION
+
         Representative Volume Element (RVE) or Representative Elementary Volume (REV)
 
         Parameters

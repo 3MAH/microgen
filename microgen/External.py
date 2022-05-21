@@ -7,12 +7,11 @@ import os
 import numpy as np
 
 
-
 # Ajout MB 07/01/2022
 
 
 def lanceNeper(filename, nbCell, dimCube):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -40,7 +39,7 @@ def lanceNeper(filename, nbCell, dimCube):
 
 
 def parseNeper(filename):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------

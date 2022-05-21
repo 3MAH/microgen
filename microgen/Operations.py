@@ -2,16 +2,13 @@ import numpy as np
 import cadquery as cq
 import os
 
-from OCP.BRepAlgoAPI import (
-    BRepAlgoAPI_Fuse,
-    BRepAlgoAPI_Cut
-)
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse, BRepAlgoAPI_Cut
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 
 def rotateEuler(object, center, psi, theta, phi):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -59,7 +56,7 @@ def rotateEuler(object, center, psi, theta, phi):
 
 
 def removeEmptyLines(filename):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -78,7 +75,7 @@ def removeEmptyLines(filename):
 
 
 def fuseParts(cqShapeList, retain_edges):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -158,7 +155,7 @@ def fuseParts(cqShapeList, retain_edges):
 
 
 def cutPhasesByShape(cqShapeList, cut_obj):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -190,7 +187,7 @@ def cutPhasesByShape(cqShapeList, cut_obj):
 
 
 def cutPhaseByShapeList(phaseToCut, cqShapeList):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -217,7 +214,7 @@ def cutPhaseByShapeList(phaseToCut, cqShapeList):
 
 
 def cutParts(cqShapeList, reverseOrder=True):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -264,8 +261,9 @@ def cutParts(cqShapeList, reverseOrder=True):
 
     return (phase_cut, occ_solids_list)
 
+
 def rasterShapeList(cqShapeList, rve, grid):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -288,7 +286,7 @@ def rasterShapeList(cqShapeList, rve, grid):
         DESCRIPTION
     """
 
-    occ_solids_list=[]
+    occ_solids_list = []
 
     for cqshape in cqShapeList:
         wk_plane = cq.Workplane().add(cqshape.Solids())
@@ -299,21 +297,22 @@ def rasterShapeList(cqShapeList, rve, grid):
         np.delete(ygrid, 0)
         np.delete(zgrid, 0)
         for i in xgrid:
-            Plane_x = cq.Face.makePlane(basePnt = (i, 0, 0), dir = (1, 0, 0))
+            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
         for j in ygrid:
-            Plane_y = cq.Face.makePlane(basePnt = (0, j, 0), dir = (0, 1, 0))
+            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
         for k in zgrid:
-            Plane_z = cq.Face.makePlane(basePnt = (0, 0, k), dir = (0, 0, 1))
+            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
             wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
 
         occ_solids_list.append(wk_plane.val().Solids())
-    
+
     flat_list = [item for sublist in occ_solids_list for item in sublist]
     volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
     center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
     return (flat_list, occ_solids_list, volume_list, center_list)
+
 
 # def cut_parts(cqShapeList):
 #
@@ -336,8 +335,9 @@ def rasterShapeList(cqShapeList, rve, grid):
 #    occ_solids_list = [s.Solids() for s in phase_cut[::-1]]
 #    return (phase_cut[::-1], occ_solids_list)
 
+
 def repeatGeometry(unit_geom, rve, grid):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -353,9 +353,11 @@ def repeatGeometry(unit_geom, rve, grid):
     for i_x in range(grid["x"]):
         for i_y in range(grid["y"]):
             for i_z in range(grid["z"]):
-                xyz_repeat.add(unit_geom, 
-                               loc=cq.Location(cq.Vector(i_x*rve.dim_x, 
-                                                         i_y*rve.dim_y, 
-                                                         i_z*rve.dim_z)))
-    
+                xyz_repeat.add(
+                    unit_geom,
+                    loc=cq.Location(
+                        cq.Vector(i_x * rve.dim_x, i_y * rve.dim_y, i_z * rve.dim_z)
+                    ),
+                )
+
     return xyz_repeat.toCompound()

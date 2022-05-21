@@ -5,6 +5,7 @@ import pygalmesh
 
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
+
 class Custom(pygalmesh.DomainBase):
     def __init__(self, rve, function, height):
         super().__init__()
@@ -12,9 +13,10 @@ class Custom(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
         self.function = function
 
     def get_bounding_sphere_squared_radius(self):
@@ -40,7 +42,7 @@ class Hyperboloid(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
         if self.z0 < z and z < self.z1:
-            return x ** 2 + y ** 2 - (z ** 2 + self.waist_radius) ** 2
+            return x**2 + y**2 - (z**2 + self.waist_radius) ** 2
         return 1.0
 
     def get_bounding_sphere_squared_radius(self):
@@ -82,9 +84,10 @@ class SchwarzP(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -93,7 +96,7 @@ class SchwarzP(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z) + self.height
+        return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z) + self.height
 
 
 class SchwarzD(pygalmesh.DomainBase):
@@ -103,9 +106,10 @@ class SchwarzD(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -114,10 +118,10 @@ class SchwarzD(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        a = sin(2*pi*x) * sin(2*pi*y) * sin(2*pi*z)
-        b = sin(2*pi*x) * cos(2*pi*y) * cos(2*pi*z)
-        c = cos(2*pi*x) * sin(2*pi*y) * cos(2*pi*z)
-        d = cos(2*pi*x) * cos(2*pi*y) * sin(2*pi*z)
+        a = sin(2 * pi * x) * sin(2 * pi * y) * sin(2 * pi * z)
+        b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+        c = cos(2 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
+        d = cos(2 * pi * x) * cos(2 * pi * y) * sin(2 * pi * z)
         return a + b + c + d + self.height
 
 
@@ -128,9 +132,10 @@ class Neovius(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -140,10 +145,11 @@ class Neovius(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
 
-        a = 3*cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z)
-        b = 4*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)
+        a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
+        b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
 
         return a + b + self.height
+
 
 class SchoenIWP(pygalmesh.DomainBase):
     def __init__(self, rve, height):
@@ -152,9 +158,10 @@ class SchoenIWP(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -164,13 +171,16 @@ class SchoenIWP(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
 
-        l = 2*(cos(2*pi*x)*cos(2*pi*y) + \
-            cos(2*pi*y)*cos(2*pi*z) + \
-            cos(2*pi*z)*cos(2*pi*x))
-        m = cos(4*pi*x) + cos(4*pi*y) + cos(4*pi*z)
-        
+        l = 2 * (
+            cos(2 * pi * x) * cos(2 * pi * y)
+            + cos(2 * pi * y) * cos(2 * pi * z)
+            + cos(2 * pi * z) * cos(2 * pi * x)
+        )
+        m = cos(4 * pi * x) + cos(4 * pi * y) + cos(4 * pi * z)
+
         return l - m + self.height
-    
+
+
 class SchoenFRD(pygalmesh.DomainBase):
     def __init__(self, rve, height):
         super().__init__()
@@ -178,9 +188,10 @@ class SchoenFRD(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -190,12 +201,15 @@ class SchoenFRD(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
 
-        a = 4*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)
-        b = cos(4*pi*x)*cos(4*pi*y) + \
-            cos(4*pi*y)*cos(4*pi*z) + \
-            cos(4*pi*z)*cos(4*pi*x)
+        a = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+        b = (
+            cos(4 * pi * x) * cos(4 * pi * y)
+            + cos(4 * pi * y) * cos(4 * pi * z)
+            + cos(4 * pi * z) * cos(4 * pi * x)
+        )
         return a - b + self.height
-    
+
+
 class FischerKochS(pygalmesh.DomainBase):
     def __init__(self, rve, height):
         super().__init__()
@@ -203,9 +217,10 @@ class FischerKochS(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -215,12 +230,13 @@ class FischerKochS(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
 
-        a = cos(4*pi*x)*sin(2*pi*y)*cos(2*pi*z)
-        b = cos(2*pi*x)*cos(4*pi*y)*sin(2*pi*z)
-        c = sin(2*pi*x)*cos(2*pi*y)*cos(4*pi*z)
+        a = cos(4 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
+        b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
+        c = sin(2 * pi * x) * cos(2 * pi * y) * cos(4 * pi * z)
 
         return a + b + c + self.height
-    
+
+
 class PMY(pygalmesh.DomainBase):
     def __init__(self, rve, height):
         super().__init__()
@@ -228,9 +244,10 @@ class PMY(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -240,13 +257,14 @@ class PMY(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
 
-        a = 2*cos(2*pi*x)*cos(2*pi*y)*cos(2*pi*z)
-        b = sin(4*pi*x) * sin(2*pi*y)
-        c = sin(2*pi*x) * sin(4*pi*z)
-        d = sin(4*pi*y) * sin(2*pi*z)
+        a = 2 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+        b = sin(4 * pi * x) * sin(2 * pi * y)
+        c = sin(2 * pi * x) * sin(4 * pi * z)
+        d = sin(4 * pi * y) * sin(2 * pi * z)
 
         return a + b + c + d + self.height
-    
+
+
 class HoneyComb(pygalmesh.DomainBase):
     def __init__(self, rve, height):
         super().__init__()
@@ -254,9 +272,10 @@ class HoneyComb(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -265,8 +284,14 @@ class HoneyComb(pygalmesh.DomainBase):
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        return sin(2*pi*x)*cos(2*pi*y) + sin(2*pi*y) + cos(2*pi*z) + self.height
-        
+        return (
+            sin(2 * pi * x) * cos(2 * pi * y)
+            + sin(2 * pi * y)
+            + cos(2 * pi * z)
+            + self.height
+        )
+
+
 class Gyroid(pygalmesh.DomainBase):
     def __init__(self, rve, height):
         super().__init__()
@@ -274,9 +299,10 @@ class Gyroid(pygalmesh.DomainBase):
         self.z0 = 0.0
         self.z1 = rve.dz
         self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
-        self.bounding_sphere_squared_radius = math.sqrt((0.5 * rve.dx) ** 2 +
-                                                        (0.5 * rve.dy) ** 2 +
-                                                        (0.5 * rve.dz) ** 2) * 1.1
+        self.bounding_sphere_squared_radius = (
+            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            * 1.1
+        )
 
     def get_bounding_sphere_squared_radius(self):
         return self.bounding_sphere_squared_radius
@@ -286,9 +312,12 @@ class Gyroid(pygalmesh.DomainBase):
         y = pos[1]
         z = pos[2]
         if abs(x) + abs(y) + abs(z) > 1.0e-8:
-            return sin(2*pi*x)*cos(2*pi*y) + \
-                   sin(2*pi*y)*cos(2*pi*z) + \
-                   sin(2*pi*z)*cos(2*pi*x) + self.height
+            return (
+                sin(2 * pi * x) * cos(2 * pi * y)
+                + sin(2 * pi * y) * cos(2 * pi * z)
+                + sin(2 * pi * z) * cos(2 * pi * x)
+                + self.height
+            )
         else:
             return 1.0
 
@@ -300,11 +329,11 @@ def generateTPMS(
     sizeMesh=0.05,
     minFacetAngle=10.0,
     maxRadius=0.05,
-    path_data='.',
+    path_data=".",
     function="",
-    verbose=False
+    verbose=False,
 ):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -337,12 +366,12 @@ def generateTPMS(
         s_testplus = Custom(rve, function, thickness / 4.0)
         s_testminus = Custom(rve, function, -thickness / 4.0)
         s_plus = Custom(rve, function, thickness / 2.0)
-        s_minus = Custom(rve, function, -1.0 * thickness / 2.0)  
+        s_minus = Custom(rve, function, -1.0 * thickness / 2.0)
     elif type_tpms == "honeycomb":
         s_testplus = HoneyComb(rve, thickness / 4.0)
         s_testminus = HoneyComb(rve, -thickness / 4.0)
         s_plus = HoneyComb(rve, thickness / 2.0)
-        s_minus = HoneyComb(rve, -1.0 * thickness / 2.0)    
+        s_minus = HoneyComb(rve, -1.0 * thickness / 2.0)
     elif type_tpms == "gyroid":
         s_testplus = Gyroid(rve, thickness / 4.0)
         s_testminus = Gyroid(rve, -thickness / 4.0)
@@ -425,12 +454,13 @@ def generateTPMS(
 
     if not os.path.isdir(path_data):
         os.mkdir(path_data)
-    mesh_surf_testplus.write(path_data + '/' + 'tpms_testplus.stl')
-    mesh_surf_testminus.write(path_data + '/' + 'tpms_testminus.stl')
-    mesh_surf_plus.write(path_data + '/' + 'tpms_plus.stl')
-    mesh_surf_minus.write(path_data + '/' + 'tpms_minus.stl')
+    mesh_surf_testplus.write(path_data + "/" + "tpms_testplus.stl")
+    mesh_surf_testminus.write(path_data + "/" + "tpms_testminus.stl")
+    mesh_surf_plus.write(path_data + "/" + "tpms_plus.stl")
+    mesh_surf_minus.write(path_data + "/" + "tpms_minus.stl")
 
     return True
+
 
 def is_function_valid(function):
     try:

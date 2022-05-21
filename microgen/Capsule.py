@@ -1,7 +1,7 @@
 from microgen.Operations import rotateEuler
 import cadquery as cq
 
-# ----------CAPSULE-----------------------------------------------------------------------------------------#
+# ----------CAPSULE-------------------------------------------------------------------#
 
 
 class Capsule:
@@ -39,5 +39,7 @@ class Capsule:
         )
         capsule = cylinder.fuse(sphereG)
         capsule = capsule.fuse(sphereD)
-        capsule = rotateEuler(capsule, self.center, self.angle[0], self.angle[1], self.angle[2])
+        capsule = rotateEuler(
+            capsule, self.center, self.angle[0], self.angle[1], self.angle[2]
+        )
         return cq.Workplane().add(capsule.Solids())

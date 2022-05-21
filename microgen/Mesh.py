@@ -2,9 +2,8 @@ import numpy as np
 import gmsh
 
 
-
 def mesh(mesh_file, listPhases, size, order=1, output_file="Mesh.msh"):
-    """ DESCRIPTION
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -106,8 +105,10 @@ def mesh(mesh_file, listPhases, size, order=1, output_file="Mesh.msh"):
     gmsh.finalize()
 
 
-def meshPeriodic(mesh_file, rve, listPhases, size, order=1, output_file="MeshPeriodic.msh"):
-    """ DESCRIPTION
+def meshPeriodic(
+    mesh_file, rve, listPhases, size, order=1, output_file="MeshPeriodic.msh"
+):
+    """DESCRIPTION
 
     Parameters
     ----------
@@ -226,12 +227,14 @@ def meshPeriodic(mesh_file, rve, listPhases, size, order=1, output_file="MeshPer
 
             print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
-            if (abs(xmin2 - xmin) < eps
-                    and abs(xmax2 - xmax) < eps
-                    and abs(ymin2 - ymin) < eps
-                    and abs(ymax2 - ymax) < eps
-                    and abs(zmin2 - zmin) < eps
-                    and abs(zmax2 - zmax) < eps):
+            if (
+                abs(xmin2 - xmin) < eps
+                and abs(xmax2 - xmax) < eps
+                and abs(ymin2 - ymin) < eps
+                and abs(ymax2 - ymax) < eps
+                and abs(zmin2 - zmin) < eps
+                and abs(zmax2 - zmax) < eps
+            ):
                 gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
 
     # We get all the entities on the Ym
