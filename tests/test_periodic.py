@@ -54,5 +54,5 @@ def test_periodic():
     generate_sphere(x=1, y=1, z=0, rve=rve)
     generate_sphere(x=1, y=1, z=1, rve=rve)
 
-
-
+if __name__ == "__main__":
+    test_periodic()

@@ -111,24 +111,24 @@ def periodic(cqshape, rve):
 
         part = (
             cq.Workplane()
-            .add(partitions[f_0].solids(face_dir_inv[f_0]))
+            .add(partitions[f_0].solids(face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
         )
-        periodic_object.append(part.solids(face_dir_inv[f_1])
+        periodic_object.append(part.solids(face_dir[f_1])
                                    .intersect(rve.Box))
         periodic_object.append(
-            part.solids(face_dir[f_1])
+            part.solids(face_dir_inv[f_1])
                 .translate(translate[f_1])
                 .intersect(rve.Box)
         )
 
         part = (
             cq.Workplane()
-            .add(partitions[f_0].solids(face_dir[f_0]))
+            .add(partitions[f_0].solids(face_dir_inv[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
         )
         periodic_object.append(
-            part.solids(face_dir_inv[f_1])
+            part.solids(face_dir[f_1])
                 .translate(translate[f_0])
                 .intersect(rve.Box)
         )
@@ -138,7 +138,7 @@ def periodic(cqshape, rve):
             translate[f_0][2] + translate[f_1][2],
         )
         periodic_object.append(
-            part.solids(face_dir[f_1]).translate(tslt).intersect(rve.Box)
+            part.solids(face_dir_inv[f_1]).translate(tslt).intersect(rve.Box)
         )
 
     elif len(intersected_faces) == 3:  # three faces intersected (corner)
