@@ -1,14 +1,14 @@
 import numpy as np
 import cadquery as cq
 
-from microgen.Box import Box
-from microgen.Sphere import Sphere
-from microgen.Cylinder import Cylinder
-from microgen.ExtrudedPolygon import ExtrudedPolygon
-from microgen.Ellipsoid import Ellipsoid
-from microgen.Capsule import Capsule
-from microgen.Tpms import Tpms
-from microgen.Polyhedron import Polyhedron
+from .shape.box import Box
+from .shape.sphere import Sphere
+from .shape.cylinder import Cylinder
+from .shape.extrudedPolygon import ExtrudedPolygon
+from .shape.ellipsoid import Ellipsoid
+from .shape.capsule import Capsule
+from .shape.tpms import Tpms
+from .shape.polyhedron import Polyhedron
 
 
 class BasicGeometry:
@@ -106,25 +106,33 @@ class BasicGeometry:
                 number=self.number,
             )
         if self.shape.lower() == "tpms":
-            if self.param_geom["type_surface"] == "custom":
-                self.geometry = Tpms(
-                    center=self.center,
-                    angle=self.angle,
-                    type_surface=self.param_geom["type_surface"],
-                    type_part=self.param_geom["type_part"],
-                    thickness=self.param_geom["thickness"],
-                    number=self.number,
-                    function=self.param_geom["function"],
-                )
-            else:
-                self.geometry = Tpms(
-                    center=self.center,
-                    angle=self.angle,
-                    type_surface=self.param_geom["type_surface"],
-                    type_part=self.param_geom["type_part"],
-                    thickness=self.param_geom["thickness"],
-                    number=self.number,
-                )
+            self.geometry = Tpms(
+                center=self.center,
+                angle=self.angle,
+                surface_function=self.param_geom["surface_function"],
+                type_part=self.param_geom["type_part"],
+                thickness=self.param_geom["thickness"],
+                number=self.number,
+            )
+            # if self.param_geom["type_surface"] == "custom":
+            #     self.geometry = Tpms(
+            #         center=self.center,
+            #         angle=self.angle,
+            #         type_surface=self.param_geom["type_surface"],
+            #         type_part=self.param_geom["type_part"],
+            #         thickness=self.param_geom["thickness"],
+            #         number=self.number,
+            #         function=self.param_geom["function"],
+            #     )
+            # else:
+            #     self.geometry = Tpms(
+            #         center=self.center,
+            #         angle=self.angle,
+            #         type_surface=self.param_geom["type_surface"],
+            #         type_part=self.param_geom["type_part"],
+            #         thickness=self.param_geom["thickness"],
+            #         number=self.number,
+            #     )
 
         if self.shape.lower() == "polyhedron":
             self.geometry = Polyhedron(dic=self.param_geom["dic"], 

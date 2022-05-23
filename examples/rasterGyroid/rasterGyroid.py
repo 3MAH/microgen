@@ -1,5 +1,5 @@
 import cadquery as cq
-from microgen import Rve, BasicGeometry, rasterShapeList, mesh
+from microgen import Rve, BasicGeometry, rasterShapeList, mesh, gyroid
 
 # Size of the mesh
 size_mesh = 0.03
@@ -13,7 +13,7 @@ revel = Rve(a, b, c, size_mesh)
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5, zc=0.5,
                      psi=0., theta=0., phi=0.,
-                     param_geom={"type_surface": 'gyroid',
+                     param_geom={"surface_function": gyroid,
                                  "type_part": 'skeletal',
                                  "thickness": 0.3},
                      path_data='data')

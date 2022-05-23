@@ -3,12 +3,10 @@ import cadquery as cq
 import numpy as np
 
 
-def test_misc():
-    assert microgen.is_function_valid("cos(2*pi*x) + 3*sin(4*pi*x)") is True
-    assert microgen.is_function_valid("co(2*pi*x) + 3*sin(4*pi*x)") is False
-    assert microgen.is_function_valid("cos(2pi*x) + 3*sin(4*pi*x)") is False
-    
+def test_misc():    
     listPolyhedra, seed, vertices, edges, faces, polys = microgen.parseNeper('examples/Voronoi/test1')
+
+    microgen.removeEmptyLines("fake_file.txt")
 
     microgen.MatSection(number=0,
                         name="test",

@@ -1,5 +1,5 @@
 # -*- coding: utf8 -*-
-from microgen.Operations import removeEmptyLines
+from .operations import removeEmptyLines
 
 import numpy as np
 

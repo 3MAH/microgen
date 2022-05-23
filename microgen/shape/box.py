@@ -1,4 +1,4 @@
-from microgen.Operations import rotateEuler
+from ..operations import rotateEuler
 import cadquery as cq
 
 # ----------BOX-----------------------------------------------------------------------------------------#
