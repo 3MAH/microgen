@@ -12,11 +12,6 @@ conda:
 sphinx:
   configuration: docs/conf.py
 
-build:
-  os: ubuntu-22.04
-  tools:
-    python: "3.9"
-
 # Build documentation with MkDocs
 #mkdocs:
 #  configuration: mkdocs.yml

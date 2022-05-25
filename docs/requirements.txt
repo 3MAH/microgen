@@ -1,6 +1,6 @@
-vtk==9.0.1
-cadquery==2.2.0b0
-python-gmsh==4.8
+vtk
+cadquery
+python-gmsh
 pygalmesh
 mmg
 pytest-cov
