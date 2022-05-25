@@ -6,7 +6,7 @@ import numpy as np
 
 
 class Capsule:
-    def __init__(self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], height: float, radius: float, number: int) -> None:
+    def __init__(self, center: np.ndarray, angle: np.ndarray, height: float, radius: float, number: int) -> None:
         self.center = center
         self.angle = angle
         self.height = height

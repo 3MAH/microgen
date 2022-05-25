@@ -7,7 +7,7 @@ import numpy as np
 
 
 class Box:
-    def __init__(self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], dim_x: float, dim_y: float, dim_z: float, number: int) -> None:
+    def __init__(self, center: np.ndarray, angle: np.ndarray, dim_x: float, dim_y: float, dim_z: float, number: int) -> None:
         self.center = center
         self.angle = angle
         self.dim_x = dim_x

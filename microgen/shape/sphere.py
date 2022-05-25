@@ -5,7 +5,7 @@ import numpy as np
 
 
 class Sphere:
-    def __init__(self, center: np.ndarray[float, float, float], radius: float, number: int) -> None:
+    def __init__(self, center: np.ndarray, radius: float, number: int) -> None:
         self.center = center
         self.radius = radius
         self.number = number

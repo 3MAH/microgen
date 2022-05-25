@@ -156,7 +156,7 @@ def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> tuple[cq.Shape
 #    return (phase_cut, occ_solids_list)
 
 
-def cutPhasesByShape(cqShapeList: list, cut_obj: cq.Workplane or cq.Shape) -> tuple(list[cq.Shape], list[list[cq.Shape]]):
+def cutPhasesByShape(cqShapeList: list, cut_obj: cq.Workplane or cq.Shape) -> tuple[list[cq.Shape], list[list[cq.Shape]]]:
     """DESCRIPTION
 
     Parameters

@@ -6,7 +6,7 @@ import numpy as np
 
 
 class ExtrudedPolygon:
-    def __init__(self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], listCorners: list, height: float, number: int) -> None:
+    def __init__(self, center: np.ndarray, angle: np.ndarray, listCorners: list, height: float, number: int) -> None:
         self.center = center
         self.angle = angle
         self.listCorners = listCorners

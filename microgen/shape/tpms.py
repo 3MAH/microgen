@@ -90,7 +90,7 @@ def honeycomb(x: float, y: float, z: float, height: float) -> float:
 
 class Tpms:
     def __init__(
-        self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], surface_function: Callable[[float, float, float, float], float], type_part: str, thickness: float, number: int,
+        self, center: np.ndarray, angle: np.ndarray, surface_function: Callable[[float, float, float, float], float], type_part: str, thickness: float, number: int,
     ) -> None:
         """DESCRIPTION
 
