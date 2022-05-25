@@ -1,13 +1,11 @@
 import cadquery as cq
 from microgen import Rve, fuseParts, BasicGeometry, repeatGeometry
 
-# Size of the mesh
-size_mesh = 0.03
 a = 1.0
 b = 1.0
 c = 1.0
 
-rve = Rve(dim_x=a, dim_y=b, dim_z=c, size_mesh=size_mesh)
+rve = Rve(dim_x=a, dim_y=b, dim_z=c)
 
 # unit_geom = cq.importers.importStep('../../octetTruss/compound.step')
 unit_geom = cq.importers.importStep('../../triplyPeriodicMinimalSurfaces/sheet.step')

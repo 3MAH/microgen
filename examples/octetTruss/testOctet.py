@@ -25,13 +25,11 @@ number, shape, xc, yc, zc, psi, theta, phi, height, radius, = np.loadtxt(NPhases
 
 # sections = read_sections(path_data,section_file)
 
-# Size of the mesh
-size_mesh = 0.03
 a = 1.0
 b = 1.0
 c = 1.0
 
-revel = Rve(a, b, c, size_mesh)
+revel = Rve(a, b, c)
 listPhases = []
 listPeriodicPhases = []
 n = len(xc)

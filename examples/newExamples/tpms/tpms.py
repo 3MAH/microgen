@@ -9,7 +9,7 @@ surfaces = ["neovius", "gyroid", "schwarzD",
             "schwarzP", "honeycomb", "schoenIWP",
             "schoenFRD", "fischerKochS", "pmy"]
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.05)
+rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
 assembly = cq.Assembly()
 

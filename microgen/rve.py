@@ -3,7 +3,7 @@ import cadquery as cq
 
 
 class Rve:
-    def __init__(self, dim_x, dim_y, dim_z, size_mesh=0.03):
+    def __init__(self, dim_x: float, dim_y: float, dim_z: float) -> None:
         """DESCRIPTION
 
         Representative Volume Element (RVE) or Representative Elementary Volume (REV)
@@ -16,8 +16,6 @@ class Rve:
             Y dimension of the RVE
         dim_z : float
             Z dimension of the RVE
-        size_mesh : float
-            useless
         """
         self.dim_x = dim_x
         self.dim_y = dim_y
@@ -28,7 +26,6 @@ class Rve:
         self.y_max = dim_y
         self.z_min = 0.0
         self.z_max = dim_z
-        self.size_mesh = size_mesh
         self.dx = abs(self.x_max - self.x_min)
         self.dy = abs(self.y_max - self.y_min)
         self.dz = abs(self.z_max - self.z_min)

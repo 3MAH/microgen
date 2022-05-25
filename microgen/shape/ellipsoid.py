@@ -1,11 +1,12 @@
 from ..operations import rotateEuler
 import cadquery as cq
+import numpy as np
 
 # ----------ELLIPSOID-----------------------------------------------------------------------------------------#
 
 
 class Ellipsoid:
-    def __init__(self, center, angle, a_x, a_y, a_z, number):
+    def __init__(self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], a_x: float, a_y: float, a_z: float, number: int) -> None:
         self.center = center
         self.angle = angle
         self.a_x = a_x
@@ -14,7 +15,7 @@ class Ellipsoid:
         self.number = number
         self.name_part = "ellipsoid" + str(self.number)
 
-    def createEllipsoid(self):
+    def createEllipsoid(self) -> cq.Workplane:
         transform_mat = cq.Matrix(
             [
                 [self.a_x, 0, 0, self.center[0]],

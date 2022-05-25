@@ -1,11 +1,15 @@
 import pygalmesh
 from ..operations import fuseParts
+from ..rve import Rve
 import cadquery as cq
 
 import math
 from numpy import pi, sin, cos
+import numpy as np
 
 import os
+
+from typing import Callable
 
 from OCP.StlAPI import StlAPI_Reader
 
@@ -15,7 +19,7 @@ from OCP.TopoDS import TopoDS_Shape
 
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
-def gyroid(x, y, z, height):
+def gyroid(x: float, y: float, z: float, height: float) -> float:
     if abs(x) + abs(y) + abs(z) > 1.0e-8:
         return (
             sin(2 * pi * x) * cos(2 * pi * y)
@@ -26,23 +30,23 @@ def gyroid(x, y, z, height):
     else:
         return 1.0
 
-def schwarzP(x, y, z, height): 
+def schwarzP(x: float, y: float, z: float, height: float) -> float:
     return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z) + height
 
-def schwarzD(x, y, z, height): 
+def schwarzD(x: float, y: float, z: float, height: float) -> float:
     a = sin(2 * pi * x) * sin(2 * pi * y) * sin(2 * pi * z)
     b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     c = cos(2 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
     d = cos(2 * pi * x) * cos(2 * pi * y) * sin(2 * pi * z)
     return a + b + c + d + height
 
-def neovius(x, y, z, height): 
+def neovius(x: float, y: float, z: float, height: float) -> float:
     a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
     b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
 
     return a + b + height
 
-def schoenIWP(x, y, z, height): 
+def schoenIWP(x: float, y: float, z: float, height: float) -> float:
     l = 2 * (
         cos(2 * pi * x) * cos(2 * pi * y)
         + cos(2 * pi * y) * cos(2 * pi * z)
@@ -52,7 +56,7 @@ def schoenIWP(x, y, z, height):
 
     return l - m + height
 
-def schoenFRD(x, y, z, height): 
+def schoenFRD(x: float, y: float, z: float, height: float) -> float:
     a = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     b = (
         cos(4 * pi * x) * cos(4 * pi * y)
@@ -61,14 +65,14 @@ def schoenFRD(x, y, z, height):
     )
     return a - b + height
 
-def fischerKochS(x, y, z, height): 
+def fischerKochS(x: float, y: float, z: float, height: float) -> float:
     a = cos(4 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
     b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
     c = sin(2 * pi * x) * cos(2 * pi * y) * cos(4 * pi * z)
 
     return a + b + c + height
 
-def pmy(x, y, z, height): 
+def pmy(x: float, y: float, z: float, height: float) -> float:
     a = 2 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     b = sin(4 * pi * x) * sin(2 * pi * y)
     c = sin(2 * pi * x) * sin(4 * pi * z)
@@ -76,7 +80,7 @@ def pmy(x, y, z, height):
 
     return a + b + c + d + height
 
-def honeycomb(x, y, z, height):
+def honeycomb(x: float, y: float, z: float, height: float) -> float:
     return (
         sin(2 * pi * x) * cos(2 * pi * y)
         + sin(2 * pi * y)
@@ -86,8 +90,8 @@ def honeycomb(x, y, z, height):
 
 class Tpms:
     def __init__(
-        self, center, angle, surface_function, type_part, thickness, number,
-    ):
+        self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], surface_function: Callable[[float, float, float, float], float], type_part: str, thickness: float, number: int,
+    ) -> None:
         """DESCRIPTION
 
         Parameters
@@ -118,13 +122,13 @@ class Tpms:
 
     def createSurfaces(
         self,
-        rve,
-        sizeMesh=0.05,
-        minFacetAngle=10,
-        maxRadius=0.05,
-        path_data=".",
-        verbose=False,
-    ):
+        rve: Rve,
+        sizeMesh: float = 0.05,
+        minFacetAngle: float = 10,
+        maxRadius: float = 0.05,
+        path_data: str = ".",
+        verbose: bool = False,
+    ) -> bool:
         """DESCRIPTION
 
         Parameters
@@ -194,7 +198,7 @@ class Tpms:
 
         return True
 
-    def createTpms(self, path_data, rve):
+    def createTpms(self, path_data: str, rve: Rve) -> cq.Workplane:
         """DESCRIPTION
 
         Parameters
@@ -269,7 +273,7 @@ class Tpms:
 
 
 class Generator(pygalmesh.DomainBase):
-    def __init__(self, rve, height, surface_function):
+    def __init__(self, rve: Rve, height: float, surface_function: Callable[[float, float, float, float], float]) -> None:
         super().__init__()
         self.height = height
         self.z0 = 0.0
@@ -281,8 +285,8 @@ class Generator(pygalmesh.DomainBase):
         )
         self.surface_function = surface_function
 
-    def get_bounding_sphere_squared_radius(self):
+    def get_bounding_sphere_squared_radius(self) -> float:
         return self.bounding_sphere_squared_radius
 
-    def eval(self, pos):
+    def eval(self, pos: list) -> float:
         return self.surface_function(x=pos[0], y=pos[1], z=pos[2], height=self.height)

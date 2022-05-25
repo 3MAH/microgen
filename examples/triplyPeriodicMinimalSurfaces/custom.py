@@ -9,13 +9,11 @@ thickness = 0.1
 def custom(x, y, z, height):
     return cos(2*pi*x) + cos(2*pi*y) + cos(2*pi*z) + height
 
-# Size of the mesh
-size_mesh = 0.03
 a = 1.0
 b = 1.0
 c = 1.0
 
-revel = Rve(a, b, c, size_mesh)
+revel = Rve(a, b, c)
 
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5,   zc=0.5,

@@ -41,7 +41,7 @@ def test_operations():
 
     microgen.cutPhasesByShape([shape1], shape2)
 
-    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.03)
+    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1)
     microgen.repeatGeometry(shape1, rve, grid={"x": 2, "y": 2, "z": 2})
 
 
@@ -51,3 +51,7 @@ def test_operations():
 
     # MATERIAL
     # readSections
+
+if __name__ == "__main__":
+    test_misc()
+    test_operations

@@ -18,13 +18,11 @@ def test_octettruss():
                                                                              usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
                                                                              skiprows=1, unpack=True, ndmin=1)
 
-    # Size of the mesh
-    size_mesh = 0.03
     a = 1.0
     b = 1.0
     c = 1.0
 
-    revel = microgen.Rve(a, b, c, size_mesh)
+    revel = microgen.Rve(a, b, c)
     listPhases = []
     listPeriodicPhases = []
     n = len(xc)
@@ -51,3 +49,6 @@ def test_octettruss():
 
     cq.exporters.export(compound, 'tests/data/compound.step')
     microgen.meshPeriodic(mesh_file='tests/data/compound.step', rve=revel, listPhases=phases_cut[1], size=0.03, order=1, output_file='tests/data/MeshPeriodic.vtk')
+
+if __name__ == "__main__":
+    test_octettruss()

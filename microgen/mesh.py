@@ -1,8 +1,10 @@
 import numpy as np
 import gmsh
 
+from .rve import Rve
 
-def mesh(mesh_file, listPhases, size, order=1, output_file="Mesh.msh"):
+
+def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_file: str = "Mesh.msh") -> None:
     """DESCRIPTION
 
     Parameters
@@ -106,8 +108,8 @@ def mesh(mesh_file, listPhases, size, order=1, output_file="Mesh.msh"):
 
 
 def meshPeriodic(
-    mesh_file, rve, listPhases, size, order=1, output_file="MeshPeriodic.msh"
-):
+    mesh_file: str, rve: Rve, listPhases: list, size: float, order: int = 1, output_file: str = "MeshPeriodic.msh"
+) -> None:
     """DESCRIPTION
 
     Parameters

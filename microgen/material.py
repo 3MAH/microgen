@@ -7,16 +7,16 @@ import numpy as np
 class MatSection:
     def __init__(
         self,
-        number,
-        name,
-        umat_name,
-        psi_mat,
-        theta_mat,
-        phi_mat,
-        nprops,
-        nstatev,
-        props,
-    ):
+        number: int,
+        name: str,
+        umat_name: str,
+        psi_mat: float,
+        theta_mat: float,
+        phi_mat: float,
+        nprops: int,
+        nstatev: int,
+        props: list,
+    ) -> None:
         self.number = number  # Number of the section
         self.name = name  # Name of the section
         self.umat_name = umat_name  # Name of the constitutive law
@@ -57,7 +57,7 @@ class MatSection:
         self.p2 = y2mat.tolist()
 
 
-def readSections(path_data, section_file):
+def readSections(path_data: str, section_file: str) -> list:
 
     nsections = 0
     sections = []

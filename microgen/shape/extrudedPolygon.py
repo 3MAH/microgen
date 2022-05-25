@@ -1,11 +1,12 @@
 from ..operations import rotateEuler
 import cadquery as cq
+import numpy as np
 
 # ----------ExtrudedPolygon-----------------------------------------------------------------------------------------#
 
 
 class ExtrudedPolygon:
-    def __init__(self, center, angle, listCorners, height, number):
+    def __init__(self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], listCorners: list, height: float, number: int) -> None:
         self.center = center
         self.angle = angle
         self.listCorners = listCorners
@@ -13,7 +14,7 @@ class ExtrudedPolygon:
         self.number = number
         self.name_part = "extrudedpolygon" + str(self.number)
 
-    def createExtrudedpolygon(self):
+    def createExtrudedpolygon(self) -> cq.Workplane:
         poly = (
             cq.Workplane("YZ")
             .polyline(self.listCorners)

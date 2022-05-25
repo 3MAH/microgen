@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 
 def test_shapes():
-    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.03)
+    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1)
 
     elem = microgen.BasicGeometry(number=0, shape='ellipsoid',
                                   xc=0, yc=0, zc=0,
@@ -100,7 +100,7 @@ def test_shapes():
     microgen.mesh(mesh_file='tests/data/compound.step', listPhases=raster[1], size=0.03, order=1, output_file="tests/data/compound.msh")
 
 def test_tpms():
-    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.03)
+    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1)
 
     elem = microgen.BasicGeometry(number=0, shape='tpms',
                                   xc=0.5, yc=0.5, zc=0.5,

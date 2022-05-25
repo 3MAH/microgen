@@ -4,7 +4,7 @@ import cadquery as cq
 
 
 class Polyhedron:
-    def __init__(self, dic, number):
+    def __init__(self, dic: dict, number: int) -> None:
         self.dic = dic
         self.faces_ixs = [face["vertices"] for face in dic["faces"]]
         for ixs in self.faces_ixs:
@@ -12,7 +12,7 @@ class Polyhedron:
         self.number = number
         self.name_part = "polyhedron" + str(self.number)
 
-    def createPolyhedron(self):
+    def createPolyhedron(self) -> cq.Workplane:
 
         faces = []
         for ixs in self.faces_ixs:

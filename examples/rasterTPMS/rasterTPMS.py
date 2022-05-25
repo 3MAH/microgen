@@ -8,7 +8,7 @@ b = 1.0
 c = 1.0
 
 periodicity = 0
-revel = Rve(a, b, c, size_mesh)
+revel = Rve(a, b, c)
 
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5, zc=0.5,

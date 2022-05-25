@@ -9,7 +9,7 @@ def generate_sphere(x, y, z, rve):
 
 
 def test_periodic():
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, size_mesh=0.03)
+    rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
     # test x- and x+ faces intersected 
     elem = BasicGeometry(shape='capsule',

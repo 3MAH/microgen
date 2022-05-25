@@ -1,8 +1,9 @@
 from .operations import fuseParts
+from .rve import Rve
 import cadquery as cq
 
 
-def periodic(cqshape, rve):
+def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
     """DESCRIPTION
 
     Parameters

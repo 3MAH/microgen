@@ -1,12 +1,13 @@
 from ..operations import rotateEuler
 import cadquery as cq
+import numpy as np
 
 # ----------BOX-----------------------------------------------------------------------------------------#
 # MB 03/12/2021
 
 
 class Box:
-    def __init__(self, center, angle, dim_x, dim_y, dim_z, number):
+    def __init__(self, center: np.ndarray[float, float, float], angle: np.ndarray[float, float, float], dim_x: float, dim_y: float, dim_z: float, number: int) -> None:
         self.center = center
         self.angle = angle
         self.dim_x = dim_x
@@ -15,7 +16,7 @@ class Box:
         self.number = number
         self.name_part = "box" + str(self.number)
 
-    def createBox(self):
+    def createBox(self) -> cq.Workplane:
         box = (
             cq.Workplane()
             .box(self.dim_x, self.dim_y, self.dim_z)

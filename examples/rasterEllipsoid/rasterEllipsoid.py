@@ -8,7 +8,7 @@ b = 1.0
 c = 1.0
 
 periodicity = 0
-revel = Rve(a, b, c, size_mesh)
+revel = Rve(a, b, c)
 listPhases = []
 
 elem = BasicGeometry(number=101, shape='ellipsoid',

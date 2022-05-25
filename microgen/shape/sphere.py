@@ -1,16 +1,17 @@
 import cadquery as cq
+import numpy as np
 
 # ----------SPHERE--------------------------------------------------------#
 
 
 class Sphere:
-    def __init__(self, center, radius, number):
+    def __init__(self, center: np.ndarray[float, float, float], radius: float, number: int) -> None:
         self.center = center
         self.radius = radius
         self.number = number
         self.name_part = "sphere" + str(self.number)
 
-    def createSphere(self):
+    def createSphere(self) -> cq.Workplane:
         return (
             cq.Workplane()
             .sphere(self.radius)

@@ -1,0 +1,6 @@
+vtk
+cadquery
+python-gmsh
+pygalmesh
+mmg
+pytest-cov

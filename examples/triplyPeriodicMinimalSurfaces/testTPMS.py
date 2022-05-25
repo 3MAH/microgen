@@ -1,14 +1,12 @@
 import cadquery as cq
 from microgen import Rve, BasicGeometry, gyroid
 
-# Size of the mesh
-size_mesh = 0.03
 a = 1.0
 b = 1.0
 c = 1.0
 
 periodicity = 0
-revel = Rve(a, b, c, size_mesh)
+rve = Rve(a, b, c)
 
 elem = BasicGeometry(number=0, shape='tpms',
                      xc=0.5, yc=0.5, zc=0.5,
@@ -17,9 +15,9 @@ elem = BasicGeometry(number=0, shape='tpms',
                                  "type_part": 'sheet',
                                  "thickness": 0.1},
                      path_data='data')
-elem.geometry.createSurfaces(rve=revel,
+elem.geometry.createSurfaces(rve=rve,
                              sizeMesh=0.03, minFacetAngle=20., maxRadius=0.03,
                              path_data='data')
-part = elem.generate(rve=revel)
+part = elem.generate(rve=rve)
 
 cq.exporters.export(part, 'gyroid.step')

@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import cadquery as cq
 
@@ -9,22 +10,23 @@ from .shape.ellipsoid import Ellipsoid
 from .shape.capsule import Capsule
 from .shape.tpms import Tpms
 from .shape.polyhedron import Polyhedron
+from .rve import Rve
 
 
 class BasicGeometry:
     def __init__(
         self,
-        shape,
-        param_geom,
-        number=0,
-        xc=0,
-        yc=0,
-        zc=0,
-        psi=0,
-        theta=0,
-        phi=0,
-        path_data=None,
-    ):
+        shape: str,
+        param_geom: dict,
+        number: int = 0,
+        xc: float = 0,
+        yc: float = 0,
+        zc: float = 0,
+        psi: float = 0,
+        theta: float = 0,
+        phi: float = 0,
+        path_data: str = None,
+    ) -> None:
         """DESCRIPTION
 
         Parameters
@@ -56,6 +58,8 @@ class BasicGeometry:
         self.center = np.array([self.xc, self.yc, self.zc])
         self.angle = np.array([self.psi, self.theta, self.phi])
         self.name = self.shape + str(self.number)
+
+        self.geometry = None  # type: Any 
 
         if self.shape.lower() == "box":
             self.geometry = Box(
@@ -138,7 +142,7 @@ class BasicGeometry:
             self.geometry = Polyhedron(dic=self.param_geom["dic"], 
                                        number=self.number)
 
-    def __cmp__(self, other):
+    def __cmp__(self, other: 'BasicGeometry') -> int:
         # return cmp(self.number, other.number)
         return (self.number > other.number) - (
             self.number < other.number
@@ -146,7 +150,7 @@ class BasicGeometry:
 
     # ----------GENERATE PHASES------------------------------------------------
 
-    def generate(self, rve=None):
+    def generate(self, rve: Rve = None) -> cq.Shape:
         """DESCRIPTION
 
         Parameters
