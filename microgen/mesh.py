@@ -25,11 +25,11 @@ def mesh(
         DESCRIPTION
     """
     gmsh.initialize()
-    gmsh.option.setNumber('General.Verbosity', 1) # this would still print errors, but not warnings
+    gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
     nbTags = len(flatListPhases)
-    listTagsNb = [len(phase_list) for phase_list in listPhases]
+    # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
     # print(nbTags)
     # print(listTagsNb)
@@ -49,7 +49,7 @@ def mesh(
     listDimTags = [(3, tag) for tag in FlatListTags]
     # print(listDimTags)
 
-    ToMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
+    # ToMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
     # print(ToMesh)
 
     #    #get all elementary entities in the model
@@ -138,11 +138,11 @@ def meshPeriodic(
         DESCRIPTION
     """
     gmsh.initialize()
-    gmsh.option.setNumber('General.Verbosity', 1) # this would still print errors, but not warnings
+    gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
     nbTags = len(flatListPhases)
-    listTagsNb = [len(phase_list) for phase_list in listPhases]
+    # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
     # print(nbTags)
     # print(listTagsNb)
@@ -162,7 +162,7 @@ def meshPeriodic(
     listDimTags = [(3, tag) for tag in flatListTags]
     # print(listDimTags)
 
-    toMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
+    # toMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
     # print(toMesh)
 
     #    #get all elementary entities in the model
