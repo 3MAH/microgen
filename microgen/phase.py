@@ -1,16 +1,17 @@
 from typing import Any
-import numpy as np
-import cadquery as cq
 
-from .shape.box import Box
-from .shape.sphere import Sphere
-from .shape.cylinder import Cylinder
-from .shape.extrudedPolygon import ExtrudedPolygon
-from .shape.ellipsoid import Ellipsoid
-from .shape.capsule import Capsule
-from .shape.tpms import Tpms
-from .shape.polyhedron import Polyhedron
+import cadquery as cq
+import numpy as np
+
 from .rve import Rve
+from .shape.box import Box
+from .shape.capsule import Capsule
+from .shape.cylinder import Cylinder
+from .shape.ellipsoid import Ellipsoid
+from .shape.extrudedPolygon import ExtrudedPolygon
+from .shape.polyhedron import Polyhedron
+from .shape.sphere import Sphere
+from .shape.tpms import Tpms
 
 
 class BasicGeometry:
@@ -59,7 +60,7 @@ class BasicGeometry:
         self.angle = np.array([self.psi, self.theta, self.phi])
         self.name = self.shape + str(self.number)
 
-        self.geometry = None  # type: Any 
+        self.geometry = None  # type: Any
 
         if self.shape.lower() == "box":
             self.geometry = Box(
@@ -96,9 +97,7 @@ class BasicGeometry:
             )
         if self.shape.lower() == "sphere":
             self.geometry = Sphere(
-                center=self.center,
-                radius=self.param_geom["radius"],
-                number=self.number
+                center=self.center, radius=self.param_geom["radius"], number=self.number
             )
         if self.shape.lower() == "ellipsoid":
             self.geometry = Ellipsoid(
@@ -139,10 +138,9 @@ class BasicGeometry:
             #     )
 
         if self.shape.lower() == "polyhedron":
-            self.geometry = Polyhedron(dic=self.param_geom["dic"], 
-                                       number=self.number)
+            self.geometry = Polyhedron(dic=self.param_geom["dic"], number=self.number)
 
-    def __cmp__(self, other: 'BasicGeometry') -> int:
+    def __cmp__(self, other: "BasicGeometry") -> int:
         # return cmp(self.number, other.number)
         return (self.number > other.number) - (
             self.number < other.number
@@ -177,8 +175,7 @@ class BasicGeometry:
         elif self.shape.lower() == "ellipsoid":
             cqshape = self.geometry.createEllipsoid()
         elif self.shape.lower() == "tpms":
-            cqshape = self.geometry.createTpms(path_data=self.path_data,
-                                               rve=rve)
+            cqshape = self.geometry.createTpms(path_data=self.path_data, rve=rve)
         elif self.shape.lower() == "polyhedron":
             cqshape = self.geometry.createPolyhedron()
         else:

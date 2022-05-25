@@ -2,10 +2,12 @@
 # - neper
 # - mmg
 
-import subprocess
 import os
-import numpy as np
+import subprocess
 
+from typing import Union
+
+import numpy as np
 
 # Ajout MB 07/01/2022
 
@@ -201,14 +203,14 @@ def parseNeper(filename: str) -> tuple:
     listeSommets = []
     listeSommetsOut = []
     for i in range(nbPolys):
-        voro = {}
+        voro = {}  # type: dict[str, Union[dict, list]]
         voro["original"] = seed[i]
         voro["faces"] = []
         listeSommetsPoly = []
         sommets = []
         for facePoly in polys[i][1:]:
             listeSommetsFace = []
-            dicVertices = {}
+            dicVertices = {}  # type: dict[str, list]
             dicVertices["vertices"] = []
             for segment in faces[facePoly - 1][1:]:
                 # Listes des sommets avec numérotation globale et faces associées

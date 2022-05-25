@@ -1,12 +1,20 @@
-from ..operations import rotateEuler
 import cadquery as cq
 import numpy as np
+
+from ..operations import rotateEuler
 
 # ----------CAPSULE-------------------------------------------------------------------#
 
 
 class Capsule:
-    def __init__(self, center: np.ndarray, angle: np.ndarray, height: float, radius: float, number: int) -> None:
+    def __init__(
+        self,
+        center: np.ndarray,
+        angle: np.ndarray,
+        height: float,
+        radius: float,
+        number: int,
+    ) -> None:
         self.center = center
         self.angle = angle
         self.height = height

@@ -37,7 +37,6 @@ def test_octettruss():
         listPhases.append(elem.generate())
 
     for phase_elem in listPhases:
-        print(phase_elem)
         periodicPhase = microgen.periodic(cqshape=phase_elem, rve=revel)
         listPeriodicPhases.append(periodicPhase)
 

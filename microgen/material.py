@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
-from .operations import removeEmptyLines
-
 import numpy as np
+
+from .operations import removeEmptyLines
 
 
 class MatSection:

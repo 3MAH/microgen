@@ -1,15 +1,22 @@
-import numpy as np
-import cadquery as cq
 import os
+
+import cadquery as cq
+import numpy as np
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
+from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+
+from typing import Union
 
 from .rve import Rve
 
-from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse, BRepAlgoAPI_Cut
 
-from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
-
-
-def rotateEuler(object: cq.Shape or cq.Workplane, center: np.array, psi: float, theta: float, phi: float) -> cq.Shape or cq.Workplane:
+def rotateEuler(
+    object: Union[cq.Shape, cq.Workplane],
+    center: np.ndarray,
+    psi: float,
+    theta: float,
+    phi: float,
+) -> Union[cq.Shape, cq.Workplane]:
     """DESCRIPTION
 
     Parameters
@@ -42,16 +49,16 @@ def rotateEuler(object: cq.Shape or cq.Workplane, center: np.array, psi: float, 
     )
 
     object_r = object.rotate(
-        (center[0], center[1], center[2]), (center[0], center[1], center[2] + 1.0), psi
+        cq.Vector(center[0], center[1], center[2]), cq.Vector(center[0], center[1], center[2] + 1.0), psi
     )
     object_r = object_r.rotate(
-        (center[0], center[1], center[2]),
-        (center[0] + u[0], center[1] + u[1], center[2] + u[2]),
+        cq.Vector(center[0], center[1], center[2]),
+        cq.Vector(center[0] + u[0], center[1] + u[1], center[2] + u[2]),
         theta,
     )
     object_r = object_r.rotate(
-        (center[0], center[1], center[2]),
-        (center[0] + z2[0], center[1] + z2[1], center[2] + z2[2]),
+        cq.Vector(center[0], center[1], center[2]),
+        cq.Vector(center[0] + z2[0], center[1] + z2[1], center[2] + z2[2]),
         phi,
     )
     return object_r
@@ -76,7 +83,9 @@ def removeEmptyLines(filename: str) -> None:
         filehandle.writelines(lines)
 
 
-def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> tuple[cq.Shape, list[list[cq.Solid]]]:
+def fuseParts(
+    cqShapeList: list[cq.Shape], retain_edges: bool
+) -> tuple[cq.Shape, list[list[cq.Solid]]]:
     """DESCRIPTION
 
     Parameters
@@ -156,7 +165,9 @@ def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> tuple[cq.Shape
 #    return (phase_cut, occ_solids_list)
 
 
-def cutPhasesByShape(cqShapeList: list, cut_obj: cq.Workplane or cq.Shape) -> tuple[list[cq.Shape], list[list[cq.Shape]]]:
+def cutPhasesByShape(
+    cqShapeList: list[cq.Shape], cut_obj: cq.Shape
+) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
     """DESCRIPTION
 
     Parameters
@@ -181,14 +192,16 @@ def cutPhasesByShape(cqShapeList: list, cut_obj: cq.Workplane or cq.Shape) -> tu
             phase_cut.append(cq.Shape(cut.Shape()))
 
     occ_solids_list = [s.Solids() for s in phase_cut]
-    print(phase_cut)
-    print(occ_solids_list)
-    print("outside cut")
+    # print(phase_cut)
+    # print(occ_solids_list)
+    # print("outside cut")
 
     return (phase_cut, occ_solids_list)
 
 
-def cutPhaseByShapeList(phaseToCut: cq.Workplane or cq.Shape, cqShapeList: list[cq.Shape]) -> tuple[cq.Shape, list[cq.Solid]]:
+def cutPhaseByShapeList(
+    phaseToCut: cq.Shape, cqShapeList: list[cq.Shape]
+) -> tuple[cq.Shape, list[cq.Solid]]:
     """DESCRIPTION
 
     Parameters
@@ -215,7 +228,9 @@ def cutPhaseByShapeList(phaseToCut: cq.Workplane or cq.Shape, cqShapeList: list[
     return (resultCut, occ_solids_list)
 
 
-def cutParts(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
+def cutParts(
+    cqShapeList: list[cq.Shape], reverseOrder: bool = True
+) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
     """DESCRIPTION
 
     Parameters
@@ -255,17 +270,16 @@ def cutParts(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> tuple[li
     phase_cut.reverse()
 
     occ_solids_list = [s.Solids() for s in phase_cut]
-    print(phase_cut)
-    print(occ_solids_list)
-    print("outside cut")
+    # print(phase_cut)
+    # print(occ_solids_list)
+    # print("outside cut")
 
     return (phase_cut, occ_solids_list)
 
 
-def rasterShapeList(cqShapeList: list[cq.Shape], 
-                    rve: Rve, 
-                    grid: list[int, int, int]
-                   ) -> tuple[list[cq.Solid], list[list[cq.Solid]], list[float], list[cq.Vector]]:
+def rasterShapeList(
+    cqShapeList: list[cq.Shape], rve: Rve, grid: list[int]
+) -> tuple[list[cq.Solid], list[list[cq.Solid]], list[float], list[cq.Vector]]:
     """DESCRIPTION
 
     Parameters
@@ -339,7 +353,9 @@ def rasterShapeList(cqShapeList: list[cq.Shape],
 #    return (phase_cut[::-1], occ_solids_list)
 
 
-def repeatGeometry(unit_geom: cq.Shape or cq.Workplane, rve: Rve, grid: list[int, int, int]) -> cq.Compound:
+def repeatGeometry(
+    unit_geom: Union[cq.Shape, cq.Workplane], rve: Rve, grid: dict[str, int]
+) -> cq.Compound:
     """DESCRIPTION
 
     Parameters
@@ -364,6 +380,7 @@ def repeatGeometry(unit_geom: cq.Shape or cq.Workplane, rve: Rve, grid: list[int
                 )
 
     return xyz_repeat.toCompound()
+
 
 # def rescaleGeometry(unit_geom: cq.Shape, scale: list[float, float, float]) -> cq.Shape: # marche pas
 #     transform_mat = cq.Matrix(

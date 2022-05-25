@@ -1,12 +1,20 @@
-from ..operations import rotateEuler
 import cadquery as cq
 import numpy as np
+
+from ..operations import rotateEuler
 
 # ----------CYLINDER-----------------------------------------------------------------------------------------#
 
 
 class Cylinder:
-    def __init__(self, center: np.ndarray, angle: np.ndarray, height: float, radius: float, number: int) -> None:
+    def __init__(
+        self,
+        center: np.ndarray,
+        angle: np.ndarray,
+        height: float,
+        radius: float,
+        number: int,
+    ) -> None:
         self.center = center
         self.angle = angle
         self.radius = radius

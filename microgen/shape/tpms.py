@@ -1,96 +1,29 @@
-import pygalmesh
-from ..operations import fuseParts
-from ..rve import Rve
-import cadquery as cq
-
 import math
-from numpy import pi, sin, cos
-import numpy as np
-
 import os
-
 from typing import Callable
 
+import cadquery as cq
+import numpy as np
+import pygalmesh
+from numpy import cos, pi, sin
 from OCP.StlAPI import StlAPI_Reader
-
 from OCP.TopoDS import TopoDS_Shape
+
+from ..operations import fuseParts
+from ..rve import Rve
 
 # ----------TPMS-----------------------------------------------------------------------------------------#
 
-# Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
-
-def gyroid(x: float, y: float, z: float, height: float) -> float:
-    if abs(x) + abs(y) + abs(z) > 1.0e-8:
-        return (
-            sin(2 * pi * x) * cos(2 * pi * y)
-            + sin(2 * pi * y) * cos(2 * pi * z)
-            + sin(2 * pi * z) * cos(2 * pi * x)
-            + height
-        )
-    else:
-        return 1.0
-
-def schwarzP(x: float, y: float, z: float, height: float) -> float:
-    return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z) + height
-
-def schwarzD(x: float, y: float, z: float, height: float) -> float:
-    a = sin(2 * pi * x) * sin(2 * pi * y) * sin(2 * pi * z)
-    b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
-    c = cos(2 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
-    d = cos(2 * pi * x) * cos(2 * pi * y) * sin(2 * pi * z)
-    return a + b + c + d + height
-
-def neovius(x: float, y: float, z: float, height: float) -> float:
-    a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
-    b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
-
-    return a + b + height
-
-def schoenIWP(x: float, y: float, z: float, height: float) -> float:
-    l = 2 * (
-        cos(2 * pi * x) * cos(2 * pi * y)
-        + cos(2 * pi * y) * cos(2 * pi * z)
-        + cos(2 * pi * z) * cos(2 * pi * x)
-    )
-    m = cos(4 * pi * x) + cos(4 * pi * y) + cos(4 * pi * z)
-
-    return l - m + height
-
-def schoenFRD(x: float, y: float, z: float, height: float) -> float:
-    a = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
-    b = (
-        cos(4 * pi * x) * cos(4 * pi * y)
-        + cos(4 * pi * y) * cos(4 * pi * z)
-        + cos(4 * pi * z) * cos(4 * pi * x)
-    )
-    return a - b + height
-
-def fischerKochS(x: float, y: float, z: float, height: float) -> float:
-    a = cos(4 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
-    b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
-    c = sin(2 * pi * x) * cos(2 * pi * y) * cos(4 * pi * z)
-
-    return a + b + c + height
-
-def pmy(x: float, y: float, z: float, height: float) -> float:
-    a = 2 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
-    b = sin(4 * pi * x) * sin(2 * pi * y)
-    c = sin(2 * pi * x) * sin(4 * pi * z)
-    d = sin(4 * pi * y) * sin(2 * pi * z)
-
-    return a + b + c + d + height
-
-def honeycomb(x: float, y: float, z: float, height: float) -> float:
-    return (
-        sin(2 * pi * x) * cos(2 * pi * y)
-        + sin(2 * pi * y)
-        + cos(2 * pi * z)
-        + height
-    )  
 
 class Tpms:
     def __init__(
-        self, center: np.ndarray, angle: np.ndarray, surface_function: Callable[[float, float, float, float], float], type_part: str, thickness: float, number: int,
+        self,
+        center: np.ndarray,
+        angle: np.ndarray,
+        surface_function: Callable[[float, float, float, float], float],
+        type_part: str,
+        thickness: float,
+        number: int,
     ) -> None:
         """DESCRIPTION
 
@@ -144,10 +77,9 @@ class Tpms:
         path_data : TYPE, optional
             DESCRIPTION
         """
-        
+
         thickness = self.thickness * pi
 
-        
         s_testplus = Generator(rve, thickness / 4.0, self.surface_function)
         s_testminus = Generator(rve, -thickness / 4.0, self.surface_function)
         s_plus = Generator(rve, thickness / 2.0, self.surface_function)
@@ -216,7 +148,7 @@ class Tpms:
 
         if rve is None:
             raise ValueError("Please add an RVE to generate the TPMS")
-            
+
         surf_tp = TopoDS_Shape()
         surf_tm = TopoDS_Shape()
         surf_p = TopoDS_Shape()
@@ -224,13 +156,16 @@ class Tpms:
         stl_reader = StlAPI_Reader()
 
         if not (
-            stl_reader.Read(surf_tp, path_data + "/" + "tpms_testplus.stl") and
-            stl_reader.Read(surf_tm, path_data + "/" + "tpms_testminus.stl") and
-            stl_reader.Read(surf_p, path_data + "/" + "tpms_plus.stl") and
-            stl_reader.Read(surf_m, path_data + "/" + "tpms_minus.stl")
+            stl_reader.Read(surf_tp, path_data + "/" + "tpms_testplus.stl")
+            and stl_reader.Read(surf_tm, path_data + "/" + "tpms_testminus.stl")
+            and stl_reader.Read(surf_p, path_data + "/" + "tpms_plus.stl")
+            and stl_reader.Read(surf_m, path_data + "/" + "tpms_minus.stl")
         ):
-            raise ValueError("tpms_plus.stl, tpms_minus.stl, tpms_testplus.stl, tpms_testminus.stl files not found in '" + path_data + "' folder")
-
+            raise ValueError(
+                "tpms_plus.stl, tpms_minus.stl, tpms_testplus.stl, tpms_testminus.stl files not found in '"
+                + path_data
+                + "' folder"
+            )
 
         face_cut_tp = cq.Face(surf_tp)
         face_cut_tm = cq.Face(surf_tm)
@@ -242,13 +177,9 @@ class Tpms:
         boxCut = box.split(face_cut_p)
         boxCut = boxCut.split(face_cut_m)
 
-        boxSolids = boxCut.solids().all()
+        boxSolids = boxCut.solids().all()  # type: list[cq.Workplane]
 
-        # print("boxSolids", boxSolids)
-        # print("boxSolidsSize", boxCut.solids().size())
-        # print("boxCut", boxCut)
-
-        listSolids = []
+        listSolids = []  # type: list[tuple[int, cq.Shape]]
 
         for solid in boxSolids:
             temp = solid.split(face_cut_tp)
@@ -259,21 +190,22 @@ class Tpms:
         sheet = [el[1] for el in listSolids if el[0] > 1]
         skeletal = [el[1] for el in listSolids if el[0] == 1]
 
-        # print("sheet", sheet)
-        # print("skeletal", skeletal)
-
         if self.type_part == "sheet":
             to_fuse = [cq.Shape(s.wrapped) for s in sheet]
             return_object = fuseParts(to_fuse, True)
-            return cq.Workplane().add(return_object[0])
         elif self.type_part == "skeletal":
             to_fuse = [cq.Shape(s.wrapped) for s in skeletal]
             return_object = fuseParts(to_fuse, False)
-            return cq.Workplane().add(return_object[0])
+        return cq.Workplane().add(return_object[0])
 
 
 class Generator(pygalmesh.DomainBase):
-    def __init__(self, rve: Rve, height: float, surface_function: Callable[[float, float, float, float], float]) -> None:
+    def __init__(
+        self,
+        rve: Rve,
+        height: float,
+        surface_function: Callable[[float, float, float, float], float],
+    ) -> None:
         super().__init__()
         self.height = height
         self.z0 = 0.0
@@ -289,4 +221,82 @@ class Generator(pygalmesh.DomainBase):
         return self.bounding_sphere_squared_radius
 
     def eval(self, pos: list) -> float:
-        return self.surface_function(x=pos[0], y=pos[1], z=pos[2], height=self.height)
+        return self.surface_function(pos[0], pos[1], pos[2], self.height)
+
+
+# Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
+
+
+def gyroid(x: float, y: float, z: float, height: float) -> float:
+    if abs(x) + abs(y) + abs(z) > 1.0e-8:
+        return (
+            sin(2 * pi * x) * cos(2 * pi * y)
+            + sin(2 * pi * y) * cos(2 * pi * z)
+            + sin(2 * pi * z) * cos(2 * pi * x)
+            + height
+        )
+    else:
+        return 1.0
+
+
+def schwarzP(x: float, y: float, z: float, height: float) -> float:
+    return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z) + height
+
+
+def schwarzD(x: float, y: float, z: float, height: float) -> float:
+    a = sin(2 * pi * x) * sin(2 * pi * y) * sin(2 * pi * z)
+    b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+    c = cos(2 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
+    d = cos(2 * pi * x) * cos(2 * pi * y) * sin(2 * pi * z)
+    return a + b + c + d + height
+
+
+def neovius(x: float, y: float, z: float, height: float) -> float:
+    a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
+    b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+
+    return a + b + height
+
+
+def schoenIWP(x: float, y: float, z: float, height: float) -> float:
+    a = 2 * (
+        cos(2 * pi * x) * cos(2 * pi * y)
+        + cos(2 * pi * y) * cos(2 * pi * z)
+        + cos(2 * pi * z) * cos(2 * pi * x)
+    )
+    b = cos(4 * pi * x) + cos(4 * pi * y) + cos(4 * pi * z)
+
+    return a - b + height
+
+
+def schoenFRD(x: float, y: float, z: float, height: float) -> float:
+    a = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+    b = (
+        cos(4 * pi * x) * cos(4 * pi * y)
+        + cos(4 * pi * y) * cos(4 * pi * z)
+        + cos(4 * pi * z) * cos(4 * pi * x)
+    )
+    return a - b + height
+
+
+def fischerKochS(x: float, y: float, z: float, height: float) -> float:
+    a = cos(4 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
+    b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
+    c = sin(2 * pi * x) * cos(2 * pi * y) * cos(4 * pi * z)
+
+    return a + b + c + height
+
+
+def pmy(x: float, y: float, z: float, height: float) -> float:
+    a = 2 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
+    b = sin(4 * pi * x) * sin(2 * pi * y)
+    c = sin(2 * pi * x) * sin(4 * pi * z)
+    d = sin(4 * pi * y) * sin(2 * pi * z)
+
+    return a + b + c + d + height
+
+
+def honeycomb(x: float, y: float, z: float, height: float) -> float:
+    return (
+        sin(2 * pi * x) * cos(2 * pi * y) + sin(2 * pi * y) + cos(2 * pi * z) + height
+    )

@@ -1,6 +1,7 @@
+import cadquery as cq
+
 from .operations import fuseParts
 from .rve import Rve
-import cadquery as cq
 
 
 def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
@@ -22,17 +23,17 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
     """
 
     wk_plane = cq.Workplane().add(cqshape.Solids())  # shape to cut
-    periodic_object = []  # periodically cutted final object
+    periodic_object = []  # type: list[cq.Workplane]
 
     faces = ["x-", "x+", "y-", "y+", "z-", "z+"]
 
     direction = {
-        "x-": (-1,  0,  0),
-        "x+": ( 1,  0,  0),
-        "y-": ( 0, -1,  0),
-        "y+": ( 0,  1,  0),
-        "z-": ( 0,  0, -1),
-        "z+": ( 0,  0,  1),
+        "x-": (-1, 0, 0),
+        "x+": (1, 0, 0),
+        "y-": (0, -1, 0),
+        "y+": (0, 1, 0),
+        "z-": (0, 0, -1),
+        "z+": (0, 0, 1),
     }
     basePnt = {
         "x-": (0, 0, 0),
@@ -43,10 +44,9 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
         "z+": (0, 0, rve.dz),
     }
 
-    face_dir = {"x-": ">X", "x+": "<X",
-                "y-": ">Y", "y+": "<Y",
-                "z-": ">Z", "z+": "<Z"}
-                
+    face_dir = {"x-": ">X", "x+": "<X", "y-": ">Y", "y+": "<Y", "z-": ">Z", "z+": "<Z"}
+    inverse_face_dir = {"x-": "<X", "x+": ">X", "y-": "<Y", "y+": ">Y", "z-": "<Z", "z+": ">Z"}
+
     translate = {
         "x-": (rve.dx, 0, 0),
         "x+": (-rve.dx, 0, 0),
@@ -86,18 +86,19 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
 
     if len(intersected_faces) == 0:  # if no intersected faces = nothing to do
         periodic_object.append(wk_plane)
-        
+
     elif len(intersected_faces) == 1:  # one face intersected
         f_0 = intersected_faces[0]
         periodic_object.append(
-            partitions[f_0].solids(face_dir[f_0])  # add the part of the 
-                           .intersect(rve.Box)   # object included in the rve
-        )  
+            partitions[f_0]
+            .solids(face_dir[f_0])  # add the part of the
+            .intersect(rve.Box)  # object included in the rve
+        )
         periodic_object.append(
             partitions[f_0]
-            .solids(not face_dir[f_0])  # translate the outside part of
+            .solids(inverse_face_dir[f_0])  # translate the outside part of
             .translate(translate[f_0])  # the object in the rve and add
-            .intersect(rve.Box)       # it to the final object
+            .intersect(rve.Box)  # it to the final object
         )
 
     elif len(intersected_faces) == 2:  # two faces intersected (edge)
@@ -109,23 +110,20 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             .add(partitions[f_0].solids(face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
         )
-        periodic_object.append(part.solids(face_dir[f_1])
-                                   .intersect(rve.Box))
+        periodic_object.append(part.solids(face_dir[f_1]).intersect(rve.Box))
         periodic_object.append(
-            part.solids(not face_dir[f_1])  # not "<X" = ">X"
-                .translate(translate[f_1])
-                .intersect(rve.Box)
+            part.solids(inverse_face_dir[f_1])
+            .translate(translate[f_1])
+            .intersect(rve.Box)
         )
 
         part = (
             cq.Workplane()
-            .add(partitions[f_0].solids(not face_dir[f_0]))
+            .add(partitions[f_0].solids(inverse_face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
         )
         periodic_object.append(
-            part.solids(face_dir[f_1])
-                .translate(translate[f_0])
-                .intersect(rve.Box)
+            part.solids(face_dir[f_1]).translate(translate[f_0]).intersect(rve.Box)
         )
         tslt = (
             translate[f_0][0] + translate[f_1][0],
@@ -133,7 +131,7 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             translate[f_0][2] + translate[f_1][2],
         )
         periodic_object.append(
-            part.solids(not face_dir[f_1]).translate(tslt).intersect(rve.Box)
+            part.solids(inverse_face_dir[f_1]).translate(tslt).intersect(rve.Box)
         )
 
     elif len(intersected_faces) == 3:  # three faces intersected (corner)
@@ -147,10 +145,9 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             .split(cq.Workplane().add(planes[f_1]))
             .solids(face_dir[f_1])
         )
-        periodic_object.append(new_part.solids(face_dir[f_2])
-                                       .intersect(rve.Box))
+        periodic_object.append(new_part.solids(face_dir[f_2]).intersect(rve.Box))
         periodic_object.append(
-            new_part.solids(not face_dir[f_2])
+            new_part.solids(inverse_face_dir[f_2])
             .translate(translate[f_2])
             .intersect(rve.Box)
         )
@@ -159,41 +156,37 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             cq.Workplane()
             .add(partitions[f_0].solids(face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
-            .solids(not face_dir[f_1])
+            .solids(inverse_face_dir[f_1])
         )
         periodic_object.append(
-            new_part.solids(face_dir[f_1])
-                    .translate(translate[f_1])
-                    .intersect(rve.Box)
+            new_part.solids(face_dir[f_1]).translate(translate[f_1]).intersect(rve.Box)
         )
         periodic_object.append(
-            new_part.solids(not face_dir[f_1])
+            new_part.solids(inverse_face_dir[f_1])
             .translate((0, translate[f_1][1], translate[f_2][2]))
             .intersect(rve.Box)
         )
 
         new_part = (
             cq.Workplane()
-            .add(partitions[f_0].solids(not face_dir[f_0]))
+            .add(partitions[f_0].solids(inverse_face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
             .solids(face_dir[f_1])
         )
         periodic_object.append(
-            new_part.solids(face_dir[f_2])
-                    .translate(translate[f_0])
-                    .intersect(rve.Box)
+            new_part.solids(face_dir[f_2]).translate(translate[f_0]).intersect(rve.Box)
         )
         periodic_object.append(
-            new_part.solids(not face_dir[f_2])
+            new_part.solids(inverse_face_dir[f_2])
             .translate((translate[f_0][0], 0, translate[f_2][2]))
             .intersect(rve.Box)
         )
 
         new_part = (
             cq.Workplane()
-            .add(partitions[f_0].solids(not face_dir[f_0]))
+            .add(partitions[f_0].solids(inverse_face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
-            .solids(not face_dir[f_1])
+            .solids(inverse_face_dir[f_1])
         )
         periodic_object.append(
             new_part.solids(face_dir[f_2])
@@ -201,7 +194,7 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             .intersect(rve.Box)
         )
         periodic_object.append(
-            new_part.solids(not face_dir[f_2])
+            new_part.solids(inverse_face_dir[f_2])
             .translate((translate[f_0][0], translate[f_1][1], translate[f_2][2]))
             .intersect(rve.Box)
         )

@@ -1,10 +1,16 @@
-import numpy as np
 import gmsh
+import numpy as np
 
 from .rve import Rve
 
 
-def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_file: str = "Mesh.msh") -> None:
+def mesh(
+    mesh_file: str,
+    listPhases: list,
+    size: float,
+    order: int = 1,
+    output_file: str = "Mesh.msh",
+) -> None:
     """DESCRIPTION
 
     Parameters
@@ -19,15 +25,16 @@ def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_f
         DESCRIPTION
     """
     gmsh.initialize()
+    gmsh.option.setNumber('General.Verbosity', 1) # this would still print errors, but not warnings
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
     nbTags = len(flatListPhases)
     listTagsNb = [len(phase_list) for phase_list in listPhases]
 
-    print(nbTags)
-    print(listTagsNb)
+    # print(nbTags)
+    # print(listTagsNb)
     FlatListTags = list(range(1, nbTags + 1, 1))
-    print(FlatListTags)
+    # print(FlatListTags)
 
     listTags = []
     index = 0
@@ -37,13 +44,13 @@ def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_f
             index = index + 1
             temp.append(index)
         listTags.append(temp)
-    print(listTags)
+    # print(listTags)
 
     listDimTags = [(3, tag) for tag in FlatListTags]
-    print(listDimTags)
+    # print(listDimTags)
 
     ToMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
-    print(ToMesh)
+    # print(ToMesh)
 
     #    #get all elementary entities in the model
     #    entities = gmsh.model.getEntities()
@@ -72,8 +79,8 @@ def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_f
     #                  str(numv) + " nodes in param coord: " + str(parv) + ")")
 
     if len(listDimTags) > 1:
-        print(listDimTags[:-1])
-        print(listDimTags[-1])
+        # print(listDimTags[:-1])
+        # print(listDimTags[-1])
         outDimTags, outDimTagsMap = gmsh.model.occ.fragment(
             listDimTags[:-1], [listDimTags[-1]]
         )
@@ -89,8 +96,8 @@ def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_f
     #    gmsh.model.occ.fuse([(3, 5)], [(3, 6)])
 
     for i, tag in enumerate(listTags):
-        print(i)
-        print(type(i))
+        # print(i)
+        # print(type(i))
         ps_i = gmsh.model.addPhysicalGroup(3, tag)
         gmsh.model.setPhysicalName(3, ps_i, "Mat" + str(i))
 
@@ -108,7 +115,12 @@ def mesh(mesh_file: str, listPhases: list, size: float, order: int = 1, output_f
 
 
 def meshPeriodic(
-    mesh_file: str, rve: Rve, listPhases: list, size: float, order: int = 1, output_file: str = "MeshPeriodic.msh"
+    mesh_file: str,
+    rve: Rve,
+    listPhases: list,
+    size: float,
+    order: int = 1,
+    output_file: str = "MeshPeriodic.msh",
 ) -> None:
     """DESCRIPTION
 
@@ -126,15 +138,16 @@ def meshPeriodic(
         DESCRIPTION
     """
     gmsh.initialize()
+    gmsh.option.setNumber('General.Verbosity', 1) # this would still print errors, but not warnings
 
     flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
     nbTags = len(flatListPhases)
     listTagsNb = [len(phase_list) for phase_list in listPhases]
 
-    print(nbTags)
-    print(listTagsNb)
+    # print(nbTags)
+    # print(listTagsNb)
     flatListTags = list(range(1, nbTags + 1, 1))
-    print(flatListTags)
+    # print(flatListTags)
 
     listTags = []
     index = 0
@@ -144,13 +157,13 @@ def meshPeriodic(
             index = index + 1
             temp.append(index)
         listTags.append(temp)
-    print(listTags)
+    # print(listTags)
 
     listDimTags = [(3, tag) for tag in flatListTags]
-    print(listDimTags)
+    # print(listDimTags)
 
     toMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
-    print(toMesh)
+    # print(toMesh)
 
     #    #get all elementary entities in the model
     #    entities = gmsh.model.getEntities()
@@ -187,8 +200,8 @@ def meshPeriodic(
     gmsh.model.occ.synchronize()
 
     for i, tag in enumerate(listTags):
-        print(i)
-        print(type(i))
+        # print(i)
+        # print(type(i))
         ps_i = gmsh.model.addPhysicalGroup(3, tag)
         gmsh.model.setPhysicalName(3, ps_i, "Mat" + str(i))
 
@@ -205,9 +218,9 @@ def meshPeriodic(
         0 - eps, -eps, -eps, eps, rve.dy + eps, rve.dy + eps, 2
     )
 
-    for i in sxmin:
+    for tup_min in sxmin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(i[0], i[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         sxmax = gmsh.model.getEntitiesInBoundingBox(
@@ -220,14 +233,14 @@ def meshPeriodic(
             2,
         )
         # For all the matches, we compare the corresponding bounding boxes...
-        for j in sxmax:
+        for tup_max in sxmax:
             xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = gmsh.model.getBoundingBox(
-                j[0], j[1]
+                tup_max[0], tup_max[1]
             )
             xmin2 -= 1
             xmax2 -= 1
 
-            print(xmin, ymin, zmin, xmax, ymax, zmax)
+            # print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
             if (
                 abs(xmin2 - xmin) < eps
@@ -237,7 +250,7 @@ def meshPeriodic(
                 and abs(zmin2 - zmin) < eps
                 and abs(zmax2 - zmax) < eps
             ):
-                gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
+                gmsh.model.mesh.setPeriodic(2, [tup_max[1]], [tup_min[1]], translation)
 
     # We get all the entities on the Ym
     translation = [1, 0, 0, 0, 0, 1, 0, rve.dy, 0, 0, 1, 0, 0, 0, 0, 1]
@@ -245,9 +258,9 @@ def meshPeriodic(
         0 - eps, -eps, -eps, rve.dx + eps, eps, rve.dz + eps, 2
     )
 
-    for i in symin:
+    for tup_min in symin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(i[0], i[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         symax = gmsh.model.getEntitiesInBoundingBox(
@@ -260,14 +273,14 @@ def meshPeriodic(
             2,
         )
         # For all the matches, we compare the corresponding bounding boxes...
-        for j in symax:
+        for tup_max in symax:
             xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = gmsh.model.getBoundingBox(
-                j[0], j[1]
+                tup_max[0], tup_max[1]
             )
             ymin2 -= 1
             ymax2 -= 1
 
-            print(xmin, ymin, zmin, xmax, ymax, zmax)
+            # print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
             if (
                 abs(xmin2 - xmin) < eps
@@ -277,7 +290,7 @@ def meshPeriodic(
                 and abs(zmin2 - zmin) < eps
                 and abs(zmax2 - zmax) < eps
             ):
-                gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
+                gmsh.model.mesh.setPeriodic(2, [tup_max[1]], [tup_min[1]], translation)
 
     # We get all the entities on the Zm
     translation = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, rve.dz, 0, 0, 0, 1]
@@ -285,12 +298,12 @@ def meshPeriodic(
         0 - eps, -eps, -eps, rve.dx + eps, rve.dy + eps, eps, 2
     )
 
-    for i in szmin:
+    for tup_min in szmin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(i[0], i[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
         # We translate the bounding box to the right and look for surfaces inside
         # it:
-        print(xmin, ymin, zmin, xmax, ymax, zmax)
+        # print(xmin, ymin, zmin, xmax, ymax, zmax)
         szmax = gmsh.model.getEntitiesInBoundingBox(
             xmin - eps,
             ymin - eps,
@@ -301,14 +314,14 @@ def meshPeriodic(
             2,
         )
         # For all the matches, we compare the corresponding bounding boxes...
-        for j in szmax:
+        for tup_max in szmax:
             xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = gmsh.model.getBoundingBox(
-                j[0], j[1]
+                tup_max[0], tup_max[1]
             )
             zmin2 -= 1
             zmax2 -= 1
 
-            print(xmin, ymin, zmin, xmax, ymax, zmax)
+            # print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
             if (
                 abs(xmin2 - xmin) < eps
@@ -318,7 +331,7 @@ def meshPeriodic(
                 and abs(zmin2 - zmin) < eps
                 and abs(zmax2 - zmax) < eps
             ):
-                gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
+                gmsh.model.mesh.setPeriodic(2, [tup_max[1]], [tup_min[1]], translation)
 
     p = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(p, size)
