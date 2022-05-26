@@ -7,6 +7,9 @@ from ..operations import rotateEuler
 
 
 class Capsule:
+    """
+    Class to generate a capsule (cylinder with hemispherical ends)
+    """
     def __init__(
         self,
         center: np.ndarray,

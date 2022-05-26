@@ -13,16 +13,8 @@ import numpy as np
 
 
 def lanceNeper(filename: str, nbCell: int, dimCube: list) -> None:
-    """DESCRIPTION
-
-    Parameters
-    ----------
-    filename : TYPE
-        DESCRIPTION
-    nbCell : TYPE
-        DESCRIPTION
-    dimCube : TYPE
-        DESCRIPTION
+    """
+    Runs neper command from the command line
     """
     command = "neper -T -n " + str(nbCell) + " -id 1 -dim 3"
     command = (
@@ -41,27 +33,8 @@ def lanceNeper(filename: str, nbCell: int, dimCube: list) -> None:
 
 
 def parseNeper(filename: str) -> tuple:
-    """DESCRIPTION
-
-    Parameters
-    ----------
-    filename : TYPE
-        DESCRIPTION
-
-    Returns
-    -------
-    A : TYPE
-        DESCRIPTION
-    seed : TYPE
-        DESCRIPTION
-    listeSommetsOut : TYPE
-        DESCRIPTION
-    edges : TYPE
-        DESCRIPTION
-    faces : TYPE
-        DESCRIPTION
-    polys : TYPE
-        DESCRIPTION
+    """
+    Parses file obtained with neper
     """
 
     # 1ere étape : lecture des coordonées des germes, coordonées des sommets,

@@ -5,6 +5,9 @@ import numpy as np
 
 
 class Sphere:
+    """
+    Class to generate a sphere
+    """
     def __init__(self, center: np.ndarray, radius: float, number: int) -> None:
         self.center = center
         self.radius = radius

@@ -25,24 +25,9 @@ class Tpms:
         thickness: float,
         number: int,
     ) -> None:
-        """DESCRIPTION
-
-        Parameters
-        ----------
-        center : TYPE
-            DESCRIPTION
-        angle : TYPE
-            DESCRIPTION
-        type_surface : TYPE
-            DESCRIPTION
-        type_part : TYPE
-            DESCRIPTION
-        thickness : TYPE
-            DESCRIPTION
-        number : TYPE
-            DESCRIPTION
-        function : TYPE, optional
-            DESCRIPTION
+        """
+        Class to generate Triply Periodical Minimal Surfaces (TPMS)
+        geometry from a given mathematical function, with given thickness
         """
         self.center = center
         self.angle = angle
@@ -62,20 +47,8 @@ class Tpms:
         path_data: str = ".",
         verbose: bool = False,
     ) -> bool:
-        """DESCRIPTION
-
-        Parameters
-        ----------
-        rve : TYPE
-            DESCRIPTION
-        sizeMesh : TYPE, optional
-            DESCRIPTION
-        minFacetAngle : TYPE, optional
-            DESCRIPTION
-        maxRadius : TYPE, optional
-            DESCRIPTION
-        path_data : TYPE, optional
-            DESCRIPTION
+        """
+        Creates surfaces files of the TPMS and saves them in path_data directory
         """
 
         thickness = self.thickness * pi
@@ -131,19 +104,9 @@ class Tpms:
         return True
 
     def createTpms(self, path_data: str, rve: Rve) -> cq.Workplane:
-        """DESCRIPTION
-
-        Parameters
-        ----------
-        path_data : TYPE
-            DESCRIPTION
-        rve : TYPE
-            DESCRIPTION
-
-        Returns
-        -------
-        cq.Workplane().add(return_object[0]) : TYPE
-            DESCRIPTION
+        """
+        Creates TPMS geometry (sheet or skeletal part) from surface
+        files located in the directory given by path_data
         """
 
         if rve is None:
@@ -200,6 +163,9 @@ class Tpms:
 
 
 class Generator(pygalmesh.DomainBase):
+    """
+    Base class to generate TPMS geometry with a given surface function
+    """
     def __init__(
         self,
         rve: Rve,

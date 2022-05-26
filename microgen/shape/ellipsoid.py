@@ -7,6 +7,9 @@ from ..operations import rotateEuler
 
 
 class Ellipsoid:
+    """
+    Class to generate an ellipsoid
+    """
     def __init__(
         self,
         center: np.ndarray,

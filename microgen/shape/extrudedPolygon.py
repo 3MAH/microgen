@@ -7,6 +7,9 @@ from ..operations import rotateEuler
 
 
 class ExtrudedPolygon:
+    """
+    Class to generate an extruded polygon with a given list of points and a thickness
+    """
     def __init__(
         self,
         center: np.ndarray,

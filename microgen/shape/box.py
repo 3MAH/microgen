@@ -8,6 +8,9 @@ from ..operations import rotateEuler
 
 
 class Box:
+    """
+    Class to generate a box
+    """
     def __init__(
         self,
         center: np.ndarray,

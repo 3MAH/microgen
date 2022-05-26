@@ -7,6 +7,9 @@ from ..operations import rotateEuler
 
 
 class Cylinder:
+    """
+    Class to generate a cylinder
+    """
     def __init__(
         self,
         center: np.ndarray,

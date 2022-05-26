@@ -5,21 +5,15 @@ from .rve import Rve
 
 
 def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
-    """DESCRIPTION
-
-    Parameters
-    ----------
-    cqshape : TYPE
-        DESCRIPTION
-    rve : TYPE
-        DESCRIPTION
+    """
+    Rearrange cqshape periodically according to the rve
 
     Returns
     -------
-    return_object_periodic[0].copy() : TYPE
-        DESCRIPTION
+    return_object_periodic[0].copy() :
+        cutted object
     flat_list : TYPE
-        DESCRIPTION
+        list of cutted parts
     """
 
     wk_plane = cq.Workplane().add(cqshape.Solids())  # shape to cut

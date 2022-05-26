@@ -17,25 +17,23 @@ def rotateEuler(
     theta: float,
     phi: float,
 ) -> Union[cq.Shape, cq.Workplane]:
-    """DESCRIPTION
+    """
+
+    Rotates object according to XZX Euler angle convention
 
     Parameters
     ----------
-    object : TYPE
-        DESCRIPTION
-    center : TYPE
-        DESCRIPTION
-    psi : TYPE
-        DESCRIPTION
-    theta : TYPE
-        DESCRIPTION
-    phi : TYPE
-        DESCRIPTION
+    object :
+        Object to rotate
+    center :
+        numpy array (x, y, z)
+    psi, theta, phi :
+        Euler angles
 
     Returns
     -------
-    object_r : TYPE
-        DESCRIPTION
+    object_r :
+        Rotated object
     """
 
     u = np.array([0.0, 0.0, 1.0])
@@ -49,7 +47,9 @@ def rotateEuler(
     )
 
     object_r = object.rotate(
-        cq.Vector(center[0], center[1], center[2]), cq.Vector(center[0], center[1], center[2] + 1.0), psi
+        cq.Vector(center[0], center[1], center[2]),
+        cq.Vector(center[0], center[1], center[2] + 1.0),
+        psi
     )
     object_r = object_r.rotate(
         cq.Vector(center[0], center[1], center[2]),
@@ -65,12 +65,8 @@ def rotateEuler(
 
 
 def removeEmptyLines(filename: str) -> None:
-    """DESCRIPTION
-
-    Parameters
-    ----------
-    filename : TYPE
-        DESCRIPTION
+    """
+    Removes empty lines of the given file
     """
     if not os.path.isfile(filename):
         print("{} does not exist ".format(filename))
@@ -86,21 +82,17 @@ def removeEmptyLines(filename: str) -> None:
 def fuseParts(
     cqShapeList: list[cq.Shape], retain_edges: bool
 ) -> tuple[cq.Shape, list[list[cq.Solid]]]:
-    """DESCRIPTION
+    """
 
     Parameters
     ----------
-    cqShapeList : TYPE
-        DESCRIPTION
-    retain_edges : TYPE
-        DESCRIPTION
+    cqShapeList : list of shapes to fuse
+    retain_edges : ?
 
     Returns
     -------
-    cq.Shape(fixed) : TYPE
-        DESCRIPTION
-    occ_solids_list : TYPE
-        DESCRIPTION
+    cq.Shape(fixed) : fused object
+    occ_solids_list : list of list of solids
     """
 
     #    occ_solids_list = (s.Solids() for s in cqShapeList)
@@ -168,21 +160,18 @@ def fuseParts(
 def cutPhasesByShape(
     cqShapeList: list[cq.Shape], cut_obj: cq.Shape
 ) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
-    """DESCRIPTION
+    """
+    Cuts list of shapes by another shape
 
     Parameters
     ----------
-    cqShapeList : TYPE
-        DESCRIPTION
-    cut_obj : TYPE
-        DESCRIPTION
+    cqShapeList : list of shapes to cut
+    cut_obj : cutting object
 
     Returns
     -------
-    phase_cut : TYPE
-        DESCRIPTION
-    occ_solids_list : TYPE
-        DESCRIPTION
+    phase_cut : final result
+    occ_solids_list : list of list of solids
     """
     phase_cut = []
 
@@ -202,21 +191,18 @@ def cutPhasesByShape(
 def cutPhaseByShapeList(
     phaseToCut: cq.Shape, cqShapeList: list[cq.Shape]
 ) -> tuple[cq.Shape, list[cq.Solid]]:
-    """DESCRIPTION
+    """
+    Cuts a shape by a list of shapes
 
     Parameters
     ----------
-    phaseToCut : TYPE
-        DESCRIPTION
-    print_cols : TYPE
-        DESCRIPTION
+    phaseToCut : shape to cut
+    cqShapeList : list of cutting shapes
 
     Returns
     -------
-    ResultCut : TYPE
-        DESCRIPTION
-    occ_solids_list : TYPE
-        DESCRIPTION
+    resultCut : cutted shape
+    occ_solids_list : list of solids
     """
 
     resultCut = phaseToCut
@@ -231,7 +217,7 @@ def cutPhaseByShapeList(
 def cutParts(
     cqShapeList: list[cq.Shape], reverseOrder: bool = True
 ) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
-    """DESCRIPTION
+    """
 
     Parameters
     ----------
@@ -280,27 +266,21 @@ def cutParts(
 def rasterShapeList(
     cqShapeList: list[cq.Shape], rve: Rve, grid: list[int]
 ) -> tuple[list[cq.Solid], list[list[cq.Solid]], list[float], list[cq.Vector]]:
-    """DESCRIPTION
+    """
+    Rasters shapes from shape list according to the rve divided by the given grid
 
     Parameters
     ----------
-    cqShapeList : TYPE
-        DESCRIPTION
-    rve : TYPE
-        DESCRIPTION
-    grid : TYPE
-        DESCRIPTION
+    cqShapeList : list of shapes to raster
+    rve : RVE divided by the given grid
+    grid : number of divisions in each direction [x, y, z]
 
     Returns
     -------
-    flat_list : TYPE
-        DESCRIPTION
-    occ_solids_list : TYPE
-        DESCRIPTION
-    volume_list : TYPE
-        DESCRIPTION
-    center_list : TYPE
-        DESCRIPTION
+    flat_list : flatten list from occ_solids_list
+    occ_solids_list : list of list of solids
+    volume_list : list of shape volume (scalar)
+    center_list : list of shape center (vector)
     """
 
     occ_solids_list = []
@@ -356,16 +336,14 @@ def rasterShapeList(
 def repeatGeometry(
     unit_geom: Union[cq.Shape, cq.Workplane], rve: Rve, grid: dict[str, int]
 ) -> cq.Compound:
-    """DESCRIPTION
+    """
+    Repeats unit geometry in each direction according to the given grid
 
     Parameters
     ----------
-    unit_geom : TYPE
-        DESCRIPTION
-    rve : TYPE
-        DESCRIPTION
-    grid : TYPE
-        DESCRIPTION
+    unit_geom : Geometry to repeat
+    rve : RVE of the geometry to repeat
+    grid : dictionary of number of geometry repetitions in each direction {'x': 3, 'y': 3, 'z': 3}
     """
 
     xyz_repeat = cq.Assembly()
