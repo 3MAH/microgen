@@ -41,7 +41,7 @@ def mesh(
     listDimTags = [(3, tag) for tag in FlatListTags]
     # print(listDimTags)
 
-    # ToMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
+    gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
     # print(ToMesh)
 
     #    #get all elementary entities in the model
@@ -142,7 +142,7 @@ def meshPeriodic(
     listDimTags = [(3, tag) for tag in flatListTags]
     # print(listDimTags)
 
-    # toMesh = gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
+    gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
     # print(toMesh)
 
     #    #get all elementary entities in the model
