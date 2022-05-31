@@ -10,7 +10,8 @@ Welcome to Microgen's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   Overview
+   microgen
 
 Indices and tables
 ==================
