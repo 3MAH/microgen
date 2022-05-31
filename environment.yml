@@ -11,4 +11,4 @@ dependencies:
   - pygalmesh
   - mmg
   - pytest-cov
-  - libtiff=4.0
+  - libtiff<4.4
