@@ -64,7 +64,7 @@ jobs:
         id: cache
 
       - name: Update environment
-        run: mamba env update -n microgen -f environment.yml
+        run: mamba env update -n microgen -f environment.yml && conda uninstall libtiff
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Install
