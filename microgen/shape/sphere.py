@@ -1,4 +1,5 @@
 import cadquery as cq
+import pyvista as pv
 import numpy as np
 
 # ----------SPHERE--------------------------------------------------------#
@@ -19,4 +20,10 @@ class Sphere:
             cq.Workplane()
             .sphere(self.radius)
             .translate((self.center[0], self.center[1], self.center[2]))
+        )
+
+    def createPvSphere(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
+        return pv.Sphere(
+            radius=self.radius,
+            center=tuple(self.center)
         )

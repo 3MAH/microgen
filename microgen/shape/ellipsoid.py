@@ -1,7 +1,9 @@
 import cadquery as cq
+import pyvista as pv
 import numpy as np
 
 from ..operations import rotateEuler
+from ..pvoperations import rotatePvEuler
 
 # ----------ELLIPSOID-----------------------------------------------------------------------------------------#
 
@@ -42,3 +44,22 @@ class Ellipsoid:
             ellipsoid, self.center, self.angle[0], self.angle[1], self.angle[2]
         )
         return cq.Workplane().add(ellipsoid)
+        
+    def createPvEllipsoid(self) -> pv.PolyData:
+        transform_mat = np.array(
+            [
+                [self.a_x, 0, 0, self.center[0]],
+                [0, self.a_y, 0, self.center[1]],
+                [0, 0, self.a_z, self.center[2]],
+            ]
+        )
+
+        sphere = pv.Sphere(
+            radius=self.radius,
+            center=tuple(self.center)
+        )
+        ellipsoid = sphere.transform(transform_matrix)
+        ellipsoid = rotatePvEuler(
+            ellipsoid, self.center, self.angle[0], self.angle[1], self.angle[2]
+        )
+        return ellipsoid
