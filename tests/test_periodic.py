@@ -1,9 +1,10 @@
 from microgen import BasicGeometry, periodic, Rve
- 
+
+
 def generate_sphere(x, y, z, rve):
     elem = BasicGeometry(shape='sphere',
-                                  xc=x, yc=y, zc=z,
-                                  param_geom={"radius": 0.1})
+                         xc=x, yc=y, zc=z,
+                         param_geom={"radius": 0.1})
     phase = elem.generate()
     periodic(cqshape=phase, rve=rve)
 
@@ -11,11 +12,11 @@ def generate_sphere(x, y, z, rve):
 def test_periodic():
     rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
-    # test x- and x+ faces intersected 
+    # test x- and x+ faces intersected
     elem = BasicGeometry(shape='capsule',
-                                  xc=0.5, yc=0, zc=0.5,
-                                  param_geom={"height": 1,
-                                              "radius": 0.1})
+                         xc=0.5, yc=0, zc=0.5,
+                         param_geom={"height": 1,
+                                     "radius": 0.1})
     phase = elem.generate()
     periodic(cqshape=phase, rve=rve)
 
@@ -53,6 +54,7 @@ def test_periodic():
     generate_sphere(x=1, y=0, z=1, rve=rve)
     generate_sphere(x=1, y=1, z=0, rve=rve)
     generate_sphere(x=1, y=1, z=1, rve=rve)
+
 
 if __name__ == "__main__":
     test_periodic()

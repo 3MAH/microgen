@@ -7,7 +7,7 @@ Microgen package
 
    shape.rst
 
-Submodules
+Modules
 ----------
 
 - Phase : :class:`~microgen.phase`

@@ -51,7 +51,7 @@ class BasicGeometry:
         self.path_data = path_data
 
         self.center = np.array([self.xc, self.yc, self.zc])
-        self.angle = np.array([self.psi, self.theta, self.phi])
+        self.orientation = np.array([self.psi, self.theta, self.phi])
         self.name = self.shape + str(self.number)
 
         self.geometry = None  # type: Any
@@ -59,7 +59,7 @@ class BasicGeometry:
         if self.shape.lower() == "box":
             self.geometry = Box(
                 center=self.center,
-                angle=self.angle,
+                orientation=self.orientation,
                 dim_x=self.param_geom["dim_x"],
                 dim_y=self.param_geom["dim_y"],
                 dim_z=self.param_geom["dim_z"],
@@ -68,7 +68,7 @@ class BasicGeometry:
         if self.shape.lower() == "cylinder":
             self.geometry = Cylinder(
                 center=self.center,
-                angle=self.angle,
+                orientation=self.orientation,
                 height=self.param_geom["height"],
                 radius=self.param_geom["radius"],
                 number=self.number,
@@ -76,7 +76,7 @@ class BasicGeometry:
         if self.shape.lower() == "extrudedpolygon":
             self.geometry = ExtrudedPolygon(
                 center=self.center,
-                angle=self.angle,
+                orientation=self.orientation,
                 listCorners=self.param_geom["listCorners"],
                 height=self.param_geom["height"],
                 number=self.number,
@@ -84,7 +84,7 @@ class BasicGeometry:
         if self.shape.lower() == "capsule":
             self.geometry = Capsule(
                 center=self.center,
-                angle=self.angle,
+                orientation=self.orientation,
                 height=self.param_geom["height"],
                 radius=self.param_geom["radius"],
                 number=self.number,
@@ -96,7 +96,7 @@ class BasicGeometry:
         if self.shape.lower() == "ellipsoid":
             self.geometry = Ellipsoid(
                 center=self.center,
-                angle=self.angle,
+                orientation=self.orientation,
                 a_x=self.param_geom["a_x"],
                 a_y=self.param_geom["a_y"],
                 a_z=self.param_geom["a_z"],
@@ -105,7 +105,7 @@ class BasicGeometry:
         if self.shape.lower() == "tpms":
             self.geometry = Tpms(
                 center=self.center,
-                angle=self.angle,
+                orientation=self.orientation,
                 surface_function=self.param_geom["surface_function"],
                 type_part=self.param_geom["type_part"],
                 thickness=self.param_geom["thickness"],
@@ -114,7 +114,7 @@ class BasicGeometry:
             # if self.param_geom["type_surface"] == "custom":
             #     self.geometry = Tpms(
             #         center=self.center,
-            #         angle=self.angle,
+            #         orientation=self.orientation,
             #         type_surface=self.param_geom["type_surface"],
             #         type_part=self.param_geom["type_part"],
             #         thickness=self.param_geom["thickness"],
@@ -124,7 +124,7 @@ class BasicGeometry:
             # else:
             #     self.geometry = Tpms(
             #         center=self.center,
-            #         angle=self.angle,
+            #         orientation=self.orientation,
             #         type_surface=self.param_geom["type_surface"],
             #         type_part=self.param_geom["type_part"],
             #         thickness=self.param_geom["thickness"],
