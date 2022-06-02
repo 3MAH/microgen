@@ -1,13 +1,12 @@
-# -*- coding: utf8 -*-
+"""
+Representative Volume Element (RVE) or Representative Elementary Volume (REV)
+"""
 import cadquery as cq
 
 
 class Rve:
     def __init__(self, dim_x: float, dim_y: float, dim_z: float) -> None:
         """
-
-        Representative Volume Element (RVE) or Representative Elementary Volume (REV)
-
         Parameters
         ----------
         dim_x : float

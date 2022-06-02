@@ -1,3 +1,6 @@
+"""
+Periodic function to cut a shape periodically according to a RVE
+"""
 import cadquery as cq
 
 from .operations import fuseParts

@@ -1,4 +1,4 @@
-Overview
+Install
 ========
 
 Microstructure generation

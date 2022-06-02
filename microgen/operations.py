@@ -1,3 +1,6 @@
+"""
+Boolean operations
+"""
 import os
 
 import cadquery as cq

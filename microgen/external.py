@@ -1,6 +1,8 @@
-# External softwares
-# - neper
-# - mmg
+"""
+Functions related to external softwares
+    - neper
+    - mmg
+"""
 
 import os
 import subprocess
@@ -8,8 +10,6 @@ import subprocess
 from typing import Union
 
 import numpy as np
-
-# Ajout MB 07/01/2022
 
 
 def lanceNeper(filename: str, nbCell: int, dimCube: list) -> None:

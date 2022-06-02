@@ -1,3 +1,6 @@
+"""
+BasicGeometry class to manage shapes
+"""
 from typing import Any
 
 import cadquery as cq
@@ -28,8 +31,7 @@ class BasicGeometry:
         phi: float = 0,
         path_data: str = None,
     ) -> None:
-        """DESCRIPTION
-
+        """
         Parameters
         ----------
         number : TYPE
@@ -149,8 +151,7 @@ class BasicGeometry:
     # ----------GENERATE PHASES------------------------------------------------
 
     def generate(self, rve: Rve = None) -> cq.Shape:
-        """DESCRIPTION
-
+        """
         Parameters
         ----------
         rve : TYPE, optional

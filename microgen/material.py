@@ -1,4 +1,6 @@
-# -*- coding: utf8 -*-
+"""
+Material class
+"""
 import numpy as np
 
 from .operations import removeEmptyLines

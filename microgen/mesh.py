@@ -1,3 +1,6 @@
+"""
+Mesh using gmsh
+"""
 import gmsh
 import numpy as np
 
@@ -12,8 +15,8 @@ def mesh(
     output_file: str = "Mesh.msh",
 ) -> None:
     """
-    Meshes list of shapes with gmsh
-    
+    Meshes step file with gmsh with list of phases management
+
     output_file : output file (.msh, .vtk)
     """
     gmsh.initialize()
