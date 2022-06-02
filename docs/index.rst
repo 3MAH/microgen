@@ -12,6 +12,7 @@ Welcome to Microgen's documentation!
 
    Overview
    microgen
+   shape
 
 Indices and tables
 ==================

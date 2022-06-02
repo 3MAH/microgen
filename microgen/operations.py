@@ -64,6 +64,24 @@ def rotateEuler(
     return object_r
 
 
+def rescale(
+    obj: cq.Shape,
+    scale: list[float, float, float],
+    center: list[float, float, float]
+) -> cq.Shape:
+    """
+    Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
+    """
+    transform_mat = cq.Matrix(
+        [
+            [scale[0], 0, 0, center[0]],
+            [0, scale[1], 0, center[1]],
+            [0, 0, scale[2], center[2]],
+        ]
+    )
+    return obj.transformGeometry(transform_mat)
+
+
 def removeEmptyLines(filename: str) -> None:
     """
     Removes empty lines of the given file
