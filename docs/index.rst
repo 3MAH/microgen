@@ -10,9 +10,9 @@ Welcome to Microgen's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   Overview
    Install
-   microgen
-   shape
+   Documentation
 
 Indices and tables
 ==================

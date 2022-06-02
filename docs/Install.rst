@@ -1,8 +1,6 @@
 Install
 ========
 
-Microstructure generation
-
 ----------------------------------------------------------------------------------
 
 Install Microgen with conda: 
