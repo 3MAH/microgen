@@ -11,12 +11,11 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
     """
     Rearrange cqshape periodically according to the rve
 
-    Returns
-    -------
-    return_object_periodic[0].copy() :
-        cutted object
-    flat_list : TYPE
-        list of cutted parts
+    :param cqshape: CQ Shape to cut periodically
+    :param rve: RVE for periodicity
+
+    :return return_object_periodic[0].copy(): cutted object
+    :return flat_list: list of cutted parts
     """
 
     wk_plane = cq.Workplane().add(cqshape.Solids())  # shape to cut

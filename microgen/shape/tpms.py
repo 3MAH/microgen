@@ -1,3 +1,8 @@
+"""
+=============================================
+TPMS (:mod:`microgen.shape.tpms`)
+=============================================
+"""
 import math
 import os
 from typing import Callable
@@ -12,25 +17,34 @@ from OCP.TopoDS import TopoDS_Shape
 from ..operations import fuseParts
 from ..rve import Rve
 
-# ----------TPMS-----------------------------------------------------------------------------------------#
-
 
 class Tpms:
+    """
+    Class to generate Triply Periodical Minimal Surfaces (TPMS)
+    geometry from a given mathematical function, with given thickness
+
+    functions available :
+        - :class:`~microgen.shape.tpms.gyroid`
+        - :class:`~microgen.shape.tpms.schwarzP`
+        - :class:`~microgen.shape.tpms.schwarzD`
+        - :class:`~microgen.shape.tpms.neovius`
+        - :class:`~microgen.shape.tpms.schoenIWP`
+        - :class:`~microgen.shape.tpms.schoenFRD`
+        - :class:`~microgen.shape.tpms.fischerKochS`
+        - :class:`~microgen.shape.tpms.pmy`
+        - :class:`~microgen.shape.tpms.honeycomb`
+    """
     def __init__(
         self,
         center: np.ndarray,
-        angle: np.ndarray,
+        orientation: np.ndarray,
         surface_function: Callable[[float, float, float, float], float],
         type_part: str,
         thickness: float,
-        number: int,
+        number: int = 0,
     ) -> None:
-        """
-        Class to generate Triply Periodical Minimal Surfaces (TPMS)
-        geometry from a given mathematical function, with given thickness
-        """
         self.center = center
-        self.angle = angle
+        self.orientation = orientation
         self.surface_function = surface_function
         self.type_part = type_part
         self.thickness = thickness
@@ -194,6 +208,9 @@ class Generator(pygalmesh.DomainBase):
 
 
 def gyroid(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0`
+    """
     if abs(x) + abs(y) + abs(z) > 1.0e-8:
         return (
             sin(2 * pi * x) * cos(2 * pi * y)
@@ -206,10 +223,19 @@ def gyroid(x: float, y: float, z: float, height: float) -> float:
 
 
 def schwarzP(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0`
+    """
     return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z) + height
 
 
 def schwarzD(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \
+           sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
+           cos(2 \pi x) sin(2 \pi y) cos(2 \pi z) + \
+           cos(2 \pi x) cos(2 \pi y) sin(2 \pi z) = 0`
+    """
     a = sin(2 * pi * x) * sin(2 * pi * y) * sin(2 * pi * z)
     b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     c = cos(2 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
@@ -218,6 +244,10 @@ def schwarzD(x: float, y: float, z: float, height: float) -> float:
 
 
 def neovius(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \
+           4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0`
+    """
     a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
     b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
 
@@ -225,6 +255,12 @@ def neovius(x: float, y: float, z: float, height: float) -> float:
 
 
 def schoenIWP(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`2 ( cos(2 \pi x) cos(2 \pi y) + \
+               cos(2 \pi y) cos(2 \pi z) + \
+               cos(2 \pi z) cos(2 \pi x)) - \
+           (cos(4 \pi x) + cos(4 \pi y) + cos(4 \pi z)) = 0`
+    """
     a = 2 * (
         cos(2 * pi * x) * cos(2 * pi * y)
         + cos(2 * pi * y) * cos(2 * pi * z)
@@ -236,6 +272,12 @@ def schoenIWP(x: float, y: float, z: float, height: float) -> float:
 
 
 def schoenFRD(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \
+           (cos(4 \pi x) cos(4 \pi y) + \
+            cos(4 \pi y) cos(4 \pi z) + \
+            cos(4 \pi z) cos(4 \pi x)) = 0`
+    """
     a = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     b = (
         cos(4 * pi * x) * cos(4 * pi * y)
@@ -246,6 +288,11 @@ def schoenFRD(x: float, y: float, z: float, height: float) -> float:
 
 
 def fischerKochS(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \
+           cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \
+           sin(2 \pi x) cos(2 \pi y) cos(4 \pi z) = 0`
+    """
     a = cos(4 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
     b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
     c = sin(2 * pi * x) * cos(2 * pi * y) * cos(4 * pi * z)
@@ -254,6 +301,12 @@ def fischerKochS(x: float, y: float, z: float, height: float) -> float:
 
 
 def pmy(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
+           sin(4 \pi x) sin(2 \pi y) + \
+           sin(2 \pi x) sin(4 \pi z) + \
+           sin(4 \pi y) sin(2 \pi z) = 0`
+    """
     a = 2 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     b = sin(4 * pi * x) * sin(2 * pi * y)
     c = sin(2 * pi * x) * sin(4 * pi * z)
@@ -263,6 +316,9 @@ def pmy(x: float, y: float, z: float, height: float) -> float:
 
 
 def honeycomb(x: float, y: float, z: float, height: float) -> float:
+    """
+    :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0`
+    """
     return (
         sin(2 * pi * x) * cos(2 * pi * y) + sin(2 * pi * y) + cos(2 * pi * z) + height
     )

@@ -1,3 +1,8 @@
+"""
+=============================================
+Polyhedron (:mod:`microgen.shape.polyhedron`)
+=============================================
+"""
 import cadquery as cq
 
 # ----------POLYHEDRON-----------------------------------------------------------------------------------------#
@@ -7,7 +12,7 @@ class Polyhedron:
     """
     Class to generate a Polyhedron with a given set of faces and vertices
     """
-    def __init__(self, dic: dict[str, list], number: int) -> None:
+    def __init__(self, dic: dict[str, list], number: int = 0) -> None:
         self.dic = dic
         self.faces_ixs = [face["vertices"] for face in dic["faces"]]
         for ixs in self.faces_ixs:

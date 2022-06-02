@@ -1,9 +1,3 @@
-"""
-==============
-TEST SHAPE DOC
-==============
-"""
-
 from .box import *
 from .capsule import *
 from .cylinder import *

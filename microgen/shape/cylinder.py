@@ -1,3 +1,8 @@
+"""
+=========================================
+Cylinder (:mod:`microgen.shape.cylinder`)
+=========================================
+"""
 import cadquery as cq
 import numpy as np
 
@@ -13,13 +18,13 @@ class Cylinder:
     def __init__(
         self,
         center: np.ndarray,
-        angle: np.ndarray,
+        orientation: np.ndarray,
         height: float,
         radius: float,
-        number: int,
+        number: int = 0,
     ) -> None:
         self.center = center
-        self.angle = angle
+        self.orientation = orientation
         self.radius = radius
         self.height = height
         self.number = number
@@ -35,6 +40,6 @@ class Cylinder:
             )
         )
         cylinder = rotateEuler(
-            cylinder, self.center, self.angle[0], self.angle[1], self.angle[2]
+            cylinder, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
         return cylinder

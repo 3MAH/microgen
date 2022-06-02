@@ -1,3 +1,8 @@
+"""
+=======================================
+Capsule (:mod:`microgen.shape.capsule`)
+=======================================
+"""
 import cadquery as cq
 import numpy as np
 
@@ -13,13 +18,13 @@ class Capsule:
     def __init__(
         self,
         center: np.ndarray,
-        angle: np.ndarray,
+        orientation: np.ndarray,
         height: float,
         radius: float,
-        number: int,
+        number: int = 0,
     ) -> None:
         self.center = center
-        self.angle = angle
+        self.orientation = orientation
         self.height = height
         self.radius = radius
         self.number = number
@@ -52,6 +57,6 @@ class Capsule:
         capsule = cylinder.fuse(sphereG)
         capsule = capsule.fuse(sphereD)
         capsule = rotateEuler(
-            capsule, self.center, self.angle[0], self.angle[1], self.angle[2]
+            capsule, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
         return cq.Workplane().add(capsule.Solids())

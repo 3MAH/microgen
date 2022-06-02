@@ -18,6 +18,14 @@ from .shape.tpms import Tpms
 
 
 class BasicGeometry:
+    """
+        BasicGeometry class to manage shapes
+
+        :param shape: name of the shape
+        :type shape: str
+        :param param_geom: dictionary containing corresponding shape parameters
+        :type param_geom: dict
+    """
     def __init__(
         self,
         shape: str,
@@ -31,22 +39,6 @@ class BasicGeometry:
         phi: float = 0,
         path_data: str = None,
     ) -> None:
-        """
-        Parameters
-        ----------
-        number : TYPE
-            DESCRIPTION
-        shape : TYPE
-            DESCRIPTION
-        xc, yc, zc : TYPE
-            DESCRIPTION
-        psi, theta, phi : TYPE
-            DESCRIPTION
-        param_geom : TYPE
-            DESCRIPTION
-        path_data : TYPE
-            DESCRIPTION
-        """
         self.number = number
         self.shape = shape
         self.xc = xc
@@ -152,15 +144,11 @@ class BasicGeometry:
 
     def generate(self, rve: Rve = None) -> cq.Shape:
         """
-        Parameters
-        ----------
-        rve : TYPE, optional
-            DESCRIPTION
+        BasicGeometry class to manage shapes
 
-        Returns
-        -------
-        cq.Shape(cqshape.val().wrapped) : TYPE
-            DESCRIPTION
+        :param rve: Rve is required when the shape is a TPMS
+        :type rve: Rve
+        :return: CQ Shape
         """
 
         if self.shape.lower() == "box":

@@ -1,9 +1,14 @@
+"""
+========================================================
+Extruded Polygon (:mod:`microgen.shape.extrudedPolygon`)
+========================================================
+"""
 import cadquery as cq
 import numpy as np
 
-from ..operations import rotateEuler
+from typing import Sequence, Tuple
 
-# ----------ExtrudedPolygon-----------------------------------------------------------------------------------------#
+from ..operations import rotateEuler
 
 
 class ExtrudedPolygon:
@@ -13,13 +18,13 @@ class ExtrudedPolygon:
     def __init__(
         self,
         center: np.ndarray,
-        angle: np.ndarray,
-        listCorners: list,
+        orientation: np.ndarray,
+        listCorners: Sequence[Tuple[float, float]],
         height: float,
-        number: int,
+        number: int = 0,
     ) -> None:
         self.center = center
-        self.angle = angle
+        self.orientation = orientation
         self.listCorners = listCorners
         self.height = height
         self.number = number
@@ -36,6 +41,6 @@ class ExtrudedPolygon:
             )
         )
         poly = rotateEuler(
-            poly, self.center, self.angle[0], self.angle[1], self.angle[2]
+            poly, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
         return poly

@@ -1,3 +1,8 @@
+"""
+=============================================
+Ellipsoid (:mod:`microgen.shape.ellipsoid`)
+=============================================
+"""
 import cadquery as cq
 import numpy as np
 
@@ -13,14 +18,14 @@ class Ellipsoid:
     def __init__(
         self,
         center: np.ndarray,
-        angle: np.ndarray,
+        orientation: np.ndarray,
         a_x: float,
         a_y: float,
         a_z: float,
-        number: int,
+        number: int = 0,
     ) -> None:
         self.center = center
-        self.angle = angle
+        self.orientation = orientation
         self.a_x = a_x
         self.a_y = a_y
         self.a_z = a_z
@@ -39,6 +44,6 @@ class Ellipsoid:
         sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
         ellipsoid = sphere.transformGeometry(transform_mat)
         ellipsoid = rotateEuler(
-            ellipsoid, self.center, self.angle[0], self.angle[1], self.angle[2]
+            ellipsoid, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
         return cq.Workplane().add(ellipsoid)

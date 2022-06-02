@@ -1,3 +1,8 @@
+"""
+=============================================
+Sphere (:mod:`microgen.shape.sphere`)
+=============================================
+"""
 import cadquery as cq
 import numpy as np
 
@@ -8,7 +13,7 @@ class Sphere:
     """
     Class to generate a sphere
     """
-    def __init__(self, center: np.ndarray, radius: float, number: int) -> None:
+    def __init__(self, center: np.ndarray, radius: float, number: int = 0) -> None:
         self.center = center
         self.radius = radius
         self.number = number

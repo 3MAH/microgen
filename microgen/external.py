@@ -1,7 +1,10 @@
 """
 Functions related to external softwares
-    - neper
-    - mmg
+    - `Neper\: Polycrystal Generation and Meshing`_
+    - `mmg\: Robust, Open-source & Multidisciplinary Software for Remeshing`_
+
+.. _Neper\: Polycrystal Generation and Meshing: https://neper.info/
+.. _mmg\: Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
 """
 
 import os
@@ -294,6 +297,9 @@ def mmg2d(
     opnbdy=None,
     rmc=None,
 ):
+    """
+    Runs mmg2d_O3 from the command line with given arguments
+    """
     cmd = ["mmg2d_O3"]
     if d:
         cmd.append("-d")
@@ -416,6 +422,9 @@ def mmgs(
     optim=None,
     rn=None,
 ):
+    """
+    Runs mmgs_O3 from the command line with given arguments
+    """
     cmd = ["mmgs_O3"]
     if d:
         cmd.append("-d")
@@ -532,6 +541,9 @@ def mmg3d(
     rmc=None,
     rn=None,
 ):
+    """
+    Runs mmg3d_O3 from the command line with given arguments
+    """
     cmd = ["mmg3d_O3"]
     if d:
         cmd.append("-d")

@@ -21,22 +21,13 @@ def rotateEuler(
     phi: float,
 ) -> Union[cq.Shape, cq.Workplane]:
     """
-
     Rotates object according to XZX Euler angle convention
 
-    Parameters
-    ----------
-    object :
-        Object to rotate
-    center :
-        numpy array (x, y, z)
-    psi, theta, phi :
-        Euler angles
+    :param object: Object to rotate
+    :param center: numpy array (x, y, z)
+    :param psi, theta, phi: Euler angles
 
-    Returns
-    -------
-    object_r :
-        Rotated object
+    :return object_r: Rotated object
     """
 
     u = np.array([0.0, 0.0, 1.0])
@@ -74,6 +65,12 @@ def rescale(
 ) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
+
+    :param obj: CQ Shape
+    :param scale: list of scale factor in each direction
+    :param center: list of center components
+
+    :return shape: CQ Shape
     """
     transform_mat = cq.Matrix(
         [
@@ -88,6 +85,8 @@ def rescale(
 def removeEmptyLines(filename: str) -> None:
     """
     Removes empty lines of the given file
+
+    :param filename: file where to remove empty lines
     """
     if not os.path.isfile(filename):
         print("{} does not exist ".format(filename))
@@ -105,15 +104,11 @@ def fuseParts(
 ) -> tuple[cq.Shape, list[list[cq.Solid]]]:
     """
 
-    Parameters
-    ----------
-    cqShapeList : list of shapes to fuse
-    retain_edges : ?
+    :param cqShapeList: list of shapes to fuse
+    :param retain_edges: ?
 
-    Returns
-    -------
-    cq.Shape(fixed) : fused object
-    occ_solids_list : list of list of solids
+    :return cq.Shape(fixed): fused object
+    :return occ_solids_list: list of list of solids
     """
 
     #    occ_solids_list = (s.Solids() for s in cqShapeList)
@@ -184,15 +179,11 @@ def cutPhasesByShape(
     """
     Cuts list of shapes by another shape
 
-    Parameters
-    ----------
-    cqShapeList : list of shapes to cut
-    cut_obj : cutting object
+    :param cqShapeList: list of shapes to cut
+    :param cut_obj: cutting object
 
-    Returns
-    -------
-    phase_cut : final result
-    occ_solids_list : list of list of solids
+    :return phase_cut: final result
+    :return occ_solids_list: list of list of solids
     """
     phase_cut = []
 
@@ -215,15 +206,11 @@ def cutPhaseByShapeList(
     """
     Cuts a shape by a list of shapes
 
-    Parameters
-    ----------
-    phaseToCut : shape to cut
-    cqShapeList : list of cutting shapes
+    :param phaseToCut: shape to cut
+    :param cqShapeList: list of cutting shapes
 
-    Returns
-    -------
-    resultCut : cutted shape
-    occ_solids_list : list of solids
+    :return resultCut: cutted shape
+    :return occ_solids_list: list of solids
     """
 
     resultCut = phaseToCut
@@ -240,19 +227,11 @@ def cutParts(
 ) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
     """
 
-    Parameters
-    ----------
-    cqShapeList : TYPE
-        DESCRIPTION
-    reverseOrder : TYPE, optional
-        DESCRIPTION
+    :param cqShapeList:
+    :param reverseOrder:
 
-    Returns
-    -------
-    phase_cut : TYPE
-        DESCRIPTION
-    occ_solids_list : TYPE
-        DESCRIPTION
+    :return phase_cut:
+    :return occ_solids_list:
     """
     phase_cut = []
     if reverseOrder:
@@ -290,18 +269,14 @@ def rasterShapeList(
     """
     Rasters shapes from shape list according to the rve divided by the given grid
 
-    Parameters
-    ----------
-    cqShapeList : list of shapes to raster
-    rve : RVE divided by the given grid
-    grid : number of divisions in each direction [x, y, z]
+    :param cqShapeList: list of shapes to raster
+    :param rve: RVE divided by the given grid
+    :param grid: number of divisions in each direction [x, y, z]
 
-    Returns
-    -------
-    flat_list : flatten list from occ_solids_list
-    occ_solids_list : list of list of solids
-    volume_list : list of shape volume (scalar)
-    center_list : list of shape center (vector)
+    :return flat_list: flatten list from occ_solids_list
+    :return occ_solids_list: list of list of solids
+    :return volume_list: list of shape volume (scalar)
+    :return center_list: list of shape center (vector)
     """
 
     occ_solids_list = []
@@ -360,11 +335,11 @@ def repeatGeometry(
     """
     Repeats unit geometry in each direction according to the given grid
 
-    Parameters
-    ----------
-    unit_geom : Geometry to repeat
-    rve : RVE of the geometry to repeat
-    grid : dictionary of number of geometry repetitions in each direction {'x': 3, 'y': 3, 'z': 3}
+    :param unit_geom: Geometry to repeat
+    :param rve: RVE of the geometry to repeat
+    :param grid: dictionary of number of geometry repetitions in each direction {'x': 3, 'y': 3, 'z': 3}
+    
+    :return CQ Compound
     """
 
     xyz_repeat = cq.Assembly()

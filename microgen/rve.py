@@ -5,17 +5,12 @@ import cadquery as cq
 
 
 class Rve:
+    """
+    :param dim_x: X dimension of the RVE
+    :param dim_y: Y dimension of the RVE
+    :param dim_z: Z dimension of the RVE
+    """
     def __init__(self, dim_x: float, dim_y: float, dim_z: float) -> None:
-        """
-        Parameters
-        ----------
-        dim_x : float
-            X dimension of the RVE
-        dim_y : float
-            Y dimension of the RVE
-        dim_z : float
-            Z dimension of the RVE
-        """
         self.dim_x = dim_x
         self.dim_y = dim_y
         self.dim_z = dim_z

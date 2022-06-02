@@ -17,7 +17,14 @@ def mesh(
     """
     Meshes step file with gmsh with list of phases management
 
-    output_file : output file (.msh, .vtk)
+    :param mesh_file: step file to mesh
+    :param listPhases: list of phases to mesh
+    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
+    :param order: see `gmsh.model.mesh.setOrder(order)`_
+    :param output_file: output file (.msh, .vtk)
+
+    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     gmsh.initialize()
     gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
@@ -119,6 +126,16 @@ def meshPeriodic(
 ) -> None:
     """
     Meshes periodic geometries with gmsh
+
+    :param mesh_file: step file to mesh
+    :param rve: RVE for periodicity
+    :param listPhases: list of phases to mesh
+    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
+    :param order: see `gmsh.model.mesh.setOrder(order)`_
+    :param output_file: output file (.msh, .vtk)
+
+    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     gmsh.initialize()
     gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings

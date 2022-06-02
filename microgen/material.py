@@ -7,6 +7,9 @@ from .operations import removeEmptyLines
 
 
 class MatSection:
+    """
+    DESCRIPTION
+    """
     def __init__(
         self,
         number: int,
@@ -60,7 +63,9 @@ class MatSection:
 
 
 def readSections(path_data: str, section_file: str) -> list:
-
+    """
+    DESCRIPTION
+    """
     nsections = 0
     sections = []
     path_inputfile = path_data + "/" + section_file

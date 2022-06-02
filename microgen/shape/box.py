@@ -1,10 +1,12 @@
+"""
+===============================
+Box (:mod:`microgen.shape.box`)
+===============================
+"""
 import cadquery as cq
 import numpy as np
 
 from ..operations import rotateEuler
-
-# ----------BOX-----------------------------------------------------------------------------------------#
-# MB 03/12/2021
 
 
 class Box:
@@ -14,14 +16,14 @@ class Box:
     def __init__(
         self,
         center: np.ndarray,
-        angle: np.ndarray,
+        orientation: np.ndarray,
         dim_x: float,
         dim_y: float,
         dim_z: float,
-        number: int,
+        number: int = 0,
     ) -> None:
         self.center = center
-        self.angle = angle
+        self.orientation = orientation
         self.dim_x = dim_x
         self.dim_y = dim_y
         self.dim_z = dim_z
@@ -34,5 +36,5 @@ class Box:
             .box(self.dim_x, self.dim_y, self.dim_z)
             .translate((self.center[0], self.center[1], self.center[2]))
         )
-        box = rotateEuler(box, self.center, self.angle[0], self.angle[1], self.angle[2])
+        box = rotateEuler(box, self.center, self.orientation[0], self.orientation[1], self.orientation[2])
         return box

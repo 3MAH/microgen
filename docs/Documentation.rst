@@ -1,9 +1,8 @@
-Welcome to Microgen's documentation!
+Microgen API
 ====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    microgen
-   shape
