@@ -45,8 +45,8 @@ class Polyhedron:
             vertices_in_face.insert(0,len(vertices_in_face))
 
         vertices = np.array(self.dic["vertices"])
-        faces = np.hstack([facesPv])
-        
+        faces = np.hstack(facesPv)
+
         return pv.PolyData(vertices, faces)
 
 
