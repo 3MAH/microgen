@@ -111,25 +111,6 @@ class BasicGeometry:
                 thickness=self.param_geom["thickness"],
                 number=self.number,
             )
-            # if self.param_geom["type_surface"] == "custom":
-            #     self.geometry = Tpms(
-            #         center=self.center,
-            #         orientation=self.orientation,
-            #         type_surface=self.param_geom["type_surface"],
-            #         type_part=self.param_geom["type_part"],
-            #         thickness=self.param_geom["thickness"],
-            #         number=self.number,
-            #         function=self.param_geom["function"],
-            #     )
-            # else:
-            #     self.geometry = Tpms(
-            #         center=self.center,
-            #         orientation=self.orientation,
-            #         type_surface=self.param_geom["type_surface"],
-            #         type_part=self.param_geom["type_part"],
-            #         thickness=self.param_geom["thickness"],
-            #         number=self.number,
-            #     )
 
         if self.shape.lower() == "polyhedron":
             self.geometry = Polyhedron(dic=self.param_geom["dic"], number=self.number)
@@ -140,7 +121,6 @@ class BasicGeometry:
             self.number < other.number
         )  # replacement for cmp function not availbale with Python3
 
-    # ----------GENERATE PHASES------------------------------------------------
 
     def generate(self, rve: Rve = None) -> cq.Shape:
         """

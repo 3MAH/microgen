@@ -6,8 +6,6 @@ Sphere (:mod:`microgen.shape.sphere`)
 import cadquery as cq
 import numpy as np
 
-# ----------SPHERE--------------------------------------------------------#
-
 
 class Sphere:
     """

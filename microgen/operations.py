@@ -70,7 +70,7 @@ def rescale(
     :param scale: list of scale factor in each direction
     :param center: list of center components
 
-    :return shape: CQ Shape
+    :return shape: rescaled CQ Shape
     """
     transform_mat = cq.Matrix(
         [
@@ -111,14 +111,7 @@ def fuseParts(
     :return occ_solids_list: list of list of solids
     """
 
-    #    occ_solids_list = (s.Solids() for s in cqShapeList)
-    #    for cqshape in cqShapeList:
-
     occ_solids_list = [s.Solids() for s in cqShapeList]
-    #    print("occ_solids_list = ", occ_solids_list)
-    #    flat_list = [item for sublist in occ_solids_list for item in sublist]
-
-    #   print("flat_list = ", flat_list)
 
     occ_Solids = cqShapeList[0].wrapped
     for i in range(1, len(cqShapeList)):
@@ -193,9 +186,6 @@ def cutPhasesByShape(
             phase_cut.append(cq.Shape(cut.Shape()))
 
     occ_solids_list = [s.Solids() for s in phase_cut]
-    # print(phase_cut)
-    # print(occ_solids_list)
-    # print("outside cut")
 
     return (phase_cut, occ_solids_list)
 
@@ -226,12 +216,11 @@ def cutParts(
     cqShapeList: list[cq.Shape], reverseOrder: bool = True
 ) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
     """
+    :param cqShapeList: list of CQ Shape to cut
+    :param reverseOrder: bool, order for cutting shapes
 
-    :param cqShapeList:
-    :param reverseOrder:
-
-    :return phase_cut:
-    :return occ_solids_list:
+    :return phase_cut: list of phases
+    :return occ_solids_list: list of list of solids
     """
     phase_cut = []
     if reverseOrder:
@@ -256,9 +245,6 @@ def cutParts(
     phase_cut.reverse()
 
     occ_solids_list = [s.Solids() for s in phase_cut]
-    # print(phase_cut)
-    # print(occ_solids_list)
-    # print("outside cut")
 
     return (phase_cut, occ_solids_list)
 
@@ -338,7 +324,7 @@ def repeatGeometry(
     :param unit_geom: Geometry to repeat
     :param rve: RVE of the geometry to repeat
     :param grid: dictionary of number of geometry repetitions in each direction {'x': 3, 'y': 3, 'z': 3}
-    
+
     :return CQ Compound
     """
 
@@ -354,15 +340,3 @@ def repeatGeometry(
                 )
 
     return xyz_repeat.toCompound()
-
-
-# def rescaleGeometry(unit_geom: cq.Shape, scale: list[float, float, float]) -> cq.Shape: # marche pas
-#     transform_mat = cq.Matrix(
-#         [
-#             [scale['x'], 0, 0, unit_geom.Center().x],
-#             [0, scale['y'], 0, unit_geom.Center().y],
-#             [0, 0, scale['z'], unit_geom.Center().z],
-#         ]
-#     )
-
-#     return unit_geom.transformShape(transform_mat)

@@ -5,8 +5,6 @@ Polyhedron (:mod:`microgen.shape.polyhedron`)
 """
 import cadquery as cq
 
-# ----------POLYHEDRON-----------------------------------------------------------------------------------------#
-
 
 class Polyhedron:
     """

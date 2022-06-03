@@ -8,8 +8,6 @@ import numpy as np
 
 from ..operations import rotateEuler
 
-# ----------CYLINDER-----------------------------------------------------------------------------------------#
-
 
 class Cylinder:
     """

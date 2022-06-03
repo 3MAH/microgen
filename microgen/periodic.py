@@ -68,17 +68,18 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
         if len(partitions[face].solids().all()) > 1:
             intersected_faces.append(face)
 
-    # A REFLECHIR
-    # Erreur/Warning quand un objet dépasse des deux côtés ?
     if "x-" in intersected_faces and "x+" in intersected_faces:
         intersected_faces.remove("x-")
         intersected_faces.remove("x+")
+        raise Warning("Object intersecting x+ and x- faces: not doing anything in this direction")
     if "y-" in intersected_faces and "y+" in intersected_faces:
         intersected_faces.remove("y-")
         intersected_faces.remove("y+")
+        raise Warning("Object intersecting y+ and y- faces: not doing anything in this direction")
     if "z-" in intersected_faces and "z+" in intersected_faces:
         intersected_faces.remove("z-")
         intersected_faces.remove("z+")
+        raise Warning("Object intersecting z+ and z- faces: not doing anything in this direction")
 
     if len(intersected_faces) == 0:  # if no intersected faces = nothing to do
         periodic_object.append(wk_plane)
@@ -88,13 +89,13 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
         periodic_object.append(
             partitions[f_0]
             .solids(face_dir[f_0])  # add the part of the
-            .intersect(rve.Box)  # object included in the rve
+            .intersect(rve.Box)     # object included in the rve
         )
         periodic_object.append(
             partitions[f_0]
             .solids(inverse_face_dir[f_0])  # translate the outside part of
-            .translate(translate[f_0])  # the object in the rve and add
-            .intersect(rve.Box)  # it to the final object
+            .translate(translate[f_0])      # the object in the rve and add
+            .intersect(rve.Box)             # it to the final object
         )
 
     elif len(intersected_faces) == 2:  # two faces intersected (edge)
