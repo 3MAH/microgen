@@ -1,7 +1,11 @@
 import cadquery as cq
 import numpy as np
 
+import vtk
+import pyvista as pv
+
 from ..operations import rotateEuler
+from ..pvoperations import rotatePvEuler
 
 # ----------CAPSULE-------------------------------------------------------------------#
 
@@ -55,3 +59,15 @@ class Capsule:
             capsule, self.center, self.angle[0], self.angle[1], self.angle[2]
         )
         return cq.Workplane().add(capsule.Solids())
+
+    def createPvCapsule(self, resolution=100, capping=True) -> pv.PolyData:
+        capsule = vtk.vtkCapsuleSource()
+        capsule.SetCenter(self.center[0], self.center[1], self.center[2])
+        capsule.SetRadius(self.radius)
+        capsule.SetCylinderLength(self.height)
+        capsule.SetThetaResolution(resolution)
+        capsule.SetPhiResolution(resolution)
+        capsule.Update()
+        capsule = pv.wrap(capsule.GetOutput())
+        capsule = rotatePvEuler(capsule, self.center, self.angle[0], self.angle[1], self.angle[2])
+        return capsule

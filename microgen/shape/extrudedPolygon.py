@@ -1,7 +1,9 @@
 import cadquery as cq
+import pyvista as pv
 import numpy as np
 
 from ..operations import rotateEuler
+from ..pvoperations import rotatePvEuler
 
 # ----------ExtrudedPolygon-----------------------------------------------------------------------------------------#
 
@@ -36,6 +38,23 @@ class ExtrudedPolygon:
             )
         )
         poly = rotateEuler(
+            poly, self.center, self.angle[0], self.angle[1], self.angle[2]
+        )
+        return poly
+
+    def createPvExtrudedpolygon(self, capping=True) -> pv.PolyData:
+        vertices = []
+        for corner in self.listCorners:
+            vertices.append([self.center[0] - 0.5 * self.height,
+                             self.center[1] + corner[0],
+                             self.center[2] + corner[1]])
+        faces = np.arange(len(vertices))
+        faces = np.insert(faces, 0, len(vertices))
+
+        poly = pv.PolyData(vertices, faces)
+        poly = poly.extrude([self.height, 0, 0], capping=capping)
+
+        poly = rotatePvEuler(
             poly, self.center, self.angle[0], self.angle[1], self.angle[2]
         )
         return poly

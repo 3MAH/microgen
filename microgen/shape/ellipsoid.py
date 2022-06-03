@@ -46,7 +46,7 @@ class Ellipsoid:
         return cq.Workplane().add(ellipsoid)
         
     def createPvEllipsoid(self) -> pv.PolyData:
-        transform_mat = np.array(
+        transform_matrix = np.array(
             [
                 [self.a_x, 0, 0, self.center[0]],
                 [0, self.a_y, 0, self.center[1]],
