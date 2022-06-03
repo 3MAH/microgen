@@ -91,7 +91,7 @@ def fuseParts(
 
     Returns
     -------
-    cq.Shape(fixed) : fused object
+    cq.Shape : fused object
     occ_solids_list : list of list of solids
     """
 
