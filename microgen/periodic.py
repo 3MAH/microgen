@@ -6,6 +6,8 @@ import cadquery as cq
 from .operations import fuseParts
 from .rve import Rve
 
+import warnings
+
 
 def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
     """
@@ -71,15 +73,15 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
     if "x-" in intersected_faces and "x+" in intersected_faces:
         intersected_faces.remove("x-")
         intersected_faces.remove("x+")
-        raise Warning("Object intersecting x+ and x- faces: not doing anything in this direction")
+        warnings.warn("Object intersecting x+ and x- faces: not doing anything in this direction")
     if "y-" in intersected_faces and "y+" in intersected_faces:
         intersected_faces.remove("y-")
         intersected_faces.remove("y+")
-        raise Warning("Object intersecting y+ and y- faces: not doing anything in this direction")
+        warnings.warn("Object intersecting y+ and y- faces: not doing anything in this direction")
     if "z-" in intersected_faces and "z+" in intersected_faces:
         intersected_faces.remove("z-")
         intersected_faces.remove("z+")
-        raise Warning("Object intersecting z+ and z- faces: not doing anything in this direction")
+        warnings.warn("Object intersecting z+ and z- faces: not doing anything in this direction")
 
     if len(intersected_faces) == 0:  # if no intersected faces = nothing to do
         periodic_object.append(wk_plane)

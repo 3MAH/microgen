@@ -121,7 +121,6 @@ class BasicGeometry:
             self.number < other.number
         )  # replacement for cmp function not availbale with Python3
 
-
     def generate(self, rve: Rve = None) -> cq.Shape:
         """
         BasicGeometry class to manage shapes

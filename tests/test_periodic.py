@@ -1,5 +1,7 @@
 from microgen import BasicGeometry, periodic, Rve
 
+import pytest
+
 
 def generate_sphere(x, y, z, rve):
     elem = BasicGeometry(shape='sphere',
@@ -9,6 +11,7 @@ def generate_sphere(x, y, z, rve):
     periodic(cqshape=phase, rve=rve)
 
 
+@pytest.mark.filterwarnings("ignore:Object intersecting")
 def test_periodic():
     rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 

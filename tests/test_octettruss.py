@@ -3,7 +3,9 @@ import cadquery as cq
 import numpy as np
 import os
 
+import pytest
 
+@pytest.mark.filterwarnings("ignore:Object intersecting")
 def test_octettruss():
 
     # fichier
@@ -33,8 +35,7 @@ def test_octettruss():
                                       xc=xc[i], yc=yc[i], zc=zc[i],
                                       psi=psi[i], theta=theta[i], phi=phi[i],
                                       param_geom={"height": height[i],
-                                                  "radius": radius[i]},
-                                      path_data='')
+                                                  "radius": radius[i]})
         listPhases.append(elem.generate())
 
     for phase_elem in listPhases:
