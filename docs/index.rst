@@ -10,16 +10,26 @@ Microstructure generation tool based on CadQuery library.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Introduction:
+   :caption: Introduction
 
    Overview
    Install
 
 .. toctree::
    :maxdepth: 2
-   :caption: Documentation:
+   :caption: Documentation
 
    Documentation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   basic_shapes
+   repeated_cells
+   tpms
+   3d_operations
+   mesh
 
 Indices and tables
 ==================

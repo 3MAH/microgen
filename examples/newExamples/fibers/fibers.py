@@ -2,7 +2,7 @@ import os
 import numpy as np
 import cadquery as cq
 from microgen import removeEmptyLines, Rve, BasicGeometry, periodic, cutParts, mesh, meshPeriodic, rasterShapeList, fuseParts
-
+import progressbar
 
 def read_csv(filename):
     x = []
@@ -43,6 +43,7 @@ psi, theta, phi = convert_angles(phi, theta)
 
 listPhases = []
 n = len(x) # 100
+bar = progressbar.ProgressBar(max_value=n)
 for i in range(0, n):
     # if i==4:
     #     continue
@@ -55,6 +56,7 @@ for i in range(0, n):
                         param_geom={"height": height, "radius": radius}, 
                         path_data='data')
     listPhases.append(elem.generate())
+    bar.update(i)
 
 assemb = cq.Assembly()
 for phase in listPhases:
