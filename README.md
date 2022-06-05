@@ -1,8 +1,9 @@
 # microgen
 Microstructure generation
 
-![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)
+[![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
 [![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/installer/conda.svg)](https://conda.anaconda.org/set3mah)
+[![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/1.0/)
 
 
 Documentation
@@ -16,9 +17,14 @@ Installation
 ------------
 
 -------------------------------------------------------------------------------------------------------
-Install Microgen with conda: 
+With conda: 
 ```
 conda install -c conda-forge -c cadquery -c set3mah microgen
+```
+
+With pip:
+```
+pip install microgen
 ```
 -------------------------------------------------------------------------------------------------------
 
