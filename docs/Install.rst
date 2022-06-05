@@ -1,5 +1,9 @@
+.. _RST Install:
+
 Install
 ========
+
+Conda and PyPI packages are available for Microgen
 
 ----------------------------------------------------------------------------------
 

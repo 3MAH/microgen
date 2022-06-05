@@ -1,3 +1,5 @@
+.. _RST tpms:
+
 Triply Periodic Minimal Surfaces (TPMS)
 =======================================
 

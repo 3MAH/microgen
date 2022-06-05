@@ -1,3 +1,5 @@
+.. _RST repeated_cells:
+
 Repeated cells
 ====================================
 
