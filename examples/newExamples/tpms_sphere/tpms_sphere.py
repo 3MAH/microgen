@@ -16,14 +16,14 @@ gyroid = phase.generate(rve=rve)
 
 print("repeat geometry")
 gyroid = microgen.repeatGeometry(gyroid, rve, {'x': 3, 'y': 3, 'z': 3})
-cq.exporters.export(gyroid, 'gyroid.stl')
+# cq.exporters.export(gyroid, 'gyroid.stl')
 
 sphere = microgen.BasicGeometry(number=0, shape='sphere',
                                 xc=1, yc=1, zc=1,
                                 psi=0., theta=0., phi=0.,
                                 param_geom={"radius": 1.5})
 sphere = sphere.generate()
-cq.exporters.export(sphere, 'sphere.stl')
+# cq.exporters.export(sphere, 'sphere.stl')
 
 result = gyroid.intersect(sphere)
-cq.exporters.export(result, 'compound.stl')
+cq.exporters.export(result, 'tpms_sphere.stl')

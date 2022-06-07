@@ -51,6 +51,7 @@ for phase_elem in listPhases:
 phases_cut = cutParts(cqShapeList=[s[0] for s in listPeriodicPhases], reverseOrder=False)
 compound = cq.Compound.makeCompound(phases_cut[0])
 
-cq.exporters.export(compound, 'compound.step')
+cq.exporters.export(compound, 'octettruss.step')
+cq.exporters.export(compound, 'octettruss.stl')
 # mesh('compound.step', phases_cut[1], 0.03, 1, output_file='Mesh.msh')
-meshPeriodic(mesh_file='compound.step', rve=revel, listPhases=phases_cut[1], size=0.03, order=1, output_file='MeshPeriodic.vtk')
+meshPeriodic(mesh_file='octettruss.step', rve=revel, listPhases=phases_cut[1], size=0.03, order=1, output_file='octettruss.vtk')

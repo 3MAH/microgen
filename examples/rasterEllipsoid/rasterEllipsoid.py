@@ -1,6 +1,8 @@
 import cadquery as cq
 from microgen import Rve, BasicGeometry, rasterShapeList, mesh
 
+import meshio
+
 # Size of the mesh
 size_mesh = 0.03
 a = 1.0
@@ -26,4 +28,4 @@ raster = rasterShapeList(cqShapeList=[elli], rve=revel, grid=[5, 5, 5])
 compound = cq.Compound.makeCompound(raster[0])
 cq.exporters.export(compound, 'compound.step')
 
-mesh(mesh_file='compound.step', listPhases=raster[1], size=size_mesh, order=1, output_file='Mesh.vtk')
+mesh(mesh_file='compound.step', listPhases=raster[1], size=size_mesh, order=1, output_file='Mesh.msh')

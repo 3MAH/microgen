@@ -25,11 +25,11 @@ Microstructure generation tool based on CadQuery library.
    :maxdepth: 2
    :caption: Examples
 
-   basic_shapes
-   repeated_cells
-   tpms
-   3d_operations
-   mesh
+   examples/basic_shapes
+   examples/repeated_cells
+   examples/tpms
+   examples/3d_operations
+   examples/mesh
 
 Indices and tables
 ==================

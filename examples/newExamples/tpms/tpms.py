@@ -52,5 +52,5 @@ print("Total time : {} s".format(total_end - total_start))
 
 # show_object(compound) # run with cq-editor
 
-cq.exporters.export(assembly.toCompound(), 'compound.stl')
-cq.exporters.export(assembly.toCompound(), 'compound.step')
+cq.exporters.export(assembly.toCompound(), 'tpms.stl')
+# cq.exporters.export(assembly.toCompound(), 'tpms.step')
