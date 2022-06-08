@@ -7,4 +7,5 @@ Microgen API
    :maxdepth: 3
    :caption: Contents:
 
-   microgen
+   modules
+   microgen.shape
