@@ -10,7 +10,7 @@ import pytest
 def test_octettruss():
 
     # fichier
-    NPhases_file = "examples/3Doperations/BooleanOperations/octetTruss/test_octet.dat"
+    NPhases_file = "examples/Lattices/octetTruss/test_octet.dat"
     microgen.removeEmptyLines(NPhases_file)
 
     dt = np.dtype([('number', int), ('shape', np.str_, 10),
