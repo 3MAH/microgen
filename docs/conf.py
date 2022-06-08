@@ -34,7 +34,7 @@ release = '1.0.0'
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage',
               'sphinx.ext.napoleon', 'sphinx.ext.autosummary']
 
-# MOCK_MODULES = ["numpy", "cadquery"]
+# MOCK_MODULES = ["numpy", "cadquery", "OCP"]
 # for mod_name in MOCK_MODULES:
 #     sys.modules[mod_name] = mock.Mock()
 

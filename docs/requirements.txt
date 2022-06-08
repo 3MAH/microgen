@@ -1,5 +1,4 @@
 sphinx
 sphinx-rtd-theme
 sphinxcontrib-napoleon
-numpy
 mock
