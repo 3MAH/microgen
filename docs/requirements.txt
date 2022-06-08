@@ -2,4 +2,8 @@ sphinx
 sphinx-rtd-theme
 sphinxcontrib-napoleon
 mock
-numpy
+vtk=9.0.1
+cadquery==2.2.0b0
+pygmsh=4.8
+pygalmesh
+pytest-cov
