@@ -9,7 +9,7 @@ Gyroid
 .. include:: ../../examples/TPMS/gyroid/gyroid.py
    :literal:
 
-.. image:: ../_static/tpms.png
+.. image:: ../_static/gyroid.png
 
 TPMS available
 --------------

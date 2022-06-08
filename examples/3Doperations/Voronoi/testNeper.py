@@ -16,4 +16,4 @@ for polyhedron in listPolyhedra:
 compound = cq.Compound.makeCompound([phase.shape for phase in phases])
 cq.exporters.export(compound, 'compound.step')
 
-mesh(mesh_file='compound.step', listPhases=phases, size=0.05, order=1, output_file='Mesh.vtk')
+mesh(mesh_file='compound.step', listPhases=phases, size=0.05, order=1, output_file='Voronoi.vtk')

@@ -18,4 +18,4 @@ Platon polyhedra
 .. include:: ../../examples/BasicShapes/platon/platon.py
    :literal:
 
-.. image:: ../_static/shapes.png
+.. image:: ../_static/platon.png

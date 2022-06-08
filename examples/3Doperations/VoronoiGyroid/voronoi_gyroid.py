@@ -10,8 +10,7 @@ gyroid = Tpms(center=(0.5, 0.5, 0.5),
               type_part='sheet',
               thickness=0.2,
               path_data='data')
-gyroid.createSurfaces(sizeMesh=0.03, minFacetAngle=20., maxRadius=0.03)
-gyroid = gyroid.generate().translate((0.5, 0.5, 0.5))
+gyroid = gyroid.generate(sizeMesh=0.03, minFacetAngle=20., maxRadius=0.03).translate((0.5, 0.5, 0.5))
 
 phases = []
 i = 0
@@ -26,4 +25,4 @@ for polyhedron in listPolyhedra:
 compound = cq.Compound.makeCompound([phase.shape for phase in phases])
 cq.exporters.export(compound, 'compound.step')
 
-mesh(mesh_file='compound.step', listPhases=phases, size=0.05, order=1, output_file='Mesh.vtk')
+mesh(mesh_file='compound.step', listPhases=phases, size=0.05, order=1, output_file='Gyroid-voro.vtk')

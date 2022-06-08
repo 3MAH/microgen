@@ -40,6 +40,6 @@ denseSample = Phase(shape=box.generate())
 
 sample = cutPhaseByShapeList(phaseToCut=denseSample, cqShapeList=shapeList)
 
-cq.exporters.export(sample.shape, 'poly1.step')
+cq.exporters.export(sample.shape, 'honeycomb.step')
 cq.exporters.export(sample.shape, 'honeycomb.stl')
-# mesh(mesh_file='poly1.step', listPhases=[sample.getSolids()], size=0.1, order=1, output_mesh='Mesh.msh')
+# mesh(mesh_file='honeycomb.step', listPhases=[sample.getSolids()], size=0.1, order=1, output_mesh='honeycomb.vtk')
