@@ -5,8 +5,8 @@
 # Required
 version: 2
 
-# conda:
-#   environment: environment.yml
+conda:
+  environment: environment.yml
 
 build:
   os: ubuntu-22.04
@@ -29,6 +29,6 @@ sphinx:
 #   - pdf
 
 # Optionally set the version of Python and requirements required to build your docs
-python:
-  install:
-    - requirements: docs/requirements.txt
+# python:
+#   install:
+#     - requirements: docs/requirements.txt

@@ -6,4 +6,3 @@ vtk==9.0.3
 cadquery==2.2.0b0
 pygmsh
 pygalmesh
-pytest-cov
