@@ -1,6 +1,7 @@
 """
 Boolean operations
 """
+
 import os
 
 import cadquery as cq
@@ -106,7 +107,7 @@ def fuseParts(
 ) -> Phase:
     """
     Fuse all shapes in cqShapeList
-    
+
     :param cqShapeList: list of shapes to fuse
     :param retain_edges: retain intersecting edges
 

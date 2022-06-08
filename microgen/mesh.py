@@ -1,6 +1,7 @@
 """
 Mesh using gmsh
 """
+
 import gmsh
 import numpy as np
 
