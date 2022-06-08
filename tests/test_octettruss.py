@@ -9,7 +9,7 @@ import pytest
 def test_octettruss():
 
     # fichier
-    NPhases_file = "examples/octetTruss/test_octet.dat"
+    NPhases_file = "examples/3Doperations/BooleanOperations/octetTruss/test_octet.dat"
     microgen.removeEmptyLines(NPhases_file)
 
     dt = np.dtype([('number', int), ('shape', np.str_, 10),
@@ -26,30 +26,31 @@ def test_octettruss():
     c = 1.0
 
     revel = microgen.Rve(a, b, c)
-    listPhases = []
-    listPeriodicPhases = []
+    listPhases = []  # type: list[microgen.Phase]
+    listPeriodicPhases = []  # type: list[microgen.Phase]
     n = len(xc)
 
     for i in range(0, n):
-        elem = microgen.BasicGeometry(number=number[i], shape=shape[i],
-                                      xc=xc[i], yc=yc[i], zc=zc[i],
-                                      psi=psi[i], theta=theta[i], phi=phi[i],
-                                      param_geom={"height": height[i],
-                                                  "radius": radius[i]})
-        listPhases.append(elem.generate())
+        elem = microgen.shape.cylinder.Cylinder(center=(xc[i], yc[i], zc[i]),
+                                                orientation=(psi[i], theta[i], phi[i]),
+                                                height=height[i],
+                                                radius=radius[i])
+        phase = microgen.Phase(shape=elem.generate())
+        listPhases.append(phase)
 
     for phase_elem in listPhases:
-        periodicPhase = microgen.periodic(cqshape=phase_elem, rve=revel)
+        periodicPhase = microgen.periodic(phase=phase_elem, rve=revel)
         listPeriodicPhases.append(periodicPhase)
 
-    phases_cut = microgen.cutParts(cqShapeList=[s[0] for s in listPeriodicPhases], reverseOrder=True)
-    phases_cut = microgen.cutParts(cqShapeList=[s[0] for s in listPeriodicPhases], reverseOrder=False)
-    compound = cq.Compound.makeCompound(phases_cut[0])
+    cqShapeList = [phase.shape for phase in listPeriodicPhases]
+    phases_cut = microgen.cutParts(cqShapeList=cqShapeList, reverseOrder=True)
+    phases_cut = microgen.cutParts(cqShapeList=cqShapeList, reverseOrder=False)
+    compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 
     os.makedirs('tests/data', exist_ok=True)  # if data folder doesn't exist yet
 
     cq.exporters.export(compound, 'tests/data/compound.step')
-    microgen.meshPeriodic(mesh_file='tests/data/compound.step', rve=revel, listPhases=phases_cut[1], size=0.03, order=1, output_file='tests/data/MeshPeriodic.vtk')
+    microgen.meshPeriodic(mesh_file='tests/data/compound.step', rve=revel, listPhases=phases_cut, size=0.03, order=1, output_file='tests/data/MeshPeriodic.vtk')
 
 
 if __name__ == "__main__":

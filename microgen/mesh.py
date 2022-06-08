@@ -5,14 +5,16 @@ import gmsh
 import numpy as np
 
 from .rve import Rve
+from .phase import Phase
 
 
 def mesh(
     mesh_file: str,
-    listPhases: list,
+    listPhases: list[Phase],
     size: float,
     order: int = 1,
     output_file: str = "Mesh.msh",
+    mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes step file with gmsh with list of phases management
@@ -22,6 +24,7 @@ def mesh(
     :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
     :param order: see `gmsh.model.mesh.setOrder(order)`_
     :param output_file: output file (.msh, .vtk)
+    :param mshFileVersion: gmsh file version
 
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
@@ -29,8 +32,8 @@ def mesh(
     gmsh.initialize()
     gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
 
-    flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
-    nbTags = len(flatListPhases)
+    flatListSolids = [solid for phase in listPhases for solid in phase.getSolids()]
+    nbTags = len(flatListSolids)
     # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
     # print(nbTags)
@@ -40,9 +43,9 @@ def mesh(
 
     listTags = []
     index = 0
-    for i, phase_list in enumerate(listPhases):
+    for i, phase in enumerate(listPhases):
         temp = []
-        for j, phase in enumerate(phase_list):
+        for j, solid in enumerate(phase.getSolids()):
             index = index + 1
             temp.append(index)
         listTags.append(temp)
@@ -111,7 +114,7 @@ def mesh(
     gmsh.model.mesh.setSize(p, size)
     gmsh.model.mesh.setOrder(order)
     gmsh.model.mesh.generate(3)
-    gmsh.option.setNumber("Mesh.MshFileVersion", 2)
+    gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
     gmsh.write(output_file)
     gmsh.finalize()
 
@@ -119,10 +122,11 @@ def mesh(
 def meshPeriodic(
     mesh_file: str,
     rve: Rve,
-    listPhases: list,
+    listPhases: list[Phase],
     size: float,
     order: int = 1,
     output_file: str = "MeshPeriodic.msh",
+    mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes periodic geometries with gmsh
@@ -133,6 +137,7 @@ def meshPeriodic(
     :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
     :param order: see `gmsh.model.mesh.setOrder(order)`_
     :param output_file: output file (.msh, .vtk)
+    :param mshFileVersion: gmsh file version
 
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
@@ -140,8 +145,8 @@ def meshPeriodic(
     gmsh.initialize()
     gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
 
-    flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
-    nbTags = len(flatListPhases)
+    flatListSolids = [solid for phase in listPhases for solid in phase.getSolids()]
+    nbTags = len(flatListSolids)
     # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
     # print(nbTags)
@@ -151,9 +156,9 @@ def meshPeriodic(
 
     listTags = []
     index = 0
-    for i, phase_list in enumerate(listPhases):
+    for i, phase in enumerate(listPhases):
         temp = []
-        for j, phase in enumerate(phase_list):
+        for j, solid in enumerate(phase.getSolids()):
             index = index + 1
             temp.append(index)
         listTags.append(temp)
@@ -337,6 +342,6 @@ def meshPeriodic(
     gmsh.model.mesh.setSize(p, size)
     gmsh.model.mesh.generate(3)
     gmsh.model.mesh.setOrder(order)
-    gmsh.option.setNumber("Mesh.MshFileVersion", 2)
+    gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
     gmsh.write(output_file)
     gmsh.finalize()

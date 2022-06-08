@@ -8,17 +8,16 @@ import os
 from typing import Callable
 
 import cadquery as cq
-import numpy as np
 import pygalmesh
 from numpy import cos, pi, sin
 from OCP.StlAPI import StlAPI_Reader
 from OCP.TopoDS import TopoDS_Shape
 
+from .basicGeometry import BasicGeometry
 from ..operations import fuseParts
-from ..rve import Rve
 
 
-class Tpms:
+class Tpms(BasicGeometry):
     """
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
     geometry from a given mathematical function, with given thickness
@@ -36,95 +35,76 @@ class Tpms:
     """
     def __init__(
         self,
-        center: np.ndarray,
-        orientation: np.ndarray,
-        surface_function: Callable[[float, float, float, float], float],
-        type_part: str,
-        thickness: float,
-        number: int = 0,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        surface_function: Callable[[float, float, float, float], float] = None,
+        type_part: str = 'sheet',
+        thickness: float = 0,
+        path_data: str = ".",
     ) -> None:
-        self.center = center
-        self.orientation = orientation
+        super().__init__(shape='TPMS', center=center, orientation=orientation)
         self.surface_function = surface_function
         self.type_part = type_part
         self.thickness = thickness
-        self.number = number
+        self.path_data = path_data
 
-        self.name_part = "tpms" + str(self.number)
-
-    def createSurfaces(
+    def createSurface(
         self,
-        rve: Rve,
+        isovalue: float = 0,
+        filename: str = "surface.stl",
         sizeMesh: float = 0.05,
         minFacetAngle: float = 10,
         maxRadius: float = 0.05,
-        path_data: str = ".",
         verbose: bool = False,
-    ) -> bool:
+    ) -> None:
+        surface = Generator(isovalue, self.surface_function)
+        mesh = pygalmesh.generate_surface_mesh(
+            surface,
+            min_facet_angle=minFacetAngle,
+            max_radius_surface_delaunay_ball=maxRadius,
+            max_facet_distance=sizeMesh,
+            verbose=verbose,
+        )
+        if not os.path.isdir(self.path_data):
+            os.mkdir(self.path_data)
+        mesh.write(self.path_data + "/" + filename)
+
+    def generateSurface(
+        self,
+        sizeMesh: float = 0.05,
+        minFacetAngle: float = 10,
+        maxRadius: float = 0.05,
+        verbose: bool = False,
+    ) -> cq.Shape:
         """
-        Creates surfaces files of the TPMS and saves them in path_data directory
+        Creates TPMS sheet surface
+        """
+        self.createSurface(0, "surface.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
+        ocp_shape = TopoDS_Shape()
+        stl_reader = StlAPI_Reader()
+        stl_reader.Read(ocp_shape, self.path_data + "/" + "surface.stl")
+
+        box = cq.Shape(cq.Workplane("front").box(1, 1, 1).val().wrapped)
+        surface = cq.Shape(ocp_shape)
+        return surface.intersect(box)
+
+    def generate(
+        self,
+        sizeMesh: float = 0.05,
+        minFacetAngle: float = 10,
+        maxRadius: float = 0.05,
+        verbose: bool = False,
+    ) -> cq.Shape:
+        """
+        Creates thick TPMS geometry (sheet or skeletal part) from surface
+        files generated in the directory given by path_data
         """
 
         thickness = self.thickness * pi
-
-        s_testplus = Generator(rve, thickness / 4.0, self.surface_function)
-        s_testminus = Generator(rve, -thickness / 4.0, self.surface_function)
-        s_plus = Generator(rve, thickness / 2.0, self.surface_function)
-        s_minus = Generator(rve, -1.0 * thickness / 2.0, self.surface_function)
-
-        print("mesh_surf_testplus  (1/4)", end="\r")
-        mesh_surf_testplus = pygalmesh.generate_surface_mesh(
-            s_testplus,
-            min_facet_angle=minFacetAngle,
-            max_radius_surface_delaunay_ball=maxRadius,
-            max_facet_distance=sizeMesh,
-            verbose=verbose,
-        )
-
-        print("mesh_surf_testminus (2/4)", end="\r")
-        mesh_surf_testminus = pygalmesh.generate_surface_mesh(
-            s_testminus,
-            min_facet_angle=minFacetAngle,
-            max_radius_surface_delaunay_ball=maxRadius,
-            max_facet_distance=sizeMesh,
-            verbose=verbose,
-        )
-
-        print("mesh_surf_plus      (4/4)", end="\r")
-        mesh_surf_plus = pygalmesh.generate_surface_mesh(
-            s_plus,
-            min_facet_angle=minFacetAngle,
-            max_radius_surface_delaunay_ball=maxRadius,
-            max_facet_distance=sizeMesh,
-            verbose=verbose,
-        )
-
-        print("mesh_surf_minus     (4/4)", end="\r")
-        mesh_surf_minus = pygalmesh.generate_surface_mesh(
-            s_minus,
-            min_facet_angle=minFacetAngle,
-            max_radius_surface_delaunay_ball=maxRadius,
-            max_facet_distance=sizeMesh,
-            verbose=verbose,
-        )
-
-        if not os.path.isdir(path_data):
-            os.mkdir(path_data)
-        mesh_surf_testplus.write(path_data + "/" + "tpms_testplus.stl")
-        mesh_surf_testminus.write(path_data + "/" + "tpms_testminus.stl")
-        mesh_surf_plus.write(path_data + "/" + "tpms_plus.stl")
-        mesh_surf_minus.write(path_data + "/" + "tpms_minus.stl")
-
-        return True
-
-    def createTpms(self, path_data: str, rve: Rve) -> cq.Workplane:
-        """
-        Creates TPMS geometry (sheet or skeletal part) from surface
-        files located in the directory given by path_data
-        """
-
-        if rve is None:
-            raise ValueError("Please add an RVE to generate the TPMS")
+        self.createSurface(thickness / 4.0, "tpms_testplus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
+        self.createSurface(-thickness / 4.0, "tpms_testminus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
+        self.createSurface(thickness / 2.0, "tpms_plus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
+        self.createSurface(-thickness / 2.0, "tpms_minus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
 
         surf_tp = TopoDS_Shape()
         surf_tm = TopoDS_Shape()
@@ -133,14 +113,14 @@ class Tpms:
         stl_reader = StlAPI_Reader()
 
         if not (
-            stl_reader.Read(surf_tp, path_data + "/" + "tpms_testplus.stl")
-            and stl_reader.Read(surf_tm, path_data + "/" + "tpms_testminus.stl")
-            and stl_reader.Read(surf_p, path_data + "/" + "tpms_plus.stl")
-            and stl_reader.Read(surf_m, path_data + "/" + "tpms_minus.stl")
+            stl_reader.Read(surf_tp, self.path_data + "/" + "tpms_testplus.stl")
+            and stl_reader.Read(surf_tm, self.path_data + "/" + "tpms_testminus.stl")
+            and stl_reader.Read(surf_p, self.path_data + "/" + "tpms_plus.stl")
+            and stl_reader.Read(surf_m, self.path_data + "/" + "tpms_minus.stl")
         ):
             raise ValueError(
                 "tpms_plus.stl, tpms_minus.stl, tpms_testplus.stl, tpms_testminus.stl files not found in '"
-                + path_data
+                + self.path_data
                 + "' folder"
             )
 
@@ -149,7 +129,7 @@ class Tpms:
         face_cut_p = cq.Face(surf_p)
         face_cut_m = cq.Face(surf_m)
 
-        box = cq.Workplane("front").box(rve.dx, rve.dy, rve.dz)
+        box = cq.Workplane("front").box(1, 1, 1)
 
         boxCut = box.split(face_cut_p)
         boxCut = boxCut.split(face_cut_m)
@@ -173,7 +153,7 @@ class Tpms:
         elif self.type_part == "skeletal":
             to_fuse = [cq.Shape(s.wrapped) for s in skeletal]
             return_object = fuseParts(to_fuse, False)
-        return cq.Workplane().add(return_object[0])
+        return return_object.shape
 
 
 class Generator(pygalmesh.DomainBase):
@@ -182,17 +162,16 @@ class Generator(pygalmesh.DomainBase):
     """
     def __init__(
         self,
-        rve: Rve,
         height: float,
         surface_function: Callable[[float, float, float, float], float],
     ) -> None:
         super().__init__()
         self.height = height
         self.z0 = 0.0
-        self.z1 = rve.dz
-        self.waist_radius = math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2)
+        self.z1 = 1
+        self.waist_radius = math.sqrt(0.5 ** 2 + 0.5 ** 2)
         self.bounding_sphere_squared_radius = (
-            math.sqrt((0.5 * rve.dx) ** 2 + (0.5 * rve.dy) ** 2 + (0.5 * rve.dz) ** 2)
+            math.sqrt(0.5 ** 2 + 0.5 ** 2 + 0.5 ** 2)
             * 1.1
         )
         self.surface_function = surface_function

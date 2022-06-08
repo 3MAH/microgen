@@ -4,31 +4,27 @@ Capsule (:mod:`microgen.shape.capsule`)
 =======================================
 """
 import cadquery as cq
-import numpy as np
 
+from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
 
 
-class Capsule:
+class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
     """
     def __init__(
         self,
-        center: np.ndarray,
-        orientation: np.ndarray,
-        height: float,
-        radius: float,
-        number: int = 0,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        height: float = 1,
+        radius: float = 0.5,
     ) -> None:
-        self.center = center
-        self.orientation = orientation
+        super().__init__(shape='Capsule', center=center, orientation=orientation)
         self.height = height
         self.radius = radius
-        self.number = number
-        self.name_part = "capsule" + str(self.number)
 
-    def createCapsule(self) -> cq.Workplane:
+    def generate(self) -> cq.Shape:
         cylinder = cq.Solid.makeCylinder(
             self.radius,
             self.height,
@@ -57,4 +53,4 @@ class Capsule:
         capsule = rotateEuler(
             capsule, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
-        return cq.Workplane().add(capsule.Solids())
+        return capsule

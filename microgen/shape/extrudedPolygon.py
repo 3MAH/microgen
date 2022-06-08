@@ -8,29 +8,32 @@ import numpy as np
 
 from typing import Sequence, Tuple
 
+from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
 
 
-class ExtrudedPolygon:
+class ExtrudedPolygon(BasicGeometry):
     """
     Class to generate an extruded polygon with a given list of points and a thickness
     """
     def __init__(
         self,
-        center: np.ndarray,
-        orientation: np.ndarray,
-        listCorners: Sequence[Tuple[float, float]],
-        height: float,
-        number: int = 0,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        listCorners: Sequence[Tuple[float, float]] = [(1, 0),
+                                                      (0.5, 0.5 * np.sqrt(3)),
+                                                      (-0.5, 0.5 * np.sqrt(3)),
+                                                      (-1, 0),
+                                                      (-0.5, -0.5 * np.sqrt(3)),
+                                                      (0.5, -0.5 * np.sqrt(3)),
+                                                      (1, 0)],  # hexagon
+        height: float = 1,
     ) -> None:
-        self.center = center
-        self.orientation = orientation
+        super().__init__(shape='ExtrudedPolygon', center=center, orientation=orientation)
         self.listCorners = listCorners
         self.height = height
-        self.number = number
-        self.name_part = "extrudedpolygon" + str(self.number)
 
-    def createExtrudedpolygon(self) -> cq.Workplane:
+    def generate(self) -> cq.Shape:
         poly = (
             cq.Workplane("YZ")
             .polyline(self.listCorners)
@@ -43,4 +46,4 @@ class ExtrudedPolygon:
         poly = rotateEuler(
             poly, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
-        return poly
+        return cq.Shape(poly.val().wrapped)

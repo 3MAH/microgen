@@ -1,14 +1,13 @@
-from microgen import BasicGeometry, periodic, Rve
+from microgen import periodic, Rve, shape, Phase
 
 import pytest
 
 
 def generate_sphere(x, y, z, rve):
-    elem = BasicGeometry(shape='sphere',
-                         xc=x, yc=y, zc=z,
-                         param_geom={"radius": 0.1})
-    phase = elem.generate()
-    periodic(cqshape=phase, rve=rve)
+    elem = shape.sphere.Sphere(center=(x, y, z),
+                               radius=0.1)
+    phase = Phase(shape=elem.generate())
+    periodic(phase=phase, rve=rve)
 
 
 @pytest.mark.filterwarnings("ignore:Object intersecting")
@@ -16,12 +15,11 @@ def test_periodic():
     rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
     # test x- and x+ faces intersected
-    elem = BasicGeometry(shape='capsule',
-                         xc=0.5, yc=0, zc=0.5,
-                         param_geom={"height": 1,
-                                     "radius": 0.1})
-    phase = elem.generate()
-    periodic(cqshape=phase, rve=rve)
+    elem = shape.capsule.Capsule(center=(0.5, 0, 0.5),
+                                 height=1,
+                                 radius=0.1)
+    phase = Phase(shape=elem.generate())
+    periodic(phase=phase, rve=rve)
 
     # test no intersection
     generate_sphere(x=0.5, y=0.5, z=0.5, rve=rve)

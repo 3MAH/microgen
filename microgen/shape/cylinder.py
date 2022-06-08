@@ -4,31 +4,27 @@ Cylinder (:mod:`microgen.shape.cylinder`)
 =========================================
 """
 import cadquery as cq
-import numpy as np
 
+from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
 
 
-class Cylinder:
+class Cylinder(BasicGeometry):
     """
     Class to generate a cylinder
     """
     def __init__(
         self,
-        center: np.ndarray,
-        orientation: np.ndarray,
-        height: float,
-        radius: float,
-        number: int = 0,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        height: float = 1,
+        radius: float = 0.5,
     ) -> None:
-        self.center = center
-        self.orientation = orientation
+        super().__init__(shape='Cylinder', center=center, orientation=orientation)
         self.radius = radius
         self.height = height
-        self.number = number
-        self.name_part = "cylinder" + str(self.number)
 
-    def createCylinder(self) -> cq.Workplane:
+    def generate(self) -> cq.Shape:
         cylinder = (
             cq.Workplane("YZ")
             .circle(self.radius)
@@ -40,4 +36,4 @@ class Cylinder:
         cylinder = rotateEuler(
             cylinder, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
-        return cylinder
+        return cq.Shape(cylinder.val().wrapped)

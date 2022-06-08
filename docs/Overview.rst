@@ -15,10 +15,12 @@ Microstructure generation tool based on `CadQuery <https://cadquery.readthedocs.
 .. |3MAH| image:: https://3mah.github.io/assets/images/logo_3mah/3mah_logo_vsmall.png 
     :width: 50
     :alt: 3MAH website
+    :target: https://3mah.github.io/
 
 .. |GitHub| image:: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
     :width: 50
     :alt: GitHub repository
+    :target: https://github.com/3MAH/microgen
 
 -------------------------------------------------------------------------
 

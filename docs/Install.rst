@@ -7,11 +7,27 @@ Conda and PyPI packages are available for Microgen
 
 ----------------------------------------------------------------------------------
 
-Install Microgen with conda: 
+With conda: 
+~~~~~~~~~~~
 
 .. code-block:: none
 
    $ conda install -c conda-forge -c cadquery -c set3mah microgen
+
+
+With pip:
+~~~~~~~~~
+
+.. code-block:: none
+
+   $ pip install microgen
+
+You may need to install dependencies mentioned in the requirements.txt file
+
+.. code-block:: none
+
+   $ pip install -r requirements.txt
+
 
 ----------------------------------------------------------------------------------
 

@@ -7,10 +7,12 @@ import cadquery as cq
 import numpy as np
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+import OCP
 
 from typing import Union
 
 from .rve import Rve
+from .phase import Phase
 
 
 def rotateEuler(
@@ -101,11 +103,11 @@ def removeEmptyLines(filename: str) -> None:
 
 def fuseParts(
     cqShapeList: list[cq.Shape], retain_edges: bool
-) -> tuple[cq.Shape, list[list[cq.Solid]]]:
+) -> Phase:
     """
 
     :param cqShapeList: list of shapes to fuse
-    :param retain_edges: ?
+    :param retain_edges: retain intersecting edges
 
     :return cq.Shape(fixed): fused object
     :return occ_solids_list: list of list of solids
@@ -119,14 +121,13 @@ def fuseParts(
         occ_Solids = fuse.Shape()
 
     if retain_edges:
-        return (cq.Shape(occ_Solids), occ_solids_list)
+        phase = Phase(shape=cq.Shape(occ_Solids), solids=occ_solids_list)
+        return phase
     else:
         upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
         upgrader.Build()
-        fixed = upgrader.Shape()
-        occ_solids_list = [[cq.Solid(fixed)]]
-
-        return (cq.Shape(fixed), occ_solids_list)
+        shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
+        return Phase(shape=cq.Shape(shape), solids=[[cq.Solid(shape)]])
 
 
 # def cut_parts(cqShapeList):
@@ -167,74 +168,70 @@ def fuseParts(
 
 
 def cutPhasesByShape(
-    cqShapeList: list[cq.Shape], cut_obj: cq.Shape
-) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
+    phaseList: list[Phase], cut_obj: cq.Shape
+) -> list[Phase]:
     """
-    Cuts list of shapes by another shape
+    Cuts list of phases by a given shape
 
-    :param cqShapeList: list of shapes to cut
+    :param phaseList: list of phases to cut
     :param cut_obj: cutting object
 
     :return phase_cut: final result
-    :return occ_solids_list: list of list of solids
     """
-    phase_cut = []
+    phase_cut = []  # type: list[Phase]
 
-    for shape in cqShapeList:
-        cut = BRepAlgoAPI_Cut(shape.wrapped, cut_obj.wrapped)
+    for phase in phaseList:
+        cut = BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped)
         if len(cq.Shape(cut.Shape()).Solids()) > 0:
-            phase_cut.append(cq.Shape(cut.Shape()))
+            phase_cut.append(Phase(shape=cq.Shape(cut.Shape())))
+            phase_cut[-1].solids = phase_cut[-1].shape.Solids()
 
-    occ_solids_list = [s.Solids() for s in phase_cut]
-
-    return (phase_cut, occ_solids_list)
+    return phase_cut
 
 
 def cutPhaseByShapeList(
-    phaseToCut: cq.Shape, cqShapeList: list[cq.Shape]
-) -> tuple[cq.Shape, list[cq.Solid]]:
+    phaseToCut: Phase, cqShapeList: list[cq.Shape]
+) -> Phase:
     """
-    Cuts a shape by a list of shapes
+    Cuts a phase by a list of shapes
 
-    :param phaseToCut: shape to cut
+    :param phaseToCut: phase to cut
     :param cqShapeList: list of cutting shapes
 
-    :return resultCut: cutted shape
-    :return occ_solids_list: list of solids
+    :return resultCut: cutted phase
     """
 
     resultCut = phaseToCut
     for shape in cqShapeList:
-        cut = BRepAlgoAPI_Cut(resultCut.wrapped, shape.wrapped)
-        resultCut = cq.Shape(cut.Shape())
-
-    occ_solids_list = resultCut.Solids()
-    return (resultCut, occ_solids_list)
+        cut = BRepAlgoAPI_Cut(resultCut.shape.wrapped, shape.wrapped)
+        resultCut.shape = cq.Shape(cut.Shape())
+    return resultCut
 
 
 def cutParts(
     cqShapeList: list[cq.Shape], reverseOrder: bool = True
-) -> tuple[list[cq.Shape], list[list[cq.Solid]]]:
+) -> list[Phase]:
     """
+    Cuts list of shapes in the given order (or reverse) and fuse them.
+
     :param cqShapeList: list of CQ Shape to cut
-    :param reverseOrder: bool, order for cutting shapes
+    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
 
     :return phase_cut: list of phases
-    :return occ_solids_list: list of list of solids
     """
-    phase_cut = []
+    phase_cut = []  # type: list[Phase]
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
         cqShapeList_inv = cqShapeList
 
     cut_obj = cqShapeList_inv[0].copy()
-    phase_cut.append(cut_obj)
+    phase_cut.append(Phase(shape=cut_obj))
 
     for shape in cqShapeList_inv[1::]:
         copy = shape.copy()
         cut = BRepAlgoAPI_Cut(copy.wrapped, cut_obj.wrapped)
-        phase_cut.append(cq.Shape(cut.Shape()))
+        phase_cut.append(Phase(shape=cq.Shape(cut.Shape())))
 
         fuse = BRepAlgoAPI_Fuse(cut_obj.wrapped, shape.wrapped)
         fused = fuse.Shape()
@@ -244,9 +241,10 @@ def cutParts(
 
     phase_cut.reverse()
 
-    occ_solids_list = [s.Solids() for s in phase_cut]
+    for phase in phase_cut:
+        phase.solids = phase.shape.Solids()
 
-    return (phase_cut, occ_solids_list)
+    return phase_cut
 
 
 def rasterShapeList(
@@ -316,7 +314,7 @@ def rasterShapeList(
 
 
 def repeatGeometry(
-    unit_geom: Union[cq.Shape, cq.Workplane], rve: Rve, grid: dict[str, int]
+    unit_geom: Phase, rve: Rve, grid: dict[str, int]
 ) -> cq.Compound:
     """
     Repeats unit geometry in each direction according to the given grid
@@ -325,7 +323,7 @@ def repeatGeometry(
     :param rve: RVE of the geometry to repeat
     :param grid: dictionary of number of geometry repetitions in each direction {'x': 3, 'y': 3, 'z': 3}
 
-    :return CQ Compound
+    :return CQ_Compound: cq compound of the repeated geometry
     """
 
     xyz_repeat = cq.Assembly()
@@ -333,7 +331,7 @@ def repeatGeometry(
         for i_y in range(grid["y"]):
             for i_z in range(grid["z"]):
                 xyz_repeat.add(
-                    unit_geom,
+                    unit_geom.shape,
                     loc=cq.Location(
                         cq.Vector(i_x * rve.dim_x, i_y * rve.dim_y, i_z * rve.dim_z)
                     ),

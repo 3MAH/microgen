@@ -1,13 +1,12 @@
 """
 Functions related to external softwares
-    - `Neper\: Polycrystal Generation and Meshing`_
-    - `mmg\: Robust, Open-source & Multidisciplinary Software for Remeshing`_
+    - `Neper - Polycrystal Generation and Meshing`_
+    - `mmg - Robust, Open-source & Multidisciplinary Software for Remeshing`_
 
-.. _Neper\: Polycrystal Generation and Meshing: https://neper.info/
-.. _mmg\: Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
+.. _Neper - Polycrystal Generation and Meshing: https://neper.info/
+.. _mmg - Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
 """
 
-import os
 import subprocess
 
 from typing import Union
@@ -32,7 +31,10 @@ def lanceNeper(filename: str, nbCell: int, dimCube: list) -> None:
     )
     command = command + " -morpho " "gg" " -o " + filename
 
-    os.system(command)
+    try:
+        subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        print("neper command did not work, check if it is installed or contact a developer")
 
 
 def parseNeper(filename: str) -> tuple:
@@ -390,7 +392,10 @@ def mmg2d(
         cmd.append("-rmc")
         cmd.append(str(rmc))
 
-    subprocess.run(cmd)
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        print("mmg command did not work, check if it is installed or contact a developer")
 
 
 def mmgs(
@@ -503,7 +508,10 @@ def mmgs(
     if rn:
         cmd.append("-rn")
 
-    subprocess.run(cmd)
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        print("mmg command did not work, check if it is installed or contact a developer")
 
 
 def mmg3d(
@@ -639,4 +647,8 @@ def mmg3d(
     if rn:
         cmd.append("-rn")
 
-    subprocess.run(cmd)
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        print("mmg command did not work, check if it is installed or contact a developer")
+

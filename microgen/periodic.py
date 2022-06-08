@@ -5,22 +5,22 @@ import cadquery as cq
 
 from .operations import fuseParts
 from .rve import Rve
+from .phase import Phase
 
 import warnings
 
 
-def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
+def periodic(phase: Phase, rve: Rve) -> Phase:
     """
-    Rearrange cqshape periodically according to the rve
+    Rearrange phase periodically according to the rve
 
-    :param cqshape: CQ Shape to cut periodically
+    :param phase: Phase to cut periodically
     :param rve: RVE for periodicity
 
-    :return return_object_periodic[0].copy(): cutted object
-    :return flat_list: list of cutted parts
+    :return phase: resulting phase
     """
 
-    wk_plane = cq.Workplane().add(cqshape.Solids())  # shape to cut
+    wk_plane = cq.Workplane().add(phase.getSolids())  # shape to cut
     periodic_object = []  # type: list[cq.Workplane]
 
     faces = ["x-", "x+", "y-", "y+", "z-", "z+"]
@@ -54,10 +54,10 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
         "z+": (0, 0, -rve.dz),
     }
 
-    intersected_faces = []
+    intersected_faces = []  # type: list[str]
 
-    planes = {}
-    partitions = {}
+    planes = {}  # type: dict[str, cq.Face]
+    partitions = {}  # type: dict[str, cq.Workplane]
     for face in faces:
         planes[face] = cq.Face.makePlane(
             basePnt=basePnt[face], dir=direction[face]
@@ -198,8 +198,9 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             .intersect(rve.Box)
         )
 
-    occ_solids_list = [s.val().Solids() for s in periodic_object]
-    flat_list = [item.copy() for sublist in occ_solids_list for item in sublist]
-    to_fuse = [cq.Shape(s.wrapped) for s in flat_list]
-    return_object_periodic = fuseParts(to_fuse, False)
-    return (return_object_periodic[0].copy(), flat_list)
+    listSolids = [wp.val().Solids() for wp in periodic_object]
+    flat_list = [solid.copy() for solids in listSolids for solid in solids]
+    to_fuse = [cq.Shape(solid.wrapped) for solid in flat_list]
+    phase = fuseParts(cqShapeList=to_fuse, retain_edges=False)
+
+    return phase
