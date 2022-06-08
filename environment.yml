@@ -13,3 +13,4 @@ dependencies:
   - neper
   - pytest-cov
   - libtiff<4.4
+  - pyvista

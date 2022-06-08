@@ -7,7 +7,7 @@ Conda and PyPI packages are available for Microgen
 
 ----------------------------------------------------------------------------------
 
-With conda: 
+With conda
 ~~~~~~~~~~~
 
 .. code-block:: none
@@ -15,7 +15,7 @@ With conda:
    $ conda install -c conda-forge -c cadquery -c set3mah microgen
 
 
-With pip:
+With pip
 ~~~~~~~~~
 
 .. code-block:: none

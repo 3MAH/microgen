@@ -1,3 +1,9 @@
+"""
+========================================
+Shape (:mod:`microgen.shape`)
+========================================
+"""
+
 from .box import Box
 from .capsule import Capsule
 from .cylinder import Cylinder
@@ -10,7 +16,22 @@ from .tpms import Tpms
 import cadquery as cq
 
 
-def newGeometry(shape, center, orientation, param_geom) -> cq.Shape:
+def newGeometry(
+    shape: str,
+    center: tuple[float, float, float],
+    orientation: tuple[float, float, float],
+    param_geom
+) -> cq.Shape:
+    '''
+    Creates a new basic geometry with given shape and geometrical parameters
+
+    :param shape: name of the geometry
+    :param center: center
+    :param orientation: orientation
+    :param param_geom: dictionnary with required geometrical parameters
+
+    :return geometry: cq.Shape
+    '''
     if shape.lower() == "box":
         geometry = Box(
             center=center,

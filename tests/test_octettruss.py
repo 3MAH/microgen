@@ -5,6 +5,7 @@ import os
 
 import pytest
 
+
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def test_octettruss():
 

@@ -57,6 +57,9 @@ class Tpms(BasicGeometry):
         maxRadius: float = 0.05,
         verbose: bool = False,
     ) -> None:
+        '''
+        Create TPMS surface for the corresponding isovalue and save file to path_data
+        '''
         surface = Generator(isovalue, self.surface_function)
         mesh = pygalmesh.generate_surface_mesh(
             surface,
@@ -77,7 +80,7 @@ class Tpms(BasicGeometry):
         verbose: bool = False,
     ) -> cq.Shape:
         """
-        Creates TPMS sheet surface
+        Generates TPMS surface within a box for isovalue = 0
         """
         self.createSurface(0, "surface.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
         ocp_shape = TopoDS_Shape()

@@ -1,12 +1,20 @@
-.. _RST tpms:
+.. _RST Tpms:
 
 Triply Periodic Minimal Surfaces (TPMS)
 =======================================
 
+Gyroid
+--------------
+
+.. include:: ../../examples/TPMS/gyroid/gyroid.py
+   :literal:
+
+.. image:: ../_static/tpms.png
+
 TPMS available
 --------------
 
-.. include:: ../../examples/newExamples/tpms/tpms.py
+.. include:: ../../examples/TPMS/tpms/tpms.py
    :literal:
 
 .. image:: ../_static/tpms.png
@@ -15,7 +23,7 @@ TPMS available
 Spherical gyroid
 -----------------------
 
-.. include:: ../../examples/newExamples/tpms_sphere/tpms_sphere.py
+.. include:: ../../examples/TPMS/tpms_sphere/tpms_sphere.py
    :literal:
 
 .. image:: ../_static/tpms_sphere.png
@@ -23,7 +31,7 @@ Spherical gyroid
 Shell
 ---------
 
-.. include:: ../../examples/newExamples/tpms_shell/tpms_shell.py
+.. include:: ../../examples/TPMS/tpms_shell/tpms_shell.py
    :literal:
 
 .. image:: ../_static/tpms_shell.png

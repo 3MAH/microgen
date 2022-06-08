@@ -1,12 +1,12 @@
-.. _RST repeated_cells:
+.. _RST Lattices:
 
-Repeated cells
+Lattices
 ====================================
 
 Octet-truss
 -----------
 
-.. include:: ../../examples/octetTruss/testOctet.py
+.. include:: ../../examples/Lattices/octetTruss/testOctet.py
    :literal:
 
 .. image:: ../_static/octettruss.png
@@ -15,7 +15,7 @@ Octet-truss
 Honeycomb
 ---------
 
-.. include:: ../../examples/honeycomb/extrudedHoneycomb.py
+.. include:: ../../examples/Lattices/honeycomb/extrudedHoneycomb.py
    :literal:
 
 .. image:: ../_static/honeycomb.png

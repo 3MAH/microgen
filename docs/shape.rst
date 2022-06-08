@@ -3,6 +3,7 @@ Shape (:mod:`microgen.shape`)
 =============================
 
 The following shapes are available with microgen:
+    - Basic Geometry : :class:`~microgen.shape.basicGeometry`
     - Box : :class:`~microgen.shape.box`
     - Sphere : :class:`~microgen.shape.sphere`
     - Cylinder : :class:`~microgen.shape.cylinder`
@@ -11,6 +12,21 @@ The following shapes are available with microgen:
     - Extruded Polygon : :class:`~microgen.shape.extrudedPolygon`
     - Polyhedron : :class:`~microgen.shape.polyhedron`
     - TPMS : :class:`~microgen.shape.tpms`
+
+----------------------------------------------------------------------------------
+
+Basic geometry
+~~~~~~~~~~~~~~
+
+.. automodule:: microgen.shape.__init__
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: microgen.shape.basicGeometry
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 ----------------------------------------------------------------------------------
 

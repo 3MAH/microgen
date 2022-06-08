@@ -50,8 +50,8 @@ Documentation
 Examples
 ~~~~~~~~
 
-   - :ref:`RST shapes`
-   - :ref:`RST repeated_cells`
-   - :ref:`RST tpms`
+   - :ref:`RST Geometries`
+   - :ref:`RST Lattices`
+   - :ref:`RST Tpms`
    - :ref:`RST 3Dop`
    - :ref:`RST Mesh`

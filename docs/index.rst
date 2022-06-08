@@ -26,7 +26,7 @@ Microstructure generation tool based on CadQuery library.
    :caption: Examples
 
    examples/basic_shapes
-   examples/repeated_cells
+   examples/lattices
    examples/tpms
    examples/3d_operations
    examples/mesh

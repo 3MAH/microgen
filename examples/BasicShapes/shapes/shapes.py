@@ -3,11 +3,11 @@ import numpy as np
 
 from microgen.shape import newGeometry
 
-shapes = {"box":             {"dim_x": 0.8, "dim_y": 0.8, "dim_z": 0.8},
-          "sphere":          {"radius": 0.5},
-          "capsule":         {"height": 0.5, "radius": 0.3},
-          "cylinder":        {"height": 0.5, "radius": 0.5},
-          "ellipsoid":       {"a_x": 0.5, "a_y": 0.25, "a_z": 0.3},
+shapes = {"box": {"dim_x": 0.8, "dim_y": 0.8, "dim_z": 0.8},
+          "sphere": {"radius": 0.5},
+          "capsule": {"height": 0.5, "radius": 0.3},
+          "cylinder": {"height": 0.5, "radius": 0.5},
+          "ellipsoid": {"a_x": 0.5, "a_y": 0.25, "a_z": 0.3},
           "extrudedpolygon": {"listCorners": [(0.5, 0), (0.25, 0.44), (-0.25, 0.44),
                                               (-0.5, 0), (-0.25, -0.44), (0.25, -0.44), (0.5, 0)],
                               "height": 0.5}}

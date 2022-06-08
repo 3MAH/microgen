@@ -1,3 +1,9 @@
+"""
+====================================================
+Basic Geometry (:mod:`microgen.shape.basicGeometry`)
+====================================================
+"""
+
 import cadquery as cq
 
 # import box
@@ -15,9 +21,8 @@ class BasicGeometry:
         BasicGeometry class to manage shapes
 
         :param shape: name of the shape
-        :type shape: str
-        :param param_geom: dictionary containing corresponding shape parameters
-        :type param_geom: dict
+        :param center: center
+        :param orientation: orientation
     """
 
     numInstances = 0
