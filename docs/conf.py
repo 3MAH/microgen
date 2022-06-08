@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import mock
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
@@ -33,7 +34,10 @@ release = '1.0.0'
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage',
               'sphinx.ext.napoleon', 'sphinx.ext.autosummary']
 
-autodoc_mock_imports = ["numpy"]
+autodoc_mock_imports = ["numpy", "cadquery"]
+for mod_name in autodoc_mock_imports:
+    sys.modules[mod_name] = mock.Mock()
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
