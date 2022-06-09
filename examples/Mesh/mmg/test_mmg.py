@@ -16,3 +16,4 @@ microgen.external.mmg3d(input="data/intermesh.mesh", output="data/finalmesh.mesh
 
 meshFinal = meshio.read("data/finalmesh.mesh")
 meshFinal.write("finalmesh.msh", file_format="gmsh22")
+meshFinal.write("finalmesh.vtk")

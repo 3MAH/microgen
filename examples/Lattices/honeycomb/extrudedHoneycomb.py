@@ -1,4 +1,4 @@
-from microgen import Box, ExtrudedPolygon, Phase, cutPhaseByShapeList
+from microgen import Box, ExtrudedPolygon, Phase, cutPhaseByShapeList, mesh
 import numpy as np
 import cadquery as cq
 
@@ -42,4 +42,4 @@ sample = cutPhaseByShapeList(phaseToCut=denseSample, cqShapeList=shapeList)
 
 cq.exporters.export(sample.shape, 'honeycomb.step')
 cq.exporters.export(sample.shape, 'honeycomb.stl')
-# mesh(mesh_file='honeycomb.step', listPhases=[sample.getSolids()], size=0.1, order=1, output_mesh='honeycomb.vtk')
+mesh(mesh_file='honeycomb.step', listPhases=[sample], size=1, order=1, output_file='honeycomb.vtk')
