@@ -2,8 +2,11 @@
 Phase class to manage list of solids belonging to the same phase
 """
 
+import numpy as np
 import cadquery as cq
-
+from OCP.gp import (gp_Vec,gp_Mat)
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp
 
 class Phase:
     """
@@ -34,10 +37,52 @@ class Phase:
 
         self.name = "Phase_" + str(self.numInstances)
 
-        self.centerOfMass = None
-        self.inertiaMatrix = None
+        self._centerOfMass = None
+        self._inertiaMatrix = None
 
         Phase.numInstances += 1
+
+    @property
+    def centerOfMass(self):
+        """
+        Returns the center of 'mass' of an object.
+        """
+        if isinstance(self._centerOfMass, np.ndarray):
+            return self._centerOfMass
+        else:
+            self._computeCenterOfMass()
+            return self._centerOfMass
+        
+    def _computeCenterOfMass(self):
+        """
+        Calculates the center of 'mass' of an object.
+        """
+        Properties = GProp_GProps()
+        BRepGProp.VolumeProperties_s(self.shape.wrapped, Properties)
+ 
+        COM = Properties.CentreOfMass()
+        self._centerOfMass = np.array([COM.X(),COM.Y(),COM.Z()])
+        
+    @property
+    def inertiaMatrix(self):
+        """
+        Calculates the inertia Matrix of an object.
+        """
+        if isinstance(self._inertiaMatrix, np.ndarray):
+           return self._inertiaMatrix
+        else:
+           self._computeInertiaMatrix()
+           return self._inertiaMatrix
+       
+    def _computeInertiaMatrix(self):
+        """
+        Calculates the inertia Matrix of an object.
+        """
+        Properties = GProp_GProps()
+        BRepGProp.VolumeProperties_s(self.shape.wrapped, Properties)
+
+        INM = Properties.MatrixOfInertia()
+        self._inertiaMatrix = np.array([[INM.Value(1,1), INM.Value(1,2), INM.Value(1,3)], [INM.Value(2,1), INM.Value(2,2), INM.Value(2,3)], [INM.Value(3,1), INM.Value(3,2), INM.Value(3,3)]])
 
     def getSolids(self) -> list[cq.Solid]:
         if len(self.solids) > 0:
