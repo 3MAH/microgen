@@ -9,7 +9,7 @@ Mesh
 .. include:: ../../examples/3Doperations/Voronoi/testNeper.py
    :literal:
 
-.. image:: ../_static/Mesh.png
+.. image:: ../_static/examples/Mesh.png
 
 
 Periodic Mesh
@@ -18,7 +18,7 @@ Periodic Mesh
 .. include:: ../../examples/Lattices/octetTruss/testOctet.py
    :literal:
 
-.. image:: ../_static/meshPeriodic.png
+.. image:: ../_static/examples/meshPeriodic.png
 
 
 mmg
@@ -27,7 +27,7 @@ mmg
 .. include:: ../../examples/Mesh/mmg/test_mmg.py
    :literal:
 
-.. image:: ../_static/mmg.png
+.. image:: ../_static/examples/mmg.png
 
 
 mmg Voronoi
@@ -36,5 +36,5 @@ mmg Voronoi
 .. include:: ../../examples/Mesh/mmg-voro/test_mmg.py
    :literal:
 
-.. image:: ../_static/mmg-voro.png
+.. image:: ../_static/examples/mmg-voro.png
 

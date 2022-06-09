@@ -9,7 +9,7 @@ Octet-truss
 .. include:: ../../examples/Lattices/octetTruss/testOctet.py
    :literal:
 
-.. image:: ../_static/octettruss.png
+.. image:: ../_static/examples/octettruss.png
 
 
 Honeycomb
@@ -18,4 +18,4 @@ Honeycomb
 .. include:: ../../examples/Lattices/honeycomb/extrudedHoneycomb.py
    :literal:
 
-.. image:: ../_static/honeycomb.png
+.. image:: ../_static/examples/honeycomb.png

@@ -9,7 +9,7 @@ Basic shapes
 .. include:: ../../examples/BasicShapes/shapes/shapes.py
    :literal:
 
-.. image:: ../_static/shapes.png
+.. image:: ../_static/examples/shapes.png
 
 
 Platon polyhedra
@@ -18,4 +18,4 @@ Platon polyhedra
 .. include:: ../../examples/BasicShapes/platon/platon.py
    :literal:
 
-.. image:: ../_static/platon.png
+.. image:: ../_static/examples/platon.png

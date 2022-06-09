@@ -9,7 +9,7 @@ Gyroid
 .. include:: ../../examples/TPMS/gyroid/gyroid.py
    :literal:
 
-.. image:: ../_static/gyroid.png
+.. image:: ../_static/examples/gyroid.png
 
 TPMS available
 --------------
@@ -17,7 +17,7 @@ TPMS available
 .. include:: ../../examples/TPMS/tpms/tpms.py
    :literal:
 
-.. image:: ../_static/tpms.png
+.. image:: ../_static/examples/tpms.png
 
 
 Spherical gyroid
@@ -26,7 +26,7 @@ Spherical gyroid
 .. include:: ../../examples/TPMS/tpms_sphere/tpms_sphere.py
    :literal:
 
-.. image:: ../_static/tpms_sphere.png
+.. image:: ../_static/examples/tpms_sphere.png
 
 Shell
 ---------
@@ -34,4 +34,4 @@ Shell
 .. include:: ../../examples/TPMS/tpms_shell/tpms_shell.py
    :literal:
 
-.. image:: ../_static/tpms_shell.png
+.. image:: ../_static/examples/tpms_shell.png

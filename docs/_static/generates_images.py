@@ -18,6 +18,7 @@ def show_example(filename, screenshot=False, color=None, show_edges=False, scree
     if screenshot:
         if screen_name is None:
             screen_name = filename.split('/')[-1].split('.')[0] + '.png'
+        screen_name = 'examples/' + screen_name
         if os.path.exists(screen_name):
             print(screen_name + " already exists")
         plotter.screenshot(screen_name, transparent_background=True)
