@@ -29,5 +29,6 @@ test:
     - microgen
   source_files:
     - tests
+    - examples
   commands:
     - pytest tests
