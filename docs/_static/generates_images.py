@@ -2,23 +2,24 @@ import pyvista as pv
 import os.path
 
 
-def show_example(filename, screenshot=False, show_edges=False):
+def show_example(filename, screenshot=False, show_edges=False, screen_name=None):
     if not os.path.exists(filename):
         print(filename + " not found")
         return
 
     mesh = pv.read(filename)
     plotter = pv.Plotter(off_screen=screenshot)
-    plotter.add_mesh(mesh, show_edges=show_edges)
+    plotter.add_mesh(mesh, show_edges=show_edges, cmap='coolwarm')
     if show_edges:
         plotter.remove_scalar_bar()
-    plotter.show_axes()
+    # plotter.show_axes()
 
     if screenshot:
-        image_name = filename.split('/')[-1].split('.')[0] + '.png'
-        if os.path.exists(image_name):
-            print(image_name + " already exists")
-        plotter.screenshot(image_name, transparent_background=True)
+        if screen_name is None:
+            screen_name = filename.split('/')[-1].split('.')[0] + '.png'
+        if os.path.exists(screen_name):
+            print(screen_name + " already exists")
+        plotter.screenshot(screen_name, transparent_background=True)
     else:
         plotter.show()
 
@@ -63,12 +64,24 @@ show_example(
 show_example(
     filename=example_path + "3Doperations/Voronoi/Voronoi.vtk",
     screenshot=True,
-    show_edges=True
+    show_edges=False
 )
 show_example(
     filename=example_path + "3Doperations/VoronoiGyroid/Gyroid-voro.vtk",
     screenshot=True,
-    show_edges=True
+    show_edges=False
+)
+show_example(
+    filename=example_path + "3Doperations/Voronoi/Voronoi.vtk",
+    screenshot=True,
+    show_edges=True,
+    screen_name="Mesh.png"
+)
+show_example(
+    filename=example_path + "Lattices/octetTruss/octettruss.vtk",
+    screenshot=True,
+    show_edges=True,
+    screen_name="meshPeriodic.png"
 )
 
 
