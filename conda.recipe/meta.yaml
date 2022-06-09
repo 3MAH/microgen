@@ -28,6 +28,6 @@ test:
   imports:
     - microgen
   source_files:
-    - examples
+    - tests
   commands:
     - pytest tests
