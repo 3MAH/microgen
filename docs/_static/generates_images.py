@@ -2,17 +2,18 @@ import pyvista as pv
 import os.path
 
 
-def show_example(filename, screenshot=False, show_edges=False, screen_name=None):
+def show_example(filename, screenshot=False, color=None, show_edges=False, screen_name=None, cmap='coolwarm'):
     if not os.path.exists(filename):
         print(filename + " not found")
         return
 
     mesh = pv.read(filename)
     plotter = pv.Plotter(off_screen=screenshot)
-    plotter.add_mesh(mesh, show_edges=show_edges, cmap='coolwarm')
-    if show_edges:
+    plotter.add_mesh(mesh, show_edges=show_edges, color=color, cmap=cmap)
+    try:
         plotter.remove_scalar_bar()
-    # plotter.show_axes()
+    except:
+        pass
 
     if screenshot:
         if screen_name is None:
@@ -49,10 +50,6 @@ show_example(
     filename=example_path + "TPMS/tpms_sphere/tpms_sphere.stl",
     screenshot=True
 )
-# show_example(
-#     filename=example_path + "TPMS/tpms/tpms.stl",
-#     screenshot=False
-# )
 show_example(
     filename=example_path + "TPMS/gyroid/gyroid.stl",
     screenshot=True
@@ -81,8 +78,16 @@ show_example(
     filename=example_path + "Lattices/octetTruss/octettruss.vtk",
     screenshot=True,
     show_edges=True,
+    color='white',
+    cmap=None,
     screen_name="meshPeriodic.png"
 )
+
+
+# show_example(
+#     filename=example_path + "TPMS/tpms/tpms.stl",
+#     screenshot=False
+# )
 
 
 stl_files = [

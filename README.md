@@ -90,7 +90,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/Voronoi.png" height="250">
 </a>
 <a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#voronoi-gyroid">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/voronoi_gyroid.png" height="250">
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/Gyroid-voro.png" height="250">
 </a>
 
 ### Mesh
