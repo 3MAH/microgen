@@ -1,7 +1,7 @@
-microgen
-========
+Microgen modules
+================
 
-microgen.phase module
+Phase module
 -----------------------------------
 
 .. automodule:: microgen.phase
@@ -9,7 +9,7 @@ microgen.phase module
    :undoc-members:
    :show-inheritance:
 
-microgen.operations module
+Operations
 -----------------------------------
 
 .. automodule:: microgen.operations
@@ -17,7 +17,7 @@ microgen.operations module
    :undoc-members:
    :show-inheritance:
 
-microgen.rve module
+Rve
 -----------------------------------
 
 .. automodule:: microgen.rve
@@ -25,7 +25,7 @@ microgen.rve module
    :undoc-members:
    :show-inheritance:
 
-microgen.periodic module
+Periodic
 -----------------------------------
 
 .. automodule:: microgen.periodic
@@ -33,7 +33,7 @@ microgen.periodic module
    :undoc-members:
    :show-inheritance:
 
-microgen.mesh module
+Mesh
 -----------------------------------
 
 .. automodule:: microgen.mesh
@@ -41,7 +41,7 @@ microgen.mesh module
    :undoc-members:
    :show-inheritance:
 
-microgen.external module
+External
 -----------------------------------
 
 .. automodule:: microgen.external
@@ -49,7 +49,7 @@ microgen.external module
    :undoc-members:
    :show-inheritance:
 
-microgen.material module
+Material
 -----------------------------------
 
 .. automodule:: microgen.material

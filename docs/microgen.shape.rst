@@ -1,10 +1,15 @@
 microgen.shape package
 ======================
 
-Submodules
-----------
+Shape
+---------------------------
 
-microgen.shape.basicGeometry module
+.. automodule:: microgen.shape
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Basic Geometry
 -----------------------------------
 
 .. automodule:: microgen.shape.basicGeometry
@@ -12,7 +17,7 @@ microgen.shape.basicGeometry module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.box module
+Box
 -------------------------
 
 .. automodule:: microgen.shape.box
@@ -20,7 +25,7 @@ microgen.shape.box module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.capsule module
+Capsule
 -----------------------------
 
 .. automodule:: microgen.shape.capsule
@@ -28,7 +33,7 @@ microgen.shape.capsule module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.cylinder module
+Cylinder
 ------------------------------
 
 .. automodule:: microgen.shape.cylinder
@@ -36,7 +41,7 @@ microgen.shape.cylinder module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.ellipsoid module
+Ellipsoid
 -------------------------------
 
 .. automodule:: microgen.shape.ellipsoid
@@ -44,7 +49,7 @@ microgen.shape.ellipsoid module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.extrudedPolygon module
+Extruded Polygon
 -------------------------------------
 
 .. automodule:: microgen.shape.extrudedPolygon
@@ -52,7 +57,7 @@ microgen.shape.extrudedPolygon module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.polyhedron module
+Polyhedron
 --------------------------------
 
 .. automodule:: microgen.shape.polyhedron
@@ -60,7 +65,7 @@ microgen.shape.polyhedron module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.sphere module
+Sphere
 ----------------------------
 
 .. automodule:: microgen.shape.sphere
@@ -68,18 +73,10 @@ microgen.shape.sphere module
    :undoc-members:
    :show-inheritance:
 
-microgen.shape.tpms module
+Tpms
 --------------------------
 
 .. automodule:: microgen.shape.tpms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: microgen.shape
    :members:
    :undoc-members:
    :show-inheritance:
