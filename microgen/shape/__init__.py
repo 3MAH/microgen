@@ -4,6 +4,9 @@ Shape (:mod:`microgen.shape`)
 ========================================
 """
 
+from typing import Any
+
+from .basicGeometry import BasicGeometry
 from .box import Box
 from .capsule import Capsule
 from .cylinder import Cylinder
@@ -13,27 +16,25 @@ from .polyhedron import Polyhedron
 from .sphere import Sphere
 from .tpms import Tpms
 
-import cadquery as cq
-
 
 def newGeometry(
     shape: str,
-    center: tuple[float, float, float],
-    orientation: tuple[float, float, float],
-    param_geom
-) -> cq.Shape:
-    '''
+    param_geom: dict[str, Any],
+    center: tuple[float, float, float] = (0, 0, 0),
+    orientation: tuple[float, float, float] = (0, 0, 0),
+) -> BasicGeometry:
+    """
     Creates a new basic geometry with given shape and geometrical parameters
 
     :param shape: name of the geometry
+    :param param_geom: dictionnary with required geometrical parameters
     :param center: center
     :param orientation: orientation
-    :param param_geom: dictionnary with required geometrical parameters
 
-    :return geometry: cq.Shape
-    '''
+    :return geometry: BasicGeometry
+    """
     if shape.lower() == "box":
-        geometry = Box(
+        return Box(
             center=center,
             orientation=orientation,
             dim_x=param_geom["dim_x"],
@@ -41,32 +42,30 @@ def newGeometry(
             dim_z=param_geom["dim_z"],
         )
     elif shape.lower() == "cylinder":
-        geometry = Cylinder(
+        return Cylinder(
             center=center,
             orientation=orientation,
             height=param_geom["height"],
             radius=param_geom["radius"],
         )
     elif shape.lower() == "extrudedpolygon":
-        geometry = ExtrudedPolygon(
+        return ExtrudedPolygon(
             center=center,
             orientation=orientation,
             listCorners=param_geom["listCorners"],
             height=param_geom["height"],
         )
     elif shape.lower() == "capsule":
-        geometry = Capsule(
+        return Capsule(
             center=center,
             orientation=orientation,
             height=param_geom["height"],
             radius=param_geom["radius"],
         )
     elif shape.lower() == "sphere":
-        geometry = Sphere(
-            center=center, radius=param_geom["radius"]
-        )
+        return Sphere(center=center, radius=param_geom["radius"])
     elif shape.lower() == "ellipsoid":
-        geometry = Ellipsoid(
+        return Ellipsoid(
             center=center,
             orientation=orientation,
             a_x=param_geom["a_x"],
@@ -74,16 +73,17 @@ def newGeometry(
             a_z=param_geom["a_z"],
         )
     elif shape.lower() == "tpms":
-        geometry = Tpms(
+        return Tpms(
             center=center,
             orientation=orientation,
             surface_function=param_geom["surface_function"],
             type_part=param_geom["type_part"],
             thickness=param_geom["thickness"],
+            cell_size=param_geom["cell_size"],
+            repeat_cell=param_geom["repeat_cell"],
+            path_data=param_geom["path_data"],
         )
     elif shape.lower() == "polyhedron":
-        geometry = Polyhedron(dic=param_geom["dic"])
+        return Polyhedron(dic=param_geom["dic"])
     else:
-        print(shape + ' name not recognised')
-
-    return geometry
+        raise ValueError(shape + " name not recognised")

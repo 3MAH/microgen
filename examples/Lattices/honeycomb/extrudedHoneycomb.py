@@ -16,23 +16,30 @@ h2 = abs(np.sin(theta) * side_length)
 thickness = 30  # mm
 
 
-g = open("seedList.data", 'r', encoding="iso-8859-15")  # open data file
+g = open("seedList.data", "r", encoding="iso-8859-15")  # open data file
 
 seedList = [[1, 1, 1]]
 
 
-seedList = np.genfromtxt(g, delimiter='\t')
+seedList = np.genfromtxt(g, delimiter="\t")
 
 box = Box(dim_x=thickness, dim_y=60, dim_z=60)
 
 shapeList = []
 for seed in seedList:
-    poly = ExtrudedPolygon(center=(seed[0] - thickness, seed[1], seed[2]),
-                           listCorners=[(0, h2 + h0), (h1, h0),
-                                        (h1, -h0), (0, -h2 - h0),
-                                        (-h1, -h0), (-h1, h0),
-                                        (0, h2 + h0)],
-                           height=thickness)
+    poly = ExtrudedPolygon(
+        center=(seed[0] - thickness, seed[1], seed[2]),
+        listCorners=[
+            (0, h2 + h0),
+            (h1, h0),
+            (h1, -h0),
+            (0, -h2 - h0),
+            (-h1, -h0),
+            (-h1, h0),
+            (0, h2 + h0),
+        ],
+        height=thickness,
+    )
     shapeList.append(poly.generate())
 
 # generate CAD geometry
@@ -40,6 +47,12 @@ denseSample = Phase(shape=box.generate())
 
 sample = cutPhaseByShapeList(phaseToCut=denseSample, cqShapeList=shapeList)
 
-cq.exporters.export(sample.shape, 'honeycomb.step')
-cq.exporters.export(sample.shape, 'honeycomb.stl')
-mesh(mesh_file='honeycomb.step', listPhases=[sample], size=1, order=1, output_file='honeycomb.vtk')
+cq.exporters.export(sample.shape, "honeycomb.step")
+cq.exporters.export(sample.shape, "honeycomb.stl")
+mesh(
+    mesh_file="honeycomb.step",
+    listPhases=[sample],
+    size=1,
+    order=1,
+    output_file="honeycomb.vtk",
+)

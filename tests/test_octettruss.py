@@ -13,14 +13,29 @@ def test_octettruss():
     NPhases_file = "examples/Lattices/octetTruss/test_octet.dat"
     microgen.removeEmptyLines(NPhases_file)
 
-    dt = np.dtype([('number', int), ('shape', np.str_, 10),
-                   ('xc', np.float64), ('yc', np.float64), ('zc', np.float64),
-                   ('psi', np.float64), ('theta', np.float64), ('phi', np.float64),
-                   ('height', np.float64), ('radius', np.float64)])
+    dt = np.dtype(
+        [
+            ("number", int),
+            ("shape", np.str_, 10),
+            ("xc", np.float64),
+            ("yc", np.float64),
+            ("zc", np.float64),
+            ("psi", np.float64),
+            ("theta", np.float64),
+            ("phi", np.float64),
+            ("height", np.float64),
+            ("radius", np.float64),
+        ]
+    )
     # précision du type des données
-    number, shape, xc, yc, zc, psi, theta, phi, height, radius, = np.loadtxt(NPhases_file, dtype=dt,
-                                                                             usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
-                                                                             skiprows=1, unpack=True, ndmin=1)
+    number, shape, xc, yc, zc, psi, theta, phi, height, radius, = np.loadtxt(
+        NPhases_file,
+        dtype=dt,
+        usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+        skiprows=1,
+        unpack=True,
+        ndmin=1,
+    )
 
     a = 1.0
     b = 1.0
@@ -32,10 +47,12 @@ def test_octettruss():
     n = len(xc)
 
     for i in range(0, n):
-        elem = microgen.shape.cylinder.Cylinder(center=(xc[i], yc[i], zc[i]),
-                                                orientation=(psi[i], theta[i], phi[i]),
-                                                height=height[i],
-                                                radius=radius[i])
+        elem = microgen.shape.cylinder.Cylinder(
+            center=(xc[i], yc[i], zc[i]),
+            orientation=(psi[i], theta[i], phi[i]),
+            height=height[i],
+            radius=radius[i],
+        )
         phase = microgen.Phase(shape=elem.generate())
         listPhases.append(phase)
 
@@ -48,10 +65,17 @@ def test_octettruss():
     phases_cut = microgen.cutParts(cqShapeList=cqShapeList, reverseOrder=False)
     compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 
-    os.makedirs('tests/data', exist_ok=True)  # if data folder doesn't exist yet
+    os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet
 
-    cq.exporters.export(compound, 'tests/data/compound.step')
-    microgen.meshPeriodic(mesh_file='tests/data/compound.step', rve=revel, listPhases=phases_cut, size=0.03, order=1, output_file='tests/data/MeshPeriodic.vtk')
+    cq.exporters.export(compound, "tests/data/compound.step")
+    microgen.meshPeriodic(
+        mesh_file="tests/data/compound.step",
+        rve=revel,
+        listPhases=phases_cut,
+        size=0.03,
+        order=1,
+        output_file="tests/data/MeshPeriodic.vtk",
+    )
 
 
 if __name__ == "__main__":

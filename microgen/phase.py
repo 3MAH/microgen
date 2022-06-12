@@ -2,11 +2,13 @@
 Phase class to manage list of solids belonging to the same phase
 """
 
-import numpy as np
 import cadquery as cq
-from OCP.gp import (gp_Vec,gp_Mat)
-from OCP.GProp import GProp_GProps
+import numpy as np
 from OCP.BRepGProp import BRepGProp
+from OCP.GProp import GProp_GProps
+
+from typing import Union
+
 
 class Phase:
     """
@@ -27,11 +29,12 @@ class Phase:
         center: tuple[float, float, float] = None,
         orientation: tuple[float, float, float] = None,
     ) -> None:
+
         if shape is None and solids == []:
             print("Empty phase")
 
-        self.shape = shape
-        self.solids = solids
+        self._shape = shape
+        self._solids = solids
         self.center = center
         self.orientation = orientation
 
@@ -52,48 +55,70 @@ class Phase:
         else:
             self._computeCenterOfMass()
             return self._centerOfMass
-        
+
     def _computeCenterOfMass(self):
         """
         Calculates the center of 'mass' of an object.
         """
         Properties = GProp_GProps()
-        BRepGProp.VolumeProperties_s(self.shape.wrapped, Properties)
- 
-        COM = Properties.CentreOfMass()
-        self._centerOfMass = np.array([COM.X(),COM.Y(),COM.Z()])
-        
+        BRepGProp.VolumeProperties_s(self._shape.wrapped, Properties)
+
+        com = Properties.CentreOfMass()
+        self._centerOfMass = np.array([com.X(), com.Y(), com.Z()])
+
     @property
     def inertiaMatrix(self):
         """
         Calculates the inertia Matrix of an object.
         """
         if isinstance(self._inertiaMatrix, np.ndarray):
-           return self._inertiaMatrix
+            return self._inertiaMatrix
         else:
-           self._computeInertiaMatrix()
-           return self._inertiaMatrix
-       
+            self._computeInertiaMatrix()
+            return self._inertiaMatrix
+
     def _computeInertiaMatrix(self):
         """
         Calculates the inertia Matrix of an object.
         """
         Properties = GProp_GProps()
-        BRepGProp.VolumeProperties_s(self.shape.wrapped, Properties)
+        BRepGProp.VolumeProperties_s(self._shape.wrapped, Properties)
 
-        INM = Properties.MatrixOfInertia()
-        self._inertiaMatrix = np.array([[INM.Value(1,1), INM.Value(1,2), INM.Value(1,3)], [INM.Value(2,1), INM.Value(2,2), INM.Value(2,3)], [INM.Value(3,1), INM.Value(3,2), INM.Value(3,3)]])
+        inm = Properties.MatrixOfInertia()
+        self._inertiaMatrix = np.array(
+            [
+                [inm.Value(1, 1), inm.Value(1, 2), inm.Value(1, 3)],
+                [inm.Value(2, 1), inm.Value(2, 2), inm.Value(2, 3)],
+                [inm.Value(3, 1), inm.Value(3, 2), inm.Value(3, 3)],
+            ]
+        )
 
-    def getSolids(self) -> list[cq.Solid]:
-        if len(self.solids) > 0:
-            return self.solids
-        elif self.shape is not None:
-            return self.shape.Solids()
+    @property
+    def shape(self) -> Union[cq.Shape, None]:
+        if self._shape is not None:
+            return self._shape
+        elif len(self._solids) > 0:
+            # there may be a fastest way
+            compound = cq.Compound.makeCompound(self._solids)
+            self._shape = cq.Shape(compound.wrapped)
+            return self._shape
         else:
-            print("No solids")
+            print("No shape nor solids")
+            return None
+
+    @property
+    def solids(self) -> Union[list[cq.Solid], None]:
+        if len(self._solids) > 0:
+            return self._solids
+        elif self._shape is not None:
+            self._solids = self._shape.Solids()
+            return self._solids
+        else:
+            print("No solids nor shape")
+            return None
 
     def getFlatSolidList(self) -> list[cq.Solid]:
-        if isinstance(self.solids[0], list):  # if solids is list of list
-            return [item.copy() for sublist in self.solids for item in sublist]
+        if isinstance(self._solids[0], list):  # if solids is list of list
+            return [item.copy() for sublist in self._solids for item in sublist]
         else:
-            return self.solids
+            return self._solids

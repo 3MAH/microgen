@@ -8,7 +8,6 @@ Functions related to external softwares
 """
 
 import subprocess
-
 from typing import Union
 
 import numpy as np
@@ -32,9 +31,11 @@ def lanceNeper(filename: str, nbCell: int, dimCube: list) -> None:
     command = command + " -morpho " "gg" " -o " + filename
 
     try:
-        subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT)
+        subprocess.check_output(command.split(" "), stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
-        print("neper command did not work, check if it is installed or contact a developer")
+        print(
+            "neper command did not work, check if it is installed or contact a developer"
+        )
 
 
 def parseNeper(filename: str) -> tuple:
@@ -395,7 +396,9 @@ def mmg2d(
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
-        print("mmg command did not work, check if it is installed or contact a developer")
+        print(
+            "mmg command did not work, check if it is installed or contact a developer"
+        )
 
 
 def mmgs(
@@ -511,7 +514,9 @@ def mmgs(
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
-        print("mmg command did not work, check if it is installed or contact a developer")
+        print(
+            "mmg command did not work, check if it is installed or contact a developer"
+        )
 
 
 def mmg3d(
@@ -650,5 +655,6 @@ def mmg3d(
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
-        print("mmg command did not work, check if it is installed or contact a developer")
-
+        print(
+            "mmg command did not work, check if it is installed or contact a developer"
+        )

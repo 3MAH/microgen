@@ -73,5 +73,5 @@ jobs:
           
       - name: Test
         shell: bash -l {0}
-        run: pytest --cov=microgen tests
+        run: pytest --cov-report term-missing --cov=microgen tests
 

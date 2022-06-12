@@ -5,8 +5,8 @@ Mesh using gmsh
 import gmsh
 import numpy as np
 
-from .rve import Rve
 from .phase import Phase
+from .rve import Rve
 
 
 def mesh(
@@ -31,9 +31,11 @@ def mesh(
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     gmsh.initialize()
-    gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
+    gmsh.option.setNumber(
+        "General.Verbosity", 1
+    )  # this would still print errors, but not warnings
 
-    flatListSolids = [solid for phase in listPhases for solid in phase.getSolids()]
+    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
     nbTags = len(flatListSolids)
     # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
@@ -46,7 +48,7 @@ def mesh(
     index = 0
     for i, phase in enumerate(listPhases):
         temp = []
-        for j, solid in enumerate(phase.getSolids()):
+        for j, solid in enumerate(phase.solids):
             index = index + 1
             temp.append(index)
         listTags.append(temp)
@@ -144,9 +146,11 @@ def meshPeriodic(
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     gmsh.initialize()
-    gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
+    gmsh.option.setNumber(
+        "General.Verbosity", 1
+    )  # this would still print errors, but not warnings
 
-    flatListSolids = [solid for phase in listPhases for solid in phase.getSolids()]
+    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
     nbTags = len(flatListSolids)
     # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
@@ -159,7 +163,7 @@ def meshPeriodic(
     index = 0
     for i, phase in enumerate(listPhases):
         temp = []
-        for j, solid in enumerate(phase.getSolids()):
+        for j, solid in enumerate(phase.solids):
             index = index + 1
             temp.append(index)
         listTags.append(temp)
@@ -226,7 +230,9 @@ def meshPeriodic(
 
     for tup_min in sxmin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+            tup_min[0], tup_min[1]
+        )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         sxmax = gmsh.model.getEntitiesInBoundingBox(
@@ -266,7 +272,9 @@ def meshPeriodic(
 
     for tup_min in symin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+            tup_min[0], tup_min[1]
+        )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         symax = gmsh.model.getEntitiesInBoundingBox(
@@ -306,7 +314,9 @@ def meshPeriodic(
 
     for tup_min in szmin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+            tup_min[0], tup_min[1]
+        )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         # print(xmin, ymin, zmin, xmax, ymax, zmax)

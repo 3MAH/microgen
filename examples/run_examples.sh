@@ -1,0 +1,56 @@
+cd BasicShapes
+cd shapes
+python shapes.py
+cd ..
+cd platon
+python platon.py
+cd ..
+cd ..
+
+cd Lattices
+cd honeycomb
+python honeycomb.py
+cd ..
+cd octetTruss
+python testOctet.py
+cd ..
+cd ..
+
+cd TPMS
+cd gyroid
+python gyroid.py
+cd ..
+cd tpms
+python tpms.py
+cd ..
+cd tpms_shell
+python tpms_shell.py
+cd ..
+cd tpms
+python tpms_sphere.py
+cd ..
+cd ..
+
+cd 3Doperations
+cd rasterEllipsoid
+python rasterEllipsoid.py
+cd ..
+cd repeatGeom
+python repeat.py
+cd ..
+cd Voronoi
+python test_neper.py
+cd ..
+cd VoronoiGyroid
+python voronoi_gyroid.py
+cd ..
+cd ..
+
+cd Mesh
+cd mmg
+python test_mmg.py
+cd ..
+cd mmg-voro
+python test_mmg.py
+cd ..
+cd ..
