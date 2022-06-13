@@ -13,7 +13,6 @@ class Ellipsoid(BasicGeometry):
     """
     Class to generate an ellipsoid
     """
-
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),

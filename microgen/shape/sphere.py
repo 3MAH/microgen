@@ -12,7 +12,6 @@ class Sphere(BasicGeometry):
     """
     Class to generate a sphere
     """
-
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),

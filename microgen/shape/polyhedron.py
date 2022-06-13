@@ -12,7 +12,6 @@ class Polyhedron(BasicGeometry):
     """
     Class to generate a Polyhedron with a given set of faces and vertices
     """
-
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),
@@ -44,7 +43,6 @@ class Polyhedron(BasicGeometry):
             faces.append(cq.Face.makeFromWires(wire))
         shell = cq.Shell.makeShell(faces)
         solid = cq.Solid.makeSolid(shell)
-        # return cq.Shape(cq.Workplane().add(solid).val().wrapped)  # need better way to convert from cq.Solid to cq.Shape
         return cq.Shape(solid.wrapped)
 
 
@@ -66,5 +64,4 @@ def read_obj(filename: str):
                 for i in range(len(vertices)):
                     vertices[i] = int(vertices[i]) - 1
                 dic["faces"].append({"vertices": vertices})
-
     return dic

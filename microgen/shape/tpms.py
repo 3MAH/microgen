@@ -34,7 +34,6 @@ class Tpms(BasicGeometry):
         - :class:`~microgen.shape.tpms.pmy`
         - :class:`~microgen.shape.tpms.honeycomb`
     """
-
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),
@@ -101,7 +100,7 @@ class Tpms(BasicGeometry):
 
         .. _pygalmesh: https://github.com/meshpro/pygalmesh
         """
-        surface = Generator(height=isovalue, surface_fuction=self.surface_function)
+        surface = Generator(height=isovalue, surface_function=self.surface_function)
         mesh = pygalmesh.generate_surface_mesh(
             surface,
             min_facet_angle=minFacetAngle,

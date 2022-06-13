@@ -11,7 +11,6 @@ class Rve:
     :param dim_y: Y dimension of the RVE
     :param dim_z: Z dimension of the RVE
     """
-
     def __init__(self, dim_x: float, dim_y: float, dim_z: float) -> None:
         self.dim_x = dim_x
         self.dim_y = dim_y
