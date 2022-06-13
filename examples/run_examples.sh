@@ -1,3 +1,7 @@
+# exit when any command fails
+set -e
+
+echo "BasicShapes"
 cd BasicShapes
 cd shapes
 python shapes.py
@@ -7,15 +11,17 @@ python platon.py
 cd ..
 cd ..
 
+echo "Lattices"
 cd Lattices
 cd honeycomb
-python honeycomb.py
+python extrudedHoneycomb.py
 cd ..
 cd octetTruss
 python testOctet.py
 cd ..
 cd ..
 
+echo "TPMS"
 cd TPMS
 cd gyroid
 python gyroid.py
@@ -26,11 +32,12 @@ cd ..
 cd tpms_shell
 python tpms_shell.py
 cd ..
-cd tpms
+cd tpms_sphere
 python tpms_sphere.py
 cd ..
 cd ..
 
+echo "3Doperations"
 cd 3Doperations
 cd rasterEllipsoid
 python rasterEllipsoid.py
@@ -39,13 +46,14 @@ cd repeatGeom
 python repeat.py
 cd ..
 cd Voronoi
-python test_neper.py
+python testNeper.py
 cd ..
 cd VoronoiGyroid
 python voronoi_gyroid.py
 cd ..
 cd ..
 
+echo "Mesh"
 cd Mesh
 cd mmg
 python test_mmg.py

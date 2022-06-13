@@ -301,7 +301,7 @@ def rasterShapeList(
 
 def repeatGeometry(
     unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]
-) -> cq.Compound:
+) -> Phase:
     """
     Repeats unit geometry in each direction according to the given grid
 

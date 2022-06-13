@@ -25,14 +25,6 @@ def test_operations():
     shape1 = elem.generate()
     phase1 = microgen.Phase(shape=shape1)
 
-    com = phase1.centerOfMass
-    moi = phase1.inertiaMatrix
-
-    #    if not isinstance(com, np.ndarray):
-    #        #raise error
-    #    if not isinstance(moi, np.ndarray):
-    #        #raise error
-
     elem = microgen.shape.Box(center=(0, 0, 0), dim_x=0.5, dim_y=0.5, dim_z=0.5)
     shape2 = elem.generate()
 

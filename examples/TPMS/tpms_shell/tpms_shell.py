@@ -20,7 +20,7 @@ geometry = Tpms(
 )
 shape = geometry.generate()
 
-inside = repeatGeometry(Phase(shape=shape), rve, {"x": 3, "y": 3, "z": 3})
+inside = repeatGeometry(Phase(shape=shape), rve, grid=(3, 3, 3))
 
-compound = cq.Compound.makeCompound([shell, inside])
+compound = cq.Compound.makeCompound([shell, inside.shape])
 cq.exporters.export(compound, "tpms_shell.stl")

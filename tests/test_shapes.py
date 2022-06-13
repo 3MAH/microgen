@@ -5,8 +5,6 @@ import numpy as np
 
 import pytest
 
-from microgen.operations import repeatGeometry
-
 
 def test_shapes():
     rve = microgen.rve.Rve(dim_x=1, dim_y=1, dim_z=1)
