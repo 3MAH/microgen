@@ -46,7 +46,7 @@ class Phase:
         Phase.numInstances += 1
 
     @property
-    def centerOfMass(self):
+    def centerOfMass(self) -> np.ndarray:
         """
         Returns the center of 'mass' of an object.
         """
@@ -67,7 +67,7 @@ class Phase:
         self._centerOfMass = np.array([com.X(), com.Y(), com.Z()])
 
     @property
-    def inertiaMatrix(self):
+    def inertiaMatrix(self) np.ndarray:
         """
         Calculates the inertia Matrix of an object.
         """
