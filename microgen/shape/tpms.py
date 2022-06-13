@@ -101,7 +101,7 @@ class Tpms(BasicGeometry):
 
         .. _pygalmesh: https://github.com/meshpro/pygalmesh
         """
-        surface = Generator(isovalue, self.surface_function)
+        surface = Generator(height=isovalue, surface_fuction=self.surface_function)
         mesh = pygalmesh.generate_surface_mesh(
             surface,
             min_facet_angle=minFacetAngle,
@@ -131,7 +131,12 @@ class Tpms(BasicGeometry):
         .. _pygalmesh: https://github.com/meshpro/pygalmesh
         """
         self.createSurface(
-            0, "surface.stl", sizeMesh, minFacetAngle, maxRadius, verbose
+            isovalue=0,
+            filename="surface.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
         )
         ocp_shape = TopoDS_Shape()
         stl_reader = StlAPI_Reader()
@@ -162,36 +167,36 @@ class Tpms(BasicGeometry):
 
         thickness = self.thickness * pi
         self.createSurface(
-            thickness / 4.0,
-            "tpms_testplus.stl",
-            sizeMesh,
-            minFacetAngle,
-            maxRadius,
-            verbose,
+            isovalue=thickness / 4.0,
+            filename="tpms_testplus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
         )
         self.createSurface(
-            -thickness / 4.0,
-            "tpms_testminus.stl",
-            sizeMesh,
-            minFacetAngle,
-            maxRadius,
-            verbose,
+            isovalue=-thickness / 4.0,
+            filename="tpms_testminus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
         )
         self.createSurface(
-            thickness / 2.0,
-            "tpms_plus.stl",
-            sizeMesh,
-            minFacetAngle,
-            maxRadius,
-            verbose,
+            isovalue=thickness / 2.0,
+            filename="tpms_plus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
         )
         self.createSurface(
-            -thickness / 2.0,
-            "tpms_minus.stl",
-            sizeMesh,
-            minFacetAngle,
-            maxRadius,
-            verbose,
+            isovalue=-thickness / 2.0,
+            filename="tpms_minus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
         )
 
         surf_tp = TopoDS_Shape()

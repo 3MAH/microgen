@@ -299,9 +299,7 @@ def rasterShapeList(
 #    return (phase_cut[::-1], occ_solids_list)
 
 
-def repeatGeometry(
-    unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]
-) -> Phase:
+def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
     """
     Repeats unit geometry in each direction according to the given grid
 

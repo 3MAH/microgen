@@ -1,6 +1,5 @@
 import microgen
 import cadquery as cq
-import pyvista as pv
 
 
 filenames = [
@@ -23,8 +22,3 @@ for filename in filenames:
 
 cq.exporters.export(cq.Compound.makeCompound(platon_solids), "platon.stl")
 
-# mesh = pv.read("platon.stl")
-# plotter = pv.Plotter()
-# plotter.add_mesh(mesh)
-# plotter.show_axes()
-# plotter.show()

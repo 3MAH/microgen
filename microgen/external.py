@@ -13,7 +13,7 @@ from typing import Union
 import numpy as np
 
 
-def lanceNeper(filename: str, nbCell: int, dimCube: list) -> None:
+def runNeper(filename: str, nbCell: int, dimCube: list) -> None:
     """
     Runs neper command from the command line
     """

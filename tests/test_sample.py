@@ -36,7 +36,7 @@ def test_operations():
     microgen.repeatGeometry(phase1, rve, grid=[2, 2, 2])
 
     #  EXTERNAL
-    #  lanceNeper
+    #  runNeper
 
     #  MATERIAL
     #  readSections

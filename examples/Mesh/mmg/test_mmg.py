@@ -3,6 +3,7 @@ import os
 import microgen
 import meshio
 
+
 meshIni = "Mesh.msh"
 
 if "data" not in os.listdir("."):
@@ -17,5 +18,5 @@ microgen.external.mmg3d(
 )
 
 meshFinal = meshio.read("data/finalmesh.mesh")
-meshFinal.write("finalmesh.msh", file_format="gmsh22")
+meshFinal.write("finalmesh.msh", file_format="gmsh4")
 meshFinal.write("finalmesh.vtk")

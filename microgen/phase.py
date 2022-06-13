@@ -103,19 +103,19 @@ class Phase:
             self._shape = cq.Shape(compound.wrapped)
             return self._shape
         else:
-            print("No shape nor solids")
+            print("No shape or solids")
             return None
 
     @property
-    def solids(self) -> Union[list[cq.Solid], None]:
+    def solids(self) -> list[cq.Solid]:
         if len(self._solids) > 0:
             return self._solids
         elif self._shape is not None:
             self._solids = self._shape.Solids()
             return self._solids
         else:
-            print("No solids nor shape")
-            return None
+            print("No solids or shape")
+            return []
 
     def getFlatSolidList(self) -> list[cq.Solid]:
         if isinstance(self._solids[0], list):  # if solids is list of list
