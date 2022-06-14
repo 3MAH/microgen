@@ -3,21 +3,7 @@ import microgen
 
 def test_misc():
     microgen.parseNeper("examples/3Doperations/voronoi/test1")
-
     microgen.removeEmptyLines("fake_file.txt")
-
-    microgen.MatSection(
-        number=0,
-        name="test",
-        umat_name="test",
-        psi_mat=0,
-        theta_mat=0,
-        phi_mat=0,
-        nprops=0,
-        nstatev=0,
-        props=[],
-    )
-
 
 def test_operations():
 
