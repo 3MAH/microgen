@@ -1,5 +1,4 @@
 from .external import *
-from .material import *
 from .mesh import *
 from .operations import *
 from .periodic import *
