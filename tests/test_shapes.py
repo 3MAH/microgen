@@ -55,11 +55,11 @@ def test_shapes():
     )
     elem.generate()
 
+    # elem = microgen.shape.polyhedron.Polyhedron()  # default shape = tetrahedron
+    # elem.generate()
     dic = microgen.shape.polyhedron.read_obj(
         "examples/BasicShapes/platon/tetrahedron.obj"
     )
-    elem = microgen.shape.polyhedron.Polyhedron(dic=dic)
-    elem.generate()
     microgen.shape.newGeometry(shape="Polyhedron", param_geom={"dic": dic})
 
     with pytest.raises(ValueError):
@@ -83,18 +83,18 @@ def test_shapes():
 
 
 def test_tpms():
-    # elem = microgen.shape.newGeometry(
-    #     shape="tpms",
-    #     center=(0.5, 0.5, 0.5),
-    #     param_geom={
-    #         "surface_function": microgen.shape.tpms.gyroid,
-    #         "type_part": "skeletal",
-    #         "thickness": 0.1,
-    #         "cell_size": None,
-    #         "repeat_cell": 1,
-    #         "path_data": "tests/data/tpms1",
-    #     },
-    # )
+    elem = microgen.shape.newGeometry(
+        shape="tpms",
+        center=(0.5, 0.5, 0.5),
+        param_geom={
+            "surface_function": microgen.shape.tpms.gyroid,
+            "type_part": "skeletal",
+            "thickness": 0.1,
+            "cell_size": None,
+            "repeat_cell": 1,
+            "path_data": "tests/data/tpms1",
+        },
+    )
 
     elem = microgen.shape.tpms.Tpms(
         center=(0.5, 0.5, 0.5),

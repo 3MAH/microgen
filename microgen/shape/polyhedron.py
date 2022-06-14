@@ -17,8 +17,11 @@ class Polyhedron(BasicGeometry):
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         dic: dict[str, list] = {
-            "vertices": [(1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)],
-            "faces": {"vertices": [(0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 2, 3)]},
+            "vertices": [(1., 1., 1.), (1., -1., -1.), (-1., 1., -1.), (-1., -1., 1.)],
+            "faces": [{"vertices": (0, 1, 2)}, 
+                      {"vertices": (0, 3, 1)}, 
+                      {"vertices": (0, 2, 3)},
+                      {"vertices": (1, 2, 3)}]
         },
     ) -> None:
         '''

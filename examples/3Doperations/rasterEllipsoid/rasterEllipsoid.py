@@ -19,5 +19,5 @@ mesh(
     listPhases=phases,
     size=0.03,
     order=1,
-    output_file="rasterEllipsoid.vtk",
+    output_file="rasterEllipsoid.msh",
 )

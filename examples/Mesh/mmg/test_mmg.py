@@ -12,8 +12,8 @@ if "data" not in os.listdir("."):
 mesh = meshio.read(meshIni)
 mesh.write("data/meshIni.mesh")
 
-microgen.external.mmg3d(input="data/meshIni.mesh", output="data/intermesh.mesh")
-microgen.external.mmg3d(
+microgen.external.Mmg.mmg3d(input="data/meshIni.mesh", output="data/intermesh.mesh")
+microgen.external.Mmg.mmg3d(
     input="data/intermesh.mesh", output="data/finalmesh.mesh", ls=True, hsiz=0.03
 )
 
