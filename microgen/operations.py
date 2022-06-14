@@ -129,6 +129,7 @@ def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> Phase:
         shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
         return Phase(shape=cq.Shape(shape), solids=[[cq.Solid(shape)]])
 
+
 def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
     """
     Cuts list of phases by a given shape
@@ -242,26 +243,36 @@ def rasterShapeList(
     return (flat_list, occ_solids_list, volume_list, center_list)
 
 
-# def cut_parts(cqShapeList):
-#
-#    phase_cut = []
-#    occ_Solids = cqShapeList[-1].copy()
-#    phase_cut.append(cqShapeList[-1])
-#
-#    for s in cqShapeList[-2::-1]:
-#        print('s', s)
-#        cut = BRepAlgoAPI_Cut(s.wrapped, occ_Solids.wrapped)
-#        phase_cut.append(cq.Shape(cut.Shape()))
-#
-#        fuse = BRepAlgoAPI_Fuse(occ_Solids.wrapped, s.wrapped)
-#        occ_Solids = fuse.Shape()
-#        upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
-#        upgrader.Build()
-#        occ_Solids = cq.Shape(upgrader.Shape())
-#
-#    print('phase_cut', phase_cut)
-#    occ_solids_list = [s.Solids() for s in phase_cut[::-1]]
-#    return (phase_cut[::-1], occ_solids_list)
+def rasterPhase(
+    phase: Phase, rve: Rve, grid: list[int]
+) -> Union[Phase, list[Phase]]:
+    """
+    Rasters solids from phase according to the rve divided by the given grid
+
+    :param phase: phase to raster
+    :param rve: RVE divided by the given grid
+    :param grid: number of divisions in each direction [x, y, z]
+
+    :return: Phase
+    """
+    wk_plane = cq.Workplane().add(phase.solids)
+    xgrid = np.linspace(0.0, rve.dx, num=grid[0])
+    ygrid = np.linspace(0.0, rve.dy, num=grid[1])
+    zgrid = np.linspace(0.0, rve.dz, num=grid[2])
+    np.delete(xgrid, 0)
+    np.delete(ygrid, 0)
+    np.delete(zgrid, 0)
+    for i in xgrid:
+        Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
+        wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
+    for j in ygrid:
+        Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
+        wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
+    for k in zgrid:
+        Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
+        wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
+
+    return Phase(solids=wk_plane.val().Solids())
 
 
 def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:

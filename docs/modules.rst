@@ -48,11 +48,3 @@ External
    :members:
    :undoc-members:
    :show-inheritance:
-
-Material
------------------------------------
-
-.. automodule:: microgen.material
-   :members:
-   :undoc-members:
-   :show-inheritance:

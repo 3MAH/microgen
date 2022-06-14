@@ -25,7 +25,7 @@ class Phase:
     def __init__(
         self,
         shape: cq.Shape = None,
-        solids: list = [],
+        solids: list[cq.Solid] = [],
         center: tuple[float, float, float] = None,
         orientation: tuple[float, float, float] = None,
     ) -> None:
