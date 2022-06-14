@@ -14,10 +14,10 @@ cd ..
 echo "Lattices"
 cd Lattices
 cd honeycomb
-python extrudedHoneycomb.py
+python honeycomb.py
 cd ..
 cd octetTruss
-python testOctet.py
+python octetTruss.py
 cd ..
 cd ..
 
@@ -29,11 +29,11 @@ cd ..
 cd tpms
 python tpms.py
 cd ..
-cd tpms_shell
-python tpms_shell.py
+cd tpmsShell
+python tpmsShell.py
 cd ..
-cd tpms_sphere
-python tpms_sphere.py
+cd tpmsSphere
+python tpmsSphere.py
 cd ..
 cd ..
 
@@ -43,13 +43,13 @@ cd rasterEllipsoid
 python rasterEllipsoid.py
 cd ..
 cd repeatGeom
-python repeat.py
+python repeatGeom.py
 cd ..
-cd Voronoi
-python testNeper.py
+cd voronoi
+python voronoi.py
 cd ..
-cd VoronoiGyroid
-python voronoi_gyroid.py
+cd voronoiGyroid
+python voronoiGyroid.py
 cd ..
 cd ..
 
