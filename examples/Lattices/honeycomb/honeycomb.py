@@ -5,23 +5,16 @@ import cadquery as cq
 side_length = 2.5  # side in mm of the hexagon
 poly_height = 2.5  # height in mm of the hexagon
 theta = 30 * np.pi / 180  # half angle of the hexagone
-density = 0.5  # relative density (roh*/roh_s) of the honeycomb
 
 h0 = 0.5 * poly_height
 h1 = np.cos(theta) * side_length
 h2 = abs(np.sin(theta) * side_length)
 
-# t = density*(2*h1*(h/l + abs(np.sin(theta))))/(h/l + 2)
-
 thickness = 30  # mm
 
-
-g = open("seedList.data", "r", encoding="iso-8859-15")  # open data file
-
-seedList = [[1, 1, 1]]
-
-
-seedList = np.genfromtxt(g, delimiter="\t")
+with open('seedList.data', 'r') as f:
+    seedList = [[1, 1, 1]]
+    seedList = np.genfromtxt(f, delimiter="\t")
 
 box = Box(dim_x=thickness, dim_y=60, dim_z=60)
 
@@ -42,16 +35,15 @@ for seed in seedList:
     )
     shapeList.append(poly.generate())
 
-# generate CAD geometry
-denseSample = Phase(shape=box.generate())
+boxPhase = Phase(shape=box.generate())
 
-sample = cutPhaseByShapeList(phaseToCut=denseSample, cqShapeList=shapeList)
+honeycomb = cutPhaseByShapeList(phaseToCut=boxPhase, cqShapeList=shapeList)
 
-cq.exporters.export(sample.shape, "honeycomb.step")
-cq.exporters.export(sample.shape, "honeycomb.stl")
+cq.exporters.export(honeycomb.shape, "honeycomb.step")
+cq.exporters.export(honeycomb.shape, "honeycomb.stl")
 mesh(
     mesh_file="honeycomb.step",
-    listPhases=[sample],
+    listPhases=[honeycomb],
     size=1,
     order=1,
     output_file="honeycomb.vtk",

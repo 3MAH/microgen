@@ -21,6 +21,10 @@ class Polyhedron(BasicGeometry):
             "faces": {"vertices": [(0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 2, 3)]},
         },
     ) -> None:
+        '''
+        .. warning:
+            Give a center parameter only if the polyhedron must be translated from its original position.
+        '''
         super().__init__(shape="Polyhedron", center=center, orientation=orientation)
         self.dic = dic
         self.faces_ixs = [face["vertices"] for face in dic["faces"]]

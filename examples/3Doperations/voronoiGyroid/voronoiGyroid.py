@@ -3,7 +3,7 @@ from microgen import parseNeper, Tpms, Polyhedron, Phase, mesh
 import microgen
 
 # We import the Polyhedra from Nepoer tesselation file
-listPolyhedra, seed, vertices, edges, faces, polys = parseNeper("test1")
+listPolyhedra = parseNeper("test1")[0]
 
 gyroid = Tpms(
     center=(0.5, 0.5, 0.5),
@@ -29,8 +29,6 @@ for polyhedron in listPolyhedra:
     )
     elem = elem.generate()
     phases.append(Phase(shape=elem.intersect(gyroid)))
-    # cq.exporters.export(compound, 'compound{}.stl'.format(i))
-    # i = i + 1
 
 compound = cq.Compound.makeCompound([phase.shape for phase in phases])
 cq.exporters.export(compound, "compound.step")

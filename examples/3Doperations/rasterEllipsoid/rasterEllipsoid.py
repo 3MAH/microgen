@@ -2,7 +2,6 @@ import cadquery as cq
 from microgen import Rve, Ellipsoid, rasterShapeList, mesh, Phase
 
 rve = Rve(dim_x=1, dim_y=1, dim_z=1)
-listPhases = []
 
 elem = Ellipsoid(center=(0, 0.5, 0.5), a_x=0.15, a_y=0.31, a_z=0.4)
 elli = elem.generate()

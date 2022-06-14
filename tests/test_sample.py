@@ -2,7 +2,7 @@ import microgen
 
 
 def test_misc():
-    microgen.parseNeper("examples/3Doperations/Voronoi/test1")
+    microgen.parseNeper("examples/3Doperations/voronoi/test1")
 
     microgen.removeEmptyLines("fake_file.txt")
 

@@ -61,17 +61,20 @@ def rotateEuler(
 
 
 def rescale(
-    obj: Phase, scale: tuple[float, float, float], center: tuple[float, float, float]
+    obj: Phase, scale: Union[float, tuple[float, float, float]], center: tuple[float, float, float]
 ) -> Phase:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
     :param obj: Phase
-    :param scale: list of scale factor in each direction
+    :param scale: float or list of scale factor in each direction
     :param center: list of center components
 
     :return shape: rescaled Phase
     """
+    if isinstance(scale, float):
+        scale = (scale, scale, scale)
+
     transform_mat = cq.Matrix(
         [
             [scale[0], 0, 0, center[0]],
