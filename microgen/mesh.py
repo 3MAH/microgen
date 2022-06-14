@@ -103,10 +103,7 @@ def meshPeriodic(
 
     flatListSolids = [solid for phase in listPhases for solid in phase.solids]
     nbTags = len(flatListSolids)
-    # listTagsNb = [len(phase_list) for phase_list in listPhases]
 
-    # print(nbTags)
-    # print(listTagsNb)
     flatListTags = list(range(1, nbTags + 1, 1))
     # print(flatListTags)
 
