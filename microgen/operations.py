@@ -129,44 +129,6 @@ def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> Phase:
         shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
         return Phase(shape=cq.Shape(shape), solids=[[cq.Solid(shape)]])
 
-
-# def cut_parts(cqShapeList):
-#
-#    print('inside cut')
-#    phase_cut = []
-#    phase_cut.append(cqShapeList[0].copy())
-#    cut_objtemp = cqShapeList[0].copy()
-#    upgrader = ShapeUpgrade_UnifySameDomain(cut_objtemp.wrapped, True, True, True)
-#    upgrader.Build()
-#    cut_obj = cq.Shape(upgrader.Shape())
-#
-#    for shape in cqShapeList[1::]:
-#        print('tatayoyo')
-#
-#        SolidsCut = []
-#        for s in shape.Solids():
-#            sCut = s.wrapped
-#            for t in cut_obj.Solids():
-#                cut = BRepAlgoAPI_Cut(sCut, t.wrapped)
-#                sCut = cut.Shape()
-#            SolidsCut.append(cq.Shape(cut.Shape()))
-#        cutted = fuse_parts(SolidsCut, False)
-#        phase_cut.append(cutted[0])
-#
-#        fuse = BRepAlgoAPI_Fuse(cut_obj.wrapped, shape.wrapped)
-#        fused = fuse.Shape()
-#        upgrader = ShapeUpgrade_UnifySameDomain(fused, True, True, True)
-#        upgrader.Build()
-#        cut_obj = cq.Shape(upgrader.Shape())
-#
-#    occ_solids_list = [s.Solids() for s in phase_cut]
-#    print(phase_cut)
-#    print(occ_solids_list)
-#    print('outside cut')
-#
-#    return (phase_cut, occ_solids_list)
-
-
 def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
     """
     Cuts list of phases by a given shape
