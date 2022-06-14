@@ -5,7 +5,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 """
 import math
 import os
-from typing import Callable
+from typing import Callable, Union
 
 import cadquery as cq
 import pygalmesh
@@ -13,8 +13,9 @@ from numpy import cos, pi, sin
 from OCP.StlAPI import StlAPI_Reader
 from OCP.TopoDS import TopoDS_Shape
 
+from ..operations import fuseParts, repeatGeometry, rescale
+from ..rve import Rve
 from .basicGeometry import BasicGeometry
-from ..operations import fuseParts
 
 
 class Tpms(BasicGeometry):
@@ -38,14 +39,44 @@ class Tpms(BasicGeometry):
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         surface_function: Callable[[float, float, float, float], float] = None,
-        type_part: str = 'sheet',
+        type_part: str = "sheet",
         thickness: float = 0,
+        cell_size: Union[float, tuple[float, float, float], None] = None,
+        repeat_cell: Union[int, tuple[int, int, int], None] = None,
         path_data: str = ".",
     ) -> None:
-        super().__init__(shape='TPMS', center=center, orientation=orientation)
+        """
+        :param center: center of the geometry
+        :param orientation: orientation of the geometry
+        :param surface_function: tpms function or custom function (f(x, y, z, t) = 0)
+        :param type_part: 'sheet' or 'skeletal'
+        :param thickness: thickness of the tpms
+        :param cell_size: By default, the tpms is generated for (1, 1, 1) dimensions but this can be modified by passing 'cell_size' scaling parameter (float or list of float for each dimension)
+        :param repeat_cell: By default, the tpms is generated for one unit_cell. 'repeat_cell' parameter allows to repeat the geometry in the three dimensions
+        :param path_data: folder where to store surfaces stl files required to generate the tpms
+        """
+        super().__init__(shape="TPMS", center=center, orientation=orientation)
+
         self.surface_function = surface_function
+
+        if type_part != "sheet" and type_part != "skeletal":
+            raise ValueError("type_part must be 'sheet' or 'skeletal'")
         self.type_part = type_part
+
         self.thickness = thickness
+
+        if isinstance(cell_size, tuple) or cell_size is None:
+            self.cell_size = cell_size
+        elif cell_size is None:
+            self.cell_size = (1, 1, 1)
+        else:
+            self.cell_size = (cell_size, cell_size, cell_size)
+
+        if isinstance(repeat_cell, tuple) or repeat_cell is None:
+            self.repeat_cell = repeat_cell
+        else:
+            self.repeat_cell = (repeat_cell, repeat_cell, repeat_cell)
+
         self.path_data = path_data
 
     def createSurface(
@@ -57,10 +88,19 @@ class Tpms(BasicGeometry):
         maxRadius: float = 0.05,
         verbose: bool = False,
     ) -> None:
-        '''
+        """
         Create TPMS surface for the corresponding isovalue and save file to path_data
-        '''
-        surface = Generator(isovalue, self.surface_function)
+
+        :param isovalue: height isovalue of the given tpms function
+        :param filename: surface file name
+        :param sizeMesh: max_facet_distance from `pygalmesh`_
+        :param minFacetAngle: min_facet_angle from `pygalmesh`_
+        :param maxRadius: max_radius_surface_delaunay_ball from `pygalmesh`_
+        :param verbose: verbose from `pygalmesh`_
+
+        .. _pygalmesh: https://github.com/meshpro/pygalmesh
+        """
+        surface = Generator(height=isovalue, surface_function=self.surface_function)
         mesh = pygalmesh.generate_surface_mesh(
             surface,
             min_facet_angle=minFacetAngle,
@@ -81,8 +121,22 @@ class Tpms(BasicGeometry):
     ) -> cq.Shape:
         """
         Generates TPMS surface within a box for isovalue = 0
+
+        :param sizeMesh: max_facet_distance from `pygalmesh`_
+        :param minFacetAngle: min_facet_angle from `pygalmesh`_
+        :param maxRadius: max_radius_surface_delaunay_ball from `pygalmesh`_
+        :param verbose: verbose from `pygalmesh`_
+
+        .. _pygalmesh: https://github.com/meshpro/pygalmesh
         """
-        self.createSurface(0, "surface.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
+        self.createSurface(
+            isovalue=0,
+            filename="surface.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
+        )
         ocp_shape = TopoDS_Shape()
         stl_reader = StlAPI_Reader()
         stl_reader.Read(ocp_shape, self.path_data + "/" + "surface.stl")
@@ -101,68 +155,109 @@ class Tpms(BasicGeometry):
         """
         Creates thick TPMS geometry (sheet or skeletal part) from surface
         files generated in the directory given by path_data
+
+        :param sizeMesh: max_facet_distance from `pygalmesh`_
+        :param minFacetAngle: min_facet_angle from `pygalmesh`_
+        :param maxRadius: max_radius_surface_delaunay_ball from `pygalmesh`_
+        :param verbose: verbose from `pygalmesh`_
+
+        .. _pygalmesh: https://github.com/meshpro/pygalmesh
         """
 
         thickness = self.thickness * pi
-        self.createSurface(thickness / 4.0, "tpms_testplus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
-        self.createSurface(-thickness / 4.0, "tpms_testminus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
-        self.createSurface(thickness / 2.0, "tpms_plus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
-        self.createSurface(-thickness / 2.0, "tpms_minus.stl", sizeMesh, minFacetAngle, maxRadius, verbose)
+        self.createSurface(
+            isovalue=thickness / 4.0,
+            filename="tpms_testplus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
+        )
+        self.createSurface(
+            isovalue=-thickness / 4.0,
+            filename="tpms_testminus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
+        )
+        self.createSurface(
+            isovalue=thickness / 2.0,
+            filename="tpms_plus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
+        )
+        self.createSurface(
+            isovalue=-thickness / 2.0,
+            filename="tpms_minus.stl",
+            sizeMesh=sizeMesh,
+            minFacetAngle=minFacetAngle,
+            maxRadius=maxRadius,
+            verbose=verbose,
+        )
 
         surf_tp = TopoDS_Shape()
         surf_tm = TopoDS_Shape()
         surf_p = TopoDS_Shape()
         surf_m = TopoDS_Shape()
         stl_reader = StlAPI_Reader()
-
-        if not (
-            stl_reader.Read(surf_tp, self.path_data + "/" + "tpms_testplus.stl")
-            and stl_reader.Read(surf_tm, self.path_data + "/" + "tpms_testminus.stl")
-            and stl_reader.Read(surf_p, self.path_data + "/" + "tpms_plus.stl")
-            and stl_reader.Read(surf_m, self.path_data + "/" + "tpms_minus.stl")
-        ):
-            raise ValueError(
-                "tpms_plus.stl, tpms_minus.stl, tpms_testplus.stl, tpms_testminus.stl files not found in '"
-                + self.path_data
-                + "' folder"
-            )
+        stl_reader.Read(surf_tp, self.path_data + "/" + "tpms_testplus.stl")
+        stl_reader.Read(surf_tm, self.path_data + "/" + "tpms_testminus.stl")
+        stl_reader.Read(surf_p, self.path_data + "/" + "tpms_plus.stl")
+        stl_reader.Read(surf_m, self.path_data + "/" + "tpms_minus.stl")
 
         face_cut_tp = cq.Face(surf_tp)
         face_cut_tm = cq.Face(surf_tm)
         face_cut_p = cq.Face(surf_p)
         face_cut_m = cq.Face(surf_m)
 
-        box = cq.Workplane("front").box(1, 1, 1)
+        box_wp = cq.Workplane("front").box(1, 1, 1)
 
-        boxCut = box.split(face_cut_p)
-        boxCut = boxCut.split(face_cut_m)
+        boxCut_wp = box_wp.split(face_cut_p)
+        boxCut_wp = boxCut_wp.split(face_cut_m)
 
-        boxSolids = boxCut.solids().all()  # type: list[cq.Workplane]
+        boxWorkplanes = boxCut_wp.solids().all()  # type: list[cq.Workplane]
 
-        listSolids = []  # type: list[tuple[int, cq.Shape]]
+        listShapes = []  # type: list[tuple[int, cq.Shape]]
 
-        for solid in boxSolids:
-            temp = solid.split(face_cut_tp)
-            temp = temp.split(face_cut_tm)
-            tempSize = temp.solids().size()
-            listSolids.append((tempSize, solid.val()))
+        for wp in boxWorkplanes:
+            listShapes.append(
+                (wp.split(face_cut_tp).split(face_cut_tm).solids().size(), wp.val())
+            )
 
-        sheet = [el[1] for el in listSolids if el[0] > 1]
-        skeletal = [el[1] for el in listSolids if el[0] == 1]
+        sheet = [shape for (number, shape) in listShapes if number > 1]
+        skeletal = [shape for (number, shape) in listShapes if number == 1]
 
         if self.type_part == "sheet":
-            to_fuse = [cq.Shape(s.wrapped) for s in sheet]
+            to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
             return_object = fuseParts(to_fuse, True)
         elif self.type_part == "skeletal":
-            to_fuse = [cq.Shape(s.wrapped) for s in skeletal]
+            to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
             return_object = fuseParts(to_fuse, False)
+
+        if self.cell_size is not None:
+            return_object = rescale(
+                obj=return_object, scale=self.cell_size, center=self.center
+            )
+        if self.repeat_cell is not None:
+            rve = Rve(*self.cell_size)
+            return_object = repeatGeometry(
+                unit_geom=return_object, rve=rve, grid=self.repeat_cell
+            )
+
         return return_object.shape
 
 
 class Generator(pygalmesh.DomainBase):
     """
     Base class to generate TPMS geometry with a given surface function
+    Inherited from DomainBase class from `pygalmesh`_
+
+    .. _pygalmesh: https://github.com/meshpro/pygalmesh
     """
+
     def __init__(
         self,
         height: float,
@@ -172,10 +267,9 @@ class Generator(pygalmesh.DomainBase):
         self.height = height
         self.z0 = 0.0
         self.z1 = 1
-        self.waist_radius = math.sqrt(0.5 ** 2 + 0.5 ** 2)
+        self.waist_radius = math.sqrt(0.5**2 + 0.5**2)
         self.bounding_sphere_squared_radius = (
-            math.sqrt(0.5 ** 2 + 0.5 ** 2 + 0.5 ** 2)
-            * 1.1
+            math.sqrt(0.5**2 + 0.5**2 + 0.5**2) * 1.1
         )
         self.surface_function = surface_function
 

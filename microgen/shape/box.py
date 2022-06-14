@@ -5,8 +5,8 @@ Box (:mod:`microgen.shape.box`)
 """
 import cadquery as cq
 
-from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
+from .basicGeometry import BasicGeometry
 
 
 class Box(BasicGeometry):
@@ -21,7 +21,7 @@ class Box(BasicGeometry):
         dim_y: float = 1,
         dim_z: float = 1,
     ) -> None:
-        super().__init__(shape='Box', center=center, orientation=orientation)
+        super().__init__(shape="Box", center=center, orientation=orientation)
         self.dim_x = dim_x
         self.dim_y = dim_y
         self.dim_z = dim_z
@@ -32,5 +32,11 @@ class Box(BasicGeometry):
             .box(self.dim_x, self.dim_y, self.dim_z)
             .translate((self.center[0], self.center[1], self.center[2]))
         )
-        box = rotateEuler(box, self.center, self.orientation[0], self.orientation[1], self.orientation[2])
+        box = rotateEuler(
+            box,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
+        )
         return cq.Shape(box.val().wrapped)

@@ -5,8 +5,8 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 """
 import cadquery as cq
 
-from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
+from .basicGeometry import BasicGeometry
 
 
 class Ellipsoid(BasicGeometry):
@@ -21,7 +21,7 @@ class Ellipsoid(BasicGeometry):
         a_y: float = 0.5,
         a_z: float = 0.25,
     ) -> None:
-        super().__init__(shape='Ellipsoid', center=center, orientation=orientation)
+        super().__init__(shape="Ellipsoid", center=center, orientation=orientation)
         self.a_x = a_x
         self.a_y = a_y
         self.a_z = a_z
@@ -38,6 +38,10 @@ class Ellipsoid(BasicGeometry):
         sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
         ellipsoid = sphere.transformGeometry(transform_mat)
         ellipsoid = rotateEuler(
-            ellipsoid, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
+            ellipsoid,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
         return ellipsoid

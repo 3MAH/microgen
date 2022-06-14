@@ -3,22 +3,21 @@ Boolean operations
 """
 
 import os
+from typing import Union
 
 import cadquery as cq
 import numpy as np
+import OCP
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
-import OCP
 
-from typing import Union
-
-from .rve import Rve
 from .phase import Phase
+from .rve import Rve
 
 
 def rotateEuler(
     object: Union[cq.Shape, cq.Workplane],
-    center: np.ndarray,
+    center: Union[np.ndarray, tuple[float, float, float]],
     psi: float,
     theta: float,
     phi: float,
@@ -46,7 +45,7 @@ def rotateEuler(
     object_r = object.rotate(
         cq.Vector(center[0], center[1], center[2]),
         cq.Vector(center[0], center[1], center[2] + 1.0),
-        psi
+        psi,
     )
     object_r = object_r.rotate(
         cq.Vector(center[0], center[1], center[2]),
@@ -62,18 +61,16 @@ def rotateEuler(
 
 
 def rescale(
-    obj: cq.Shape,
-    scale: list[float, float, float],
-    center: list[float, float, float]
-) -> cq.Shape:
+    obj: Phase, scale: tuple[float, float, float], center: tuple[float, float, float]
+) -> Phase:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
-    :param obj: CQ Shape
+    :param obj: Phase
     :param scale: list of scale factor in each direction
     :param center: list of center components
 
-    :return shape: rescaled CQ Shape
+    :return shape: rescaled Phase
     """
     transform_mat = cq.Matrix(
         [
@@ -82,7 +79,7 @@ def rescale(
             [0, 0, scale[2], center[2]],
         ]
     )
-    return obj.transformGeometry(transform_mat)
+    return Phase(shape=obj.shape.transformGeometry(transform_mat))
 
 
 def removeEmptyLines(filename: str) -> None:
@@ -102,9 +99,7 @@ def removeEmptyLines(filename: str) -> None:
         filehandle.writelines(lines)
 
 
-def fuseParts(
-    cqShapeList: list[cq.Shape], retain_edges: bool
-) -> Phase:
+def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> Phase:
     """
     Fuse all shapes in cqShapeList
 
@@ -169,9 +164,7 @@ def fuseParts(
 #    return (phase_cut, occ_solids_list)
 
 
-def cutPhasesByShape(
-    phaseList: list[Phase], cut_obj: cq.Shape
-) -> list[Phase]:
+def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
     """
     Cuts list of phases by a given shape
 
@@ -186,14 +179,10 @@ def cutPhasesByShape(
         cut = BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped)
         if len(cq.Shape(cut.Shape()).Solids()) > 0:
             phase_cut.append(Phase(shape=cq.Shape(cut.Shape())))
-            phase_cut[-1].solids = phase_cut[-1].shape.Solids()
-
     return phase_cut
 
 
-def cutPhaseByShapeList(
-    phaseToCut: Phase, cqShapeList: list[cq.Shape]
-) -> Phase:
+def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase:
     """
     Cuts a phase by a list of shapes
 
@@ -203,16 +192,14 @@ def cutPhaseByShapeList(
     :return resultCut: cutted phase
     """
 
-    resultCut = phaseToCut
+    resultCut = phaseToCut.shape
     for shape in cqShapeList:
-        cut = BRepAlgoAPI_Cut(resultCut.shape.wrapped, shape.wrapped)
-        resultCut.shape = cq.Shape(cut.Shape())
-    return resultCut
+        cut = BRepAlgoAPI_Cut(resultCut.wrapped, shape.wrapped)
+        resultCut = cq.Shape(cut.Shape())
+    return Phase(shape=resultCut)
 
 
-def cutParts(
-    cqShapeList: list[cq.Shape], reverseOrder: bool = True
-) -> list[Phase]:
+def cutParts(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[Phase]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -242,9 +229,6 @@ def cutParts(
         cut_obj = cq.Shape(upgrader.Shape())
 
     phase_cut.reverse()
-
-    for phase in phase_cut:
-        phase.solids = phase.shape.Solids()
 
     return phase_cut
 
@@ -315,28 +299,26 @@ def rasterShapeList(
 #    return (phase_cut[::-1], occ_solids_list)
 
 
-def repeatGeometry(
-    unit_geom: Phase, rve: Rve, grid: dict[str, int]
-) -> cq.Compound:
+def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
     """
     Repeats unit geometry in each direction according to the given grid
 
     :param unit_geom: Geometry to repeat
     :param rve: RVE of the geometry to repeat
-    :param grid: dictionary of number of geometry repetitions in each direction {'x': 3, 'y': 3, 'z': 3}
+    :param grid: list of number of geometry repetitions in each direction
 
     :return CQ_Compound: cq compound of the repeated geometry
     """
 
     xyz_repeat = cq.Assembly()
-    for i_x in range(grid["x"]):
-        for i_y in range(grid["y"]):
-            for i_z in range(grid["z"]):
+    for i_x in range(grid[0]):
+        for i_y in range(grid[1]):
+            for i_z in range(grid[2]):
                 xyz_repeat.add(
                     unit_geom.shape,
                     loc=cq.Location(
                         cq.Vector(i_x * rve.dim_x, i_y * rve.dim_y, i_z * rve.dim_z)
                     ),
                 )
-
-    return xyz_repeat.toCompound()
+    compound = xyz_repeat.toCompound()
+    return Phase(shape=cq.Shape(compound.wrapped))

@@ -1,9 +1,14 @@
 import microgen
 import cadquery as cq
-import pyvista as pv
 
 
-filenames = ['tetrahedron.obj', 'cube.obj', 'octahedron.obj', 'dodecahedron.obj', 'icosahedron.obj']
+filenames = [
+    "tetrahedron.obj",
+    "cube.obj",
+    "octahedron.obj",
+    "dodecahedron.obj",
+    "icosahedron.obj",
+]
 platon_solids = []
 
 i = 0
@@ -15,10 +20,5 @@ for filename in filenames:
     platon_solids.append(shape)
     i += 1
 
-cq.exporters.export(cq.Compound.makeCompound(platon_solids), 'platon.stl')
+cq.exporters.export(cq.Compound.makeCompound(platon_solids), "platon.stl")
 
-mesh = pv.read('platon.stl')
-plotter = pv.Plotter()
-plotter.add_mesh(mesh)
-plotter.show_axes()
-plotter.show()

@@ -5,8 +5,8 @@ Capsule (:mod:`microgen.shape.capsule`)
 """
 import cadquery as cq
 
-from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
+from .basicGeometry import BasicGeometry
 
 
 class Capsule(BasicGeometry):
@@ -20,7 +20,7 @@ class Capsule(BasicGeometry):
         height: float = 1,
         radius: float = 0.5,
     ) -> None:
-        super().__init__(shape='Capsule', center=center, orientation=orientation)
+        super().__init__(shape="Capsule", center=center, orientation=orientation)
         self.height = height
         self.radius = radius
 
@@ -51,6 +51,10 @@ class Capsule(BasicGeometry):
         capsule = cylinder.fuse(sphereG)
         capsule = capsule.fuse(sphereD)
         capsule = rotateEuler(
-            capsule, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
+            capsule,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
         return capsule

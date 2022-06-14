@@ -83,6 +83,14 @@ show_example(
     cmap=None,
     screen_name="meshPeriodic.png"
 )
+show_example(
+    filename=example_path + "Mesh/mmg/finalmesh.vtk",
+    screenshot=True,
+    show_edges=True,
+    color='white',
+    cmap=None,
+    screen_name="mmg.png"
+)
 
 
 # show_example(

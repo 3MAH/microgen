@@ -1,6 +1,7 @@
 
 
 Microstructure generation
+[![Microgen Logo](https://github.com/3MAH/microgen/blob/main/docs/_static/microgen.png?raw=true)](https://github.com/3MAH/microgen)
 
 [![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
 [![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/installer/conda.svg)](https://conda.anaconda.org/set3mah)

@@ -5,8 +5,8 @@ Cylinder (:mod:`microgen.shape.cylinder`)
 """
 import cadquery as cq
 
-from .basicGeometry import BasicGeometry
 from ..operations import rotateEuler
+from .basicGeometry import BasicGeometry
 
 
 class Cylinder(BasicGeometry):
@@ -20,7 +20,7 @@ class Cylinder(BasicGeometry):
         height: float = 1,
         radius: float = 0.5,
     ) -> None:
-        super().__init__(shape='Cylinder', center=center, orientation=orientation)
+        super().__init__(shape="Cylinder", center=center, orientation=orientation)
         self.radius = radius
         self.height = height
 
@@ -34,6 +34,10 @@ class Cylinder(BasicGeometry):
             )
         )
         cylinder = rotateEuler(
-            cylinder, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
+            cylinder,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
         return cq.Shape(cylinder.val().wrapped)

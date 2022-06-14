@@ -2,13 +2,13 @@
 Periodic function to cut a shape periodically according to a RVE
 """
 
+import warnings
+
 import cadquery as cq
 
 from .operations import fuseParts
-from .rve import Rve
 from .phase import Phase
-
-import warnings
+from .rve import Rve
 
 
 def periodic(phase: Phase, rve: Rve) -> Phase:
@@ -21,7 +21,7 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
     :return phase: resulting phase
     """
 
-    wk_plane = cq.Workplane().add(phase.getSolids())  # shape to cut
+    wk_plane = cq.Workplane().add(phase.solids)  # shape to cut
     periodic_object = []  # type: list[cq.Workplane]
 
     faces = ["x-", "x+", "y-", "y+", "z-", "z+"]
@@ -44,7 +44,14 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
     }
 
     face_dir = {"x-": ">X", "x+": "<X", "y-": ">Y", "y+": "<Y", "z-": ">Z", "z+": "<Z"}
-    inverse_face_dir = {"x-": "<X", "x+": ">X", "y-": "<Y", "y+": ">Y", "z-": "<Z", "z+": ">Z"}
+    inverse_face_dir = {
+        "x-": "<X",
+        "x+": ">X",
+        "y-": "<Y",
+        "y+": ">Y",
+        "z-": "<Z",
+        "z+": ">Z",
+    }
 
     translate = {
         "x-": (rve.dx, 0, 0),
@@ -74,15 +81,21 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
     if "x-" in intersected_faces and "x+" in intersected_faces:
         intersected_faces.remove("x-")
         intersected_faces.remove("x+")
-        warnings.warn("Object intersecting x+ and x- faces: not doing anything in this direction")
+        warnings.warn(
+            "Object intersecting x+ and x- faces: not doing anything in this direction"
+        )
     if "y-" in intersected_faces and "y+" in intersected_faces:
         intersected_faces.remove("y-")
         intersected_faces.remove("y+")
-        warnings.warn("Object intersecting y+ and y- faces: not doing anything in this direction")
+        warnings.warn(
+            "Object intersecting y+ and y- faces: not doing anything in this direction"
+        )
     if "z-" in intersected_faces and "z+" in intersected_faces:
         intersected_faces.remove("z-")
         intersected_faces.remove("z+")
-        warnings.warn("Object intersecting z+ and z- faces: not doing anything in this direction")
+        warnings.warn(
+            "Object intersecting z+ and z- faces: not doing anything in this direction"
+        )
 
     if len(intersected_faces) == 0:  # if no intersected faces = nothing to do
         periodic_object.append(wk_plane)
@@ -92,13 +105,13 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         periodic_object.append(
             partitions[f_0]
             .solids(face_dir[f_0])  # add the part of the
-            .intersect(rve.Box)     # object included in the rve
+            .intersect(rve.Box)  # object included in the rve
         )
         periodic_object.append(
             partitions[f_0]
             .solids(inverse_face_dir[f_0])  # translate the outside part of
-            .translate(translate[f_0])      # the object in the rve and add
-            .intersect(rve.Box)             # it to the final object
+            .translate(translate[f_0])  # the object in the rve and add
+            .intersect(rve.Box)  # it to the final object
         )
 
     elif len(intersected_faces) == 2:  # two faces intersected (edge)

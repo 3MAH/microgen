@@ -4,8 +4,7 @@ import pytest
 
 
 def generate_sphere(x, y, z, rve):
-    elem = shape.sphere.Sphere(center=(x, y, z),
-                               radius=0.1)
+    elem = shape.sphere.Sphere(center=(x, y, z), radius=0.1)
     phase = Phase(shape=elem.generate())
     periodic(phase=phase, rve=rve)
 
@@ -15,9 +14,7 @@ def test_periodic():
     rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
     # test x- and x+ faces intersected
-    elem = shape.capsule.Capsule(center=(0.5, 0, 0.5),
-                                 height=1,
-                                 radius=0.1)
+    elem = shape.capsule.Capsule(center=(0.5, 0, 0.5), height=1, radius=0.1)
     phase = Phase(shape=elem.generate())
     periodic(phase=phase, rve=rve)
 

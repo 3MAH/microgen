@@ -6,6 +6,8 @@ Basic Geometry (:mod:`microgen.shape.basicGeometry`)
 
 import cadquery as cq
 
+from typing import Union
+
 # import box
 # from .capsule import Capsule
 # from .cylinder import Cylinder
@@ -18,11 +20,11 @@ import cadquery as cq
 
 class BasicGeometry:
     """
-        BasicGeometry class to manage shapes
+    BasicGeometry class to manage shapes
 
-        :param shape: name of the shape
-        :param center: center
-        :param orientation: orientation
+    :param shape: name of the shape
+    :param center: center
+    :param orientation: orientation
     """
 
     numInstances = 0
@@ -30,7 +32,7 @@ class BasicGeometry:
     def __init__(
         self,
         shape: str,
-        center: list[float, float, float] = (0, 0, 0),
+        center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
     ) -> None:
 
@@ -38,7 +40,7 @@ class BasicGeometry:
         self.shape = shape
         self.center = center
         self.orientation = orientation
-        self.name = self.shape + '_' + str(self.number)
+        self.name = self.shape + "_" + str(self.number)
 
-        self.geometry = None  # type: cq.Shape
+        self.geometry = None  # type: Union[cq.Shape, None]
         BasicGeometry.numInstances += 1

@@ -11,6 +11,7 @@ class MatSection:
     """
     DESCRIPTION
     """
+
     def __init__(
         self,
         number: int,
