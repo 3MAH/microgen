@@ -29,8 +29,9 @@ class Polyhedron(BasicGeometry):
         for ixs in self.faces_ixs:
             lines = []
             for v1, v2 in zip(ixs, ixs[1:]):
-                vertice_coords1 = self.dic["vertices"][v1]
-                vertice_coords2 = self.dic["vertices"][v2]
+                # tuple(map(sum, zip(a, b))) -> sum of tuples value by value
+                vertice_coords1 = tuple(map(sum, zip(self.center, self.dic["vertices"][v1])))
+                vertice_coords2 = tuple(map(sum, zip(self.center, self.dic["vertices"][v2])))
                 lines.append(
                     cq.Edge.makeLine(
                         cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
