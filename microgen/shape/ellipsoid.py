@@ -1,3 +1,8 @@
+"""
+=============================================
+Ellipsoid (:mod:`microgen.shape.ellipsoid`)
+=============================================
+"""
 import cadquery as cq
 import pyvista as pv
 import numpy as np
@@ -5,31 +10,26 @@ import numpy as np
 from ..operations import rotateEuler
 from ..pvoperations import rotatePvEuler
 
-# ----------ELLIPSOID-----------------------------------------------------------------------------------------#
+from .basicGeometry import BasicGeometry
 
-
-class Ellipsoid:
+class Ellipsoid(BasicGeometry):
     """
     Class to generate an ellipsoid
     """
     def __init__(
         self,
-        center: np.ndarray,
-        angle: np.ndarray,
-        a_x: float,
-        a_y: float,
-        a_z: float,
-        number: int,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        a_x: float = 1,
+        a_y: float = 0.5,
+        a_z: float = 0.25,
     ) -> None:
-        self.center = center
-        self.angle = angle
+        super().__init__(shape="Ellipsoid", center=center, orientation=orientation)
         self.a_x = a_x
         self.a_y = a_y
         self.a_z = a_z
-        self.number = number
-        self.name_part = "ellipsoid" + str(self.number)
 
-    def createEllipsoid(self) -> cq.Workplane:
+    def generate(self) -> cq.Shape:
         transform_mat = cq.Matrix(
             [
                 [self.a_x, 0, 0, self.center[0]],
@@ -41,11 +41,15 @@ class Ellipsoid:
         sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
         ellipsoid = sphere.transformGeometry(transform_mat)
         ellipsoid = rotateEuler(
-            ellipsoid, self.center, self.angle[0], self.angle[1], self.angle[2]
+            ellipsoid,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
-        return cq.Workplane().add(ellipsoid)
+        return cq.Shape(ellipsoid.val().wrapped)
         
-    def createPvEllipsoid(self) -> pv.PolyData:
+    def generateVtk(self) -> pv.PolyData:
         transform_matrix = np.array(
             [
                 [self.a_x, 0, 0, self.center[0]],

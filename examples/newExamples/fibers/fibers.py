@@ -1,7 +1,18 @@
 import os
 import numpy as np
 import cadquery as cq
-from microgen import removeEmptyLines, Rve, BasicGeometry, periodic, cutParts, mesh, meshPeriodic, rasterShapeList, fuseParts
+from microgen import (
+    removeEmptyLines,
+    Rve,
+    BasicGeometry,
+    periodic,
+    cutParts,
+    mesh,
+    meshPeriodic,
+    rasterShapeList,
+    fuseParts,
+)
+import progressbar
 
 
 def read_csv(filename):
@@ -13,7 +24,7 @@ def read_csv(filename):
     theta = []
     aspect_ratio = []
     index = []
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         f.readline()
         f.readline()
         for line in f:
@@ -33,7 +44,7 @@ def convert_angles(phi, theta):
     new_psi = phi
     new_theta = [90 for _ in phi]
     new_phi = theta
-    
+
     return new_psi, new_theta, new_phi
 
 
@@ -42,19 +53,28 @@ psi, theta, phi = convert_angles(phi, theta)
 
 
 listPhases = []
-n = len(x) # 100
+n = len(x)  # 100
+bar = progressbar.ProgressBar(max_value=n)
 for i in range(0, n):
     # if i==4:
     #     continue
     # height = aspect_ratio[i]*diameter[i]
-    height = 250. # constant length = 150-350 µm (250) ou aléatoire
-    radius = 0.5*diameter[i]
-    elem = BasicGeometry(number=index[i], shape="cylinder",
-                        xc=x[i], yc=y[i], zc=z[i],
-                        psi=psi[i], theta=theta[i], phi=phi[i],
-                        param_geom={"height": height, "radius": radius}, 
-                        path_data='data')
+    height = 250.0  # constant length = 150-350 µm (250) ou aléatoire
+    radius = 0.5 * diameter[i]
+    elem = BasicGeometry(
+        number=index[i],
+        shape="cylinder",
+        xc=x[i],
+        yc=y[i],
+        zc=z[i],
+        psi=psi[i],
+        theta=theta[i],
+        phi=phi[i],
+        param_geom={"height": height, "radius": radius},
+        path_data="data",
+    )
     listPhases.append(elem.generate())
+    bar.update(i)
 
 assemb = cq.Assembly()
 for phase in listPhases:
@@ -63,9 +83,8 @@ for phase in listPhases:
 
 compound = assemb.toCompound()
 
-cq.exporters.export(compound, 'compound.step')
-cq.exporters.export(compound, 'compound.stl')
-
+cq.exporters.export(compound, "compound.step")
+cq.exporters.export(compound, "compound.stl")
 
 
 # mesh(mesh_file='compound.step', listPhases=raster[1], size=0.03, order=1, output_file='Mesh.msh')

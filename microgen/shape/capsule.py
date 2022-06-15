@@ -1,35 +1,33 @@
+"""
+=======================================
+Capsule (:mod:`microgen.shape.capsule`)
+=======================================
+"""
 import cadquery as cq
-import numpy as np
 
 import vtk
 import pyvista as pv
 
 from ..operations import rotateEuler
 from ..pvoperations import rotatePvEuler
+from .basicGeometry import BasicGeometry
 
-# ----------CAPSULE-------------------------------------------------------------------#
-
-
-class Capsule:
+class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
     """
     def __init__(
         self,
-        center: np.ndarray,
-        angle: np.ndarray,
-        height: float,
-        radius: float,
-        number: int,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        height: float = 1,
+        radius: float = 0.5,
     ) -> None:
-        self.center = center
-        self.angle = angle
+        super().__init__(shape="Capsule", center=center, orientation=orientation)
         self.height = height
         self.radius = radius
-        self.number = number
-        self.name_part = "capsule" + str(self.number)
 
-    def createCapsule(self) -> cq.Workplane:
+    def generate(self) -> cq.Shape:
         cylinder = cq.Solid.makeCylinder(
             self.radius,
             self.height,
@@ -56,11 +54,15 @@ class Capsule:
         capsule = cylinder.fuse(sphereG)
         capsule = capsule.fuse(sphereD)
         capsule = rotateEuler(
-            capsule, self.center, self.angle[0], self.angle[1], self.angle[2]
+            capsule,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
-        return cq.Workplane().add(capsule.Solids())
+        return cq.Shape(capsule.val().wrapped)
 
-    def createPvCapsule(self, resolution=100, capping=True) -> pv.PolyData:
+    def generateVtk(self, resolution=100, capping=True) -> pv.PolyData:
         capsule = vtk.vtkCapsuleSource()
         capsule.SetCenter(self.center[0], self.center[1], self.center[2])
         capsule.SetRadius(self.radius)

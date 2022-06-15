@@ -10,4 +10,7 @@ dependencies:
   - python-gmsh=4.8
   - pygalmesh
   - mmg
+  - neper
   - pytest-cov
+  - libtiff<4.4
+  - pyvista

@@ -19,30 +19,16 @@ requirements:
     - python-gmsh=4.8
     - pygalmesh
     - mmg
+    - neper
+    - pytest-cov
+    - libtiff<4.4
+    - pyvista
 
 test:
   imports:
     - microgen
   source_files:
+    - tests
     - examples
   commands:
-    # - cd $SRC_DIR/examples/mmg
-    # - $PYTHON test_mmg.py
-          
-    # - cd $SRC_DIR/examples/mmg-voro
-    # - $PYTHON test_mmg.py
-          
-    - cd $SRC_DIR/examples/octetTruss
-    - $PYTHON testOctet.py
-          
-    # - cd $SRC_DIR/examples/rasterEllipsoid
-    # - $PYTHON rasterEllipsoid.py
-          
-    # - cd $SRC_DIR/examples/rasterGyroid
-    # - $PYTHON rasterGyroid.py
-          
-    # - cd $SRC_DIR/examples/triplyPeriodicMinimalSurfaces
-    # - $PYTHON testTPMS.py
-          
-    # - cd $SRC_DIR/examples/Voronoi
-    # - $PYTHON testNeper.py
+    - pytest tests

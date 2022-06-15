@@ -1,139 +1,117 @@
+"""
+Mesh using gmsh
+"""
+
 import gmsh
 import numpy as np
 
+from .phase import Phase
 from .rve import Rve
 
 
 def mesh(
     mesh_file: str,
-    listPhases: list,
+    listPhases: list[Phase],
     size: float,
     order: int = 1,
     output_file: str = "Mesh.msh",
+    mshFileVersion: int = 4,
 ) -> None:
     """
-    Meshes list of shapes with gmsh
-    
-    output_file : output file (.msh, .vtk)
+    Meshes step file with gmsh with list of phases management
+
+    :param mesh_file: step file to mesh
+    :param listPhases: list of phases to mesh
+    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
+    :param order: see `gmsh.model.mesh.setOrder(order)`_
+    :param output_file: output file (.msh, .vtk)
+    :param mshFileVersion: gmsh file version
+
+    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     gmsh.initialize()
-    gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
+    gmsh.option.setNumber(
+        name="General.Verbosity", value=1
+    )  # this would still print errors, but not warnings
 
-    flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
-    nbTags = len(flatListPhases)
-    # listTagsNb = [len(phase_list) for phase_list in listPhases]
-
-    # print(nbTags)
-    # print(listTagsNb)
+    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
+    nbTags = len(flatListSolids)
     FlatListTags = list(range(1, nbTags + 1, 1))
-    # print(FlatListTags)
 
     listTags = []
     index = 0
-    for i, phase_list in enumerate(listPhases):
+    for i, phase in enumerate(listPhases):
         temp = []
-        for j, phase in enumerate(phase_list):
+        for j, solid in enumerate(phase.solids):
             index = index + 1
             temp.append(index)
         listTags.append(temp)
-    # print(listTags)
 
     listDimTags = [(3, tag) for tag in FlatListTags]
-    # print(listDimTags)
 
-    gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
-    # print(ToMesh)
-
-    #    #get all elementary entities in the model
-    #    entities = gmsh.model.getEntities()
-    #    print(len(entities))
-    #
-    #    for e in entities:
-    #        print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
-    #        # get the mesh nodes for each elementary entity
-    #        nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(e[0], e[1])
-    #        # get the mesh elements for each elementary entity
-    #        elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(e[0], e[1])
-    #        # count number of elements
-    #        numElem = sum(len(i) for i in elemTags)
-    #        print(" - mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
-    #              " elements")
-    #        boundary = gmsh.model.getBoundary([e])
-    #        print(" - boundary entities " + str(boundary))
-    #        partitions = gmsh.model.getPartitions(e[0], e[1])
-    #        if len(partitions):
-    #            print(" - Partition tag(s): " + str(partitions) + " - parent entity " +
-    #                  str(gmsh.model.getParent(e[0], e[1])))
-    #        for t in elemTypes:
-    #            name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(
-    #                t)
-    #            print(" - Element type: " + name + ", order " + str(order) + " (" +
-    #                  str(numv) + " nodes in param coord: " + str(parv) + ")")
+    gmsh.model.occ.importShapes(fileName=mesh_file, highestDimOnly=True)
 
     if len(listDimTags) > 1:
-        # print(listDimTags[:-1])
-        # print(listDimTags[-1])
-        outDimTags, outDimTagsMap = gmsh.model.occ.fragment(
-            listDimTags[:-1], [listDimTags[-1]]
+        gmsh.model.occ.fragment(
+            objectDimTags=listDimTags[:-1], toolDimTags=[listDimTags[-1]]
         )
 
-    #    ent = gmsh.model.getEntities(3)
-    #    print(ent)
-    #    gmsh.model.occ.healShapes()
     gmsh.model.occ.synchronize()
 
-    #    print(a)
-    #    print(len(a))
-    #    gmsh.model.occ.fuse([(3, 3)], [(3, 4)])
-    #    gmsh.model.occ.fuse([(3, 5)], [(3, 6)])
-
     for i, tag in enumerate(listTags):
-        # print(i)
-        # print(type(i))
-        ps_i = gmsh.model.addPhysicalGroup(3, tag)
-        gmsh.model.setPhysicalName(3, ps_i, "Mat" + str(i))
+        ps_i = gmsh.model.addPhysicalGroup(dim=3, tags=tag)
+        gmsh.model.setPhysicalName(dim=3, tag=ps_i, name="Mat" + str(i))
 
-    # gmsh.model.mesh.setSize(gmsh.model.getEntities(0), Size)
-    # p = gmsh.model.getBoundary(ToMesh, False, False, True)  # Get all points
     p = gmsh.model.getEntities()
-    #    print(p)
 
-    gmsh.model.mesh.setSize(p, size)
-    gmsh.model.mesh.setOrder(order)
-    gmsh.model.mesh.generate(3)
-    gmsh.option.setNumber("Mesh.MshFileVersion", 2)
-    gmsh.write(output_file)
+    gmsh.model.mesh.setSize(dimTags=p, size=size)
+    gmsh.model.mesh.setOrder(order=order)
+    gmsh.model.mesh.generate(dim=3)
+    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
+    gmsh.write(fileName=output_file)
     gmsh.finalize()
 
 
 def meshPeriodic(
     mesh_file: str,
     rve: Rve,
-    listPhases: list,
+    listPhases: list[Phase],
     size: float,
     order: int = 1,
     output_file: str = "MeshPeriodic.msh",
+    mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes periodic geometries with gmsh
+
+    :param mesh_file: step file to mesh
+    :param rve: RVE for periodicity
+    :param listPhases: list of phases to mesh
+    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
+    :param order: see `gmsh.model.mesh.setOrder(order)`_
+    :param output_file: output file (.msh, .vtk)
+    :param mshFileVersion: gmsh file version
+
+    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     gmsh.initialize()
-    gmsh.option.setNumber('General.Verbosity', 1)  # this would still print errors, but not warnings
+    gmsh.option.setNumber(
+        "General.Verbosity", 1
+    )  # this would still print errors, but not warnings
 
-    flatListPhases = [phase for phase_list in listPhases for phase in phase_list]
-    nbTags = len(flatListPhases)
-    # listTagsNb = [len(phase_list) for phase_list in listPhases]
+    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
+    nbTags = len(flatListSolids)
 
-    # print(nbTags)
-    # print(listTagsNb)
     flatListTags = list(range(1, nbTags + 1, 1))
     # print(flatListTags)
 
     listTags = []
     index = 0
-    for i, phase_list in enumerate(listPhases):
+    for i, phase in enumerate(listPhases):
         temp = []
-        for j, phase in enumerate(phase_list):
+        for j, solid in enumerate(phase.solids):
             index = index + 1
             temp.append(index)
         listTags.append(temp)
@@ -200,7 +178,9 @@ def meshPeriodic(
 
     for tup_min in sxmin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+            tup_min[0], tup_min[1]
+        )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         sxmax = gmsh.model.getEntitiesInBoundingBox(
@@ -240,7 +220,9 @@ def meshPeriodic(
 
     for tup_min in symin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+            tup_min[0], tup_min[1]
+        )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         symax = gmsh.model.getEntitiesInBoundingBox(
@@ -280,7 +262,9 @@ def meshPeriodic(
 
     for tup_min in szmin:
         # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(tup_min[0], tup_min[1])
+        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+            tup_min[0], tup_min[1]
+        )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
         # print(xmin, ymin, zmin, xmax, ymax, zmax)
@@ -317,6 +301,6 @@ def meshPeriodic(
     gmsh.model.mesh.setSize(p, size)
     gmsh.model.mesh.generate(3)
     gmsh.model.mesh.setOrder(order)
-    gmsh.option.setNumber("Mesh.MshFileVersion", 2)
+    gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
     gmsh.write(output_file)
     gmsh.finalize()

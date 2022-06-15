@@ -1,22 +1,27 @@
+"""
+Periodic function to cut a shape periodically according to a RVE
+"""
+
+import warnings
+
 import cadquery as cq
 
 from .operations import fuseParts
+from .phase import Phase
 from .rve import Rve
 
 
-def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
+def periodic(phase: Phase, rve: Rve) -> Phase:
     """
-    Rearrange cqshape periodically according to the rve
+    Rearrange phase periodically according to the rve
 
-    Returns
-    -------
-    return_object_periodic[0].copy() :
-        cutted object
-    flat_list : TYPE
-        list of cutted parts
+    :param phase: Phase to cut periodically
+    :param rve: RVE for periodicity
+
+    :return phase: resulting phase
     """
 
-    wk_plane = cq.Workplane().add(cqshape.Solids())  # shape to cut
+    wk_plane = cq.Workplane().add(phase.solids)  # shape to cut
     periodic_object = []  # type: list[cq.Workplane]
 
     faces = ["x-", "x+", "y-", "y+", "z-", "z+"]
@@ -39,7 +44,14 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
     }
 
     face_dir = {"x-": ">X", "x+": "<X", "y-": ">Y", "y+": "<Y", "z-": ">Z", "z+": "<Z"}
-    inverse_face_dir = {"x-": "<X", "x+": ">X", "y-": "<Y", "y+": ">Y", "z-": "<Z", "z+": ">Z"}
+    inverse_face_dir = {
+        "x-": "<X",
+        "x+": ">X",
+        "y-": "<Y",
+        "y+": ">Y",
+        "z-": "<Z",
+        "z+": ">Z",
+    }
 
     translate = {
         "x-": (rve.dx, 0, 0),
@@ -50,10 +62,10 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
         "z+": (0, 0, -rve.dz),
     }
 
-    intersected_faces = []
+    intersected_faces = []  # type: list[str]
 
-    planes = {}
-    partitions = {}
+    planes = {}  # type: dict[str, cq.Face]
+    partitions = {}  # type: dict[str, cq.Workplane]
     for face in faces:
         planes[face] = cq.Face.makePlane(
             basePnt=basePnt[face], dir=direction[face]
@@ -66,17 +78,24 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
         if len(partitions[face].solids().all()) > 1:
             intersected_faces.append(face)
 
-    # A REFLECHIR
-    # Erreur/Warning quand un objet dépasse des deux côtés ?
     if "x-" in intersected_faces and "x+" in intersected_faces:
         intersected_faces.remove("x-")
         intersected_faces.remove("x+")
+        warnings.warn(
+            "Object intersecting x+ and x- faces: not doing anything in this direction"
+        )
     if "y-" in intersected_faces and "y+" in intersected_faces:
         intersected_faces.remove("y-")
         intersected_faces.remove("y+")
+        warnings.warn(
+            "Object intersecting y+ and y- faces: not doing anything in this direction"
+        )
     if "z-" in intersected_faces and "z+" in intersected_faces:
         intersected_faces.remove("z-")
         intersected_faces.remove("z+")
+        warnings.warn(
+            "Object intersecting z+ and z- faces: not doing anything in this direction"
+        )
 
     if len(intersected_faces) == 0:  # if no intersected faces = nothing to do
         periodic_object.append(wk_plane)
@@ -193,8 +212,9 @@ def periodic(cqshape: cq.Shape, rve: Rve) -> tuple:
             .intersect(rve.Box)
         )
 
-    occ_solids_list = [s.val().Solids() for s in periodic_object]
-    flat_list = [item.copy() for sublist in occ_solids_list for item in sublist]
-    to_fuse = [cq.Shape(s.wrapped) for s in flat_list]
-    return_object_periodic = fuseParts(to_fuse, False)
-    return (return_object_periodic[0].copy(), flat_list)
+    listSolids = [wp.val().Solids() for wp in periodic_object]
+    flat_list = [solid.copy() for solids in listSolids for solid in solids]
+    to_fuse = [cq.Shape(solid.wrapped) for solid in flat_list]
+    phase = fuseParts(cqShapeList=to_fuse, retain_edges=False)
+
+    return phase

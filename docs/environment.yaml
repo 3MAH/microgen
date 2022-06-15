@@ -1,0 +1,12 @@
+name: docs
+channels:
+  - conda-forge
+  - cadquery
+
+dependencies:
+  - vtk=9.0.1
+  - cadquery=master
+  - python-gmsh=4.8
+  - pygalmesh
+  - pip:
+    - sphinx_rtd_theme

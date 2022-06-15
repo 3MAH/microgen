@@ -1,29 +1,37 @@
+"""
+=============================================
+Sphere (:mod:`microgen.shape.sphere`)
+=============================================
+"""
 import cadquery as cq
 import pyvista as pv
-import numpy as np
 
-# ----------SPHERE--------------------------------------------------------#
+from .basicGeometry import BasicGeometry
 
 
-class Sphere:
+class Sphere(BasicGeometry):
     """
     Class to generate a sphere
     """
-    def __init__(self, center: np.ndarray, radius: float, number: int) -> None:
-        self.center = center
+    def __init__(
+        self,
+        center: tuple[float, float, float] = (0, 0, 0),
+        radius: float = 1,
+    ) -> None:
+        super().__init__(shape="Box", center=center)
         self.radius = radius
-        self.number = number
-        self.name_part = "sphere" + str(self.number)
 
-    def createSphere(self) -> cq.Workplane:
-        return (
+    def generate(self) -> cq.Shape:
+        sphere = (
             cq.Workplane()
             .sphere(self.radius)
             .translate((self.center[0], self.center[1], self.center[2]))
         )
+        return cq.Shape(sphere.val().wrapped)
 
     def createPvSphere(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
         return pv.Sphere(
             radius=self.radius,
             center=tuple(self.center)
         )
+        

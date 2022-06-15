@@ -4,3 +4,13 @@
 *.egg-info
 **/__pycache__
 .coverage
+*.stl
+*.vtk
+*.step
+*.msh
+!examples/Mesh/mmg/Mesh.msh
+!examples/Mesh/mmg-voro/Mesh.msh
+.vscode
+data/
+_build/
+.ipynb_checkpoints/
