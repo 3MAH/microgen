@@ -14,6 +14,7 @@ import numpy as np
 
 from microgen.shape import Polyhedron
 
+
 class Neper:
 
     @staticmethod
@@ -22,7 +23,7 @@ class Neper:
         Runs neper command from the command line
 
         command = neper -T -n nbCell -id 1 -dim 3 -domain 'cube(dimCube[0], dimCube[1], dimCube[2])' -morpho gg -o filename
-        
+
         :param filename: output file
         :param nbCell: Specify the number of cells of the tessellation
         :param dimCube: `neper's documentation`_
@@ -62,9 +63,9 @@ class Neper:
             for face_ind in global_ind_faces:
                 face_vertices = tess['faces']['vertices'][face_ind - 1]
                 global_ind_vertices += face_vertices
-            global_ind_vertices = list(dict.fromkeys(global_ind_vertices)) # remove duplicates
+            global_ind_vertices = list(dict.fromkeys(global_ind_vertices))  # remove duplicates
             global_ind_vertices.sort()
-            
+
             vertices = []
             local_ind_vertices = []
             for i in range(len(global_ind_vertices)):
@@ -85,14 +86,13 @@ class Neper:
             polyhedra.append(Polyhedron(dic={"vertices": vertices, "faces": faces}))
         return polyhedra
 
-
     @staticmethod
     def tessParse(filename: str) -> dict[str, dict]:
         '''
             Parses tesselation file (.tess) generated with neper.
-            Following .tess structure from `neper's documentation`_: 
-            Returns a dictionnary containing information cells, 
-            vertices, edges, faces, polyhedra 
+            Following .tess structure from `neper's documentation`_:
+            Returns a dictionnary containing information cells,
+            vertices, edges, faces, polyhedra
 
             .. _neper's documentation: https://neper.info/doc/fileformat.html#tessellation-file-tess
         '''
@@ -229,7 +229,7 @@ class Neper:
             n_fac = int(data[1])
             polyhedra['faces'].append([])
             for j in range(n_fac):
-                polyhedra['faces'][-1].append(np.abs(int(data[j+2])))
+                polyhedra['faces'][-1].append(np.abs(int(data[j + 2])))
         return polyhedra
 
 
@@ -595,7 +595,6 @@ class Mmg:
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
-
 
     @staticmethod
     def mmgs(

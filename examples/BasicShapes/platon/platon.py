@@ -21,4 +21,3 @@ for filename in filenames:
     i += 1
 
 cq.exporters.export(cq.Compound.makeCompound(platon_solids), "platon.stl")
-

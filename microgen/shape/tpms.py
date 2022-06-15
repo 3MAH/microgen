@@ -239,7 +239,7 @@ class Tpms(BasicGeometry):
 
         if self.cell_size is not None:
             return_object = rescale(
-                obj=return_object, scale=self.cell_size, center=self.center
+                obj=return_object, scale=self.cell_size
             )
         if self.repeat_cell is not None:
             rve = Rve(*self.cell_size)

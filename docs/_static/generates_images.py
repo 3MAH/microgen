@@ -2,13 +2,25 @@ import pyvista as pv
 import os.path
 
 
-def show_example(filename, screenshot=False, color=None, show_edges=False, screen_name=None, cmap='coolwarm'):
+def show_example(filename, 
+                 screenshot=False,
+                 color=None,
+                 show_edges=False,
+                 screen_name=None,
+                 cmap='coolwarm',
+                 rotate=False):
     if not os.path.exists(filename):
         print(filename + " not found")
         return
 
     mesh = pv.read(filename)
     plotter = pv.Plotter(off_screen=screenshot)
+    if rotate:
+        plotter.camera_position = 'zy'
+        plotter.camera.zoom(0.8)
+        plotter.camera.position = (-1, 0.5, 0.5)
+        plotter.camera.focal_point = (mesh.center[0], mesh.center[1], mesh.center[2])
+
     plotter.add_mesh(mesh, show_edges=show_edges, color=color, cmap=cmap)
     try:
         plotter.remove_scalar_bar()
@@ -24,6 +36,7 @@ def show_example(filename, screenshot=False, color=None, show_edges=False, scree
         plotter.screenshot(screen_name, transparent_background=True)
     else:
         plotter.show()
+        print(plotter.camera.position)
 
 
 example_path = "../../examples/"
@@ -44,11 +57,11 @@ show_example(
     screenshot=True
 )
 show_example(
-    filename=example_path + "TPMS/tpms_shell/tpms_shell.stl",
+    filename=example_path + "TPMS/tpmsShell/tpms_shell.stl",
     screenshot=True
 )
 show_example(
-    filename=example_path + "TPMS/tpms_sphere/tpms_sphere.stl",
+    filename=example_path + "TPMS/tpmsSphere/tpms_sphere.stl",
     screenshot=True
 )
 show_example(
@@ -60,17 +73,23 @@ show_example(
     screenshot=True
 )
 show_example(
-    filename=example_path + "3Doperations/Voronoi/Voronoi.vtk",
+    filename=example_path + "3Doperations/rasterEllipsoid/rasterEllipsoid.vtk",
+    screenshot=True,
+    show_edges=True,
+    rotate=True,
+)
+show_example(
+    filename=example_path + "3Doperations/voronoi/Voronoi.vtk",
     screenshot=True,
     show_edges=False
 )
 show_example(
-    filename=example_path + "3Doperations/VoronoiGyroid/Gyroid-voro.vtk",
+    filename=example_path + "3Doperations/voronoiGyroid/Gyroid-voro.vtk",
     screenshot=True,
     show_edges=False
 )
 show_example(
-    filename=example_path + "3Doperations/Voronoi/Voronoi.vtk",
+    filename=example_path + "3Doperations/voronoi/Voronoi.vtk",
     screenshot=True,
     show_edges=True,
     screen_name="Mesh.png"

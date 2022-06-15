@@ -86,7 +86,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/repeated_geometry.png" height="250">
 </a>
 <a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#raster-ellipsoid">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/raster.png" height="250">
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/rasterEllipsoid.png" height="250">
 </a>
 <a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#voronoi">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Voronoi.png" height="250">

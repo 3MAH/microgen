@@ -50,11 +50,13 @@ class Phase:
         """
         Returns the center of 'mass' of an object.
         """
-        if isinstance(self._centerOfMass, np.ndarray):
-            return self._centerOfMass
-        else:
-            self._computeCenterOfMass()
-            return self._centerOfMass
+        # if isinstance(self._centerOfMass, np.ndarray):
+        #     return self._centerOfMass
+        # else:
+        #     self._computeCenterOfMass()
+        #     return self._centerOfMass
+        self._computeCenterOfMass()
+        return self._centerOfMass
 
     def _computeCenterOfMass(self):
         """

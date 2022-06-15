@@ -61,20 +61,25 @@ def rotateEuler(
 
 
 def rescale(
-    obj: Phase, scale: Union[float, tuple[float, float, float]], center: tuple[float, float, float]
+    obj: Phase, scale: Union[float, tuple[float, float, float]]
 ) -> Phase:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
     :param obj: Phase
     :param scale: float or list of scale factor in each direction
-    :param center: list of center components
 
     :return shape: rescaled Phase
     """
     if isinstance(scale, float):
         scale = (scale, scale, scale)
 
+    center = obj.centerOfMass
+
+    # move the shape at (0, 0, 0) to rescale it
+    shape = obj.shape.move(cq.Location(cq.Vector(-center[0], -center[1], -center[2])))
+
+    # then move it back to its center with transform Matrix
     transform_mat = cq.Matrix(
         [
             [scale[0], 0, 0, center[0]],
@@ -82,7 +87,9 @@ def rescale(
             [0, 0, scale[2], center[2]],
         ]
     )
-    return Phase(shape=obj.shape.transformGeometry(transform_mat))
+    shape = shape.transformGeometry(transform_mat)
+
+    return Phase(shape=shape)
 
 
 def removeEmptyLines(filename: str) -> None:
@@ -244,7 +251,7 @@ def rasterShapeList(
 
 
 def rasterPhase(
-    phase: Phase, rve: Rve, grid: list[int]
+    phase: Phase, rve: Rve, grid: list[int], phasePerRaster: bool = True
 ) -> Union[Phase, list[Phase]]:
     """
     Rasters solids from phase according to the rve divided by the given grid
@@ -255,24 +262,41 @@ def rasterPhase(
 
     :return: Phase
     """
-    wk_plane = cq.Workplane().add(phase.solids)
-    xgrid = np.linspace(0.0, rve.dx, num=grid[0])
-    ygrid = np.linspace(0.0, rve.dy, num=grid[1])
-    zgrid = np.linspace(0.0, rve.dz, num=grid[2])
-    np.delete(xgrid, 0)
-    np.delete(ygrid, 0)
-    np.delete(zgrid, 0)
-    for i in xgrid:
-        Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
-        wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
-    for j in ygrid:
-        Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
-        wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
-    for k in zgrid:
-        Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
-        wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
+    solidList = []  # type: list[cq.Solid]
 
-    return Phase(solids=wk_plane.val().Solids())
+    for solid in phase.solids:
+        wk_plane = cq.Workplane().add(solid)
+        xgrid = np.linspace(0.0, rve.dx, num=grid[0])
+        ygrid = np.linspace(0.0, rve.dy, num=grid[1])
+        zgrid = np.linspace(0.0, rve.dz, num=grid[2])
+        np.delete(xgrid, 0)
+        np.delete(ygrid, 0)
+        np.delete(zgrid, 0)
+        for i in xgrid:
+            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
+            wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
+        for j in ygrid:
+            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
+            wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
+        for k in zgrid:
+            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
+            wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
+
+        for subsolid in wk_plane.val().Solids():
+            solidList.append(subsolid)
+
+    if phasePerRaster:
+        solids_phases = [[] for _ in range(grid[0] * grid[1] * grid[2])]  # type: list[list[cq.Solid]]
+        for solid in solidList:
+            center = solid.Center()
+            i = int(round(center.x / (rve.dx / grid[0])))
+            j = int(round(center.y / (rve.dy / grid[1])))
+            k = int(round(center.z / (rve.dz / grid[2])))
+            ind = i + grid[0] * j + grid[0] * grid[1] * k
+            solids_phases[ind].append(solid)
+        return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
+    else:
+        return Phase(solids=solidList)
 
 
 def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:

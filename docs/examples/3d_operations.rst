@@ -19,7 +19,7 @@ Raster Ellipsoid
 .. include:: ../../examples/3Doperations/rasterEllipsoid/rasterEllipsoid.py
    :literal:
 
-.. image:: ../_static/examples/raster.png
+.. image:: ../_static/examples/rasterEllipsoid.png
 
 
 Voronoi
