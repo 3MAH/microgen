@@ -13,6 +13,7 @@ class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
     """
+
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),

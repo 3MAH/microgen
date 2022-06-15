@@ -105,7 +105,6 @@ def meshPeriodic(
     nbTags = len(flatListSolids)
 
     flatListTags = list(range(1, nbTags + 1, 1))
-    # print(flatListTags)
 
     listTags = []
     index = 0
@@ -115,39 +114,10 @@ def meshPeriodic(
             index = index + 1
             temp.append(index)
         listTags.append(temp)
-    # print(listTags)
 
     listDimTags = [(3, tag) for tag in flatListTags]
-    # print(listDimTags)
 
     gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
-    # print(toMesh)
-
-    #    #get all elementary entities in the model
-    #    entities = gmsh.model.getEntities()
-    #    print(len(entities))
-    #
-    #    for e in entities:
-    #        print("Entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1]))
-    #        # get the mesh nodes for each elementary entity
-    #        nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(e[0], e[1])
-    #        # get the mesh elements for each elementary entity
-    #        elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(e[0], e[1])
-    #        # count number of elements
-    #        numElem = sum(len(i) for i in elemTags)
-    #        print(" - mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
-    #              " elements")
-    #        boundary = gmsh.model.getBoundary([e])
-    #        print(" - boundary entities " + str(boundary))
-    #        partitions = gmsh.model.getPartitions(e[0], e[1])
-    #        if len(partitions):
-    #            print(" - Partition tag(s): " + str(partitions) + " - parent entity " +
-    #                  str(gmsh.model.getParent(e[0], e[1])))
-    #        for t in elemTypes:
-    #            name, dim, order, numv, parv, _ = gmsh.model.mesh.getElementProperties(
-    #                t)
-    #            print(" - Element type: " + name + ", order " + str(order) + " (" +
-    #                  str(numv) + " nodes in param coord: " + str(parv) + ")")
 
     size_box = np.min(np.array([rve.dx, rve.dy, rve.dz]))
     eps = 1.0e-3 * size_box
@@ -158,14 +128,10 @@ def meshPeriodic(
     gmsh.model.occ.synchronize()
 
     for i, tag in enumerate(listTags):
-        # print(i)
-        # print(type(i))
         ps_i = gmsh.model.addPhysicalGroup(3, tag)
         gmsh.model.setPhysicalName(3, ps_i, "Mat" + str(i))
 
-    #    p = gmsh.model.getBoundary(ToMesh, False, False, True)  # Get all points
     p = gmsh.model.getEntities()
-    #    print(p)
 
     # We now identify corresponding surfaces on the left and right sides of the
     # geometry automatically.
@@ -200,7 +166,6 @@ def meshPeriodic(
             xmin2 -= 1
             xmax2 -= 1
 
-            # print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
             if (
                 abs(xmin2 - xmin) < eps
@@ -242,7 +207,6 @@ def meshPeriodic(
             ymin2 -= 1
             ymax2 -= 1
 
-            # print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
             if (
                 abs(xmin2 - xmin) < eps
@@ -267,7 +231,6 @@ def meshPeriodic(
         )
         # We translate the bounding box to the right and look for surfaces inside
         # it:
-        # print(xmin, ymin, zmin, xmax, ymax, zmax)
         szmax = gmsh.model.getEntitiesInBoundingBox(
             xmin - eps,
             ymin - eps,
@@ -285,7 +248,6 @@ def meshPeriodic(
             zmin2 -= 1
             zmax2 -= 1
 
-            # print(xmin, ymin, zmin, xmax, ymax, zmax)
             # ...and if they match, we apply the periodicity constraint
             if (
                 abs(xmin2 - xmin) < eps

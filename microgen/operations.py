@@ -60,9 +60,7 @@ def rotateEuler(
     return object_r
 
 
-def rescale(
-    obj: Phase, scale: Union[float, tuple[float, float, float]]
-) -> Phase:
+def rescale(obj: Phase, scale: Union[float, tuple[float, float, float]]) -> Phase:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -286,7 +284,9 @@ def rasterPhase(
             solidList.append(subsolid)
 
     if phasePerRaster:
-        solids_phases = [[] for _ in range(grid[0] * grid[1] * grid[2])]  # type: list[list[cq.Solid]]
+        solids_phases = [
+            [] for _ in range(grid[0] * grid[1] * grid[2])
+        ]  # type: list[list[cq.Solid]]
         for solid in solidList:
             center = solid.Center()
             i = int(round(center.x / (rve.dx / grid[0])))

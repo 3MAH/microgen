@@ -45,18 +45,16 @@ class Phase:
 
         Phase.numInstances += 1
 
-    @property
-    def centerOfMass(self) -> np.ndarray:
+    def getCenterOfMass(self, compute: bool = True) -> np.ndarray:
         """
         Returns the center of 'mass' of an object.
+        :param compute: if False and centerOfMass already exists, does not compute it (use carefully)
         """
-        # if isinstance(self._centerOfMass, np.ndarray):
-        #     return self._centerOfMass
-        # else:
-        #     self._computeCenterOfMass()
-        #     return self._centerOfMass
-        self._computeCenterOfMass()
-        return self._centerOfMass
+        if isinstance(self._centerOfMass, np.ndarray) and not compute:
+            return self._centerOfMass
+        else:
+            self._computeCenterOfMass()
+            return self._centerOfMass
 
     def _computeCenterOfMass(self):
         """
@@ -68,12 +66,12 @@ class Phase:
         com = Properties.CentreOfMass()
         self._centerOfMass = np.array([com.X(), com.Y(), com.Z()])
 
-    @property
-    def inertiaMatrix(self) -> np.ndarray:
+    def getInertiaMatrix(self, compute: bool = True) -> np.ndarray:
         """
         Calculates the inertia Matrix of an object.
+        :param compute: if False and inertiaMatrix already exists, does not compute it (use carefully)
         """
-        if isinstance(self._inertiaMatrix, np.ndarray):
+        if isinstance(self._inertiaMatrix, np.ndarray) and not compute:
             return self._inertiaMatrix
         else:
             self._computeInertiaMatrix()
@@ -119,8 +117,12 @@ class Phase:
             print("No solids or shape")
             return []
 
-    def getFlatSolidList(self) -> list[cq.Solid]:
-        if isinstance(self._solids[0], list):  # if solids is list of list
-            return [item.copy() for sublist in self._solids for item in sublist]
+    def translate(self, vec: Union[tuple, np.ndarray]) -> None:
+        if type(vec) == tuple:
+            self._shape.move(cq.Location(cq.Vector(vec)))
         else:
-            return self._solids
+            self._shape.move(cq.Location(cq.Vector(vec[0], vec[1], vec[2])))
+        self._computeCenterOfMass()
+
+    centerOfMass = property(getCenterOfMass)
+    inertiaMatrix = property(getInertiaMatrix)

@@ -34,6 +34,7 @@ class Tpms(BasicGeometry):
         - :class:`~microgen.shape.tpms.pmy`
         - :class:`~microgen.shape.tpms.honeycomb`
     """
+
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),
@@ -41,8 +42,8 @@ class Tpms(BasicGeometry):
         surface_function: Callable[[float, float, float, float], float] = None,
         type_part: str = "sheet",
         thickness: float = 0,
-        cell_size: Union[float, tuple[float, float, float], None] = None,
-        repeat_cell: Union[int, tuple[int, int, int], None] = None,
+        cell_size: Union[float, tuple[float, float, float]] = (1, 1, 1),
+        repeat_cell: Union[int, tuple[int, int, int]] = (1, 1, 1),
         path_data: str = ".",
     ) -> None:
         """
@@ -65,17 +66,15 @@ class Tpms(BasicGeometry):
 
         self.thickness = thickness
 
-        if isinstance(cell_size, tuple) or cell_size is None:
-            self.cell_size = cell_size
-        elif cell_size is None:
-            self.cell_size = (1, 1, 1)
-        else:
+        if type(cell_size) == float or type(cell_size) == int:
             self.cell_size = (cell_size, cell_size, cell_size)
-
-        if isinstance(repeat_cell, tuple) or repeat_cell is None:
-            self.repeat_cell = repeat_cell
         else:
+            self.cell_size = cell_size
+
+        if type(repeat_cell) == int:
             self.repeat_cell = (repeat_cell, repeat_cell, repeat_cell)
+        else:
+            self.repeat_cell = repeat_cell
 
         self.path_data = path_data
 
@@ -237,15 +236,27 @@ class Tpms(BasicGeometry):
             to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
             return_object = fuseParts(to_fuse, False)
 
-        if self.cell_size is not None:
-            return_object = rescale(
-                obj=return_object, scale=self.cell_size
-            )
-        if self.repeat_cell is not None:
-            rve = Rve(*self.cell_size)
+        if self.cell_size != (1.0, 1.0, 1.0):
+            return_object = rescale(obj=return_object, scale=self.cell_size)
+
+        if self.repeat_cell != (1, 1, 1):
             return_object = repeatGeometry(
-                unit_geom=return_object, rve=rve, grid=self.repeat_cell
+                unit_geom=return_object, rve=Rve(*self.cell_size), grid=self.repeat_cell
             )
+
+        return_object.translate(
+            (
+                -0.5
+                + self.center[0]
+                - 0.25 * self.cell_size[0] * (self.repeat_cell[0] - 1),
+                -0.5
+                + self.center[1]
+                - 0.25 * self.cell_size[1] * (self.repeat_cell[1] - 1),
+                -0.5
+                + self.center[2]
+                - 0.25 * self.cell_size[2] * (self.repeat_cell[2] - 1),
+            )
+        )
 
         return return_object.shape
 

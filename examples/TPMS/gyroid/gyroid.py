@@ -2,7 +2,6 @@ from microgen import Tpms, tpms
 import cadquery as cq
 
 geometry = Tpms(
-    center=(0.5, 0.5, 0.5),
     surface_function=tpms.gyroid,
     type_part="sheet",
     thickness=0.2,

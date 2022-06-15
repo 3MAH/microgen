@@ -13,6 +13,7 @@ class Cylinder(BasicGeometry):
     """
     Class to generate a cylinder
     """
+
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),

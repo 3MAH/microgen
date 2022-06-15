@@ -12,22 +12,30 @@ class Polyhedron(BasicGeometry):
     """
     Class to generate a Polyhedron with a given set of faces and vertices
     """
+
     def __init__(
         self,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         dic: dict[str, list] = {
-            "vertices": [(1., 1., 1.), (1., -1., -1.), (-1., 1., -1.), (-1., -1., 1.)],
-            "faces": [{"vertices": (0, 1, 2)}, 
-                      {"vertices": (0, 3, 1)}, 
-                      {"vertices": (0, 2, 3)},
-                      {"vertices": (1, 2, 3)}]
+            "vertices": [
+                (1.0, 1.0, 1.0),
+                (1.0, -1.0, -1.0),
+                (-1.0, 1.0, -1.0),
+                (-1.0, -1.0, 1.0),
+            ],
+            "faces": [
+                {"vertices": (0, 1, 2)},
+                {"vertices": (0, 3, 1)},
+                {"vertices": (0, 2, 3)},
+                {"vertices": (1, 2, 3)},
+            ],
         },
     ) -> None:
-        '''
+        """
         .. warning:
             Give a center parameter only if the polyhedron must be translated from its original position.
-        '''
+        """
         super().__init__(shape="Polyhedron", center=center, orientation=orientation)
         self.dic = dic
         self.faces_ixs = [face["vertices"] for face in dic["faces"]]
@@ -40,8 +48,12 @@ class Polyhedron(BasicGeometry):
             lines = []
             for v1, v2 in zip(ixs, ixs[1:]):
                 # tuple(map(sum, zip(a, b))) -> sum of tuples value by value
-                vertice_coords1 = tuple(map(sum, zip(self.center, self.dic["vertices"][v1])))
-                vertice_coords2 = tuple(map(sum, zip(self.center, self.dic["vertices"][v2])))
+                vertice_coords1 = tuple(
+                    map(sum, zip(self.center, self.dic["vertices"][v1]))
+                )
+                vertice_coords2 = tuple(
+                    map(sum, zip(self.center, self.dic["vertices"][v2]))
+                )
                 lines.append(
                     cq.Edge.makeLine(
                         cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
