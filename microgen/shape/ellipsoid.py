@@ -47,7 +47,7 @@ class Ellipsoid(BasicGeometry):
             self.orientation[1],
             self.orientation[2],
         )
-        return cq.Shape(ellipsoid.val().wrapped)
+        return cq.Shape(ellipsoid.wrapped)
         
     def generateVtk(self) -> pv.PolyData:
         transform_matrix = np.array(
