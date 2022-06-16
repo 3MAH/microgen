@@ -60,7 +60,7 @@ class Capsule(BasicGeometry):
             self.orientation[1],
             self.orientation[2],
         )
-        return cq.Shape(capsule.val().wrapped)
+        return cq.Shape(capsule.wrapped)
 
 #    def generateVtk(self, resolution=100, capping=True) -> pv.PolyData:
 #        capsule = vtk.vtkCapsuleSource()
