@@ -21,26 +21,6 @@ python octetTruss.py
 cd ..
 cd ..
 
-echo "--TPMS--"
-cd TPMS
-echo "gyroid"
-cd gyroid
-python gyroid.py
-cd ..
-echo "tpms"
-cd tpms
-python tpms.py
-cd ..
-echo "tpmsShell"
-cd tpmsShell
-python tpmsShell.py
-cd ..
-# echo "tpmsSphere"
-# cd tpmsSphere
-# python tpmsSphere.py
-# cd ..
-cd ..
-
 echo "3Doperations"
 cd 3Doperations
 cd rasterEllipsoid
@@ -64,5 +44,25 @@ python test_mmg.py
 cd ..
 cd mmg-voro
 python test_mmg.py
+cd ..
+cd ..
+
+echo "--TPMS--"
+cd TPMS
+echo "gyroid"
+cd gyroid
+python gyroid.py
+cd ..
+echo "tpms"
+cd tpms
+python tpms.py
+cd ..
+echo "tpmsShell"
+cd tpmsShell
+python tpmsShell.py
+cd ..
+echo "tpmsSphere"
+cd tpmsSphere
+python tpmsSphere.py
 cd ..
 cd ..
