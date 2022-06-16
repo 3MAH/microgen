@@ -125,7 +125,7 @@ class Tpms(BasicGeometry):
     def createSurfaces(
         self,
         number_surfaces : int = 1
-        isovalues: tuple(float) = (0,0)
+        isovalues: tuple[float, float] = (0,0)
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
