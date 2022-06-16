@@ -78,146 +78,125 @@ class Tpms(BasicGeometry):
             self.repeat_cell = (repeat_cell, repeat_cell, repeat_cell)
 
         self.path_data = path_data
-
+        
     def createSurface(
         self,
         isovalue: float = 0,
-        filename: str = "surface.stl",
-        sizeMesh: float = 0.05,
-        minFacetAngle: float = 10,
-        maxRadius: float = 0.05,
-        verbose: bool = False,
-    ) -> None:
-        """
-        Create TPMS surface for the corresponding isovalue and save file to path_data
-
-        :param isovalue: height isovalue of the given tpms function
-        :param filename: surface file name
-        :param sizeMesh: max_facet_distance from `pygalmesh`_
-        :param minFacetAngle: min_facet_angle from `pygalmesh`_
-        :param maxRadius: max_radius_surface_delaunay_ball from `pygalmesh`_
-        :param verbose: verbose from `pygalmesh`_
-
-        .. _pygalmesh: https://github.com/meshpro/pygalmesh
-        """
-        surface = Generator(height=isovalue, surface_function=self.surface_function)
-        mesh = pygalmesh.generate_surface_mesh(
-            surface,
-            min_facet_angle=minFacetAngle,
-            max_radius_surface_delaunay_ball=maxRadius,
-            max_facet_distance=sizeMesh,
-            verbose=verbose,
-        )
-        if not os.path.isdir(self.path_data):
-            os.mkdir(self.path_data)
-        mesh.write(self.path_data + "/" + filename)
-
-    def generateSurface(
-        self,
-        sizeMesh: float = 0.05,
-        minFacetAngle: float = 10,
-        maxRadius: float = 0.05,
+        nSample: int = 20,
+        smoothing: int = 100,
         verbose: bool = False,
     ) -> cq.Shape:
         """
-        Generates TPMS surface within a box for isovalue = 0
+        Create TPMS surface for the corresponding isovalue
 
-        :param sizeMesh: max_facet_distance from `pygalmesh`_
-        :param minFacetAngle: min_facet_angle from `pygalmesh`_
-        :param maxRadius: max_radius_surface_delaunay_ball from `pygalmesh`_
-        :param verbose: verbose from `pygalmesh`_
-
-        .. _pygalmesh: https://github.com/meshpro/pygalmesh
+        :param isovalue: height isovalue of the given tpms function
+        :param nSample: surface file name
+        :param smoothing: smoothing loop iterations
         """
-        self.createSurface(
-            isovalue=0,
-            filename="surface.stl",
-            sizeMesh=sizeMesh,
-            minFacetAngle=minFacetAngle,
-            maxRadius=maxRadius,
-            verbose=verbose,
+        x_min, y_min, z_min = -0.5, -0.5, -0.5
+        grid = pv.UniformGrid(
+            dims=(nSample, nSample, nSample),
+            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            origin=(x_min, y_min, z_min),
         )
-        ocp_shape = TopoDS_Shape()
-        stl_reader = StlAPI_Reader()
-        stl_reader.Read(ocp_shape, self.path_data + "/" + "surface.stl")
+        x, y, z = grid.points.T
+        
+        surface = Generator(surface_function=self.surface_function)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isolvalue,1))
+        mesh = mesh.smooth(n_iter=smoothing)
+        list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
+        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
 
-        box = cq.Shape(cq.Workplane("front").box(1, 1, 1).val().wrapped)
-        surface = cq.Shape(ocp_shape)
-        return surface.intersect(box)
+        faces = []
+        for ixs in list_of_Triangles:
+            lines = []
+            for v1, v2 in zip(ixs, ixs[1:]):
+                vertice_coords1 = mesh.points[v1]
+                vertice_coords2 = mesh.points[v2]
+                lines.append(
+                    cq.Edge.makeLine(
+                        cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
+                    )
+                )
+            wire = cq.Wire.assembleEdges(lines)
+            faces.append(cq.Face.makeFromWires(wire))
+        return cq.Shell.makeShell(faces)
+
+    def createSurfaces(
+        self,
+        number_surfaces : int = 1
+        isovalues: tuple(float) = (0,0)
+        nSample: int = 20,
+        smoothing: int = 100,
+        verbose: bool = False,
+    ) -> cq.Shape:
+        """
+        Create TPMS surface for the corresponding isovalue
+        
+        :param numsber_surfaces: number of surfaces
+        :param isovalues: height isovalues of the given tpms function
+        :param nSample: surface file name
+        :param smoothing: smoothing loop iterations
+        """
+        x_min, y_min, z_min = -0.5, -0.5, -0.5
+        grid = pv.UniformGrid(
+            dims=(nSample, nSample, nSample),
+            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            origin=(x_min, y_min, z_min),
+        )
+        x, y, z = grid.points.T
+        
+        surface_function=self.surface_function
+        surface = surface_function(x,y,z)
+        mesh = grid.contour(number_surfaces, scalars=surface, method='flying_edges', rng=(isolvalue,1))
+        mesh = mesh.smooth(n_iter=smoothing)
+        list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
+        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
+
+        faces = []
+        for ixs in list_of_Triangles:
+            lines = []
+            for v1, v2 in zip(ixs, ixs[1:]):
+                vertice_coords1 = mesh.points[v1]
+                vertice_coords2 = mesh.points[v2]
+                lines.append(
+                    cq.Edge.makeLine(
+                        cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
+                    )
+                )
+            wire = cq.Wire.assembleEdges(lines)
+            faces.append(cq.Face.makeFromWires(wire))
+        shell = cq.Shell.makeShell(faces)
+        return shell.Shells()
 
     def generate(
         self,
-        sizeMesh: float = 0.05,
-        minFacetAngle: float = 10,
-        maxRadius: float = 0.05,
+        isovalues: tuple(float) = (-0.2,0.2)
+        nSample: int = 20,
+        smoothing: int = 100,
         verbose: bool = False,
     ) -> cq.Shape:
         """
         Creates thick TPMS geometry (sheet or skeletal part) from surface
         files generated in the directory given by path_data
 
-        :param sizeMesh: max_facet_distance from `pygalmesh`_
-        :param minFacetAngle: min_facet_angle from `pygalmesh`_
-        :param maxRadius: max_radius_surface_delaunay_ball from `pygalmesh`_
-        :param verbose: verbose from `pygalmesh`_
-
-        .. _pygalmesh: https://github.com/meshpro/pygalmesh
+        :param isovalue: height isovalue of the given tpms function
+        :param nSample: surface file name
+        :param smoothing: smoothing loop iterations
         """
 
-        thickness = self.thickness * pi
-        self.createSurface(
-            isovalue=thickness / 4.0,
-            filename="tpms_testplus.stl",
-            sizeMesh=sizeMesh,
-            minFacetAngle=minFacetAngle,
-            maxRadius=maxRadius,
-            verbose=verbose,
-        )
-        self.createSurface(
-            isovalue=-thickness / 4.0,
-            filename="tpms_testminus.stl",
-            sizeMesh=sizeMesh,
-            minFacetAngle=minFacetAngle,
-            maxRadius=maxRadius,
-            verbose=verbose,
-        )
-        self.createSurface(
-            isovalue=thickness / 2.0,
-            filename="tpms_plus.stl",
-            sizeMesh=sizeMesh,
-            minFacetAngle=minFacetAngle,
-            maxRadius=maxRadius,
-            verbose=verbose,
-        )
-        self.createSurface(
-            isovalue=-thickness / 2.0,
-            filename="tpms_minus.stl",
-            sizeMesh=sizeMesh,
-            minFacetAngle=minFacetAngle,
-            maxRadius=maxRadius,
-            verbose=verbose,
-        )
+        shells = createSurfaces(number_surfaces=4, isovalues=isovalues, nSample=nSample, smoothing=smoothing)
 
-        surf_tp = TopoDS_Shape()
-        surf_tm = TopoDS_Shape()
-        surf_p = TopoDS_Shape()
-        surf_m = TopoDS_Shape()
-        stl_reader = StlAPI_Reader()
-        stl_reader.Read(surf_tp, self.path_data + "/" + "tpms_testplus.stl")
-        stl_reader.Read(surf_tm, self.path_data + "/" + "tpms_testminus.stl")
-        stl_reader.Read(surf_p, self.path_data + "/" + "tpms_plus.stl")
-        stl_reader.Read(surf_m, self.path_data + "/" + "tpms_minus.stl")
-
-        face_cut_tp = cq.Face(surf_tp)
-        face_cut_tm = cq.Face(surf_tm)
-        face_cut_p = cq.Face(surf_p)
-        face_cut_m = cq.Face(surf_m)
+        face_cut_tp = shells[2]
+        face_cut_tm = shells[1]
+        face_cut_p = shells[3]
+        face_cut_m = shells[0]
 
         box_wp = cq.Workplane("front").box(1, 1, 1)
 
         boxCut_wp = box_wp.split(face_cut_p)
         boxCut_wp = boxCut_wp.split(face_cut_m)
-
+        
         boxWorkplanes = boxCut_wp.solids().all()  # type: list[cq.Workplane]
 
         listShapes = []  # type: list[tuple[int, cq.Shape]]
@@ -249,63 +228,27 @@ class Tpms(BasicGeometry):
 
         return return_object.shape
 
-
-class Generator(pygalmesh.DomainBase):
-    """
-    Base class to generate TPMS geometry with a given surface function
-    Inherited from DomainBase class from `pygalmesh`_
-
-    .. _pygalmesh: https://github.com/meshpro/pygalmesh
-    """
-
-    def __init__(
-        self,
-        height: float,
-        surface_function: Callable[[float, float, float, float], float],
-    ) -> None:
-        super().__init__()
-        self.height = height
-        self.z0 = 0.0
-        self.z1 = 1
-        self.waist_radius = math.sqrt(0.5**2 + 0.5**2)
-        self.bounding_sphere_squared_radius = (
-            math.sqrt(0.5**2 + 0.5**2 + 0.5**2) * 1.1
-        )
-        self.surface_function = surface_function
-
-    def get_bounding_sphere_squared_radius(self) -> float:
-        return self.bounding_sphere_squared_radius
-
-    def eval(self, pos: list) -> float:
-        return self.surface_function(pos[0], pos[1], pos[2], self.height)
-
-
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
 
-def gyroid(x: float, y: float, z: float, height: float) -> float:
+def gyroid(x: float, y: float, z: float) -> float:
     """
     :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0`
     """
-    if abs(x) + abs(y) + abs(z) > 1.0e-8:
-        return (
-            sin(2 * pi * x) * cos(2 * pi * y)
+    return (
+        sin(2 * pi * x) * cos(2 * pi * y)
             + sin(2 * pi * y) * cos(2 * pi * z)
             + sin(2 * pi * z) * cos(2 * pi * x)
-            + height
-        )
-    else:
-        return 1.0
-
+    )
 
 def schwarzP(x: float, y: float, z: float, height: float) -> float:
     """
     :math:`cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0`
     """
-    return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z) + height
+    return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
 
 
-def schwarzD(x: float, y: float, z: float, height: float) -> float:
+def schwarzD(x: float, y: float, z: float) -> float:
     """
     :math:`sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \
            sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
@@ -316,10 +259,10 @@ def schwarzD(x: float, y: float, z: float, height: float) -> float:
     b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     c = cos(2 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
     d = cos(2 * pi * x) * cos(2 * pi * y) * sin(2 * pi * z)
-    return a + b + c + d + height
+    return a + b + c + d
 
 
-def neovius(x: float, y: float, z: float, height: float) -> float:
+def neovius(x: float, y: float, z: float) -> float:
     """
     :math:`3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \
            4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0`
@@ -327,10 +270,10 @@ def neovius(x: float, y: float, z: float, height: float) -> float:
     a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
     b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
 
-    return a + b + height
+    return a + b
 
 
-def schoenIWP(x: float, y: float, z: float, height: float) -> float:
+def schoenIWP(x: float, y: float, z: float) -> float:
     """
     :math:`2 ( cos(2 \pi x) cos(2 \pi y) + \
                cos(2 \pi y) cos(2 \pi z) + \
@@ -344,10 +287,10 @@ def schoenIWP(x: float, y: float, z: float, height: float) -> float:
     )
     b = cos(4 * pi * x) + cos(4 * pi * y) + cos(4 * pi * z)
 
-    return a - b + height
+    return a - b
 
 
-def schoenFRD(x: float, y: float, z: float, height: float) -> float:
+def schoenFRD(x: float, y: float, z: float) -> float:
     """
     :math:`4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \
            (cos(4 \pi x) cos(4 \pi y) + \
@@ -360,10 +303,10 @@ def schoenFRD(x: float, y: float, z: float, height: float) -> float:
         + cos(4 * pi * y) * cos(4 * pi * z)
         + cos(4 * pi * z) * cos(4 * pi * x)
     )
-    return a - b + height
+    return a - b
 
 
-def fischerKochS(x: float, y: float, z: float, height: float) -> float:
+def fischerKochS(x: float, y: float, z: float) -> float:
     """
     :math:`cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \
            cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \
@@ -373,10 +316,10 @@ def fischerKochS(x: float, y: float, z: float, height: float) -> float:
     b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
     c = sin(2 * pi * x) * cos(2 * pi * y) * cos(4 * pi * z)
 
-    return a + b + c + height
+    return a + b + c
 
 
-def pmy(x: float, y: float, z: float, height: float) -> float:
+def pmy(x: float, y: float, z: float) -> float:
     """
     :math:`2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
            sin(4 \pi x) sin(2 \pi y) + \
@@ -388,13 +331,13 @@ def pmy(x: float, y: float, z: float, height: float) -> float:
     c = sin(2 * pi * x) * sin(4 * pi * z)
     d = sin(4 * pi * y) * sin(2 * pi * z)
 
-    return a + b + c + d + height
+    return a + b + c + d
 
 
-def honeycomb(x: float, y: float, z: float, height: float) -> float:
+def honeycomb(x: float, y: float, z: float) -> float:
     """
     :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0`
     """
     return (
-        sin(2 * pi * x) * cos(2 * pi * y) + sin(2 * pi * y) + cos(2 * pi * z) + height
+        sin(2 * pi * x) * cos(2 * pi * y) + sin(2 * pi * y) + cos(2 * pi * z)
     )
