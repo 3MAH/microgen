@@ -1,4 +1,4 @@
-from microgen import Rve, Tpms, repeatGeometry, tpms, Phase
+from microgen import Tpms, tpms
 import cadquery as cq
 
 shell = (
@@ -6,21 +6,17 @@ shell = (
     .box(3, 3, 3)
     .faces("+Z or -X or +X")
     .shell(0.1)
-    .translate((1.0, 1.0, 1.0))
 )
 shell = shell.val()
 
-rve = Rve(1, 1, 1)
 geometry = Tpms(
-    center=(0.5, 0.5, 0.5),
     surface_function=tpms.gyroid,
     type_part="sheet",
     thickness=0.2,
+    repeat_cell=3,
     path_data="data",
 )
 shape = geometry.generate()
 
-inside = repeatGeometry(Phase(shape=shape), rve, grid=(3, 3, 3))
-
-compound = cq.Compound.makeCompound([shell, inside.shape])
+compound = cq.Compound.makeCompound([shell, shape])
 cq.exporters.export(compound, "tpms_shell.stl")
