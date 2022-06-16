@@ -119,41 +119,6 @@ class Phase:
         else:
             print("No solids or shape")
             return []
-        
-    def generatePv(self, rve: Rve = None) -> pv.PolyData:
-        """DESCRIPTION
-
-        Parameters
-        ----------
-        rve : TYPE, optional
-            DESCRIPTION
-
-        Returns
-        -------
-        pv.polydata : TYPE
-            DESCRIPTION
-        """
-
-        if self.shape.lower() == "box":
-            pvmesh = self.geometry.createPvBox()
-        elif self.shape.lower() == "cylinder":
-            pvmesh = self.geometry.createPvCylinder()
-        elif self.shape.lower() == "extrudedpolygon":
-            pvmesh = self.geometry.createPvExtrudedpolygon()
-        elif self.shape.lower() == "capsule":
-            pvmesh = self.geometry.createPvCapsule()
-        elif self.shape.lower() == "sphere":
-            pvmesh = self.geometry.createPvSphere()
-        elif self.shape.lower() == "ellipsoid":
-            pvmesh = self.geometry.createPvEllipsoid()
-        elif self.shape.lower() == "tpms":
-            pvmesh = self.geometry.createPvTpms(path_data=self.path_data, rve=rve)
-        elif self.shape.lower() == "polyhedron":
-            pvmesh = self.geometry.createPvPolyhedron()
-        else:
-            raise ValueError(self.shape + " is not recognised")
-
-        return pvmesh
 
     def getFlatSolidList(self) -> list[cq.Solid]:
         if isinstance(self._solids[0], list):  # if solids is list of list
