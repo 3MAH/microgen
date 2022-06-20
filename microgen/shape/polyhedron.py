@@ -25,10 +25,10 @@ class Polyhedron(BasicGeometry):
                 (-1.0, -1.0, 1.0),
             ],
             "faces": [
-                {"vertices": (0, 1, 2)},
-                {"vertices": (0, 3, 1)},
-                {"vertices": (0, 2, 3)},
-                {"vertices": (1, 2, 3)},
+                {"vertices": [0, 1, 2]},
+                {"vertices": [0, 3, 1]},
+                {"vertices": [0, 2, 3]},
+                {"vertices": [1, 2, 3]},
             ],
         },
     ) -> None:

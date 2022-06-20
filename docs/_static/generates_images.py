@@ -8,7 +8,8 @@ def show_example(filename,
                  show_edges=False,
                  screen_name=None,
                  cmap='coolwarm',
-                 rotate=False):
+                 rotate=False,
+                 zoom=None):
     if not os.path.exists(filename):
         print(filename + " not found")
         return
@@ -17,9 +18,11 @@ def show_example(filename,
     plotter = pv.Plotter(off_screen=screenshot)
     if rotate:
         plotter.camera_position = 'zy'
-        plotter.camera.zoom(0.8)
         plotter.camera.position = (-1, 0.5, 0.5)
         plotter.camera.focal_point = (mesh.center[0], mesh.center[1], mesh.center[2])
+
+    if zoom:
+        plotter.camera.zoom(zoom)
 
     plotter.add_mesh(mesh, show_edges=show_edges, color=color, cmap=cmap)
     try:
@@ -62,7 +65,8 @@ show_example(
 )
 show_example(
     filename=example_path + "TPMS/tpmsSphere/tpms_sphere.stl",
-    screenshot=True
+    screenshot=True,
+    # zoom=0.2
 )
 show_example(
     filename=example_path + "TPMS/gyroid/gyroid.stl",
@@ -77,6 +81,7 @@ show_example(
     screenshot=True,
     show_edges=True,
     rotate=True,
+    zoom=0.75
 )
 show_example(
     filename=example_path + "3Doperations/voronoi/Voronoi.vtk",

@@ -13,7 +13,7 @@ from numpy import cos, pi, sin
 from OCP.StlAPI import StlAPI_Reader
 from OCP.TopoDS import TopoDS_Shape
 
-from ..operations import fuseParts, repeatGeometry, rescale
+from ..operations import fuseShapes, repeatGeometry, rescale
 from ..rve import Rve
 from .basicGeometry import BasicGeometry
 
@@ -226,39 +226,37 @@ class Tpms(BasicGeometry):
                 (wp.split(face_cut_tp).split(face_cut_tm).solids().size(), wp.val())
             )
 
-        sheet = [shape for (number, shape) in listShapes if number > 1]
-        skeletal = [shape for (number, shape) in listShapes if number == 1]
-
         if self.type_part == "sheet":
+            sheet = [shape for (number, shape) in listShapes if number > 1]
             to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
-            return_object = fuseParts(to_fuse, True)
+            shape = fuseShapes(to_fuse, True)
         elif self.type_part == "skeletal":
+            skeletal = [shape for (number, shape) in listShapes if number == 1]
             to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
-            return_object = fuseParts(to_fuse, False)
+            shape = fuseShapes(to_fuse, False)
 
         if self.cell_size != (1.0, 1.0, 1.0):
-            return_object = rescale(obj=return_object, scale=self.cell_size)
+            shape = rescale(shape=shape, scale=self.cell_size)
 
         if self.repeat_cell != (1, 1, 1):
-            return_object = repeatGeometry(
-                unit_geom=return_object, rve=Rve(*self.cell_size), grid=self.repeat_cell
+            shape = repeatGeometry(
+                unit_geom=shape,
+                rve=Rve(dim_x=self.cell_size[0],
+                        dim_y=self.cell_size[1],
+                        dim_z=self.cell_size[2],
+                        center=self.center),
+                grid=self.repeat_cell
             )
 
-        return_object.translate(
-            (
-                -0.5
-                + self.center[0]
-                - 0.25 * self.cell_size[0] * (self.repeat_cell[0] - 1),
-                -0.5
-                + self.center[1]
-                - 0.25 * self.cell_size[1] * (self.repeat_cell[1] - 1),
-                -0.5
-                + self.center[2]
-                - 0.25 * self.cell_size[2] * (self.repeat_cell[2] - 1),
-            )
-        )
+        # shape.move(cq.Location(
+        #     cq.Vector(
+        #         self.center[0] - 0.25 * self.cell_size[0] * self.repeat_cell[0],
+        #         self.center[1] - 0.25 * self.cell_size[1] * self.repeat_cell[1],
+        #         self.center[2] - 0.25 * self.cell_size[2] * self.repeat_cell[2],
+        #     )
+        # ))
 
-        return return_object.shape
+        return shape
 
 
 class Generator(pygalmesh.DomainBase):

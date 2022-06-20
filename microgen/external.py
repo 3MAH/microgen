@@ -8,6 +8,7 @@ Functions related to external softwares
 """
 
 import subprocess
+import os
 from typing import Union
 
 import numpy as np
@@ -41,13 +42,7 @@ class Neper:
             + ")'"
         )
         command = command + " -morpho " "gg" " -o " + filename
-
-        try:
-            subprocess.check_output(command.split(" "), stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
-            print(
-                "neper command did not work, check if it is installed or contact a developer"
-            )
+        os.system(command)
 
     @staticmethod
     def generateVoronoiFromTessFile(filename: str) -> list[Polyhedron]:
@@ -131,12 +126,12 @@ class Neper:
                     data = f.readline().split()
                     for id in data:
                         cells["id"].append(int(id))
-            elif tag == "  *modeid":
-                cells["modeid"] = []
-                while len(cells["modeid"]) < cells["number_of_cells"]:
+            elif tag == "  *mode" or tag == "  *modeid":
+                cells["mode"] = []
+                while len(cells["mode"]) < cells["number_of_cells"]:
                     data = f.readline().split()
                     for id in data:
-                        cells["modeid"].append(int(id))
+                        cells["mode"].append(int(id))
             elif tag == "  *seed":
                 cells["seed"] = []
                 for i in range(cells["number_of_cells"]):

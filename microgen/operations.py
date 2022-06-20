@@ -16,7 +16,7 @@ from .rve import Rve
 
 
 def rotateEuler(
-    object: Union[cq.Shape, cq.Workplane],
+    obj: Union[cq.Shape, cq.Workplane],
     center: Union[np.ndarray, tuple[float, float, float]],
     psi: float,
     theta: float,
@@ -25,7 +25,7 @@ def rotateEuler(
     """
     Rotates object according to XZX Euler angle convention
 
-    :param object: Object to rotate
+    :param obj: Object to rotate
     :param center: numpy array (x, y, z)
     :param psi, theta, phi: Euler angles
 
@@ -42,7 +42,7 @@ def rotateEuler(
         ]
     )
 
-    object_r = object.rotate(
+    object_r = obj.rotate(
         cq.Vector(center[0], center[1], center[2]),
         cq.Vector(center[0], center[1], center[2] + 1.0),
         psi,
@@ -60,34 +60,34 @@ def rotateEuler(
     return object_r
 
 
-def rescale(obj: Phase, scale: Union[float, tuple[float, float, float]]) -> Phase:
+def rescale(shape: cq.Shape, scale: Union[float, tuple[float, float, float]]) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
-    :param obj: Phase
+    :param shape: Shape
     :param scale: float or list of scale factor in each direction
 
-    :return shape: rescaled Phase
+    :return shape: rescaled Shape
     """
     if isinstance(scale, float):
         scale = (scale, scale, scale)
 
-    center = obj.centerOfMass
+    center = shape.Center()
 
     # move the shape at (0, 0, 0) to rescale it
-    shape = obj.shape.move(cq.Location(cq.Vector(-center[0], -center[1], -center[2])))
+    shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
 
     # then move it back to its center with transform Matrix
     transform_mat = cq.Matrix(
         [
-            [scale[0], 0, 0, center[0]],
-            [0, scale[1], 0, center[1]],
-            [0, 0, scale[2], center[2]],
+            [scale[0], 0, 0, center.x],
+            [0, scale[1], 0, center.y],
+            [0, 0, scale[2], center.z],
         ]
     )
     shape = shape.transformGeometry(transform_mat)
 
-    return Phase(shape=shape)
+    return shape
 
 
 def removeEmptyLines(filename: str) -> None:
@@ -107,18 +107,15 @@ def removeEmptyLines(filename: str) -> None:
         filehandle.writelines(lines)
 
 
-def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> Phase:
+def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
     """
     Fuse all shapes in cqShapeList
 
     :param cqShapeList: list of shapes to fuse
     :param retain_edges: retain intersecting edges
 
-    :return cq.Shape(fixed): fused object
-    :return occ_solids_list: list of list of solids
+    :return fused object
     """
-
-    occ_solids_list = [s.Solids() for s in cqShapeList]
 
     occ_Solids = cqShapeList[0].wrapped
     for i in range(1, len(cqShapeList)):
@@ -126,13 +123,12 @@ def fuseParts(cqShapeList: list[cq.Shape], retain_edges: bool) -> Phase:
         occ_Solids = fuse.Shape()
 
     if retain_edges:
-        phase = Phase(shape=cq.Shape(occ_Solids), solids=occ_solids_list)
-        return phase
+        return cq.Shape(occ_Solids)
     else:
         upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
         upgrader.Build()
         shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
-        return Phase(shape=cq.Shape(shape), solids=[[cq.Solid(shape)]])
+        return cq.Shape(shape)
 
 
 def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
@@ -170,38 +166,53 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase
     return Phase(shape=resultCut)
 
 
-def cutParts(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[Phase]:
+def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq.Shape]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param cqShapeList: list of CQ Shape to cut
     :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
 
-    :return phase_cut: list of phases
+    :return cutted_shapes: list of CQ Shape
     """
-    phase_cut = []  # type: list[Phase]
+    cutted_shapes = []  # type: list[cq.Shape]
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
         cqShapeList_inv = cqShapeList
 
-    cut_obj = cqShapeList_inv[0].copy()
-    phase_cut.append(Phase(shape=cut_obj))
+    cut_shape = cqShapeList_inv[0].copy()
+    cutted_shapes.append(cut_shape)
 
     for shape in cqShapeList_inv[1::]:
         copy = shape.copy()
-        cut = BRepAlgoAPI_Cut(copy.wrapped, cut_obj.wrapped)
-        phase_cut.append(Phase(shape=cq.Shape(cut.Shape())))
+        cut = BRepAlgoAPI_Cut(copy.wrapped, cut_shape.wrapped)
+        cutted_shapes.append(cq.Shape(cut.Shape()))
 
-        fuse = BRepAlgoAPI_Fuse(cut_obj.wrapped, shape.wrapped)
+        fuse = BRepAlgoAPI_Fuse(cut_shape.wrapped, shape.wrapped)
         fused = fuse.Shape()
         upgrader = ShapeUpgrade_UnifySameDomain(fused, True, True, True)
         upgrader.Build()
-        cut_obj = cq.Shape(upgrader.Shape())
+        cut_shape = cq.Shape(upgrader.Shape())
 
-    phase_cut.reverse()
+    cutted_shapes.reverse()
 
-    return phase_cut
+    return cutted_shapes
+
+
+def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
+    """
+    Cuts list of shapes in the given order (or reverse) and fuse them.
+
+    :param phaseList: list of phases to cut
+    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
+
+    :return list of phases
+    """
+    shapeList = [phase.shape for phase in phaseList]
+    cutted_shapes = cutShapes(shapeList, reverseOrder)
+
+    return [Phase(shape=shape) for shape in cutted_shapes]
 
 
 def rasterShapeList(
@@ -224,9 +235,9 @@ def rasterShapeList(
 
     for cqshape in cqShapeList:
         wk_plane = cq.Workplane().add(cqshape.Solids())
-        xgrid = np.linspace(0.0, rve.dx, num=grid[0])
-        ygrid = np.linspace(0.0, rve.dy, num=grid[1])
-        zgrid = np.linspace(0.0, rve.dz, num=grid[2])
+        xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
+        ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
+        zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
         np.delete(xgrid, 0)
         np.delete(ygrid, 0)
         np.delete(zgrid, 0)
@@ -257,16 +268,17 @@ def rasterPhase(
     :param phase: phase to raster
     :param rve: RVE divided by the given grid
     :param grid: number of divisions in each direction [x, y, z]
+    :param phasePerRaster: if True, returns list of phases
 
-    :return: Phase
+    :return: Phase or list of Phases
     """
     solidList = []  # type: list[cq.Solid]
 
     for solid in phase.solids:
         wk_plane = cq.Workplane().add(solid)
-        xgrid = np.linspace(0.0, rve.dx, num=grid[0])
-        ygrid = np.linspace(0.0, rve.dy, num=grid[1])
-        zgrid = np.linspace(0.0, rve.dz, num=grid[2])
+        xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
+        ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
+        zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
         np.delete(xgrid, 0)
         np.delete(ygrid, 0)
         np.delete(zgrid, 0)
@@ -289,9 +301,9 @@ def rasterPhase(
         ]  # type: list[list[cq.Solid]]
         for solid in solidList:
             center = solid.Center()
-            i = int(round(center.x / (rve.dx / grid[0])))
-            j = int(round(center.y / (rve.dy / grid[1])))
-            k = int(round(center.z / (rve.dz / grid[2])))
+            i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))
+            j = int(round((center.y - rve.y_min) / (rve.dy / grid[1])))
+            k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
             ind = i + grid[0] * j + grid[0] * grid[1] * k
             solids_phases[ind].append(solid)
         return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
@@ -299,7 +311,7 @@ def rasterPhase(
         return Phase(solids=solidList)
 
 
-def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
+def repeatGeometry(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
     """
     Repeats unit geometry in each direction according to the given grid
 
@@ -307,18 +319,23 @@ def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Ph
     :param rve: RVE of the geometry to repeat
     :param grid: list of number of geometry repetitions in each direction
 
-    :return CQ_Compound: cq compound of the repeated geometry
+    :return: cq shape of the repeated geometry
     """
+
+    center = unit_geom.Center()
 
     xyz_repeat = cq.Assembly()
     for i_x in range(grid[0]):
         for i_y in range(grid[1]):
             for i_z in range(grid[2]):
                 xyz_repeat.add(
-                    unit_geom.shape,
+                    unit_geom,
                     loc=cq.Location(
-                        cq.Vector(i_x * rve.dim_x, i_y * rve.dim_y, i_z * rve.dim_z)
+                        cq.Vector(center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                                  center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                                  center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z))
                     ),
                 )
     compound = xyz_repeat.toCompound()
-    return Phase(shape=cq.Shape(compound.wrapped))
+    shape = cq.Shape(compound.wrapped)
+    return shape

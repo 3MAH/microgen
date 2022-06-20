@@ -6,7 +6,7 @@ import warnings
 
 import cadquery as cq
 
-from .operations import fuseParts
+from .operations import fuseShapes
 from .phase import Phase
 from .rve import Rve
 
@@ -35,12 +35,12 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         "z+": (0, 0, 1),
     }
     basePnt = {
-        "x-": (0, 0, 0),
-        "x+": (rve.dx, 0, 0),
-        "y-": (0, 0, 0),
-        "y+": (0, rve.dy, 0),
-        "z-": (0, 0, 0),
-        "z+": (0, 0, rve.dz),
+        "x-": (rve.x_min, 0, 0),
+        "x+": (rve.x_max, 0, 0),
+        "y-": (0, rve.y_min, 0),
+        "y+": (0, rve.y_max, 0),
+        "z-": (0, 0, rve.z_min),
+        "z+": (0, 0, rve.z_max),
     }
 
     face_dir = {"x-": ">X", "x+": "<X", "y-": ">Y", "y+": "<Y", "z-": ">Z", "z+": "<Z"}
@@ -105,13 +105,13 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         periodic_object.append(
             partitions[f_0]
             .solids(face_dir[f_0])  # add the part of the
-            .intersect(rve.Box)  # object included in the rve
+            .intersect(rve.box)  # object included in the rve
         )
         periodic_object.append(
             partitions[f_0]
             .solids(inverse_face_dir[f_0])  # translate the outside part of
             .translate(translate[f_0])  # the object in the rve and add
-            .intersect(rve.Box)  # it to the final object
+            .intersect(rve.box)  # it to the final object
         )
 
     elif len(intersected_faces) == 2:  # two faces intersected (edge)
@@ -123,11 +123,11 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
             .add(partitions[f_0].solids(face_dir[f_0]))
             .split(cq.Workplane().add(planes[f_1]))
         )
-        periodic_object.append(part.solids(face_dir[f_1]).intersect(rve.Box))
+        periodic_object.append(part.solids(face_dir[f_1]).intersect(rve.box))
         periodic_object.append(
             part.solids(inverse_face_dir[f_1])
             .translate(translate[f_1])
-            .intersect(rve.Box)
+            .intersect(rve.box)
         )
 
         part = (
@@ -136,7 +136,7 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
             .split(cq.Workplane().add(planes[f_1]))
         )
         periodic_object.append(
-            part.solids(face_dir[f_1]).translate(translate[f_0]).intersect(rve.Box)
+            part.solids(face_dir[f_1]).translate(translate[f_0]).intersect(rve.box)
         )
         tslt = (
             translate[f_0][0] + translate[f_1][0],
@@ -144,7 +144,7 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
             translate[f_0][2] + translate[f_1][2],
         )
         periodic_object.append(
-            part.solids(inverse_face_dir[f_1]).translate(tslt).intersect(rve.Box)
+            part.solids(inverse_face_dir[f_1]).translate(tslt).intersect(rve.box)
         )
 
     elif len(intersected_faces) == 3:  # three faces intersected (corner)
@@ -158,11 +158,11 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
             .split(cq.Workplane().add(planes[f_1]))
             .solids(face_dir[f_1])
         )
-        periodic_object.append(new_part.solids(face_dir[f_2]).intersect(rve.Box))
+        periodic_object.append(new_part.solids(face_dir[f_2]).intersect(rve.box))
         periodic_object.append(
             new_part.solids(inverse_face_dir[f_2])
             .translate(translate[f_2])
-            .intersect(rve.Box)
+            .intersect(rve.box)
         )
 
         new_part = (
@@ -172,12 +172,12 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
             .solids(inverse_face_dir[f_1])
         )
         periodic_object.append(
-            new_part.solids(face_dir[f_1]).translate(translate[f_1]).intersect(rve.Box)
+            new_part.solids(face_dir[f_1]).translate(translate[f_1]).intersect(rve.box)
         )
         periodic_object.append(
             new_part.solids(inverse_face_dir[f_1])
             .translate((0, translate[f_1][1], translate[f_2][2]))
-            .intersect(rve.Box)
+            .intersect(rve.box)
         )
 
         new_part = (
@@ -187,12 +187,12 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
             .solids(face_dir[f_1])
         )
         periodic_object.append(
-            new_part.solids(face_dir[f_2]).translate(translate[f_0]).intersect(rve.Box)
+            new_part.solids(face_dir[f_2]).translate(translate[f_0]).intersect(rve.box)
         )
         periodic_object.append(
             new_part.solids(inverse_face_dir[f_2])
             .translate((translate[f_0][0], 0, translate[f_2][2]))
-            .intersect(rve.Box)
+            .intersect(rve.box)
         )
 
         new_part = (
@@ -204,17 +204,17 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         periodic_object.append(
             new_part.solids(face_dir[f_2])
             .translate((translate[f_0][0], translate[f_1][1], 0))
-            .intersect(rve.Box)
+            .intersect(rve.box)
         )
         periodic_object.append(
             new_part.solids(inverse_face_dir[f_2])
             .translate((translate[f_0][0], translate[f_1][1], translate[f_2][2]))
-            .intersect(rve.Box)
+            .intersect(rve.box)
         )
 
     listSolids = [wp.val().Solids() for wp in periodic_object]
     flat_list = [solid.copy() for solids in listSolids for solid in solids]
     to_fuse = [cq.Shape(solid.wrapped) for solid in flat_list]
-    phase = fuseParts(cqShapeList=to_fuse, retain_edges=False)
+    shape = fuseShapes(cqShapeList=to_fuse, retain_edges=False)
 
-    return phase
+    return Phase(shape=shape)

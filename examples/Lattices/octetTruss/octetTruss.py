@@ -6,7 +6,7 @@ from microgen import (
     Rve,
     Cylinder,
     periodic,
-    cutParts,
+    cutPhases,
     meshPeriodic,
     Phase,
 )
@@ -57,7 +57,7 @@ radius = DATA[9]
 
 # sections = read_sections(path_data,section_file)
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1)
+rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
 listPhases = []
 listPeriodicPhases = []
 n = len(xc)
@@ -74,9 +74,11 @@ for i in range(0, n):
 for phase_elem in listPhases:
     periodicPhase = periodic(phase=phase_elem, rve=rve)
     listPeriodicPhases.append(periodicPhase)
+tmp = cq.Compound.makeCompound([phase.shape for phase in listPeriodicPhases])
+cq.exporters.export(tmp, "tmp.stl")
 
-phases_cut = cutParts(
-    cqShapeList=[phase.shape for phase in listPeriodicPhases], reverseOrder=False
+phases_cut = cutPhases(
+    phaseList=listPeriodicPhases, reverseOrder=False
 )
 compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 

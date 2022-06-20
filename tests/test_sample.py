@@ -2,11 +2,13 @@ import microgen
 
 
 def test_misc():
-    microgen.parseNeper("examples/3Doperations/voronoi/test1")
+    microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
+    microgen.parseNeper("tests/data/neper")
+    microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
     microgen.removeEmptyLines("fake_file.txt")
 
-def test_operations():
 
+def test_operations():
     elem = microgen.shape.Box(center=(0.5, 0.5, 0.5), dim_x=1, dim_y=1, dim_z=1)
     shape1 = elem.generate()
     phase1 = microgen.Phase(shape=shape1)
@@ -18,14 +20,8 @@ def test_operations():
 
     microgen.cutPhasesByShape(phaseList=[phase1], cut_obj=shape2)
 
-    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1)
-    microgen.repeatGeometry(phase1, rve, grid=[2, 2, 2])
-
-    #  EXTERNAL
-    #  runNeper
-
-    #  MATERIAL
-    #  readSections
+    rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
+    microgen.repeatGeometry(shape1, rve, grid=[2, 2, 2])
 
 
 if __name__ == "__main__":

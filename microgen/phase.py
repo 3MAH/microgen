@@ -9,10 +9,13 @@ from OCP.GProp import GProp_GProps
 
 from typing import Union
 
+from .rve import Rve
+
 
 class Phase:
     """
         Phase class to manage list of solids belonging to the same phase
+        properties: centerOfMass, inertiaMatrix, shape, solids
 
     :param shape: Shape object
     :param solids: list of cq.Solid or list of list
@@ -56,6 +59,8 @@ class Phase:
             self._computeCenterOfMass()
             return self._centerOfMass
 
+    centerOfMass = property(getCenterOfMass)
+
     def _computeCenterOfMass(self):
         """
         Calculates the center of 'mass' of an object.
@@ -76,6 +81,8 @@ class Phase:
         else:
             self._computeInertiaMatrix()
             return self._inertiaMatrix
+
+    inertiaMatrix = property(getInertiaMatrix)
 
     def _computeInertiaMatrix(self):
         """
@@ -124,5 +131,76 @@ class Phase:
             self._shape.move(cq.Location(cq.Vector(vec[0], vec[1], vec[2])))
         self._computeCenterOfMass()
 
-    centerOfMass = property(getCenterOfMass)
-    inertiaMatrix = property(getInertiaMatrix)
+    def rescale(self, scale: Union[float, tuple[float, float, float]]) -> None:
+        """
+        Rescale phase according to scale parameters [dim_x, dim_y, dim_z]
+
+        :param scale: float or list of scale factor in each direction
+        """
+        if isinstance(scale, float):
+            scale = (scale, scale, scale)
+
+        center = self._shape.Center()
+
+        # move the shape at (0, 0, 0) to rescale it
+        self._shape.move(cq.Location(cq.Vector(-center[0], -center[1], -center[2])))
+
+        # then move it back to its center with transform Matrix
+        transform_mat = cq.Matrix(
+            [
+                [scale[0], 0, 0, center[0]],
+                [0, scale[1], 0, center[1]],
+                [0, 0, scale[2], center[2]],
+            ]
+        )
+        self._shape = self._shape.transformGeometry(transform_mat)
+
+    def rasterize(self, rve: Rve, grid: list[int], phasePerRaster: bool = True) -> Union[None, list['Phase']]:
+        """
+        Rasters solids from phase according to the rve divided by the given grid
+
+        :param rve: RVE divided by the given grid
+        :param grid: number of divisions in each direction [x, y, z]
+        :param phasePerRaster: if True, returns list of phases
+
+        :return: list of Phases if required
+        """
+        solidList = []  # type: list[cq.Solid]
+
+        for solid in self.solids:
+            wk_plane = cq.Workplane().add(solid)
+            xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
+            ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
+            zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
+            np.delete(xgrid, 0)
+            np.delete(ygrid, 0)
+            np.delete(zgrid, 0)
+            for i in xgrid:
+                Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
+                wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
+            for j in ygrid:
+                Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
+                wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
+            for k in zgrid:
+                Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
+                wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
+
+            for subsolid in wk_plane.val().Solids():
+                solidList.append(subsolid)
+
+        if not phasePerRaster:
+            self._solids = solidList
+            compound = cq.Compound.makeCompound(self._solids)
+            self._shape = cq.Shape(compound.wrapped)
+        else:
+            solids_phases = [
+                [] for _ in range(grid[0] * grid[1] * grid[2])
+            ]  # type: list[list[cq.Solid]]
+            for solid in solidList:
+                center = solid.Center()
+                i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))
+                j = int(round((center.y - rve.y_min) / (rve.dy / grid[1])))
+                k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
+                ind = i + grid[0] * j + grid[0] * grid[1] * k
+                solids_phases[ind].append(solid)
+            return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]

@@ -37,11 +37,7 @@ def test_octettruss():
         ndmin=1,
     )
 
-    a = 1.0
-    b = 1.0
-    c = 1.0
-
-    revel = microgen.Rve(a, b, c)
+    revel = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
     listPhases = []  # type: list[microgen.Phase]
     listPeriodicPhases = []  # type: list[microgen.Phase]
     n = len(xc)
@@ -60,9 +56,10 @@ def test_octettruss():
         periodicPhase = microgen.periodic(phase=phase_elem, rve=revel)
         listPeriodicPhases.append(periodicPhase)
 
-    cqShapeList = [phase.shape for phase in listPeriodicPhases]
-    phases_cut = microgen.cutParts(cqShapeList=cqShapeList, reverseOrder=True)
-    phases_cut = microgen.cutParts(cqShapeList=cqShapeList, reverseOrder=False)
+    print([phase.centerOfMass for phase in listPeriodicPhases])
+
+    phases_cut = microgen.cutPhases(phaseList=listPeriodicPhases, reverseOrder=True)
+    phases_cut = microgen.cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
     compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 
     os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet

@@ -6,11 +6,9 @@ from microgen import (
     Rve,
     BasicGeometry,
     periodic,
-    cutParts,
     mesh,
     meshPeriodic,
     rasterShapeList,
-    fuseParts,
 )
 import progressbar
 

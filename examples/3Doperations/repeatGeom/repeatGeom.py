@@ -9,6 +9,6 @@ unit_geom = cq.importers.importStep(
 
 unit_geom = cq.Shape(unit_geom.val().wrapped)
 
-phase = repeatGeometry(Phase(shape=unit_geom), rve, grid=(5, 5, 5))
+shape = repeatGeometry(unit_geom, rve, grid=(5, 5, 5))
 
-cq.exporters.export(phase.shape, "repeated_geometry.stl")
+cq.exporters.export(shape, "repeated_geometry.stl")

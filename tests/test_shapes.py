@@ -55,8 +55,8 @@ def test_shapes():
     )
     elem.generate()
 
-    # elem = microgen.shape.polyhedron.Polyhedron()  # default shape = tetrahedron
-    # elem.generate()
+    elem = microgen.shape.polyhedron.Polyhedron()  # default shape = tetrahedron
+    elem.generate()
     dic = microgen.shape.polyhedron.read_obj(
         "examples/BasicShapes/platon/tetrahedron.obj"
     )
@@ -65,17 +65,16 @@ def test_shapes():
     with pytest.raises(ValueError):
         microgen.shape.newGeometry(shape="fake", param_geom={"fake": 0})
 
-    raster = microgen.operations.rasterShapeList(
-        cqShapeList=[ellipsoid], rve=rve, grid=[5, 5, 5]
+    raster = microgen.operations.rasterPhase(
+        phase=phase, rve=rve, grid=[5, 5, 5]
     )
 
-    compound = cq.Compound.makeCompound(raster[0])
+    compound = cq.Compound.makeCompound([solid for phase in raster for solid in phase.solids])
     cq.exporters.export(compound, "tests/data/compound.step")
 
-    listPhases = [microgen.Phase(solids=solidList) for solidList in raster[1]]
     microgen.mesh(
         mesh_file="tests/data/compound.step",
-        listPhases=listPhases,
+        listPhases=raster,
         size=0.03,
         order=1,
         output_file="tests/data/compound.msh",
@@ -85,7 +84,6 @@ def test_shapes():
 def test_tpms():
     elem = microgen.shape.newGeometry(
         shape="tpms",
-        center=(0.5, 0.5, 0.5),
         param_geom={
             "surface_function": microgen.shape.tpms.gyroid,
             "type_part": "skeletal",
@@ -106,18 +104,7 @@ def test_tpms():
         path_data="tests/data/tpms2",
     )
     elem.generate()
-
-    elem = microgen.shape.tpms.Tpms(
-        center=(0.5, 0.5, 0.5),
-        surface_function=microgen.shape.tpms.schwarzD,
-        type_part="sheet",
-        thickness=0.3,
-        cell_size=2,
-        repeat_cell=(2, 1, 1),
-        path_data="tests/data/tpms2",
-    )
     elem.generateSurface()
-    elem.generate()
 
     with pytest.raises(ValueError):
         microgen.shape.tpms.Tpms(

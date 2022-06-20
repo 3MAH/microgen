@@ -1,22 +1,26 @@
 from microgen import Tpms, Sphere, tpms
 import cadquery as cq
 
+# unit_geom = Tpms(
+#     surface_function=tpms.gyroid,
+#     type_part="sheet",
+#     thickness=0.2,
+#     path_data="data",
+# )
+# cq.exporters.export(unit_geom.generate(), "unit.stl")
+
 geometry = Tpms(
     surface_function=tpms.gyroid,
     type_part="sheet",
     thickness=0.2,
-    repeat_cell=3,
+    cell_size=1/2,
+    repeat_cell=2,
     path_data="data",
 )
-shape = geometry.generate(sizeMesh=0.05, minFacetAngle=20., maxRadius=0.05)
-cq.exporters.export(shape, "gyroid.stl")
-print('gyroid')
+shape = geometry.generate()
 
-sphere = Sphere(radius=1.2)
+sphere = Sphere()
 sphere_shape = sphere.generate()
-cq.exporters.export(sphere_shape, "sphere.stl")
-print('sphere')
 
 result = shape.intersect(sphere_shape)
 cq.exporters.export(result, "tpms_sphere.stl")
-print('intersect')
