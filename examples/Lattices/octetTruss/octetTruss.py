@@ -89,6 +89,5 @@ meshPeriodic(
     rve=rve,
     listPhases=phases_cut,
     size=0.03,
-    order=1,
     output_file="octettruss.vtk",
 )

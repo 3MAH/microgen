@@ -13,7 +13,7 @@ def mesh(
     mesh_file: str,
     listPhases: list[Phase],
     size: float,
-    order: int = 1,
+    order: int = 0,
     output_file: str = "Mesh.msh",
     mshFileVersion: int = 4,
 ) -> None:
@@ -66,7 +66,8 @@ def mesh(
     p = gmsh.model.getEntities()
 
     gmsh.model.mesh.setSize(dimTags=p, size=size)
-    gmsh.model.mesh.setOrder(order=order)
+    if order != 0:
+        gmsh.model.mesh.setOrder(order=order)
     gmsh.model.mesh.generate(dim=3)
     gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
     gmsh.write(fileName=output_file)
@@ -78,7 +79,7 @@ def meshPeriodic(
     rve: Rve,
     listPhases: list[Phase],
     size: float,
-    order: int = 1,
+    order: int = 0,
     output_file: str = "MeshPeriodic.msh",
     mshFileVersion: int = 4,
 ) -> None:
@@ -262,7 +263,8 @@ def meshPeriodic(
     p = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(p, size)
     gmsh.model.mesh.generate(3)
-    gmsh.model.mesh.setOrder(order)
+    if order != 0:
+        gmsh.model.mesh.setOrder(order)
     gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
     gmsh.write(output_file)
     gmsh.finalize()
