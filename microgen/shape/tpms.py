@@ -102,7 +102,7 @@ class Tpms(BasicGeometry):
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
-    ) -> cq.Shape:
+    ) -> cq.Shell:
         """
         Create TPMS surface for the corresponding isovalue
 
@@ -146,7 +146,7 @@ class Tpms(BasicGeometry):
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
-    ) -> cq.Shape:
+    ) -> list[cq.Shell]:
         """
         Create TPMS surface for the corresponding isovalue
         
@@ -189,6 +189,25 @@ class Tpms(BasicGeometry):
             shells.append(cq.Shell.makeShell(faces))
             
         return shells
+
+    def generateSurface(
+        self,
+        isovalue: float = 0.,
+        nSample: int = 20,
+        smoothing: int = 100,
+        verbose: bool = False,
+    ) -> cq.Shape:
+
+        shell = self.createSurface(isovalue=isovalue, nSample=nSample, smoothing=smoothing)
+        return_object = cq.Shape(shell)
+        if self.cell_size != (1.0, 1.0, 1.0):
+            return_object = rescale(obj=return_object, scale=self.cell_size)
+
+        if self.repeat_cell != (1, 1, 1):
+            return_object = repeatGeometry(
+                unit_geom=return_object, rve=Rve(*self.cell_size), grid=self.repeat_cell
+            )
+        return return_object
 
     def generate(
         self,
