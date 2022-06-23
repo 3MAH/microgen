@@ -7,11 +7,28 @@ import math
 import os
 from typing import Callable, Union
 
+import numpy as np
 import cadquery as cq
-import pygalmesh
+import pyvista as pv
 from numpy import cos, pi, sin
 from OCP.StlAPI import StlAPI_Reader
 from OCP.TopoDS import TopoDS_Shape
+
+from OCP.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeVertex,
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeFace,
+    BRepBuilderAPI_MakePolygon,
+    BRepBuilderAPI_MakeWire,
+    BRepBuilderAPI_Sewing,
+    BRepBuilderAPI_Copy,
+    BRepBuilderAPI_GTransform,
+    BRepBuilderAPI_Transform,
+    BRepBuilderAPI_Transformed,
+    BRepBuilderAPI_RightCorner,
+    BRepBuilderAPI_RoundCorner,
+    BRepBuilderAPI_MakeSolid,
+)
 
 from ..operations import fuseParts, repeatGeometry, rescale
 from ..rve import Rve
@@ -41,7 +58,7 @@ class Tpms(BasicGeometry):
         surface_function: Callable[[float, float, float, float], float] = None,
         type_part: str = "sheet",
         thickness: float = 0,
-        cell_size: Union[float, tuple[float, float, float], None] = None,
+        cell_size: Union[float, tuple[float, float, float], None] = 1,
         repeat_cell: Union[int, tuple[int, int, int], None] = None,
         path_data: str = ".",
     ) -> None:
@@ -81,7 +98,7 @@ class Tpms(BasicGeometry):
         
     def createSurface(
         self,
-        isovalue: float = 0,
+        isovalue: [float] = 0,
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
@@ -101,8 +118,9 @@ class Tpms(BasicGeometry):
         )
         x, y, z = grid.points.T
         
-        surface = Generator(surface_function=self.surface_function)
-        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isolvalue,1))
+        surface_function=self.surface_function
+        surface = surface_function(x,y,z)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
         mesh = mesh.smooth(n_iter=smoothing)
         list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
         list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
@@ -124,8 +142,7 @@ class Tpms(BasicGeometry):
 
     def createSurfaces(
         self,
-        number_surfaces : int = 1,
-        isovalues: tuple[float, float] = (0,0),
+        isovalues: list[float] = [0],
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
@@ -148,30 +165,33 @@ class Tpms(BasicGeometry):
         
         surface_function=self.surface_function
         surface = surface_function(x,y,z)
-        mesh = grid.contour(number_surfaces, scalars=surface, method='flying_edges', rng=(isolvalue,1))
-        mesh = mesh.smooth(n_iter=smoothing)
-        list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
-        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
 
-        faces = []
-        for ixs in list_of_Triangles:
-            lines = []
-            for v1, v2 in zip(ixs, ixs[1:]):
-                vertice_coords1 = mesh.points[v1]
-                vertice_coords2 = mesh.points[v2]
-                lines.append(
-                    cq.Edge.makeLine(
-                        cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
+        shells = []
+        for isovalue in isovalues:
+            mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+            mesh = mesh.smooth(n_iter=smoothing)
+            list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
+            list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
+
+            faces = []
+            for ixs in list_of_Triangles:
+                lines = []
+                for v1, v2 in zip(ixs, ixs[1:]):
+                    vertice_coords1 = mesh.points[v1]
+                    vertice_coords2 = mesh.points[v2]
+                    lines.append(
+                        cq.Edge.makeLine(
+                            cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
+                        )
                     )
-                )
-            wire = cq.Wire.assembleEdges(lines)
-            faces.append(cq.Face.makeFromWires(wire))
-        shell = cq.Shell.makeShell(faces)
-        return shell.Shells()
+                wire = cq.Wire.assembleEdges(lines)
+                faces.append(cq.Face.makeFromWires(wire))
+            shells.append(cq.Shell.makeShell(faces))
+            
+        return shells
 
     def generate(
         self,
-        isovalues: tuple[float, float] = (-0.2,0.2),
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
@@ -185,7 +205,8 @@ class Tpms(BasicGeometry):
         :param smoothing: smoothing loop iterations
         """
 
-        shells = createSurfaces(number_surfaces=4, isovalues=isovalues, nSample=nSample, smoothing=smoothing)
+        isovalues= [-self.thickness,-self.thickness/3., self.thickness/3., self.thickness]
+        shells = self.createSurfaces(isovalues=isovalues, nSample=nSample, smoothing=smoothing)
 
         face_cut_tp = shells[2]
         face_cut_tm = shells[1]
@@ -227,6 +248,7 @@ class Tpms(BasicGeometry):
             )
 
         return return_object.shape
+
 
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
