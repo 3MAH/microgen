@@ -324,3 +324,27 @@ def repeatGeometry(unit_geom: Phase, rve: Rve, grid: tuple[int, int, int]) -> Ph
                 )
     compound = xyz_repeat.toCompound()
     return Phase(shape=cq.Shape(compound.wrapped))
+    
+def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> Phase:
+    """
+    Repeats unit geometry in each direction according to the given grid
+
+    :param unit_geom: Geometry to repeat
+    :param rve: RVE of the geometry to repeat
+    :param grid: list of number of geometry repetitions in each direction
+
+    :return CQ_Compound: cq compound of the repeated geometry
+    """
+
+    xyz_repeat = cq.Assembly()
+    for i_x in range(grid[0]):
+        for i_y in range(grid[1]):
+            for i_z in range(grid[2]):
+                xyz_repeat.add(
+                    unit_geom,
+                    loc=cq.Location(
+                        cq.Vector(i_x * rve.dim_x, i_y * rve.dim_y, i_z * rve.dim_z)
+                    ),
+                )
+    compound = xyz_repeat.toCompound()
+    return cq.Shape(compound.wrapped)
