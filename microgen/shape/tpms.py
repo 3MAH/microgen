@@ -30,7 +30,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeSolid,
 )
 
-from ..operations import fuseParts, repeatGeometry, rescale
+from ..operations import fuseParts, rescale, repeatGeometry, repeatShape
 from ..rve import Rve
 from .basicGeometry import BasicGeometry
 
@@ -98,7 +98,7 @@ class Tpms(BasicGeometry):
         
     def createSurface(
         self,
-        isovalue: [float] = 0,
+        isovalue: float = 0,
         nSample: int = 20,
         smoothing: int = 100,
         verbose: bool = False,
@@ -138,6 +138,7 @@ class Tpms(BasicGeometry):
                 )
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
+
         return cq.Shell.makeShell(faces)
 
     def createSurfaces(
@@ -199,12 +200,19 @@ class Tpms(BasicGeometry):
     ) -> cq.Shape:
 
         shell = self.createSurface(isovalue=isovalue, nSample=nSample, smoothing=smoothing)
-        return_object = cq.Shape(shell)
+        return_object = cq.Shape(shell.wrapped)
         if self.cell_size != (1.0, 1.0, 1.0):
-            return_object = rescale(obj=return_object, scale=self.cell_size)
-
+            transform_mat = cq.Matrix(
+                [
+                    [self.cell_size[0], 0, 0, 0],
+                    [0, self.cell_size[1], 0, 0],
+                    [0, 0, self.cell_size[2], 0],
+                ]
+            )
+            return_object = return_object.transformGeometry(transform_mat)
+        
         if self.repeat_cell != (1, 1, 1):
-            return_object = repeatGeometry(
+            return_object = repeatShape(
                 unit_geom=return_object, rve=Rve(*self.cell_size), grid=self.repeat_cell
             )
         return return_object
