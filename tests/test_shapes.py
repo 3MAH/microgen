@@ -51,7 +51,7 @@ def test_shapes():
         param_geom={"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
     )
     elem = microgen.shape.extrudedPolygon.ExtrudedPolygon(
-        listCorners=[(0, 0), (0, 1), (1, 1), (1, 0)]=0.3
+        listCorners=[(0, 0), (0, 1), (1, 1), (1, 0)], height=0.3
     )
     elem.generate()
 
