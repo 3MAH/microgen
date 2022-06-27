@@ -100,7 +100,7 @@ class Tpms(BasicGeometry):
         verbose: bool = False,
     ) -> cq.Shell:
         """
-        Create TPMS surface for the corresponding isovalue
+        Create TPMS surface for the corresponding isovalue, return a cq.Shell
 
         :param isovalue: height isovalue of the given tpms function
         :param nSample: surface file name
@@ -119,13 +119,16 @@ class Tpms(BasicGeometry):
         mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
         if smoothing > 0:
             mesh = mesh.smooth(n_iter=smoothing)
+        mesh.clean(inplace=True)
+          
         list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
         list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
 
         faces = []
+        
         for ixs in list_of_Triangles:
             lines = []
-            for v1, v2 in zip(ixs, ixs[1:]):
+            for v1, v2 in zip(ixs[:], ixs[1:]):
                 vertice_coords1 = mesh.points[v1]
                 vertice_coords2 = mesh.points[v2]
                 lines.append(
@@ -135,7 +138,7 @@ class Tpms(BasicGeometry):
                 )
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
-
+                
         return cq.Shell.makeShell(faces)
 
     def createSurfaces(
@@ -146,7 +149,7 @@ class Tpms(BasicGeometry):
         verbose: bool = False,
     ) -> list[cq.Shell]:
         """
-        Create TPMS surface for the corresponding isovalue
+        Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
         
         :param numsber_surfaces: number of surfaces
         :param isovalues: height isovalues of the given tpms function
@@ -169,6 +172,7 @@ class Tpms(BasicGeometry):
             mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
             if smoothing > 0:
                 mesh = mesh.smooth(n_iter=smoothing)
+            mesh.clean(inplace=True)
             list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
             list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
 
@@ -189,6 +193,47 @@ class Tpms(BasicGeometry):
             
         return shells
 
+    def generateSurfaceVtk(
+        self,
+        isovalue: float = 0,
+        nSample: int = 20,
+        smoothing: int = 100,
+        verbose: bool = False,
+    ) -> pv.PolyData:
+        """
+        Create TPMS surface for the corresponding isovalue, returns a pv.Polydata
+
+        :param isovalue: height isovalue of the given tpms function
+        :param nSample: surface file name
+        :param smoothing: smoothing loop iterations
+        """
+        x_min, y_min, z_min = -0.5, -0.5, -0.5
+        grid = pv.UniformGrid(
+            dims=(nSample, nSample, nSample),
+            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            origin=(x_min, y_min, z_min),
+        )
+        x, y, z = grid.points.T
+        
+        surface_function=self.surface_function
+        surface = surface_function(x,y,z)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+        if smoothing > 0:
+            mesh = mesh.smooth(n_iter=smoothing)
+        mesh.clean(inplace=True)
+        
+        if self.cell_size != (1.0, 1.0, 1.0):
+            transform_matrix = np.array(
+                [
+                    [self.cell_size[0], 0, 0, 0],
+                    [0, self.cell_size[1], 0, 0],
+                    [0, 0, self.cell_size[2], 0],
+                ]
+            )
+            mesh.transform(transform_matrix, inplace=True)
+        
+        return mesh
+
     def generateSurface(
         self,
         isovalue: float = 0.,
@@ -198,6 +243,7 @@ class Tpms(BasicGeometry):
     ) -> cq.Shape:
 
         shell = self.createSurface(isovalue=isovalue, nSample=nSample, smoothing=smoothing)
+
         return_object = cq.Shape(shell.wrapped)
         if self.cell_size != (1.0, 1.0, 1.0):
             transform_mat = cq.Matrix(
@@ -209,7 +255,7 @@ class Tpms(BasicGeometry):
             )
             return_object = return_object.transformGeometry(transform_mat)
         
-        if self.repeat_cell != (1, 1, 1):
+        if self.repeat_cell is not None:
             return_object = repeatShape(
                 unit_geom=return_object, rve=Rve(*self.cell_size), grid=self.repeat_cell
             )
@@ -287,7 +333,7 @@ def gyroid(x: float, y: float, z: float) -> float:
             + sin(2 * pi * z) * cos(2 * pi * x)
     )
 
-def schwarzP(x: float, y: float, z: float, height: float) -> float:
+def schwarzP(x: float, y: float, z: float) -> float:
     """
     :math:`cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0`
     """

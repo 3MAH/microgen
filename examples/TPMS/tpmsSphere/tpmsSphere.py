@@ -5,8 +5,7 @@ geometry = Tpms(
     surface_function=tpms.gyroid,
     type_part="sheet",
     thickness=0.2,
-    repeat_cell=3,
-    path_data="data",
+    repeat_cell=3
 )
 shape = geometry.generate()
 cq.exporters.export(shape, "gyroid.stl")

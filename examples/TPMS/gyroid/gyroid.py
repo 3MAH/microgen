@@ -4,8 +4,7 @@ import cadquery as cq
 geometry = Tpms(
     surface_function=tpms.gyroid,
     type_part="sheet",
-    thickness=0.2,
-    path_data="data",
+    thickness=0.2
 )
 shape = geometry.generate()
 

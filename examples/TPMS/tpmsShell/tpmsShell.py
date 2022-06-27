@@ -14,9 +14,8 @@ geometry = Tpms(
     type_part="sheet",
     thickness=0.2,
     repeat_cell=3,
-    path_data="data",
 )
-shape = geometry.generate(nSample = 50, smoothing=0)
+shape = geometry.generate(nSample = 30, smoothing=0)
 
 compound = cq.Compound.makeCompound([shell, shape])
 cq.exporters.export(compound, "tpms_shell.stl")

@@ -28,10 +28,8 @@ for surface in surfaces:
         orientation=(90, 90, 90),
         surface_function=surface,
         type_part="sheet",
-        thickness=0.0,
-        path_data="data",
+        thickness=0.0
     )
-    elem.createSurface()
     center = (1.2 * (i_x - 0.5 * (n_col - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0)
     assembly.add(elem.generateSurface(), loc=cq.Location(cq.Vector(center)))
 
