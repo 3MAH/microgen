@@ -23,7 +23,7 @@ def test_operations():
     microgen.cutPhasesByShape(phaseList=[phase1], cut_obj=shape2)
 
     rve = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
-    microgen.repeatGeometry(shape1, rve, grid=[2, 2, 2])
+    microgen.repeatShape(shape1, rve, grid=[2, 2, 2])
 
 
 if __name__ == "__main__":

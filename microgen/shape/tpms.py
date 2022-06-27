@@ -308,7 +308,7 @@ class Tpms(BasicGeometry):
             shape = rescale(shape=shape, scale=self.cell_size)
 
         if self.repeat_cell != (1, 1, 1):
-            shape = repeatGeometry(
+            shape = repeatShape(
                 unit_geom=shape,
                 rve=Rve(dim_x=self.cell_size[0],
                         dim_y=self.cell_size[1],
