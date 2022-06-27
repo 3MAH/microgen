@@ -81,7 +81,6 @@ def newGeometry(
             thickness=param_geom["thickness"],
             cell_size=param_geom["cell_size"],
             repeat_cell=param_geom["repeat_cell"],
-            path_data=param_geom["path_data"],
         )
     elif shape.lower() == "polyhedron":
         return Polyhedron(dic=param_geom["dic"])
