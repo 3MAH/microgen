@@ -273,7 +273,7 @@ class Tpms(BasicGeometry):
         :param smoothing: smoothing loop iterations
         """
 
-        isovalues= [-self.thickness,-self.thickness/3., self.thickness/3., self.thickness]
+        isovalues= [-self.thickness/2.,-self.thickness/6., self.thickness/6., self.thickness/2.]
         shells = self.createSurfaces(isovalues=isovalues, nSample=nSample, smoothing=smoothing)
 
         face_cut_tp = shells[2]
