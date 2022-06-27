@@ -58,7 +58,7 @@ class Tpms(BasicGeometry):
         surface_function: Callable[[float, float, float, float], float] = None,
         type_part: str = "sheet",
         thickness: float = 0,
-        cell_size: Union[float, tuple[float, float, float], None] = 1,
+        cell_size: Union[float, tuple[float, float, float], None] = None,
         repeat_cell: Union[int, tuple[int, int, int], None] = None
     ) -> None:
         """
@@ -82,8 +82,6 @@ class Tpms(BasicGeometry):
 
         if isinstance(cell_size, tuple) or cell_size is None:
             self.cell_size = cell_size
-        elif cell_size is None:
-            self.cell_size = (1, 1, 1)
         else:
             self.cell_size = (cell_size, cell_size, cell_size)
 
@@ -222,7 +220,7 @@ class Tpms(BasicGeometry):
             mesh = mesh.smooth(n_iter=smoothing)
         mesh.clean(inplace=True)
         
-        if self.cell_size != (1.0, 1.0, 1.0):
+        if self.cell_size is not None:
             transform_matrix = np.array(
                 [
                     [self.cell_size[0], 0, 0, 0],
@@ -245,7 +243,7 @@ class Tpms(BasicGeometry):
         shell = self.createSurface(isovalue=isovalue, nSample=nSample, smoothing=smoothing)
 
         return_object = cq.Shape(shell.wrapped)
-        if self.cell_size != (1.0, 1.0, 1.0):
+        if self.cell_size is not None:
             transform_mat = cq.Matrix(
                 [
                     [self.cell_size[0], 0, 0, 0],
@@ -302,10 +300,10 @@ class Tpms(BasicGeometry):
 
         if self.type_part == "sheet":
             to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
-            return_object = fuseParts(to_fuse, True)
+            return_object = fuseShape(to_fuse, True)
         elif self.type_part == "skeletal":
             to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
-            return_object = fuseParts(to_fuse, False)
+            return_object = fuseShapes(to_fuse, False)
 
         if self.cell_size is not None:
             return_object = rescale(
@@ -313,11 +311,11 @@ class Tpms(BasicGeometry):
             )
         if self.repeat_cell is not None:
             rve = Rve(*self.cell_size)
-            return_object = repeatGeometry(
+            return_object = repeatShape(
                 unit_geom=return_object, rve=rve, grid=self.repeat_cell
             )
 
-        return return_object.shape
+        return return_object
 
 
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
