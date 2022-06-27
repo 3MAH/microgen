@@ -59,8 +59,7 @@ class Tpms(BasicGeometry):
         type_part: str = "sheet",
         thickness: float = 0,
         cell_size: Union[float, tuple[float, float, float], None] = 1,
-        repeat_cell: Union[int, tuple[int, int, int], None] = None,
-        path_data: str = ".",
+        repeat_cell: Union[int, tuple[int, int, int], None] = None
     ) -> None:
         """
         :param center: center of the geometry
@@ -70,7 +69,6 @@ class Tpms(BasicGeometry):
         :param thickness: thickness of the tpms
         :param cell_size: By default, the tpms is generated for (1, 1, 1) dimensions but this can be modified by passing 'cell_size' scaling parameter (float or list of float for each dimension)
         :param repeat_cell: By default, the tpms is generated for one unit_cell. 'repeat_cell' parameter allows to repeat the geometry in the three dimensions
-        :param path_data: folder where to store surfaces stl files required to generate the tpms
         """
         super().__init__(shape="TPMS", center=center, orientation=orientation)
 
@@ -93,8 +91,6 @@ class Tpms(BasicGeometry):
             self.repeat_cell = repeat_cell
         else:
             self.repeat_cell = (repeat_cell, repeat_cell, repeat_cell)
-
-        self.path_data = path_data
         
     def createSurface(
         self,
@@ -121,7 +117,8 @@ class Tpms(BasicGeometry):
         surface_function=self.surface_function
         surface = surface_function(x,y,z)
         mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
-        mesh = mesh.smooth(n_iter=smoothing)
+        if smoothing > 0:
+            mesh = mesh.smooth(n_iter=smoothing)
         list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
         list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
 
@@ -170,7 +167,8 @@ class Tpms(BasicGeometry):
         shells = []
         for isovalue in isovalues:
             mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
-            mesh = mesh.smooth(n_iter=smoothing)
+            if smoothing > 0:
+                mesh = mesh.smooth(n_iter=smoothing)
             list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
             list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
 
@@ -225,7 +223,6 @@ class Tpms(BasicGeometry):
     ) -> cq.Shape:
         """
         Creates thick TPMS geometry (sheet or skeletal part) from surface
-        files generated in the directory given by path_data
 
         :param isovalue: height isovalue of the given tpms function
         :param nSample: surface file name
