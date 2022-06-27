@@ -17,6 +17,7 @@ def test_operations():
 
     elem = microgen.shape.Box(center=(0, 0, 0), dim_x=0.5, dim_y=0.5, dim_z=0.5)
     shape2 = elem.generate()
+    microgen.rescale(shape2, 2.)
 
     microgen.cutPhaseByShapeList(phaseToCut=phase1, cqShapeList=[shape2])
 

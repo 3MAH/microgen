@@ -22,6 +22,7 @@ requirements:
     - pytest-cov
     - libtiff<4.4
     - pyvista
+    - meshio
 
 test:
   imports:

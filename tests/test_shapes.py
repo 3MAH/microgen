@@ -18,12 +18,22 @@ def test_shapes():
     phase = microgen.phase.Phase(shape=ellipsoid)
     phase.centerOfMass
     phase.centerOfMass
+    phase.getCenterOfMass(compute=False)
     phase.inertiaMatrix
     phase.inertiaMatrix
+    phase.getInertiaMatrix(compute=False)
     phase.solids
     phase.shape
+    phase.translate((1, 0, 0))
+    phase.translate(np.array([0, 1, 1]))
+    phase.rescale(1.5)
+    phase.repeat(rve, (1, 2, 1))
+    phase.rasterize(rve, [2, 2, 2], phasePerRaster=True)
+    phase.rasterize(rve, [2, 2, 2], phasePerRaster=False)
 
-    microgen.phase.Phase()
+    void_phase = microgen.phase.Phase()
+    void_phase.shape
+    void_phase.solids
 
     elem = microgen.shape.newGeometry(shape="Sphere", param_geom={"radius": 0.15})
     elem = microgen.shape.sphere.Sphere(radius=0.15)
@@ -71,6 +81,10 @@ def test_shapes():
 
     with pytest.raises(ValueError):
         microgen.shape.newGeometry(shape="fake", param_geom={"fake": 0})
+
+    raster = microgen.operations.rasterPhase(
+        phase=phase, rve=rve, grid=[5, 5, 5], phasePerRaster=False
+    )
 
     raster = microgen.operations.rasterPhase(
         phase=phase, rve=rve, grid=[5, 5, 5]

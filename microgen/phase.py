@@ -144,14 +144,14 @@ class Phase:
         center = self._shape.Center()
 
         # move the shape at (0, 0, 0) to rescale it
-        self._shape.move(cq.Location(cq.Vector(-center[0], -center[1], -center[2])))
+        self._shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
 
         # then move it back to its center with transform Matrix
         transform_mat = cq.Matrix(
             [
-                [scale[0], 0, 0, center[0]],
-                [0, scale[1], 0, center[1]],
-                [0, 0, scale[2], center[2]],
+                [scale[0], 0, 0, center.x],
+                [0, scale[1], 0, center.y],
+                [0, 0, scale[2], center.z],
             ]
         )
         self._shape = self._shape.transformGeometry(transform_mat)
@@ -179,7 +179,7 @@ class Phase:
                         ),
                     )
         compound = xyz_repeat.toCompound()
-        self.shape = cq.Shape(compound.wrapped)
+        self._shape = cq.Shape(compound.wrapped)
 
     def rasterize(self, rve: Rve, grid: list[int], phasePerRaster: bool = True) -> Union[None, list['Phase']]:
         """
