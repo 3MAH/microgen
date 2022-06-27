@@ -8,7 +8,7 @@ geometry = Tpms(
     repeat_cell=3,
     path_data="data",
 )
-shape = geometry.generate(sizeMesh=0.05, minFacetAngle=20., maxRadius=0.05)
+shape = geometry.generate()
 cq.exporters.export(shape, "gyroid.stl")
 print('gyroid')
 

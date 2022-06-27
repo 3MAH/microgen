@@ -31,7 +31,7 @@ for surface in surfaces:
         thickness=0.0,
         path_data="data",
     )
-    elem.createSurface(sizeMesh=0.03, minFacetAngle=10.0, maxRadius=0.03)
+    elem.createSurface()
     center = (1.2 * (i_x - 0.5 * (n_col - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0)
     assembly.add(elem.generateSurface(), loc=cq.Location(cq.Vector(center)))
 

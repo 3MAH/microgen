@@ -7,6 +7,6 @@ geometry = Tpms(
     thickness=0.2,
     path_data="data",
 )
-shape = geometry.generate(sizeMesh=0.03, minFacetAngle=20.0, maxRadius=0.03)
+shape = geometry.generate()
 
 cq.exporters.export(shape, "gyroid.stl")
