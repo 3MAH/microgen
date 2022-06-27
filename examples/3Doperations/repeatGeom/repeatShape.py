@@ -1,5 +1,5 @@
 import cadquery as cq
-from microgen import Rve, repeatGeometry, Phase
+from microgen import Rve, repeatShape, Phase
 
 rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
@@ -9,6 +9,6 @@ unit_geom = cq.importers.importStep(
 
 unit_geom = cq.Shape(unit_geom.val().wrapped)
 
-shape = repeatGeometry(unit_geom, rve, grid=(5, 5, 5))
+shape = repeatShape(unit_geom, rve, grid=(5, 5, 5))
 
-cq.exporters.export(shape, "repeated_geometry.stl")
+cq.exporters.export(shape, "repeated_shape.stl")
