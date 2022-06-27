@@ -26,8 +26,8 @@ cd 3Doperations
 cd rasterEllipsoid
 python rasterEllipsoid.py
 cd ..
-cd repeatGeom
-python repeatGeom.py
+cd repeatShape
+python repeatShape.py
 cd ..
 cd voronoi
 python voronoi.py
