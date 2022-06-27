@@ -51,7 +51,7 @@ def test_shapes():
         param_geom={"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
     )
     elem = microgen.shape.extrudedPolygon.ExtrudedPolygon(
-        listCorners=[(0, 0), (0, 1), (1, 1), (1, 0)], height=0.3
+        listCorners=[(0, 0), (0, 1), (1, 1), (1, 0)]=0.3
     )
     elem.generate()
 
@@ -88,9 +88,8 @@ def test_tpms():
             "surface_function": microgen.shape.tpms.gyroid,
             "type_part": "skeletal",
             "thickness": 0.1,
-            "cell_size": None,
+            "cell_size": 1,
             "repeat_cell": 1,
-            "path_data": "tests/data/tpms1",
         },
     )
 
@@ -101,10 +100,19 @@ def test_tpms():
         thickness=0.3,
         cell_size=2,
         repeat_cell=(2, 1, 1),
-        path_data="tests/data/tpms2",
     )
     elem.generate()
-    elem.generateSurface()
+
+    elem = microgen.shape.tpms.Tpms(
+        center=(0.5, 0.5, 0.5),
+        surface_function=microgen.shape.tpms.schwarzD,
+        type_part="sheet",
+        thickness=0.3,
+        cell_size=2,
+        repeat_cell=(2, 1, 1),
+    )
+    elem.generateSurface(isovalue=0.1)
+    elem.generate()
 
     with pytest.raises(ValueError):
         microgen.shape.tpms.Tpms(
@@ -114,29 +122,21 @@ def test_tpms():
             thickness=0.3,
         )
 
-    bounding_sphere_radius = 1.1 * np.sqrt(0.5**2 + 0.5**2 + 0.5**2)
-    generator = microgen.shape.tpms.Generator(
-        height=0.3, surface_function=microgen.shape.tpms.gyroid
-    )
-    assert generator.get_bounding_sphere_squared_radius() == bounding_sphere_radius
-    assert abs(generator.eval([1, 1, 1]) - 0.3) < 1.0e-5
-
-    height = 0.2
-    assert microgen.shape.tpms.schwarzP(0, 0, 0, height) == 3 + height
-    assert microgen.shape.tpms.schwarzD(0, 0, 0, height) == 0 + 0 + 0 + 0 + height
+    assert microgen.shape.tpms.schwarzP(0, 0, 0) == 3
+    assert microgen.shape.tpms.schwarzD(0, 0, 0) == 0 + 0 + 0 + 0
     assert (
-        microgen.shape.tpms.neovius(0, 0, 0, height)
-        == (3 + 1 + 1) + (4 * 1 * 1 * 1) + height
+        microgen.shape.tpms.neovius(0, 0, 0)
+        == (3 + 1 + 1) + (4 * 1 * 1 * 1)
     )
     assert (
-        microgen.shape.tpms.schoenIWP(0, 0, 0, height)
-        == 2 * (1 + 1 + 1) - (1 + 1 + 1) + height
+        microgen.shape.tpms.schoenIWP(0, 0, 0)
+        == 2 * (1 + 1 + 1) - (1 + 1 + 1)
     )
-    assert microgen.shape.tpms.schoenFRD(0, 0, 0, height) == 4 - (1 + 1 + 1) + height
-    assert microgen.shape.tpms.fischerKochS(0, 0, 0, height) == 0 + 0 + 0 + height
-    assert microgen.shape.tpms.pmy(0, 0, 0, height) == 2 + 0 + 0 + 0 + height
-    assert microgen.shape.tpms.honeycomb(0, 0, 0, height) == 0 + 0 + 1 + height
-    assert microgen.shape.tpms.gyroid(0, 0, 0, height) == 1
+    assert microgen.shape.tpms.schoenFRD(0, 0, 0) == 4 - (1 + 1 + 1)
+    assert microgen.shape.tpms.fischerKochS(0, 0, 0) == 0 + 0 + 0
+    assert microgen.shape.tpms.pmy(0, 0, 0) == 2 + 0 + 0 + 0
+    assert microgen.shape.tpms.honeycomb(0, 0, 0) == 0 + 0 + 1
+    assert microgen.shape.tpms.gyroid(0, 0, 0) == 1
 
 
 if __name__ == "__main__":

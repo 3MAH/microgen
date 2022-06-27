@@ -4,9 +4,11 @@ Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
 import cadquery as cq
+import pyvista as pv
+import numpy as np
+import copy
 
 from .basicGeometry import BasicGeometry
-
 
 class Polyhedron(BasicGeometry):
     """
@@ -65,6 +67,17 @@ class Polyhedron(BasicGeometry):
         solid = cq.Solid.makeSolid(shell)
         return cq.Shape(solid.wrapped)
 
+    def generateVtk(self) -> pv.PolyData:
+
+        facesPv = copy.deepcopy(self.faces_ixs)
+        for vertices_in_face in facesPv:
+            del vertices_in_face[-1]
+            vertices_in_face.insert(0,len(vertices_in_face))
+
+        vertices = np.array(self.dic["vertices"])
+        faces = np.hstack(facesPv)
+
+        return pv.PolyData(vertices, faces)
 
 def read_obj(filename: str):
     """

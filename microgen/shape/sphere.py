@@ -4,6 +4,7 @@ Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
 import cadquery as cq
+import pyvista as pv
 
 from .basicGeometry import BasicGeometry
 
@@ -28,3 +29,10 @@ class Sphere(BasicGeometry):
             .translate((self.center[0], self.center[1], self.center[2]))
         )
         return cq.Shape(sphere.val().wrapped)
+
+    def createPvSphere(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
+        return pv.Sphere(
+            radius=self.radius,
+            center=tuple(self.center)
+        )
+        

@@ -4,10 +4,13 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 =============================================
 """
 import cadquery as cq
+import pyvista as pv
+import numpy as np
 
 from ..operations import rotateEuler
-from .basicGeometry import BasicGeometry
+from ..pvoperations import rotatePvEuler
 
+from .basicGeometry import BasicGeometry
 
 class Ellipsoid(BasicGeometry):
     """
@@ -44,5 +47,24 @@ class Ellipsoid(BasicGeometry):
             self.orientation[0],
             self.orientation[1],
             self.orientation[2],
+        )
+        return ellipsoid
+        
+    def generateVtk(self) -> pv.PolyData:
+        transform_matrix = np.array(
+            [
+                [self.a_x, 0, 0, self.center[0]],
+                [0, self.a_y, 0, self.center[1]],
+                [0, 0, self.a_z, self.center[2]],
+            ]
+        )
+
+        sphere = pv.Sphere(
+            radius=self.radius,
+            center=tuple(self.center)
+        )
+        ellipsoid = sphere.transform(transform_matrix)
+        ellipsoid = rotatePvEuler(
+            ellipsoid, self.center, self.angle[0], self.angle[1], self.angle[2]
         )
         return ellipsoid

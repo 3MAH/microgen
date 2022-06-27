@@ -3,6 +3,7 @@ Phase class to manage list of solids belonging to the same phase
 """
 
 import cadquery as cq
+import pyvista as pv
 import numpy as np
 from OCP.BRepGProp import BRepGProp
 from OCP.GProp import GProp_GProps

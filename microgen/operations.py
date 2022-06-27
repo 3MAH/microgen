@@ -113,7 +113,6 @@ def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
 
     :param cqShapeList: list of shapes to fuse
     :param retain_edges: retain intersecting edges
-
     :return fused object
     """
 
@@ -311,7 +310,7 @@ def rasterPhase(
         return Phase(solids=solidList)
 
 
-def repeatGeometry(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
+def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
     """
     Repeats unit geometry in each direction according to the given grid
 

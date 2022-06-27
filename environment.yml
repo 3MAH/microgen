@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   - python
-  - vtk=9.0.1
+  - pyvista
   - cadquery=master
   - python-gmsh #=4.8
   - pygalmesh
@@ -13,4 +13,4 @@ dependencies:
   - neper
   - pytest-cov
   - libtiff<4.4
-  - pyvista
+

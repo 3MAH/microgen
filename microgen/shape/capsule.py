@@ -5,9 +5,12 @@ Capsule (:mod:`microgen.shape.capsule`)
 """
 import cadquery as cq
 
-from ..operations import rotateEuler
-from .basicGeometry import BasicGeometry
+#import vtk
+import pyvista as pv
 
+from ..operations import rotateEuler
+from ..pvoperations import rotatePvEuler
+from .basicGeometry import BasicGeometry
 
 class Capsule(BasicGeometry):
     """
@@ -59,3 +62,15 @@ class Capsule(BasicGeometry):
             self.orientation[2],
         )
         return capsule
+
+#    def generateVtk(self, resolution=100, capping=True) -> pv.PolyData:
+#        capsule = vtk.vtkCapsuleSource()
+#        capsule.SetCenter(self.center[0], self.center[1], self.center[2])
+#        capsule.SetRadius(self.radius)
+#        capsule.SetCylinderLength(self.height)
+#        capsule.SetThetaResolution(resolution)
+#        capsule.SetPhiResolution(resolution)
+#        capsule.Update()
+#        capsule = pv.wrap(capsule.GetOutput())
+#        capsule = rotatePvEuler(capsule, self.center, self.angle[0], self.angle[1], self.angle[2])
+#        return capsule
