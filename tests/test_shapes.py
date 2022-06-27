@@ -136,7 +136,7 @@ def test_tpms():
     assert microgen.shape.tpms.fischerKochS(0, 0, 0) == 0 + 0 + 0
     assert microgen.shape.tpms.pmy(0, 0, 0) == 2 + 0 + 0 + 0
     assert microgen.shape.tpms.honeycomb(0, 0, 0) == 0 + 0 + 1
-    assert microgen.shape.tpms.gyroid(0, 0, 0) == 1
+    assert microgen.shape.tpms.gyroid(0, 0, 0) == 0
 
 
 if __name__ == "__main__":
