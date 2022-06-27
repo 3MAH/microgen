@@ -52,26 +52,3 @@ def rotatePvEuler(
         point=tuple(center)
     )
     return object_r
-
-def fusePvParts(
-    pvShapeList: list[pv.PolyData]
-) -> pv.PolyData:
-    """
-
-    Parameters
-    ----------
-    pvShapeList : list of shapes to fuse
-
-    Returns
-    -------
-    pv.PolyData : fused object
-    """
-    for pv_PolyData in pvShapeList:
-        if pv_PolyData.is_all_triangles == False:
-            pv_PolyData.triangulate()
-        
-    pv_PolyDatas = pvShapeList[0]
-    for i in range(1, len(pvShapeList)):
-        fuse = pv_PolyDatas.boolean_union(pvShapeList[i])
-
-    return fuse
