@@ -43,10 +43,8 @@ jobs:
       - name: Setup Miniforge
         uses: conda-incubator/setup-miniconda@v2
         with:
-            miniforge-variant: Miniforge
-            miniforge-version: latest
             activate-environment: microgen
-            use-mamba: true
+            auto-update-conda: true
 
       - name: Get Date
         id: get-date
