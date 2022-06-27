@@ -14,3 +14,4 @@
 data/
 _build/
 .ipynb_checkpoints/
+microgen/shape/.DS_Store
