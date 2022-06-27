@@ -3,32 +3,30 @@
 TPMS (:mod:`microgen.shape.tpms`)
 =============================================
 """
-import math
-import os
 from typing import Callable, Union
 
 import numpy as np
 import cadquery as cq
 import pyvista as pv
 from numpy import cos, pi, sin
-from OCP.StlAPI import StlAPI_Reader
-from OCP.TopoDS import TopoDS_Shape
+# from OCP.StlAPI import StlAPI_Reader
+# from OCP.TopoDS import TopoDS_Shape
 
-from OCP.BRepBuilderAPI import (
-    BRepBuilderAPI_MakeVertex,
-    BRepBuilderAPI_MakeEdge,
-    BRepBuilderAPI_MakeFace,
-    BRepBuilderAPI_MakePolygon,
-    BRepBuilderAPI_MakeWire,
-    BRepBuilderAPI_Sewing,
-    BRepBuilderAPI_Copy,
-    BRepBuilderAPI_GTransform,
-    BRepBuilderAPI_Transform,
-    BRepBuilderAPI_Transformed,
-    BRepBuilderAPI_RightCorner,
-    BRepBuilderAPI_RoundCorner,
-    BRepBuilderAPI_MakeSolid,
-)
+# from OCP.BRepBuilderAPI import (
+#     BRepBuilderAPI_MakeVertex,
+#     BRepBuilderAPI_MakeEdge,
+#     BRepBuilderAPI_MakeFace,
+#     BRepBuilderAPI_MakePolygon,
+#     BRepBuilderAPI_MakeWire,
+#     BRepBuilderAPI_Sewing,
+#     BRepBuilderAPI_Copy,
+#     BRepBuilderAPI_GTransform,
+#     BRepBuilderAPI_Transform,
+#     BRepBuilderAPI_Transformed,
+#     BRepBuilderAPI_RightCorner,
+#     BRepBuilderAPI_RoundCorner,
+#     BRepBuilderAPI_MakeSolid,
+# )
 
 from ..operations import fuseShapes, rescale, repeatShape
 from ..rve import Rve
@@ -95,7 +93,6 @@ class Tpms(BasicGeometry):
         isovalue: float = 0,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> cq.Shell:
         """
         Create TPMS surface for the corresponding isovalue, return a cq.Shell
@@ -107,20 +104,20 @@ class Tpms(BasicGeometry):
         x_min, y_min, z_min = -0.5, -0.5, -0.5
         grid = pv.UniformGrid(
             dims=(nSample, nSample, nSample),
-            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            spacing=(1. / (nSample - 1) , 1. / (nSample - 1), 1. / (nSample - 1)),
             origin=(x_min, y_min, z_min),
         )
         x, y, z = grid.points.T
         
-        surface_function=self.surface_function
-        surface = surface_function(x,y,z)
-        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+        surface_function = self.surface_function
+        surface = surface_function(x, y, z)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue, 1))
         if smoothing > 0:
             mesh = mesh.smooth(n_iter=smoothing)
         mesh.clean(inplace=True)
           
-        list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
-        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
+        list_of_Triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:, 0]]
 
         faces = []
         
@@ -144,7 +141,6 @@ class Tpms(BasicGeometry):
         isovalues: list[float] = [0],
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> list[cq.Shell]:
         """
         Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
@@ -157,22 +153,22 @@ class Tpms(BasicGeometry):
         x_min, y_min, z_min = -0.5, -0.5, -0.5
         grid = pv.UniformGrid(
             dims=(nSample, nSample, nSample),
-            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            spacing=(1. / (nSample - 1) , 1. / (nSample - 1), 1. / (nSample - 1)),
             origin=(x_min, y_min, z_min),
         )
         x, y, z = grid.points.T
         
         surface_function=self.surface_function
-        surface = surface_function(x,y,z)
+        surface = surface_function(x, y, z)
 
         shells = []
         for isovalue in isovalues:
-            mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+            mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue, 1))
             if smoothing > 0:
                 mesh = mesh.smooth(n_iter=smoothing)
             mesh.clean(inplace=True)
-            list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
-            list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
+            list_of_Triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+            list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:, 0]]
 
             faces = []
             for ixs in list_of_Triangles:
@@ -196,7 +192,6 @@ class Tpms(BasicGeometry):
         isovalue: float = 0,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> pv.PolyData:
         """
         Create TPMS surface for the corresponding isovalue, returns a pv.Polydata
@@ -208,14 +203,14 @@ class Tpms(BasicGeometry):
         x_min, y_min, z_min = -0.5, -0.5, -0.5
         grid = pv.UniformGrid(
             dims=(nSample, nSample, nSample),
-            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            spacing=(1. / (nSample - 1) , 1. / (nSample - 1), 1. / (nSample - 1)),
             origin=(x_min, y_min, z_min),
         )
         x, y, z = grid.points.T
         
         surface_function=self.surface_function
-        surface = surface_function(x,y,z)
-        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+        surface = surface_function(x, y, z)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue, 1))
         if smoothing > 0:
             mesh = mesh.smooth(n_iter=smoothing)
         mesh.clean(inplace=True)
@@ -226,6 +221,7 @@ class Tpms(BasicGeometry):
                     [self.cell_size[0], 0, 0, 0],
                     [0, self.cell_size[1], 0, 0],
                     [0, 0, self.cell_size[2], 0],
+                    [0, 0, 0, 1]
                 ]
             )
             mesh.transform(transform_matrix, inplace=True)
@@ -237,7 +233,6 @@ class Tpms(BasicGeometry):
         isovalue: float = 0.,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> cq.Shape:
 
         shell = self.createSurface(isovalue=isovalue, nSample=nSample, smoothing=smoothing)
@@ -263,7 +258,6 @@ class Tpms(BasicGeometry):
         self,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> cq.Shape:
         """
         Creates thick TPMS geometry (sheet or skeletal part) from surface
@@ -317,6 +311,9 @@ class Tpms(BasicGeometry):
                 grid=self.repeat_cell
             )
         return shape
+
+    def generateVtk(self):
+        pass
 
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 

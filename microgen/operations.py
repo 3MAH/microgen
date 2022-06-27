@@ -3,7 +3,7 @@ Boolean operations
 """
 
 import os
-from typing import Union
+from typing import Union, Tuple, List
 
 import cadquery as cq
 import numpy as np
@@ -17,7 +17,7 @@ from .rve import Rve
 
 def rotateEuler(
     obj: Union[cq.Shape, cq.Workplane],
-    center: Union[np.ndarray, tuple[float, float, float]],
+    center: Union[np.ndarray, Tuple[float, float, float]],
     psi: float,
     theta: float,
     phi: float,
@@ -60,7 +60,7 @@ def rotateEuler(
     return object_r
 
 
-def rescale(shape: cq.Shape, scale: Union[float, tuple[float, float, float]]) -> cq.Shape:
+def rescale(shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -107,7 +107,7 @@ def removeEmptyLines(filename: str) -> None:
         filehandle.writelines(lines)
 
 
-def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
+def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
     """
     Fuse all shapes in cqShapeList
 
@@ -130,7 +130,7 @@ def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
         return cq.Shape(shape)
 
 
-def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
+def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
     """
     Cuts list of phases by a given shape
 
@@ -148,7 +148,7 @@ def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
     return phase_cut
 
 
-def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase:
+def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: List[cq.Shape]) -> Phase:
     """
     Cuts a phase by a list of shapes
 
@@ -165,7 +165,7 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase
     return Phase(shape=resultCut)
 
 
-def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq.Shape]:
+def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq.Shape]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -199,7 +199,7 @@ def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq
     return cutted_shapes
 
 
-def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
+def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -215,8 +215,8 @@ def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
 
 
 def rasterShapeList(
-    cqShapeList: list[cq.Shape], rve: Rve, grid: list[int]
-) -> tuple[list[cq.Solid], list[list[cq.Solid]], list[float], list[cq.Vector]]:
+    cqShapeList: List[cq.Shape], rve: Rve, grid: List[int]
+) -> Tuple[List[cq.Solid], List[List[cq.Solid]], List[float], List[cq.Vector]]:
     """
     Rasters shapes from shape list according to the rve divided by the given grid
 
@@ -259,8 +259,8 @@ def rasterShapeList(
 
 
 def rasterPhase(
-    phase: Phase, rve: Rve, grid: list[int], phasePerRaster: bool = True
-) -> Union[Phase, list[Phase]]:
+    phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
+) -> Union[Phase, List[Phase]]:
     """
     Rasters solids from phase according to the rve divided by the given grid
 
@@ -310,7 +310,7 @@ def rasterPhase(
         return Phase(solids=solidList)
 
 
-def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
+def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
     """
     Repeats unit geometry in each direction according to the given grid
 

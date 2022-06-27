@@ -8,7 +8,7 @@ import numpy as np
 from OCP.BRepGProp import BRepGProp
 from OCP.GProp import GProp_GProps
 
-from typing import Union
+from typing import Union, Tuple
 
 from .rve import Rve
 
@@ -155,6 +155,31 @@ class Phase:
             ]
         )
         self._shape = self._shape.transformGeometry(transform_mat)
+
+    def repeat(self, rve: Rve, grid: Tuple[int, int, int]):
+        """
+        Repeats phase in each direction according to the given grid
+
+        :param rve: RVE of the phase to repeat
+        :param grid: list of number of phase repetitions in each direction
+        """
+
+        center = self.shape.Center()
+
+        xyz_repeat = cq.Assembly()
+        for i_x in range(grid[0]):
+            for i_y in range(grid[1]):
+                for i_z in range(grid[2]):
+                    xyz_repeat.add(
+                        self.shape,
+                        loc=cq.Location(
+                            cq.Vector(center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                                      center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                                      center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z))
+                        ),
+                    )
+        compound = xyz_repeat.toCompound()
+        self.shape = cq.Shape(compound.wrapped)
 
     def rasterize(self, rve: Rve, grid: list[int], phasePerRaster: bool = True) -> Union[None, list['Phase']]:
         """
