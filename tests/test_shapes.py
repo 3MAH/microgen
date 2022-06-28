@@ -3,10 +3,13 @@ import microgen
 import cadquery as cq
 import numpy as np
 
+import os
 import pytest
 
 
 def test_shapes():
+    os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet
+
     rve = microgen.rve.Rve(dim_x=1, dim_y=1, dim_z=1)
 
     elem = microgen.shape.newGeometry(
