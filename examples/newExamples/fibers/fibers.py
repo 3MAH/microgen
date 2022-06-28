@@ -2,14 +2,9 @@ import os
 import numpy as np
 import cadquery as cq
 from microgen import (
-    Rve,
-    BasicGeometry,
-    periodic,
-    mesh,
-    meshPeriodic,
-    rasterShapeList,
+    Cylinder
 )
-import progressbar
+import progressbar # pip install progressbar2
 
 
 def read_csv(filename):
@@ -49,33 +44,20 @@ x, y, z, diameter, phi, theta, aspect_ratio, index = read_csv("fibers.csv")
 psi, theta, phi = convert_angles(phi, theta)
 
 
-listPhases = []
-n = len(x)  # 100
-bar = progressbar.ProgressBar(max_value=n)
-for i in range(0, n):
-    # if i==4:
-    #     continue
-    # height = aspect_ratio[i]*diameter[i]
+shapes = []
+bar = progressbar.ProgressBar(max_value=len(x))
+for i in range(len(x)):
     height = 250.0  # constant length = 150-350 µm (250) ou aléatoire
     radius = 0.5 * diameter[i]
-    elem = BasicGeometry(
-        number=index[i],
-        shape="cylinder",
-        xc=x[i],
-        yc=y[i],
-        zc=z[i],
-        psi=psi[i],
-        theta=theta[i],
-        phi=phi[i],
-        param_geom={"height": height, "radius": radius},
-        path_data="data",
-    )
-    listPhases.append(elem.generate())
+    elem = Cylinder(center=(x[i], y[i], z[i]), orientation=(psi[i], theta[i], phi[i]),
+                    height=height,
+                    radius=radius)
+    shapes.append(elem.generate())
     bar.update(i)
 
 assemb = cq.Assembly()
-for phase in listPhases:
-    assemb.add(phase)
+for shape in shapes:
+    assemb.add(shape)
 
 
 compound = assemb.toCompound()
