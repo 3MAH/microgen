@@ -144,23 +144,6 @@ def rescale(shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]) ->
     return shape
 
 
-def removeEmptyLines(filename: str) -> None:
-    """
-    Removes empty lines of the given file
-
-    :param filename: file where to remove empty lines
-    """
-    if not os.path.isfile(filename):
-        print("{} does not exist ".format(filename))
-        return
-    with open(filename) as filehandle:
-        lines = filehandle.readlines()
-
-    with open(filename, "w") as filehandle:
-        lines = filter(lambda x: x.strip(), lines)
-        filehandle.writelines(lines)
-
-
 def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
     """
     Fuse all shapes in cqShapeList

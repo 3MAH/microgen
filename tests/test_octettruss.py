@@ -11,7 +11,6 @@ def test_octettruss():
 
     # fichier
     NPhases_file = "examples/Lattices/octetTruss/test_octet.dat"
-    microgen.removeEmptyLines(NPhases_file)
 
     dt = np.dtype(
         [

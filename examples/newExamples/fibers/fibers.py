@@ -2,7 +2,6 @@ import os
 import numpy as np
 import cadquery as cq
 from microgen import (
-    removeEmptyLines,
     Rve,
     BasicGeometry,
     periodic,

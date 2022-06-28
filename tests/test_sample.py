@@ -7,7 +7,6 @@ def test_misc():
         microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
         microgen.parseNeper("tests/data/neper")
         microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
-    microgen.removeEmptyLines("fake_file.txt")
 
 
 def test_operations():
