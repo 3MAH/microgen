@@ -14,4 +14,5 @@ dependencies:
   - neper
   - pytest-cov
   - libtiff<4.4
+  - h5py<3.2
 
