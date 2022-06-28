@@ -9,8 +9,7 @@ import cadquery as cq
 import pyvista as pv
 import numpy as np
 
-from ..operations import rotateEuler
-from ..pvoperations import rotatePvEuler
+from ..operations import rotateEuler, rotatePvEuler
 
 from .basicGeometry import BasicGeometry
 

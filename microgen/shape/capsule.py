@@ -8,8 +8,7 @@ import cadquery as cq
 import vtk
 import pyvista as pv
 
-from ..operations import rotateEuler
-from ..pvoperations import rotatePvEuler
+from ..operations import rotateEuler, rotatePvEuler
 from .basicGeometry import BasicGeometry
 
 class Capsule(BasicGeometry):

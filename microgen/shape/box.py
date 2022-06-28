@@ -6,8 +6,7 @@ Box (:mod:`microgen.shape.box`)
 import cadquery as cq
 import pyvista as pv
 
-from ..operations import rotateEuler
-from ..pvoperations import rotatePvEuler
+from ..operations import rotateEuler, rotatePvEuler
 from .basicGeometry import BasicGeometry
 
 

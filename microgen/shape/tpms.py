@@ -28,7 +28,7 @@ from numpy import cos, pi, sin
 #     BRepBuilderAPI_MakeSolid,
 # )
 
-from ..operations import fuseShapes, rescale, repeatShape
+from ..operations import fuseShapes, rescale, repeatShape, repeatPolyData
 from ..rve import Rve
 from .basicGeometry import BasicGeometry
 
@@ -76,7 +76,7 @@ class Tpms(BasicGeometry):
             raise ValueError("type_part must be 'sheet' or 'skeletal'")
         self.type_part = type_part
 
-        self.thickness = thickness
+        self.thickness = thickness * np.pi
 
         if type(cell_size) == float or type(cell_size) == int:
             self.cell_size = (cell_size, cell_size, cell_size)
@@ -225,6 +225,9 @@ class Tpms(BasicGeometry):
                 ]
             )
             mesh.transform(transform_matrix, inplace=True)
+
+        if self.repeat_cell is not None:
+            mesh = repeatPolyData(mesh, rve=Rve(*self.cell_size), grid=self.repeat_cell)
         
         return mesh
 
@@ -267,7 +270,7 @@ class Tpms(BasicGeometry):
         :param smoothing: smoothing loop iterations
         """
 
-        isovalues= [-self.thickness/2.,-self.thickness/6., self.thickness/6., self.thickness/2.]
+        isovalues= [-self.thickness,-self.thickness/3., self.thickness/3., self.thickness]
         shells = self.createSurfaces(isovalues=isovalues, nSample=nSample, smoothing=smoothing)
 
         face_cut_tp = shells[2]
@@ -312,14 +315,11 @@ class Tpms(BasicGeometry):
             )
         return shape
 
-    def generateVtk(self):
-        pass
-
 # Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
 
 def gyroid(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0`
     """
     return (
@@ -329,14 +329,14 @@ def gyroid(x: float, y: float, z: float) -> float:
     )
 
 def schwarzP(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0`
     """
     return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
 
 
 def schwarzD(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \
            sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
            cos(2 \pi x) sin(2 \pi y) cos(2 \pi z) + \
@@ -350,7 +350,7 @@ def schwarzD(x: float, y: float, z: float) -> float:
 
 
 def neovius(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \
            4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0`
     """
@@ -361,7 +361,7 @@ def neovius(x: float, y: float, z: float) -> float:
 
 
 def schoenIWP(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`2 ( cos(2 \pi x) cos(2 \pi y) + \
                cos(2 \pi y) cos(2 \pi z) + \
                cos(2 \pi z) cos(2 \pi x)) - \
@@ -378,7 +378,7 @@ def schoenIWP(x: float, y: float, z: float) -> float:
 
 
 def schoenFRD(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \
            (cos(4 \pi x) cos(4 \pi y) + \
             cos(4 \pi y) cos(4 \pi z) + \
@@ -394,7 +394,7 @@ def schoenFRD(x: float, y: float, z: float) -> float:
 
 
 def fischerKochS(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \
            cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \
            sin(2 \pi x) cos(2 \pi y) cos(4 \pi z) = 0`
@@ -407,7 +407,7 @@ def fischerKochS(x: float, y: float, z: float) -> float:
 
 
 def pmy(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
            sin(4 \pi x) sin(2 \pi y) + \
            sin(2 \pi x) sin(4 \pi z) + \
@@ -422,7 +422,7 @@ def pmy(x: float, y: float, z: float) -> float:
 
 
 def honeycomb(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0`
     """
     return (

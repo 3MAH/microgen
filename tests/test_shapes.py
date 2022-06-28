@@ -108,7 +108,7 @@ def test_tpms():
         param_geom={
             "surface_function": microgen.shape.tpms.gyroid,
             "type_part": "skeletal",
-            "thickness": 0.2,
+            "thickness": 0.075,
             "cell_size": 1,
             "repeat_cell": 1,
         },
@@ -119,12 +119,11 @@ def test_tpms():
         center=(0.5, 0.5, 0.5),
         surface_function=microgen.shape.tpms.schwarzD,
         type_part="sheet",
-        thickness=0.3,
+        thickness=0.05,
         cell_size=(1, 2, 1),
         repeat_cell=(2, 1, 1),
     )
     elem.generate()
-    elem.generateVtk()
     elem.generateSurface(isovalue=0.1)
     elem.generateSurfaceVtk()
 

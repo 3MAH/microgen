@@ -7,6 +7,8 @@ from typing import Union, Tuple, List
 
 import cadquery as cq
 import numpy as np
+import pyvista as pv
+
 import OCP
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
@@ -56,6 +58,58 @@ def rotateEuler(
         cq.Vector(center[0], center[1], center[2]),
         cq.Vector(center[0] + z2[0], center[1] + z2[1], center[2] + z2[2]),
         phi,
+    )
+    return object_r
+
+def rotatePvEuler(
+    object: pv.PolyData,
+    center: np.ndarray,
+    psi: float,
+    theta: float,
+    phi: float,
+) -> pv.PolyData:
+    """
+
+    Rotates object according to XZX Euler angle convention
+
+    Parameters
+    ----------
+    object :
+        Object to rotate
+    center :
+        numpy array (x, y, z)
+    psi, theta, phi :
+        Euler angles
+
+    Returns
+    -------
+    object_r :
+        Rotated object
+    """
+
+    u = (np.cos(psi), np.sin(psi), 0.0)
+    z2 = (
+            np.sin(psi) * np.sin(theta),
+            -np.sin(theta) * np.cos(psi),
+            np.cos(theta)
+    )
+    object_r = object.rotate_vector(
+        vector=(0,0,1),
+        angle=psi,
+        point=tuple(center),
+        inplace=False
+    )
+    object_r.rotate_vector(
+        vector=u,
+        angle=theta,
+        point=tuple(center),
+        inplace=True
+    )
+    object_r.rotate_vector(
+        vector=z2,
+        angle=phi,
+        point=tuple(center),
+        inplace=True
     )
     return object_r
 
@@ -338,3 +392,15 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
     compound = xyz_repeat.toCompound()
     shape = cq.Shape(compound.wrapped)
     return shape
+
+def repeatPolyData(mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]) -> pv.PolyData:
+    xyz_repeat = pv.PolyData()
+    for i_x in range(grid[0]):
+        for i_y in range(grid[1]):
+            for i_z in range(grid[2]):
+                new_mesh = mesh.copy()
+                new_mesh.translate((-rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                                    -rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                                    -rve.dim_z * (0.5 * grid[2] - 0.5 - i_z)), inplace=True)
+                xyz_repeat.merge(new_mesh, inplace=True)
+    return xyz_repeat
