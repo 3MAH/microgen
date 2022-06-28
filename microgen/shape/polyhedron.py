@@ -68,7 +68,6 @@ class Polyhedron(BasicGeometry):
         return cq.Shape(solid.wrapped)
 
     def generateVtk(self) -> pv.PolyData:
-
         facesPv = copy.deepcopy(self.faces_ixs)
         for vertices_in_face in facesPv:
             del vertices_in_face[-1]

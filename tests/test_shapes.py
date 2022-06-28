@@ -3,10 +3,13 @@ import microgen
 import cadquery as cq
 import numpy as np
 
+import os
 import pytest
 
 
 def test_shapes():
+    os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet
+
     rve = microgen.rve.Rve(dim_x=1, dim_y=1, dim_z=1)
 
     elem = microgen.shape.newGeometry(
@@ -14,37 +17,52 @@ def test_shapes():
     )
     elem = microgen.shape.ellipsoid.Ellipsoid(a_x=0.15, a_y=0.31, a_z=0.4)
     ellipsoid = elem.generate()
+    elem.generateVtk()
     phase = microgen.phase.Phase(shape=ellipsoid)
     phase.centerOfMass
     phase.centerOfMass
+    phase.getCenterOfMass(compute=False)
     phase.inertiaMatrix
     phase.inertiaMatrix
+    phase.getInertiaMatrix(compute=False)
     phase.solids
     phase.shape
+    phase.translate((1, 0, 0))
+    phase.translate(np.array([0, 1, 1]))
+    phase.rescale(1.5)
+    phase.repeat(rve, (1, 2, 1))
+    phase.rasterize(rve, [2, 2, 2], phasePerRaster=True)
+    phase.rasterize(rve, [2, 2, 2], phasePerRaster=False)
 
-    microgen.phase.Phase()
+    void_phase = microgen.phase.Phase()
+    void_phase.shape
+    void_phase.solids
 
     elem = microgen.shape.newGeometry(shape="Sphere", param_geom={"radius": 0.15})
     elem = microgen.shape.sphere.Sphere(radius=0.15)
     elem.generate()
+    elem.generateVtk()
 
     elem = microgen.shape.newGeometry(
         shape="Box", param_geom={"dim_x": 0.15, "dim_y": 0.31, "dim_z": 0.4}
     )
     elem = microgen.shape.box.Box(dim_x=0.15, dim_y=0.31, dim_z=0.4)
     elem.generate()
+    elem.generateVtk()
 
     elem = microgen.shape.newGeometry(
         shape="Capsule", param_geom={"height": 0.5, "radius": 0.1}
     )
     elem = microgen.shape.capsule.Capsule(height=0.5, radius=0.1)
     elem.generate()
+    elem.generateVtk()
 
     elem = microgen.shape.newGeometry(
         shape="Cylinder", param_geom={"height": 0.5, "radius": 0.1}
     )
     elem = microgen.shape.cylinder.Cylinder(height=0.5, radius=0.1)
     elem.generate()
+    elem.generateVtk()
 
     elem = microgen.shape.newGeometry(
         shape="ExtrudedPolygon",
@@ -54,9 +72,11 @@ def test_shapes():
         listCorners=[(0, 0), (0, 1), (1, 1), (1, 0)], height=0.3
     )
     elem.generate()
+    elem.generateVtk()
 
     elem = microgen.shape.polyhedron.Polyhedron()  # default shape = tetrahedron
     elem.generate()
+    elem.generateVtk()
     dic = microgen.shape.polyhedron.read_obj(
         "examples/BasicShapes/platon/tetrahedron.obj"
     )
@@ -64,6 +84,10 @@ def test_shapes():
 
     with pytest.raises(ValueError):
         microgen.shape.newGeometry(shape="fake", param_geom={"fake": 0})
+
+    raster = microgen.operations.rasterPhase(
+        phase=phase, rve=rve, grid=[5, 5, 5], phasePerRaster=False
+    )
 
     raster = microgen.operations.rasterPhase(
         phase=phase, rve=rve, grid=[5, 5, 5]
@@ -87,32 +111,36 @@ def test_tpms():
         param_geom={
             "surface_function": microgen.shape.tpms.gyroid,
             "type_part": "skeletal",
-            "thickness": 0.1,
+            "thickness": 0.075,
             "cell_size": 1,
             "repeat_cell": 1,
         },
     )
-
-    elem = microgen.shape.tpms.Tpms(
-        center=(0.5, 0.5, 0.5),
-        surface_function=microgen.shape.tpms.schwarzD,
-        type_part="sheet",
-        thickness=0.3,
-        cell_size=2,
-        repeat_cell=(2, 1, 1),
-    )
     elem.generate()
 
     elem = microgen.shape.tpms.Tpms(
         center=(0.5, 0.5, 0.5),
         surface_function=microgen.shape.tpms.schwarzD,
         type_part="sheet",
-        thickness=0.3,
-        cell_size=2,
+        thickness=0.05,
+        cell_size=(1, 2, 1),
         repeat_cell=(2, 1, 1),
     )
+    elem.generate()
     elem.generateSurface(isovalue=0.1)
-    elem.generate()
+    elem.generateSurfaceVtk()
+
+    # elem = microgen.shape.tpms.Tpms(
+    #     center=(0.5, 0.5, 0.5),
+    #     surface_function=microgen.shape.tpms.schwarzD,
+    #     type_part="sheet",
+    #     thickness=0.3,
+    #     cell_size=2,
+    #     repeat_cell=(2, 1, 1),
+    # )
+    # elem.generateSurface(isovalue=0.1)
+    # elem.generateSurfaceVtk()
+    # elem.generate()
 
     with pytest.raises(ValueError):
         microgen.shape.tpms.Tpms(

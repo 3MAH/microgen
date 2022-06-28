@@ -5,10 +5,11 @@ channels:
 
 dependencies:
   - python
+  - vtk=9.0.1
   - pyvista
   - cadquery=master
-  - python-gmsh #=4.8
-  - pygalmesh
+  - python-gmsh
+  - meshio
   - mmg
   - neper
   - pytest-cov

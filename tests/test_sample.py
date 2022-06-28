@@ -7,7 +7,6 @@ def test_misc():
         microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
         microgen.parseNeper("tests/data/neper")
         microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
-    microgen.removeEmptyLines("fake_file.txt")
 
 
 def test_operations():
@@ -17,6 +16,7 @@ def test_operations():
 
     elem = microgen.shape.Box(center=(0, 0, 0), dim_x=0.5, dim_y=0.5, dim_z=0.5)
     shape2 = elem.generate()
+    microgen.rescale(shape2, 2.)
 
     microgen.cutPhaseByShapeList(phaseToCut=phase1, cqShapeList=[shape2])
 

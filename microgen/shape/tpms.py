@@ -3,34 +3,32 @@
 TPMS (:mod:`microgen.shape.tpms`)
 =============================================
 """
-import math
-import os
 from typing import Callable, Union
 
 import numpy as np
 import cadquery as cq
 import pyvista as pv
 from numpy import cos, pi, sin
-from OCP.StlAPI import StlAPI_Reader
-from OCP.TopoDS import TopoDS_Shape
+# from OCP.StlAPI import StlAPI_Reader
+# from OCP.TopoDS import TopoDS_Shape
 
-from OCP.BRepBuilderAPI import (
-    BRepBuilderAPI_MakeVertex,
-    BRepBuilderAPI_MakeEdge,
-    BRepBuilderAPI_MakeFace,
-    BRepBuilderAPI_MakePolygon,
-    BRepBuilderAPI_MakeWire,
-    BRepBuilderAPI_Sewing,
-    BRepBuilderAPI_Copy,
-    BRepBuilderAPI_GTransform,
-    BRepBuilderAPI_Transform,
-    BRepBuilderAPI_Transformed,
-    BRepBuilderAPI_RightCorner,
-    BRepBuilderAPI_RoundCorner,
-    BRepBuilderAPI_MakeSolid,
-)
+# from OCP.BRepBuilderAPI import (
+#     BRepBuilderAPI_MakeVertex,
+#     BRepBuilderAPI_MakeEdge,
+#     BRepBuilderAPI_MakeFace,
+#     BRepBuilderAPI_MakePolygon,
+#     BRepBuilderAPI_MakeWire,
+#     BRepBuilderAPI_Sewing,
+#     BRepBuilderAPI_Copy,
+#     BRepBuilderAPI_GTransform,
+#     BRepBuilderAPI_Transform,
+#     BRepBuilderAPI_Transformed,
+#     BRepBuilderAPI_RightCorner,
+#     BRepBuilderAPI_RoundCorner,
+#     BRepBuilderAPI_MakeSolid,
+# )
 
-from ..operations import fuseShapes, rescale, repeatShape
+from ..operations import fuseShapes, rescale, repeatShape, repeatPolyData
 from ..rve import Rve
 from .basicGeometry import BasicGeometry
 
@@ -78,7 +76,7 @@ class Tpms(BasicGeometry):
             raise ValueError("type_part must be 'sheet' or 'skeletal'")
         self.type_part = type_part
 
-        self.thickness = thickness
+        self.thickness = thickness * np.pi
 
         if type(cell_size) == float or type(cell_size) == int:
             self.cell_size = (cell_size, cell_size, cell_size)
@@ -95,7 +93,6 @@ class Tpms(BasicGeometry):
         isovalue: float = 0,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> cq.Shell:
         """
         Create TPMS surface for the corresponding isovalue, return a cq.Shell
@@ -107,20 +104,20 @@ class Tpms(BasicGeometry):
         x_min, y_min, z_min = -0.5, -0.5, -0.5
         grid = pv.UniformGrid(
             dims=(nSample, nSample, nSample),
-            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            spacing=(1. / (nSample - 1) , 1. / (nSample - 1), 1. / (nSample - 1)),
             origin=(x_min, y_min, z_min),
         )
         x, y, z = grid.points.T
         
-        surface_function=self.surface_function
-        surface = surface_function(x,y,z)
-        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+        surface_function = self.surface_function
+        surface = surface_function(x, y, z)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue, 1))
         if smoothing > 0:
             mesh = mesh.smooth(n_iter=smoothing)
         mesh.clean(inplace=True)
           
-        list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
-        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
+        list_of_Triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+        list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:, 0]]
 
         faces = []
         
@@ -144,7 +141,6 @@ class Tpms(BasicGeometry):
         isovalues: list[float] = [0],
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> list[cq.Shell]:
         """
         Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
@@ -157,22 +153,22 @@ class Tpms(BasicGeometry):
         x_min, y_min, z_min = -0.5, -0.5, -0.5
         grid = pv.UniformGrid(
             dims=(nSample, nSample, nSample),
-            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            spacing=(1. / (nSample - 1) , 1. / (nSample - 1), 1. / (nSample - 1)),
             origin=(x_min, y_min, z_min),
         )
         x, y, z = grid.points.T
         
         surface_function=self.surface_function
-        surface = surface_function(x,y,z)
+        surface = surface_function(x, y, z)
 
         shells = []
         for isovalue in isovalues:
-            mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+            mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue, 1))
             if smoothing > 0:
                 mesh = mesh.smooth(n_iter=smoothing)
             mesh.clean(inplace=True)
-            list_of_Triangles = mesh.faces.reshape(-1, 4)[:,1:]
-            list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:,0]]
+            list_of_Triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+            list_of_Triangles = np.c_[list_of_Triangles,list_of_Triangles[:, 0]]
 
             faces = []
             for ixs in list_of_Triangles:
@@ -196,7 +192,6 @@ class Tpms(BasicGeometry):
         isovalue: float = 0,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> pv.PolyData:
         """
         Create TPMS surface for the corresponding isovalue, returns a pv.Polydata
@@ -208,14 +203,14 @@ class Tpms(BasicGeometry):
         x_min, y_min, z_min = -0.5, -0.5, -0.5
         grid = pv.UniformGrid(
             dims=(nSample, nSample, nSample),
-            spacing=(1./(nSample-1) , 1./(nSample-1), 1./(nSample-1)),
+            spacing=(1. / (nSample - 1) , 1. / (nSample - 1), 1. / (nSample - 1)),
             origin=(x_min, y_min, z_min),
         )
         x, y, z = grid.points.T
         
         surface_function=self.surface_function
-        surface = surface_function(x,y,z)
-        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue,1))
+        surface = surface_function(x, y, z)
+        mesh = grid.contour(1, scalars=surface, method='flying_edges', rng=(isovalue, 1))
         if smoothing > 0:
             mesh = mesh.smooth(n_iter=smoothing)
         mesh.clean(inplace=True)
@@ -226,9 +221,13 @@ class Tpms(BasicGeometry):
                     [self.cell_size[0], 0, 0, 0],
                     [0, self.cell_size[1], 0, 0],
                     [0, 0, self.cell_size[2], 0],
+                    [0, 0, 0, 1]
                 ]
             )
             mesh.transform(transform_matrix, inplace=True)
+
+        if self.repeat_cell is not None:
+            mesh = repeatPolyData(mesh, rve=Rve(*self.cell_size), grid=self.repeat_cell)
         
         return mesh
 
@@ -237,7 +236,6 @@ class Tpms(BasicGeometry):
         isovalue: float = 0.,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> cq.Shape:
 
         shell = self.createSurface(isovalue=isovalue, nSample=nSample, smoothing=smoothing)
@@ -263,7 +261,6 @@ class Tpms(BasicGeometry):
         self,
         nSample: int = 20,
         smoothing: int = 100,
-        verbose: bool = False,
     ) -> cq.Shape:
         """
         Creates thick TPMS geometry (sheet or skeletal part) from surface
@@ -273,7 +270,7 @@ class Tpms(BasicGeometry):
         :param smoothing: smoothing loop iterations
         """
 
-        isovalues= [-self.thickness/2.,-self.thickness/6., self.thickness/6., self.thickness/2.]
+        isovalues= [-self.thickness,-self.thickness/3., self.thickness/3., self.thickness]
         shells = self.createSurfaces(isovalues=isovalues, nSample=nSample, smoothing=smoothing)
 
         face_cut_tp = shells[2]
@@ -322,7 +319,7 @@ class Tpms(BasicGeometry):
 
 
 def gyroid(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0`
     """
     return (
@@ -332,14 +329,14 @@ def gyroid(x: float, y: float, z: float) -> float:
     )
 
 def schwarzP(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0`
     """
     return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
 
 
 def schwarzD(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \
            sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
            cos(2 \pi x) sin(2 \pi y) cos(2 \pi z) + \
@@ -353,7 +350,7 @@ def schwarzD(x: float, y: float, z: float) -> float:
 
 
 def neovius(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \
            4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0`
     """
@@ -364,7 +361,7 @@ def neovius(x: float, y: float, z: float) -> float:
 
 
 def schoenIWP(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`2 ( cos(2 \pi x) cos(2 \pi y) + \
                cos(2 \pi y) cos(2 \pi z) + \
                cos(2 \pi z) cos(2 \pi x)) - \
@@ -381,7 +378,7 @@ def schoenIWP(x: float, y: float, z: float) -> float:
 
 
 def schoenFRD(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \
            (cos(4 \pi x) cos(4 \pi y) + \
             cos(4 \pi y) cos(4 \pi z) + \
@@ -397,7 +394,7 @@ def schoenFRD(x: float, y: float, z: float) -> float:
 
 
 def fischerKochS(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \
            cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \
            sin(2 \pi x) cos(2 \pi y) cos(4 \pi z) = 0`
@@ -410,7 +407,7 @@ def fischerKochS(x: float, y: float, z: float) -> float:
 
 
 def pmy(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
            sin(4 \pi x) sin(2 \pi y) + \
            sin(2 \pi x) sin(4 \pi z) + \
@@ -425,7 +422,7 @@ def pmy(x: float, y: float, z: float) -> float:
 
 
 def honeycomb(x: float, y: float, z: float) -> float:
-    """
+    r"""
     :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0`
     """
     return (

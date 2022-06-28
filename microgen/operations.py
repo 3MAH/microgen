@@ -3,10 +3,12 @@ Boolean operations
 """
 
 import os
-from typing import Union
+from typing import Union, Tuple, List
 
 import cadquery as cq
 import numpy as np
+import pyvista as pv
+
 import OCP
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
@@ -17,7 +19,7 @@ from .rve import Rve
 
 def rotateEuler(
     obj: Union[cq.Shape, cq.Workplane],
-    center: Union[np.ndarray, tuple[float, float, float]],
+    center: Union[np.ndarray, Tuple[float, float, float]],
     psi: float,
     theta: float,
     phi: float,
@@ -59,8 +61,60 @@ def rotateEuler(
     )
     return object_r
 
+def rotatePvEuler(
+    object: pv.PolyData,
+    center: np.ndarray,
+    psi: float,
+    theta: float,
+    phi: float,
+) -> pv.PolyData:
+    """
 
-def rescale(shape: cq.Shape, scale: Union[float, tuple[float, float, float]]) -> cq.Shape:
+    Rotates object according to XZX Euler angle convention
+
+    Parameters
+    ----------
+    object :
+        Object to rotate
+    center :
+        numpy array (x, y, z)
+    psi, theta, phi :
+        Euler angles
+
+    Returns
+    -------
+    object_r :
+        Rotated object
+    """
+
+    u = (np.cos(psi), np.sin(psi), 0.0)
+    z2 = (
+            np.sin(psi) * np.sin(theta),
+            -np.sin(theta) * np.cos(psi),
+            np.cos(theta)
+    )
+    object_r = object.rotate_vector(
+        vector=(0,0,1),
+        angle=psi,
+        point=tuple(center),
+        inplace=False
+    )
+    object_r.rotate_vector(
+        vector=u,
+        angle=theta,
+        point=tuple(center),
+        inplace=True
+    )
+    object_r.rotate_vector(
+        vector=z2,
+        angle=phi,
+        point=tuple(center),
+        inplace=True
+    )
+    return object_r
+
+
+def rescale(shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -90,24 +144,7 @@ def rescale(shape: cq.Shape, scale: Union[float, tuple[float, float, float]]) ->
     return shape
 
 
-def removeEmptyLines(filename: str) -> None:
-    """
-    Removes empty lines of the given file
-
-    :param filename: file where to remove empty lines
-    """
-    if not os.path.isfile(filename):
-        print("{} does not exist ".format(filename))
-        return
-    with open(filename) as filehandle:
-        lines = filehandle.readlines()
-
-    with open(filename, "w") as filehandle:
-        lines = filter(lambda x: x.strip(), lines)
-        filehandle.writelines(lines)
-
-
-def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
+def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
     """
     Fuse all shapes in cqShapeList
 
@@ -130,7 +167,7 @@ def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
         return cq.Shape(shape)
 
 
-def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
+def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
     """
     Cuts list of phases by a given shape
 
@@ -148,7 +185,7 @@ def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
     return phase_cut
 
 
-def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase:
+def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: List[cq.Shape]) -> Phase:
     """
     Cuts a phase by a list of shapes
 
@@ -165,7 +202,7 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase
     return Phase(shape=resultCut)
 
 
-def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq.Shape]:
+def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq.Shape]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -199,7 +236,7 @@ def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq
     return cutted_shapes
 
 
-def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
+def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -214,53 +251,53 @@ def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
     return [Phase(shape=shape) for shape in cutted_shapes]
 
 
-def rasterShapeList(
-    cqShapeList: list[cq.Shape], rve: Rve, grid: list[int]
-) -> tuple[list[cq.Solid], list[list[cq.Solid]], list[float], list[cq.Vector]]:
-    """
-    Rasters shapes from shape list according to the rve divided by the given grid
+# def rasterShapeList(
+#     cqShapeList: List[cq.Shape], rve: Rve, grid: List[int]
+# ) -> Tuple[List[cq.Solid], List[List[cq.Solid]], List[float], List[cq.Vector]]:
+#     """
+#     Rasters shapes from shape list according to the rve divided by the given grid
 
-    :param cqShapeList: list of shapes to raster
-    :param rve: RVE divided by the given grid
-    :param grid: number of divisions in each direction [x, y, z]
+#     :param cqShapeList: list of shapes to raster
+#     :param rve: RVE divided by the given grid
+#     :param grid: number of divisions in each direction [x, y, z]
 
-    :return flat_list: flatten list from occ_solids_list
-    :return occ_solids_list: list of list of solids
-    :return volume_list: list of shape volume (scalar)
-    :return center_list: list of shape center (vector)
-    """
+#     :return flat_list: flatten list from occ_solids_list
+#     :return occ_solids_list: list of list of solids
+#     :return volume_list: list of shape volume (scalar)
+#     :return center_list: list of shape center (vector)
+#     """
 
-    occ_solids_list = []
+#     occ_solids_list = []
 
-    for cqshape in cqShapeList:
-        wk_plane = cq.Workplane().add(cqshape.Solids())
-        xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
-        ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
-        zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
-        np.delete(xgrid, 0)
-        np.delete(ygrid, 0)
-        np.delete(zgrid, 0)
-        for i in xgrid:
-            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
-        for j in ygrid:
-            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
-        for k in zgrid:
-            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
+#     for cqshape in cqShapeList:
+#         wk_plane = cq.Workplane().add(cqshape.Solids())
+#         xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
+#         ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
+#         zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
+#         np.delete(xgrid, 0)
+#         np.delete(ygrid, 0)
+#         np.delete(zgrid, 0)
+#         for i in xgrid:
+#             Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
+#             wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
+#         for j in ygrid:
+#             Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
+#             wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
+#         for k in zgrid:
+#             Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
+#             wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
 
-        occ_solids_list.append(wk_plane.val().Solids())
+#         occ_solids_list.append(wk_plane.val().Solids())
 
-    flat_list = [item for sublist in occ_solids_list for item in sublist]
-    volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
-    center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
-    return (flat_list, occ_solids_list, volume_list, center_list)
+#     flat_list = [item for sublist in occ_solids_list for item in sublist]
+#     volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
+#     center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
+#     return (flat_list, occ_solids_list, volume_list, center_list)
 
 
 def rasterPhase(
-    phase: Phase, rve: Rve, grid: list[int], phasePerRaster: bool = True
-) -> Union[Phase, list[Phase]]:
+    phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
+) -> Union[Phase, List[Phase]]:
     """
     Rasters solids from phase according to the rve divided by the given grid
 
@@ -310,7 +347,7 @@ def rasterPhase(
         return Phase(solids=solidList)
 
 
-def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
+def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
     """
     Repeats unit geometry in each direction according to the given grid
 
@@ -338,3 +375,15 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq
     compound = xyz_repeat.toCompound()
     shape = cq.Shape(compound.wrapped)
     return shape
+
+def repeatPolyData(mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]) -> pv.PolyData:
+    xyz_repeat = pv.PolyData()
+    for i_x in range(grid[0]):
+        for i_y in range(grid[1]):
+            for i_z in range(grid[2]):
+                new_mesh = mesh.copy()
+                new_mesh.translate((-rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                                    -rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                                    -rve.dim_z * (0.5 * grid[2] - 0.5 - i_z)), inplace=True)
+                xyz_repeat.merge(new_mesh, inplace=True)
+    return xyz_repeat

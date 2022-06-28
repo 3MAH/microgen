@@ -9,8 +9,7 @@ import cadquery as cq
 import pyvista as pv
 import numpy as np
 
-from ..operations import rotateEuler
-from ..pvoperations import rotatePvEuler
+from ..operations import rotateEuler, rotatePvEuler
 
 from .basicGeometry import BasicGeometry
 
@@ -72,6 +71,6 @@ class ExtrudedPolygon(BasicGeometry):
         poly = poly.extrude([self.height, 0, 0], capping=capping)
 
         poly = rotatePvEuler(
-            poly, self.center, self.angle[0], self.angle[1], self.angle[2]
+            poly, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
         return poly

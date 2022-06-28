@@ -2,7 +2,6 @@ import os
 import numpy as np
 import cadquery as cq
 from microgen import (
-    removeEmptyLines,
     Rve,
     Cylinder,
     periodic,
@@ -20,7 +19,6 @@ Ngeomphase_file = "test_octet.dat"
 
 # fichier
 NPhases_file = path_data + Ngeomphase_file
-removeEmptyLines(NPhases_file)
 
 dt = np.dtype(
     [
@@ -57,14 +55,14 @@ radius = DATA[9]
 
 # sections = read_sections(path_data,section_file)
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
+rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 listPhases = []
 listPeriodicPhases = []
 n = len(xc)
 
 for i in range(0, n):
     elem = Cylinder(
-        center=(xc[i], yc[i], zc[i]),
+        center=(xc[i] - 0.5, yc[i] - 0.5, zc[i] - 0.5),
         orientation=(psi[i], theta[i], phi[i]),
         height=height[i],
         radius=radius[i],
@@ -74,8 +72,6 @@ for i in range(0, n):
 for phase_elem in listPhases:
     periodicPhase = periodic(phase=phase_elem, rve=rve)
     listPeriodicPhases.append(periodicPhase)
-tmp = cq.Compound.makeCompound([phase.shape for phase in listPeriodicPhases])
-cq.exporters.export(tmp, "tmp.stl")
 
 phases_cut = cutPhases(
     phaseList=listPeriodicPhases, reverseOrder=False

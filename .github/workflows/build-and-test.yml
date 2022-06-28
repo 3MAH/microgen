@@ -78,4 +78,3 @@ jobs:
       - name: Examples
         shell: bash -l {0}
         run: cd examples && bash run_examples.sh
-

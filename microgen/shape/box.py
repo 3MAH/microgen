@@ -5,10 +5,8 @@ Box (:mod:`microgen.shape.box`)
 """
 import cadquery as cq
 import pyvista as pv
-import numpy as np
 
-from ..operations import rotateEuler
-from ..pvoperations import rotatePvEuler
+from ..operations import rotateEuler, rotatePvEuler
 from .basicGeometry import BasicGeometry
 
 
@@ -59,8 +57,8 @@ class Box(BasicGeometry):
         box = rotatePvEuler(
             box,
             self.center,
-            self.angle[0],
-            self.angle[1],
-            self.angle[2]
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2]
         )
         return box

@@ -7,8 +7,7 @@ import cadquery as cq
 import pyvista as pv
 import numpy as np
 
-from ..operations import rotateEuler
-from ..pvoperations import rotatePvEuler
+from ..operations import rotateEuler, rotatePvEuler
 
 from .basicGeometry import BasicGeometry
 
@@ -56,15 +55,12 @@ class Ellipsoid(BasicGeometry):
                 [self.a_x, 0, 0, self.center[0]],
                 [0, self.a_y, 0, self.center[1]],
                 [0, 0, self.a_z, self.center[2]],
+                [0, 0, 0, 1]
             ]
         )
-
-        sphere = pv.Sphere(
-            radius=self.radius,
-            center=tuple(self.center)
-        )
-        ellipsoid = sphere.transform(transform_matrix)
+        sphere = pv.Sphere(radius=1)
+        ellipsoid = sphere.transform(transform_matrix, inplace=False)
         ellipsoid = rotatePvEuler(
-            ellipsoid, self.center, self.angle[0], self.angle[1], self.angle[2]
+            ellipsoid, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
         )
         return ellipsoid

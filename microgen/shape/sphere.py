@@ -30,9 +30,11 @@ class Sphere(BasicGeometry):
         )
         return cq.Shape(sphere.val().wrapped)
 
-    def createPvSphere(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
+    def generateVtk(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
         return pv.Sphere(
             radius=self.radius,
-            center=tuple(self.center)
+            center=tuple(self.center),
+            theta_resolution=theta_resolution,
+            phi_resolution=phi_resolution,
         )
         
