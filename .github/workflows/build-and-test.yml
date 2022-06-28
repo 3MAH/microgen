@@ -40,11 +40,13 @@ jobs:
       #     environment-file: environment.yml
       #     use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
           
-      - name: Setup Miniforge
+      - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2
         with:
+            miniforge-variant: Mambaforge
+            miniforge-version: latest
             activate-environment: microgen
-            auto-update-conda: true
+            use-mamba: true
 
       - name: Get Date
         id: get-date
@@ -62,7 +64,7 @@ jobs:
         id: cache
 
       - name: Update environment
-        run: conda env update -n microgen -f environment.yml
+        run: mamba env update -n microgen -f environment.yml
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Install
@@ -76,4 +78,3 @@ jobs:
       - name: Examples
         shell: bash -l {0}
         run: cd examples && bash run_examples.sh
-
