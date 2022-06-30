@@ -45,20 +45,22 @@ class Box(BasicGeometry):
 
     def generateVtk(self, level=0, quads=True) -> pv.PolyData:
         box = pv.Box(
-            bounds=(self.center[0] - 0.5 * self.dim_x,
-                    self.center[0] + 0.5 * self.dim_x,
-                    self.center[1] - 0.5 * self.dim_y,
-                    self.center[1] + 0.5 * self.dim_y,
-                    self.center[2] - 0.5 * self.dim_z,
-                    self.center[2] + 0.5 * self.dim_z),
+            bounds=(
+                self.center[0] - 0.5 * self.dim_x,
+                self.center[0] + 0.5 * self.dim_x,
+                self.center[1] - 0.5 * self.dim_y,
+                self.center[1] + 0.5 * self.dim_y,
+                self.center[2] - 0.5 * self.dim_z,
+                self.center[2] + 0.5 * self.dim_z,
+            ),
             level=level,
-            quads=quads
+            quads=quads,
         )
         box = rotatePvEuler(
             box,
             self.center,
             self.orientation[0],
             self.orientation[1],
-            self.orientation[2]
+            self.orientation[2],
         )
         return box

@@ -61,6 +61,7 @@ def rotateEuler(
     )
     return object_r
 
+
 def rotatePvEuler(
     object: pv.PolyData,
     center: np.ndarray,
@@ -87,33 +88,18 @@ def rotatePvEuler(
     """
 
     u = (np.cos(psi), np.sin(psi), 0.0)
-    z2 = (
-            np.sin(psi) * np.sin(theta),
-            -np.sin(theta) * np.cos(psi),
-            np.cos(theta)
-    )
+    z2 = (np.sin(psi) * np.sin(theta), -np.sin(theta) * np.cos(psi), np.cos(theta))
     object_r = object.rotate_vector(
-        vector=(0,0,1),
-        angle=psi,
-        point=tuple(center),
-        inplace=False
+        vector=(0, 0, 1), angle=psi, point=tuple(center), inplace=False
     )
-    object_r.rotate_vector(
-        vector=u,
-        angle=theta,
-        point=tuple(center),
-        inplace=True
-    )
-    object_r.rotate_vector(
-        vector=z2,
-        angle=phi,
-        point=tuple(center),
-        inplace=True
-    )
+    object_r.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
+    object_r.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
     return object_r
 
 
-def rescale(shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]) -> cq.Shape:
+def rescale(
+    shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]
+) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -367,17 +353,22 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
                 xyz_repeat.add(
                     unit_geom,
                     loc=cq.Location(
-                        cq.Vector(center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
-                                  center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
-                                  center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z))
+                        cq.Vector(
+                            center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                            center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                            center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z),
+                        )
                     ),
                 )
     compound = xyz_repeat.toCompound()
     shape = cq.Shape(compound.wrapped)
     return shape
 
-def repeatPolyData(mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]) -> pv.PolyData:
-    '''
+
+def repeatPolyData(
+    mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]
+) -> pv.PolyData:
+    """
     Repeats mesh in each direction according to the given grid
 
     :param mesh: pv.PolyData to repeat
@@ -385,15 +376,20 @@ def repeatPolyData(mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]) -> p
     :param grid: list of number of geometry repetitions in each direction
 
     :return: pv.PolyData of the repeated geometry
-    '''
-    
+    """
+
     xyz_repeat = pv.PolyData()
     for i_x in range(grid[0]):
         for i_y in range(grid[1]):
             for i_z in range(grid[2]):
                 new_mesh = mesh.copy()
-                new_mesh.translate((-rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
-                                    -rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
-                                    -rve.dim_z * (0.5 * grid[2] - 0.5 - i_z)), inplace=True)
+                new_mesh.translate(
+                    (
+                        -rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                        -rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                        -rve.dim_z * (0.5 * grid[2] - 0.5 - i_z),
+                    ),
+                    inplace=True,
+                )
                 xyz_repeat.merge(new_mesh, inplace=True)
     return xyz_repeat

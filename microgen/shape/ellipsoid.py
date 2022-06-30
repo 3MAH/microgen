@@ -11,6 +11,7 @@ from ..operations import rotateEuler, rotatePvEuler
 
 from .basicGeometry import BasicGeometry
 
+
 class Ellipsoid(BasicGeometry):
     """
     Class to generate an ellipsoid
@@ -48,19 +49,23 @@ class Ellipsoid(BasicGeometry):
             self.orientation[2],
         )
         return ellipsoid
-        
+
     def generateVtk(self) -> pv.PolyData:
         transform_matrix = np.array(
             [
                 [self.a_x, 0, 0, self.center[0]],
                 [0, self.a_y, 0, self.center[1]],
                 [0, 0, self.a_z, self.center[2]],
-                [0, 0, 0, 1]
+                [0, 0, 0, 1],
             ]
         )
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
         ellipsoid = rotatePvEuler(
-            ellipsoid, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
+            ellipsoid,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
         return ellipsoid

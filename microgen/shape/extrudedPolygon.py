@@ -13,6 +13,7 @@ from ..operations import rotateEuler, rotatePvEuler
 
 from .basicGeometry import BasicGeometry
 
+
 class ExtrudedPolygon(BasicGeometry):
     """
     Class to generate an extruded polygon with a given list of points and a thickness
@@ -57,13 +58,17 @@ class ExtrudedPolygon(BasicGeometry):
             self.orientation[2],
         )
         return cq.Shape(poly.val().wrapped)
-        
+
     def generateVtk(self, capping=True) -> pv.PolyData:
         vertices = []
         for corner in self.listCorners:
-            vertices.append([self.center[0] - 0.5 * self.height,
-                             self.center[1] + corner[0],
-                             self.center[2] + corner[1]])
+            vertices.append(
+                [
+                    self.center[0] - 0.5 * self.height,
+                    self.center[1] + corner[0],
+                    self.center[2] + corner[1],
+                ]
+            )
         faces = np.arange(len(vertices))
         faces = np.insert(faces, 0, len(vertices))
 
@@ -71,6 +76,10 @@ class ExtrudedPolygon(BasicGeometry):
         poly = poly.extrude([self.height, 0, 0], capping=capping)
 
         poly = rotatePvEuler(
-            poly, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
+            poly,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
         return poly

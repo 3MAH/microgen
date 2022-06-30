@@ -10,6 +10,7 @@ import pyvista as pv
 from ..operations import rotateEuler, rotatePvEuler
 from .basicGeometry import BasicGeometry
 
+
 class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
@@ -61,18 +62,34 @@ class Capsule(BasicGeometry):
         )
         return capsule
 
-    def generateVtk(self, resolution=100, theta_resolution=50, phi_resolution=50, capping=True) -> pv.PolyData:
-        cylinder = pv.Cylinder(center=self.center, radius=self.radius, height=self.height,
-                               resolution=resolution, capping=capping)
-        sphereL = pv.Sphere(radius=self.radius,
-                            center=(self.center[0] - self.height / 2, self.center[1], self.center[2]),
-                            theta_resolution=theta_resolution,
-                            phi_resolution=phi_resolution)
-        sphereR = pv.Sphere(radius=self.radius,
-                            center=(self.center[0] + self.height / 2, self.center[1], self.center[2]),
-                            theta_resolution=theta_resolution,
-                            phi_resolution=phi_resolution)
+    def generateVtk(
+        self, resolution=100, theta_resolution=50, phi_resolution=50, capping=True
+    ) -> pv.PolyData:
+        cylinder = pv.Cylinder(
+            center=self.center,
+            radius=self.radius,
+            height=self.height,
+            resolution=resolution,
+            capping=capping,
+        )
+        sphereL = pv.Sphere(
+            radius=self.radius,
+            center=(self.center[0] - self.height / 2, self.center[1], self.center[2]),
+            theta_resolution=theta_resolution,
+            phi_resolution=phi_resolution,
+        )
+        sphereR = pv.Sphere(
+            radius=self.radius,
+            center=(self.center[0] + self.height / 2, self.center[1], self.center[2]),
+            theta_resolution=theta_resolution,
+            phi_resolution=phi_resolution,
+        )
         capsule = cylinder.merge([sphereL, sphereR])
-        capsule = rotatePvEuler(capsule, self.center,
-                                self.orientation[0], self.orientation[1], self.orientation[2])
+        capsule = rotatePvEuler(
+            capsule,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
+        )
         return capsule

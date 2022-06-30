@@ -16,9 +16,13 @@ class Rve:
     :param center: center of the RVE
     """
 
-    def __init__(self,
-                 dim_x: float = 1, dim_y: float = 1, dim_z: float = 1,
-                 center: Union[np.ndarray, tuple] = (0, 0, 0),) -> None:
+    def __init__(
+        self,
+        dim_x: float = 1,
+        dim_y: float = 1,
+        dim_z: float = 1,
+        center: Union[np.ndarray, tuple] = (0, 0, 0),
+    ) -> None:
         self.center = center
         self.dim_x = dim_x
         self.dim_y = dim_y

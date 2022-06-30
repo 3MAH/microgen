@@ -173,15 +173,19 @@ class Phase:
                     xyz_repeat.add(
                         self.shape,
                         loc=cq.Location(
-                            cq.Vector(center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
-                                      center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
-                                      center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z))
+                            cq.Vector(
+                                center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
+                                center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
+                                center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z),
+                            )
                         ),
                     )
         compound = xyz_repeat.toCompound()
         self._shape = cq.Shape(compound.wrapped)
 
-    def rasterize(self, rve: Rve, grid: list[int], phasePerRaster: bool = True) -> Union[None, list['Phase']]:
+    def rasterize(
+        self, rve: Rve, grid: list[int], phasePerRaster: bool = True
+    ) -> Union[None, list["Phase"]]:
         """
         Rasters solids from phase according to the rve divided by the given grid
 

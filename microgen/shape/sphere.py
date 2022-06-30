@@ -37,4 +37,3 @@ class Sphere(BasicGeometry):
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
         )
-        

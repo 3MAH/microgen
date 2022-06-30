@@ -10,6 +10,7 @@ from ..operations import rotateEuler, rotatePvEuler
 
 from .basicGeometry import BasicGeometry
 
+
 class Cylinder(BasicGeometry):
     """
     Class to generate a cylinder
@@ -51,9 +52,13 @@ class Cylinder(BasicGeometry):
             radius=self.radius,
             height=self.height,
             resolution=resolution,
-            capping=capping
+            capping=capping,
         )
         cylinder = rotatePvEuler(
-            cylinder, self.center, self.orientation[0], self.orientation[1], self.orientation[2]
+            cylinder,
+            self.center,
+            self.orientation[0],
+            self.orientation[1],
+            self.orientation[2],
         )
         return cylinder
