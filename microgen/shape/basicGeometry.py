@@ -8,15 +8,6 @@ import cadquery as cq
 
 from typing import Union
 
-# import box
-# from .capsule import Capsule
-# from .cylinder import Cylinder
-# from .ellipsoid import Ellipsoid
-# from .extrudedPolygon import ExtrudedPolygon
-# from .polyhedron import Polyhedron
-# from .sphere import Sphere
-# from .tpms import Tpms
-
 
 class BasicGeometry:
     """

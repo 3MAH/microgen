@@ -15,8 +15,8 @@ from .rve import Rve
 
 class Phase:
     """
-        Phase class to manage list of solids belonging to the same phase
-        properties: centerOfMass, inertiaMatrix, shape, solids
+    Phase class to manage list of solids belonging to the same phase
+    properties: centerOfMass, inertiaMatrix, shape, solids
 
     :param shape: Shape object
     :param solids: list of cq.Solid or list of list

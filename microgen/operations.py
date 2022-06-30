@@ -69,7 +69,6 @@ def rotatePvEuler(
     phi: float,
 ) -> pv.PolyData:
     """
-
     Rotates object according to XZX Euler angle convention
 
     Parameters
@@ -150,6 +149,7 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
 
     :param cqShapeList: list of shapes to fuse
     :param retain_edges: retain intersecting edges
+
     :return fused object
     """
 
@@ -351,7 +351,7 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
     """
     Repeats unit geometry in each direction according to the given grid
 
-    :param unit_geom: Geometry to repeat
+    :param unit_geom: Shape to repeat
     :param rve: RVE of the geometry to repeat
     :param grid: list of number of geometry repetitions in each direction
 
@@ -377,6 +377,16 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
     return shape
 
 def repeatPolyData(mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]) -> pv.PolyData:
+    '''
+    Repeats mesh in each direction according to the given grid
+
+    :param mesh: pv.PolyData to repeat
+    :param rve: RVE of the geometry to repeat
+    :param grid: list of number of geometry repetitions in each direction
+
+    :return: pv.PolyData of the repeated geometry
+    '''
+    
     xyz_repeat = pv.PolyData()
     for i_x in range(grid[0]):
         for i_y in range(grid[1]):
