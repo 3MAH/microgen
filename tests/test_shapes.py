@@ -117,6 +117,7 @@ def test_tpms():
         },
     )
     elem.generate()
+    elem.generateVtk()
 
     elem = microgen.shape.tpms.Tpms(
         center=(0.5, 0.5, 0.5),
@@ -129,18 +130,6 @@ def test_tpms():
     elem.generate()
     elem.generateSurface(isovalue=0.1)
     elem.generateSurfaceVtk()
-
-    # elem = microgen.shape.tpms.Tpms(
-    #     center=(0.5, 0.5, 0.5),
-    #     surface_function=microgen.shape.tpms.schwarzD,
-    #     type_part="sheet",
-    #     thickness=0.3,
-    #     cell_size=2,
-    #     repeat_cell=(2, 1, 1),
-    # )
-    # elem.generateSurface(isovalue=0.1)
-    # elem.generateSurfaceVtk()
-    # elem.generate()
 
     with pytest.raises(ValueError):
         microgen.shape.tpms.Tpms(

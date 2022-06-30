@@ -265,7 +265,6 @@ class Tpms(BasicGeometry):
         """
         Creates thick TPMS geometry (sheet or skeletal part) from surface
 
-        :param isovalue: height isovalue of the given tpms function
         :param nSample: surface file name
         :param smoothing: smoothing loop iterations
         """
@@ -315,7 +314,25 @@ class Tpms(BasicGeometry):
             )
         return shape
 
-# Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
+    def generateVtk(
+        self,
+        nSample: int = 20,
+        smoothing: int = 100,
+    ) -> pv.PolyData:
+        """
+        Creates thick TPMS geometry (sheet or skeletal part) from surface
+        Calls generate function and converts cq.Shape to pv.Polydata
+
+        :param nSample: surface file name
+        :param smoothing: smoothing loop iterations
+        """
+        shape = self.generate(nSample=nSample, smoothing=smoothing)
+        return pv.PolyData(
+            shape.toVtkPolyData(tolerance=0.01, angularTolerance=0.1, normals=True)
+        )
+
+
+#  Lidinoid -> 0.5*(sin(2*x)*cos(y)*sin(z) + sin(2*y)*cos(z)*sin(x) + sin(2*z)*cos(x)*sin(y)) - 0.5*(cos(2*x)*cos(2*y) + cos(2*y)*cos(2*z) + cos(2*z)*cos(2*x)) + 0.15 = 0
 
 
 def gyroid(x: float, y: float, z: float) -> float:
