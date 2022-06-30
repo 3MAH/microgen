@@ -9,4 +9,4 @@ mesh = geometry.generateSurfaceVtk()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-pl.show()
+pl.save_graphic('fischerKochS.pdf')
