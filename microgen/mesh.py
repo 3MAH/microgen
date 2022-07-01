@@ -13,7 +13,7 @@ def mesh(
     mesh_file: str,
     listPhases: list[Phase],
     size: float,
-    order: int = 0,
+    order: int,
     output_file: str = "Mesh.msh",
     mshFileVersion: int = 4,
 ) -> None:
@@ -34,6 +34,9 @@ def mesh(
     gmsh.option.setNumber(
         name="General.Verbosity", value=1
     )  # this would still print errors, but not warnings
+
+    gmsh.model.mesh.setOrder(order=order)
+    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
 
     flatListSolids = [solid for phase in listPhases for solid in phase.solids]
     nbTags = len(flatListSolids)
@@ -66,10 +69,7 @@ def mesh(
     p = gmsh.model.getEntities()
 
     gmsh.model.mesh.setSize(dimTags=p, size=size)
-    if order != 0:
-        gmsh.model.mesh.setOrder(order=order)
     gmsh.model.mesh.generate(dim=3)
-    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
     gmsh.write(fileName=output_file)
     gmsh.finalize()
 
@@ -79,7 +79,7 @@ def meshPeriodic(
     rve: Rve,
     listPhases: list[Phase],
     size: float,
-    order: int = 0,
+    order: int,
     output_file: str = "MeshPeriodic.msh",
     mshFileVersion: int = 4,
 ) -> None:
@@ -101,6 +101,9 @@ def meshPeriodic(
     gmsh.option.setNumber(
         "General.Verbosity", 1
     )  # this would still print errors, but not warnings
+
+    gmsh.model.mesh.setOrder(order)
+    gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
 
     flatListSolids = [solid for phase in listPhases for solid in phase.solids]
     nbTags = len(flatListSolids)
@@ -263,8 +266,5 @@ def meshPeriodic(
     p = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(p, size)
     gmsh.model.mesh.generate(3)
-    if order != 0:
-        gmsh.model.mesh.setOrder(order)
-    gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
     gmsh.write(output_file)
     gmsh.finalize()

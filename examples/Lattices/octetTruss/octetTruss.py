@@ -84,6 +84,7 @@ meshPeriodic(
     mesh_file="octettruss.step",
     rve=rve,
     listPhases=phases_cut,
+    order=1,
     size=0.03,
     output_file="octettruss.vtk",
 )
