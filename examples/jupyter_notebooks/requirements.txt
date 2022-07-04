@@ -1,0 +1,4 @@
+jupyterlab
+jupyter-cadquery
+ipyvtklink
+jupyterview
