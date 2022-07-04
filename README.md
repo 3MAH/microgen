@@ -7,6 +7,7 @@ Microstructure generation
 [![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/installer/conda.svg)](https://conda.anaconda.org/set3mah)
 [![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/1.0/)
 [![3MAH](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/)
+[![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028)
 
 
 ## Documentation
