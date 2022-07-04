@@ -65,4 +65,8 @@ echo "tpmsSphere"
 cd tpmsSphere
 python tpmsSphere.py
 cd ..
+echo "surface"
+cd surface
+python fischerKochS.py
+cd ..
 cd ..
