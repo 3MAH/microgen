@@ -17,6 +17,14 @@ from .basicGeometry import BasicGeometry
 class ExtrudedPolygon(BasicGeometry):
     """
     Class to generate an extruded polygon with a given list of points and a thickness
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.ExtrudedPolygon().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(

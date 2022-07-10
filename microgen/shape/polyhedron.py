@@ -14,6 +14,14 @@ from .basicGeometry import BasicGeometry
 class Polyhedron(BasicGeometry):
     """
     Class to generate a Polyhedron with a given set of faces and vertices
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.Polyhedron().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(

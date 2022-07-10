@@ -15,6 +15,14 @@ from .basicGeometry import BasicGeometry
 class Ellipsoid(BasicGeometry):
     """
     Class to generate an ellipsoid
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.Ellipsoid().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(

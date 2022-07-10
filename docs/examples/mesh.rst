@@ -6,7 +6,7 @@ Mesh
 Mesh
 -------
 
-.. include:: ../../examples/3Doperations/Voronoi/testNeper.py
+.. include:: ../../examples/3Doperations/voronoi/voronoi.py
    :literal:
 
 .. image:: ../_static/examples/Mesh.png
@@ -15,7 +15,7 @@ Mesh
 Periodic Mesh
 -------------
 
-.. include:: ../../examples/Lattices/octetTruss/testOctet.py
+.. include:: ../../examples/Lattices/octetTruss/octetTruss.py
    :literal:
 
 .. image:: ../_static/examples/meshPeriodic.png

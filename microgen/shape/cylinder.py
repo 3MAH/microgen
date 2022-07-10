@@ -14,6 +14,14 @@ from .basicGeometry import BasicGeometry
 class Cylinder(BasicGeometry):
     """
     Class to generate a cylinder
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.Cylinder().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(

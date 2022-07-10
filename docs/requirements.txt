@@ -2,7 +2,8 @@ sphinx
 sphinx-rtd-theme
 sphinxcontrib-napoleon
 mock
-vtk==9.0.3
+vtk==9.0.1
 cadquery==2.2.0b0
 pygmsh
-pygalmesh
+jupyter-sphinx
+pythreejs==2.3.0

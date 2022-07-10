@@ -16,7 +16,7 @@ With conda
 
 
 With pip (Linux only)
-~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: none
 

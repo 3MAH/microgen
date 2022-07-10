@@ -2,6 +2,12 @@
 =============================================
 TPMS (:mod:`microgen.shape.tpms`)
 =============================================
+
+.. jupyter-execute::
+   :hide-code:
+
+   pyvista.global_theme.smooth_shading = True
+
 """
 from typing import Callable, Union
 
@@ -355,8 +361,23 @@ class Tpms(BasicGeometry):
 
 
 def gyroid(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0`
+    """
+    .. math:: 
+       sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.gyroid,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white')
     """
     return (
         sin(2 * pi * x) * cos(2 * pi * y)
@@ -366,18 +387,45 @@ def gyroid(x: float, y: float, z: float) -> float:
 
 
 def schwarzP(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0`
+    """
+    .. math::
+       cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.schwarzP,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white')    
     """
     return cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
 
 
 def schwarzD(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \
-           sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
-           cos(2 \pi x) sin(2 \pi y) cos(2 \pi z) + \
-           cos(2 \pi x) cos(2 \pi y) sin(2 \pi z) = 0`
+    """
+    .. math::
+       \displaylines{sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \\\ sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi x) sin(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi x) cos(2 \pi y) sin(2 \pi z) = 0}
+
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.schwarzD,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     a = sin(2 * pi * x) * sin(2 * pi * y) * sin(2 * pi * z)
     b = sin(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
@@ -387,9 +435,23 @@ def schwarzD(x: float, y: float, z: float) -> float:
 
 
 def neovius(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \
-           4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0`
+    """
+    .. math::
+       \displaylines{3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \\\ 4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0}
+           
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.neovius,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     a = 3 * cos(2 * pi * x) + cos(2 * pi * y) + cos(2 * pi * z)
     b = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
@@ -398,11 +460,23 @@ def neovius(x: float, y: float, z: float) -> float:
 
 
 def schoenIWP(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`2 ( cos(2 \pi x) cos(2 \pi y) + \
-               cos(2 \pi y) cos(2 \pi z) + \
-               cos(2 \pi z) cos(2 \pi x)) - \
-           (cos(4 \pi x) + cos(4 \pi y) + cos(4 \pi z)) = 0`
+    """
+    .. math::
+       \displaylines{2 ( cos(2 \pi x) cos(2 \pi y) + \\\ cos(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi z) cos(2 \pi x)) - \\\ (cos(4 \pi x) + cos(4 \pi y) + cos(4 \pi z)) = 0}
+    
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.schoenIWP,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     a = 2 * (
         cos(2 * pi * x) * cos(2 * pi * y)
@@ -415,11 +489,23 @@ def schoenIWP(x: float, y: float, z: float) -> float:
 
 
 def schoenFRD(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \
-           (cos(4 \pi x) cos(4 \pi y) + \
-            cos(4 \pi y) cos(4 \pi z) + \
-            cos(4 \pi z) cos(4 \pi x)) = 0`
+    """
+    .. math::
+       \displaylines{4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \\\ (cos(4 \pi x) cos(4 \pi y) + \\\ cos(4 \pi y) cos(4 \pi z) + \\\ cos(4 \pi z) cos(4 \pi x)) = 0}
+            
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.schoenFRD,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     a = 4 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     b = (
@@ -431,10 +517,23 @@ def schoenFRD(x: float, y: float, z: float) -> float:
 
 
 def fischerKochS(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \
-           cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \
-           sin(2 \pi x) cos(2 \pi y) cos(4 \pi z) = 0`
+    """
+    .. math::
+       \displaylines{cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \\\ sin(2 \pi x) cos(2 \pi y) cos(4 \pi z) = 0}
+    
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.fischerKochS,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     a = cos(4 * pi * x) * sin(2 * pi * y) * cos(2 * pi * z)
     b = cos(2 * pi * x) * cos(4 * pi * y) * sin(2 * pi * z)
@@ -444,11 +543,23 @@ def fischerKochS(x: float, y: float, z: float) -> float:
 
 
 def pmy(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \
-           sin(4 \pi x) sin(2 \pi y) + \
-           sin(2 \pi x) sin(4 \pi z) + \
-           sin(4 \pi y) sin(2 \pi z) = 0`
+    """
+    .. math::
+       \displaylines{2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \\\ sin(4 \pi x) sin(2 \pi y) + \\\ sin(2 \pi x) sin(4 \pi z) + \\\ sin(4 \pi y) sin(2 \pi z) = 0}
+           
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.pmy,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     a = 2 * cos(2 * pi * x) * cos(2 * pi * y) * cos(2 * pi * z)
     b = sin(4 * pi * x) * sin(2 * pi * y)
@@ -459,7 +570,22 @@ def pmy(x: float, y: float, z: float) -> float:
 
 
 def honeycomb(x: float, y: float, z: float) -> float:
-    r"""
-    :math:`sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0`
+    """
+    .. math::
+       sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0
+       
+    .. jupyter-execute::
+       :hide-code:
+   
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.tpms.honeycomb,
+           type_part="sheet",
+           thickness=0.05
+       )
+       shape = geometry.generateSurfaceVtk()
+
+       shape.plot(color='white') 
     """
     return sin(2 * pi * x) * cos(2 * pi * y) + sin(2 * pi * y) + cos(2 * pi * z)

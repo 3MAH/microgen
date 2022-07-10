@@ -86,11 +86,11 @@ class Neper:
     def tessParse(filename: str) -> dict[str, dict]:
         """
         Parses tesselation file (.tess) generated with neper.
-        Following .tess structure from `neper's documentation`_:
+        Following .tess structure from `neper's`_ documentation:
         Returns a dictionnary containing information cells,
         vertices, edges, faces, polyhedra
 
-        .. _neper's documentation: https://neper.info/doc/fileformat.html#tessellation-file-tess
+        .. _neper's: https://neper.info/doc/fileformat.html#tessellation-file-tess
         """
         if len(filename.split(".")) == 1:
             filename += ".tess"

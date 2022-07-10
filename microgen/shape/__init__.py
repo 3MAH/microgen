@@ -2,6 +2,17 @@
 ========================================
 Shape (:mod:`microgen.shape`)
 ========================================
+
+.. jupyter-execute::
+   :hide-code:
+
+   import pyvista
+   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [690, 400]
+   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.axes.show = False
+
 """
 
 from typing import Any

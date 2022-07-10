@@ -12,6 +12,14 @@ from .basicGeometry import BasicGeometry
 class Sphere(BasicGeometry):
     """
     Class to generate a sphere
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.Sphere().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(

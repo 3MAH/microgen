@@ -13,6 +13,14 @@ from .basicGeometry import BasicGeometry
 class Box(BasicGeometry):
     """
     Class to generate a box
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.Box().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(

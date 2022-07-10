@@ -23,7 +23,7 @@ TPMS available
 Spherical gyroid
 -----------------------
 
-.. include:: ../../examples/TPMS/tpms_sphere/tpms_sphere.py
+.. include:: ../../examples/TPMS/tpmsSphere/tpmsSphere.py
    :literal:
 
 .. image:: ../_static/examples/tpms_sphere.png
@@ -31,7 +31,7 @@ Spherical gyroid
 Shell
 ---------
 
-.. include:: ../../examples/TPMS/tpms_shell/tpms_shell.py
+.. include:: ../../examples/TPMS/tpmsShell/tpmsShell.py
    :literal:
 
 .. image:: ../_static/examples/tpms_shell.png

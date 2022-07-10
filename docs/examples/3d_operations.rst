@@ -7,7 +7,7 @@
 Repeating unit geometry
 -----------------------
 
-.. include:: ../../examples/3Doperations/repeatGeom/repeat.py
+.. include:: ../../examples/3Doperations/repeatShape/repeatShape.py
    :literal:
 
 .. image:: ../_static/examples/repeated_geometry.png
@@ -25,7 +25,7 @@ Raster Ellipsoid
 Voronoi
 -------
 
-.. include:: ../../examples/3Doperations/Voronoi/testNeper.py
+.. include:: ../../examples/3Doperations/voronoi/voronoi.py
    :literal:
 
 .. image:: ../_static/examples/Voronoi.png
@@ -34,7 +34,7 @@ Voronoi
 Voronoi gyroid
 --------------
 
-.. include:: ../../examples/3Doperations/VoronoiGyroid/voronoi_gyroid.py
+.. include:: ../../examples/3Doperations/voronoiGyroid/voronoiGyroid.py
    :literal:
 
 .. image:: ../_static/examples/Gyroid-voro.png

@@ -6,7 +6,7 @@ Lattices
 Octet-truss
 -----------
 
-.. include:: ../../examples/Lattices/octetTruss/testOctet.py
+.. include:: ../../examples/Lattices/octetTruss/octetTruss.py
    :literal:
 
 .. image:: ../_static/examples/octettruss.png
@@ -15,7 +15,7 @@ Octet-truss
 Honeycomb
 ---------
 
-.. include:: ../../examples/Lattices/honeycomb/extrudedHoneycomb.py
+.. include:: ../../examples/Lattices/honeycomb/honeycomb.py
    :literal:
 
 .. image:: ../_static/examples/honeycomb.png

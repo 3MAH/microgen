@@ -14,6 +14,14 @@ from .basicGeometry import BasicGeometry
 class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
+    
+    .. jupyter-execute::
+       :hide-code:
+       
+       import microgen
+
+       shape = microgen.Capsule().generateVtk()
+       shape.plot(color='white') 
     """
 
     def __init__(
