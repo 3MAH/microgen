@@ -2,13 +2,16 @@ name: docs
 channels:
   - conda-forge
   - cadquery
+  - set3mah
 
 dependencies:
+  - microgen
   - vtk=9.0.1
   - cadquery=master
   - python-gmsh
   - pythreejs=2.3.0
   - jupyter-sphinx 
+  - pyvista
   - pip
   - pip:
     - sphinx_rtd_theme
