@@ -6,7 +6,8 @@ channels:
 dependencies:
   - vtk=9.0.1
   - cadquery=master
-  - python-gmsh=4.8
-  - pygalmesh
+  - python-gmsh
+  - pythreejs
+  - jupyter-sphinx 
   - pip:
     - sphinx_rtd_theme
