@@ -18,8 +18,8 @@ Read the Docs | [![Documentation Status](https://readthedocs.org/projects/microg
 
 
 <p align="center">
-    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
-    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
+    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="100%"/>
+    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="100%"/>
 </p>
 
 
