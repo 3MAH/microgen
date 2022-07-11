@@ -6,10 +6,14 @@
 Microgen documentation
 ======================
 
-Microstructure generation tool based on CadQuery library.
+Microstructure generation tool based on `CadQuery <https://cadquery.readthedocs.io/en/latest/>`_ and `PyVista <https://docs.pyvista.org/index.html>`_ libraries.
+
+
+Table of contents
+=================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Introduction
 
    Overview
@@ -17,13 +21,13 @@ Microstructure generation tool based on CadQuery library.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Documentation
 
    Documentation
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Examples
 
    examples/basic_shapes

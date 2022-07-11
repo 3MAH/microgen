@@ -3,7 +3,13 @@
 Overview
 ========
 
-Microstructure generation tool based on `CadQuery <https://cadquery.readthedocs.io/en/latest/>`_ library.
+Microgen is a simple python library that helps to generate and mesh microstructures.
+
+Here are the main features:
+- Entirely written in Python 3 and based on `CadQuery <https://cadquery.readthedocs.io/en/latest/>`_ and `PyVista <https://docs.pyvista.org/index.html>`_ libraries.
+- It allows to generate simple reinforcement geometries (spheres, cylinder, ellipsoids, …) to generate virtual composites microstructures.
+- Three-dimensional Voronoi tessellation rallons to simulate the response granular materials and polycrystalline metals.
+- Regular mesh and periodic mesh are implemented using `Gmsh <https://gmsh.info/>`_, remeshing using `Mmg <https://www.mmgtools.org/>`_ is also implemented.
 
 
 .. image:: https://anaconda.org/set3mah/microgen/badges/installer/conda.svg
@@ -32,32 +38,12 @@ Microstructure generation tool based on `CadQuery <https://cadquery.readthedocs.
 
 -------------------------------------------------------------------------
 
+.. raw:: html
 
-Table of contents
------------------
-
-Introduction
-~~~~~~~~~~~~
-
-   - :ref:`RST Overview`
-   - :ref:`RST Install`
-
-Documentation
-~~~~~~~~~~~~~
-
-   - :ref:`RST Doc`
-
-Examples
-~~~~~~~~
-
-   - :ref:`RST Geometries`
-   - :ref:`RST Lattices`
-   - :ref:`RST Tpms`
-   - :ref:`RST 3Dop`
-   - :ref:`RST Mesh`
-
-
-
+   <p align="center">
+      <img src="_static/gyroid.gif" alt="Gyroid" width="49%"/>
+      <img src="_static/fischerKoch.gif" alt="TPMS" width="49%"/>
+   </p>
 
 Brief examples
 --------------
@@ -110,4 +96,5 @@ Brief examples
    mesh = pyvista.PolyData(fuse.toVtkPolyData(0.1))
    pl = pyvista.Plotter()
    pl.add_mesh(mesh, color='white')
+   pl.camera.zoom(1.5)
    pl.show()
