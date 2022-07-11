@@ -12,8 +12,8 @@ Here are the main features:
 
 
 <p align="center">
-    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="414"/>
-    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="414"/>
+    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="400"/>
+    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="400"/>
 </p>
 
 [![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
