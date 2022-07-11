@@ -3,6 +3,11 @@
 
 Microstructure generation
 
+<p align="center">
+    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="500"/>
+    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="500"/>
+</p>
+
 [![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
 [![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/installer/conda.svg)](https://conda.anaconda.org/set3mah)
 [![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/1.0.0/)
@@ -15,12 +20,6 @@ Microstructure generation
 Provider      | Status
 --------      | ------
 Read the Docs | [![Documentation Status](https://readthedocs.org/projects/microgen/badge/?version=latest)](https://microgen.readthedocs.io/en/latest/?badge=latest)
-
-
-<p align="center">
-    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
-    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
-</p>
 
 
 ## Installation
