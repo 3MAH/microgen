@@ -1,7 +1,15 @@
+<p align="center">
+    <img src="https://github.com/3MAH/microgen/blob/main/docs/_static/microgen.png?raw=true" alt="Microgen logo" width="100%"/>
+</p>
 
-[![Microgen Logo](https://github.com/3MAH/microgen/blob/main/docs/_static/microgen.png?raw=true)](https://github.com/3MAH/microgen)
+Microgen is a simple python library that helps to generate and mesh microstructures.
 
-Microstructure generation
+Here are the main features:
+- Entirely written in Python 3 and based on CadQuery and PyVista libraries.
+- It allows to generate simple reinforcement geometries (spheres, cylinder, ellipsoids, …) to generate virtual composites microstructures.
+- Three-dimensional Voronoi tessellation rallons to simulate the response granular materials and polycrystalline metals.
+- Regular mesh and periodic mesh are implemented using Gmsh, remeshing using Mmg is also implemented.
+
 
 <p align="center">
     <img src="docs/_static/gyroid.gif" alt="Gyroid" width="500"/>
