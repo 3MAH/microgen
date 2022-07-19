@@ -30,15 +30,7 @@ Provider      | Status
 Read the Docs | [![Documentation Status](https://readthedocs.org/projects/microgen/badge/?version=latest)](https://microgen.readthedocs.io/en/latest/?badge=latest)
 
 
-<<<<<<< HEAD
-<p align="center">
-    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="100%"/>
-    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="100%"/>
-</p>
 
-
-=======
->>>>>>> 131d135e10582c0954d0e96e0ea240cec97428a4
 ## Installation
 
 -------------------------------------------------------------------------------------------------------
