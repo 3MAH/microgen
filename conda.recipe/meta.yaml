@@ -18,7 +18,7 @@ requirements:
     - cadquery=master
     - python-gmsh
     - mmg
-    - neper
+    - neper # [not win]
     - pytest-cov
     - libtiff<4.4
     - pyvista
