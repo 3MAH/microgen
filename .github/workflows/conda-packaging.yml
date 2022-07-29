@@ -8,7 +8,7 @@ jobs:
     name: Linux
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
@@ -17,7 +17,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install python=3.9 conda-build anaconda-client
-          anaconda login --hostname linux-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }} -y
+          anaconda login --hostname linux-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload noarch/*.tar.bz2 --force
         
@@ -25,7 +25,7 @@ jobs:
     name: MacOS
     runs-on: "macos-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
@@ -34,7 +34,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install python=3.9 conda-build anaconda-client
-          anaconda login --hostname macos-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }} -y
+          anaconda login --hostname macos-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload osx-64/*.tar.bz2 --force
         
@@ -42,16 +42,15 @@ jobs:
     name: Windows
     runs-on: "windows-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Conda build for Windows
-        shell: cmd # pwsh # bash -l {0}
-        run: |
-          set ANACONDA_API_TOKEN=$env:TOKEN
+        shell: pwsh # bash -l {0}
+        run:
           conda install python=3.9 conda-build anaconda-client
-          anaconda login --hostname windows-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }} -y
+          anaconda login --hostname windows-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload win-64/*.tar.bz2 --force
