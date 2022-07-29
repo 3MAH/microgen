@@ -1,4 +1,5 @@
 jupyterlab
 jupyter-cadquery
 ipyvtklink
+ipygany
 jupyterview
