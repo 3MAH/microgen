@@ -15,7 +15,7 @@ dependencies:
   - pytest-cov
   - libtiff<4.4
   - ipygany
-  - pywin32
+  - pywin32 # [win]
   - pip:
     - jupyter-cadquery
 
