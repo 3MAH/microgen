@@ -6,7 +6,7 @@ source:
   git_url: https://github.com/3MAH/microgen.git
 
 build:
-  noarch: python
+  # noarch: python
   script: python setup.py install
 
 requirements:
@@ -18,7 +18,7 @@ requirements:
     - cadquery=master
     - python-gmsh
     - mmg
-    - neper # [not win]
+    - neper # [unix]
     - pytest-cov
     - libtiff<4.4
     - pyvista

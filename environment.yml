@@ -11,7 +11,7 @@ dependencies:
   - python-gmsh
   - meshio
   - mmg
-  - neper # [not win]
+  - neper # [unix]
   - pytest-cov
   - libtiff<4.4
 
