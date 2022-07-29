@@ -14,7 +14,9 @@ dependencies:
   - neper # [unix]
   - pytest-cov
   - libtiff<4.4
+  # mybinder
   - ipygany
+  - mesa-libgl-devel-cos7-x86_64
   - pywin32 # [win]
   - pip:
     - jupyter-cadquery
