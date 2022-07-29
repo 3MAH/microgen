@@ -12,11 +12,13 @@ RUN apt-get update \
 # USER jovyan
 
 
+COPY . ${HOME}
+
+
 RUN conda install -y -c conda-forge -c cadquery -c set3mah microgen
 
-RUN pip install -r examples/jupyter_notebooks/requirements.txt
+RUN pip install -r ${HOME}/examples/jupyter_notebooks/requirements.txt
 
-# COPY . ${HOME}
 
 # WORKDIR $HOME
 
