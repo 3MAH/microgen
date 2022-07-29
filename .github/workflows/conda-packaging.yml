@@ -50,7 +50,7 @@ jobs:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Conda build for Windows
-        shell: pwsh # bash -l {0}
+        shell: pwsh
         run: |
           conda install python=3.9 conda-build anaconda-client
           anaconda logout

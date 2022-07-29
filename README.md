@@ -21,7 +21,7 @@ Here are the main features:
 [![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/1.0.0/)
 [![3MAH](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/)
 [![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028)
-
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/3MAH/microgen/HEAD?urlpath=lab%2Ftree%2Fexamples%2Fjupyter_notebooks)
 
 ## Documentation
 
