@@ -17,7 +17,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install python=3.9 conda-build anaconda-client
-          yes 2>/dev/null | anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+          anaconda logout
+          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload noarch/*.tar.bz2 --force
         
