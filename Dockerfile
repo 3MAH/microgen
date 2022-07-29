@@ -9,7 +9,7 @@ RUN apt-get update \
     libosmesa6 \
     xvfb \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
-# USER jovyan
+USER jovyan
 
 
 COPY . ${HOME}
