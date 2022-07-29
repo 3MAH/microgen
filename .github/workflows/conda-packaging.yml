@@ -16,7 +16,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install conda-build anaconda-client
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+          anaconda login --hostname linux-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload noarch/*.tar.bz2 --force
         
@@ -32,8 +32,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install conda-build anaconda-client
-          anaconda login --hostname macos-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build conda.recipe -c conda-forge --output-folder  .
+          anaconda login --hostname macos-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+          conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload osx-64/*.tar.bz2 --force
         
   windows:
@@ -49,6 +49,6 @@ jobs:
         run: |
           set ANACONDA_API_TOKEN=$env:TOKEN
           conda install conda-build anaconda-client
-          echo %ANACONDA_API_TOKEN%
-          conda-build conda.recipe -c conda-forge --output-folder  .
+          anaconda login --hostname linux-microgen-host --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+          conda-build conda.recipe -c conda-forge -c cadquery -c set3mah --output-folder  .
           anaconda upload win-64/*.tar.bz2 --force
