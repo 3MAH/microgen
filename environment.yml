@@ -4,10 +4,9 @@ channels:
   - set3mah
 
 dependencies:
-  - python
-  - vtk=9.0.1
-  - pyvista
   - cadquery=master
+  - vtk
+  - pyvista
   - python-gmsh
   - meshio
   - mmg
