@@ -14,7 +14,7 @@ requirements:
     - python
   run:
     - python
-    - vtk=9.0.1
+    - vtk
     - cadquery=master
     - python-gmsh
     - mmg
