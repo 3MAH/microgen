@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - microgen
-  - vtk=9.0.1
+  - vtk
   - cadquery=master
   - python-gmsh
   - pythreejs=2.3.0
