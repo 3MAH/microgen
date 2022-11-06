@@ -33,9 +33,10 @@ class Rve:
         self.y_max = center[1] + 0.5 * dim_y
         self.z_min = center[2] - 0.5 * dim_z
         self.z_max = center[2] + 0.5 * dim_z
-        self.dx = abs(self.x_max - self.x_min)
-        self.dy = abs(self.y_max - self.y_min)
-        self.dz = abs(self.z_max - self.z_min)
+        self.dx: float = abs(self.x_max - self.x_min)
+        self.dy: float = abs(self.y_max - self.y_min)
+        self.dz: float = abs(self.z_max - self.z_min)
+        self.delta = (self.dx, self.dy, self.dz)
         self.box = (
             cq.Workplane()
             .box(self.dim_x, self.dim_y, self.dim_z)
