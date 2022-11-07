@@ -78,6 +78,11 @@ def _generate_list_tags(listPhases: list[Phase]) -> list[list[int]]:
     return listTags
 
 
+def _generate_list_dim_tags(listPhases: list[Phase]) -> list[tuple[int, int]]:
+    nbTags = sum(len(phase.solids) for phase in listPhases)
+    return [(_DIM_COUNT, tag) for tag in range(1, nbTags + 1)]
+
+
 def _init_mesh(
         mesh_file: str,
         listPhases: list[Phase],
@@ -91,17 +96,9 @@ def _init_mesh(
 
     gmsh.model.mesh.setOrder(order=order)
     gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
-
-    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
-    nbTags = len(flatListSolids)
-    flatListTags = list(range(1, nbTags + 1, 1))
-
-    listTags = _generate_list_tags(listPhases)
-
-    listDimTags = [(3, tag) for tag in flatListTags]
-
     gmsh.model.occ.importShapes(fileName=mesh_file, highestDimOnly=True)
 
+    listDimTags = _generate_list_dim_tags(listPhases)
     if len(listDimTags) > 1:
         gmsh.model.occ.fragment(
             objectDimTags=listDimTags[:-1], toolDimTags=[listDimTags[-1]]
@@ -109,9 +106,10 @@ def _init_mesh(
 
     gmsh.model.occ.synchronize()
 
-    for i, tag in enumerate(listTags):
-        ps_i = gmsh.model.addPhysicalGroup(dim=3, tags=tag)
-        gmsh.model.setPhysicalName(dim=3, tag=ps_i, name="Mat" + str(i))
+    listTags = _generate_list_tags(listPhases)
+    for i, tags in enumerate(listTags):
+        ps_i = gmsh.model.addPhysicalGroup(dim=_DIM_COUNT, tags=tags)
+        gmsh.model.setPhysicalName(dim=_DIM_COUNT, tag=ps_i, name="Mat" + str(i))
 
 
 def _save_mesh(
