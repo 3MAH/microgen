@@ -140,17 +140,11 @@ def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> It
         yield bounds, tag
 
 
-def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
-    translation_matrix = np.eye(_DIM_COUNT + 1)
-    translation_matrix[axis, _DIM_COUNT] = rve.delta[axis]
-    translation: list[float] = list(translation_matrix.flatten())
-
+def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
     eps: float = 1.0e-3 * min(rve.delta)
-
     minimum = np.zeros(_DIM_COUNT)
     maximum = np.array(rve.delta)
     maximum[axis] = 0.
-
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
         bounds_min[:, axis] += 1
         for bounds_max, tag_max in _iter_bounding_boxes(bounds_min[0], bounds_min[1], eps):
@@ -158,9 +152,17 @@ def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
             if (
                     np.all(np.abs(np.subtract(bounds_max, bounds_min)) < eps)
             ):
-                gmsh.model.mesh.setPeriodic(
-                    dim=2,
-                    tags=[tag_max],
-                    tagsMaster=[tag_min],
-                    affineTransform=translation
-                )
+                yield tag_min, tag_max
+
+
+def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
+    translation_matrix = np.eye(_DIM_COUNT + 1)
+    translation_matrix[axis, _DIM_COUNT] = rve.delta[axis]
+    translation: list[float] = list(translation_matrix.flatten())
+    for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
+        gmsh.model.mesh.setPeriodic(
+            dim=2,
+            tags=[tag_max],
+            tagsMaster=[tag_min],
+            affineTransform=translation
+        )
