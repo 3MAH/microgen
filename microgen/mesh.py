@@ -10,6 +10,7 @@ from .phase import Phase
 from .rve import Rve
 
 _DIM_COUNT = 3
+_BOUNDS_COUNT = 2
 _Point3D = np.ndarray
 
 
@@ -34,8 +35,8 @@ def mesh(
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
-    _init_mesh(mesh_file, listPhases, order, mshFileVersion)
-    _save_mesh(size, output_file)
+    _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
+    _finalize_mesh(size, output_file)
 
 
 def meshPeriodic(
@@ -61,20 +62,18 @@ def meshPeriodic(
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
-    _init_mesh(mesh_file, listPhases, order, mshFileVersion)
-    _compute_periodicity(rve)
-    _save_mesh(size, output_file)
+    _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
+    _set_periodic(rve)
+    _finalize_mesh(size, output_file)
 
 
 def _generate_list_tags(listPhases: list[Phase]) -> list[list[int]]:
     listTags: list[list[int]] = []
-    index: int = 0
+    start: int = 1
     for phase in listPhases:
-        temp: list[int] = []
-        for _ in phase.solids:
-            index += 1
-            temp.append(index)
-        listTags.append(temp)
+        stop = start + len(phase.solids)
+        listTags.append(list(range(start, stop)))
+        start = stop
     return listTags
 
 
@@ -83,7 +82,7 @@ def _generate_list_dim_tags(listPhases: list[Phase]) -> list[tuple[int, int]]:
     return [(_DIM_COUNT, tag) for tag in range(1, nbTags + 1)]
 
 
-def _init_mesh(
+def _initialize_mesh(
         mesh_file: str,
         listPhases: list[Phase],
         order: int,
@@ -112,20 +111,20 @@ def _init_mesh(
         gmsh.model.setPhysicalName(dim=_DIM_COUNT, tag=ps_i, name="Mat" + str(i))
 
 
-def _save_mesh(
+def _finalize_mesh(
         size: float,
         output_file: str = "Mesh.msh",
 ) -> None:
-    p = gmsh.model.getEntities()
-    gmsh.model.mesh.setSize(dimTags=p, size=size)
-    gmsh.model.mesh.generate(dim=3)
+    list_dim_tags: list[tuple[int, int]] = gmsh.model.getEntities()
+    gmsh.model.mesh.setSize(dimTags=list_dim_tags, size=size)
+    gmsh.model.mesh.generate(dim=_DIM_COUNT)
     gmsh.write(fileName=output_file)
     gmsh.finalize()
 
 
-def _compute_periodicity(rve: Rve) -> None:
-    for axis in range(3):
-        _compute_periodicity_on_axis(rve, axis)
+def _set_periodic(rve: Rve) -> None:
+    for axis in range(_DIM_COUNT):
+        _set_periodic_on_axis(rve, axis)
 
 
 def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> Iterator[tuple[np.ndarray, int]]:
@@ -137,16 +136,16 @@ def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> It
     for dim, tag in entities:
         bounds = np.asarray(gmsh.model.getBoundingBox(
             dim, tag
-        )).reshape((2, _DIM_COUNT))
+        )).reshape((_BOUNDS_COUNT, _DIM_COUNT))
         yield bounds, tag
 
 
-def _compute_periodicity_on_axis(rve: Rve, axis: int) -> None:
-    translation_matrix = np.eye(4)
-    translation_matrix[axis, 3] = rve.delta[axis]
-    translation = list(translation_matrix.flatten())
+def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
+    translation_matrix = np.eye(_DIM_COUNT + 1)
+    translation_matrix[axis, _DIM_COUNT] = rve.delta[axis]
+    translation: list[float] = list(translation_matrix.flatten())
 
-    eps = 1.0e-3 * min(rve.delta)
+    eps: float = 1.0e-3 * min(rve.delta)
 
     minimum = np.zeros(_DIM_COUNT)
     maximum = np.array(rve.delta)
