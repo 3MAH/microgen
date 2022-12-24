@@ -294,43 +294,11 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solidList = []  # type: list[cq.Solid]
-
-    for solid in phase.solids:
-        wk_plane = cq.Workplane().add(solid)
-        xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
-        ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
-        zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
-        np.delete(xgrid, 0)
-        np.delete(ygrid, 0)
-        np.delete(zgrid, 0)
-        for i in xgrid:
-            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
-        for j in ygrid:
-            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
-        for k in zgrid:
-            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
-
-        for subsolid in wk_plane.val().Solids():
-            solidList.append(subsolid)
+    solidList: list[cq.Solid] = phase.buildSolids(rve, grid)
 
     if phasePerRaster:
-        solids_phases = [
-            [] for _ in range(grid[0] * grid[1] * grid[2])
-        ]  # type: list[list[cq.Solid]]
-        for solid in solidList:
-            center = solid.Center()
-            i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))
-            j = int(round((center.y - rve.y_min) / (rve.dy / grid[1])))
-            k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
-            ind = i + grid[0] * j + grid[0] * grid[1] * k
-            solids_phases[ind].append(solid)
-        return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
-    else:
-        return Phase(solids=solidList)
+        return Phase.generatePhasePerRaster(grid, rve, solidList)
+    return Phase(solids=solidList)
 
 
 def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:

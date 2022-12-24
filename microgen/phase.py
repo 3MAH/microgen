@@ -2,13 +2,12 @@
 Phase class to manage list of solids belonging to the same phase
 """
 
+from typing import Union, Tuple, Optional
+
 import cadquery as cq
-import pyvista as pv
 import numpy as np
 from OCP.BRepGProp import BRepGProp
 from OCP.GProp import GProp_GProps
-
-from typing import Union, Tuple
 
 from .rve import Rve
 
@@ -29,7 +28,7 @@ class Phase:
     def __init__(
         self,
         shape: cq.Shape = None,
-        solids: list[cq.Solid] = [],
+        solids: Optional[list[cq.Solid]] = None,
         center: tuple[float, float, float] = None,
         orientation: tuple[float, float, float] = None,
     ) -> None:
@@ -38,7 +37,7 @@ class Phase:
             print("Empty phase")
 
         self._shape = shape
-        self._solids = solids
+        self._solids = solids if solids is not None else []
         self.center = center
         self.orientation = orientation
 
@@ -183,17 +182,14 @@ class Phase:
         compound = xyz_repeat.toCompound()
         self._shape = cq.Shape(compound.wrapped)
 
-    def rasterize(
-        self, rve: Rve, grid: list[int], phasePerRaster: bool = True
-    ) -> Union[None, list["Phase"]]:
+    def buildSolids(self, rve: Rve, grid: list[int]) -> list[cq.Solid]:
         """
-        Rasters solids from phase according to the rve divided by the given grid
+        Build solids from phase according to the rve divided by the given grid
 
         :param rve: RVE divided by the given grid
         :param grid: number of divisions in each direction [x, y, z]
-        :param phasePerRaster: if True, returns list of phases
 
-        :return: list of Phases if required
+        :return: list of solids
         """
         solidList = []  # type: list[cq.Solid]
 
@@ -217,20 +213,39 @@ class Phase:
 
             for subsolid in wk_plane.val().Solids():
                 solidList.append(subsolid)
+        return solidList
 
-        if not phasePerRaster:
-            self._solids = solidList
-            compound = cq.Compound.makeCompound(self._solids)
-            self._shape = cq.Shape(compound.wrapped)
-        else:
-            solids_phases = [
-                [] for _ in range(grid[0] * grid[1] * grid[2])
-            ]  # type: list[list[cq.Solid]]
-            for solid in solidList:
-                center = solid.Center()
-                i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))
-                j = int(round((center.y - rve.y_min) / (rve.dy / grid[1])))
-                k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
-                ind = i + grid[0] * j + grid[0] * grid[1] * k
-                solids_phases[ind].append(solid)
-            return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
+    def rasterize(
+        self, rve: Rve, grid: list[int], phasePerRaster: bool = True
+    ) -> Optional[list["Phase"]]:
+        """
+        Rasters solids from phase according to the rve divided by the given grid
+
+        :param rve: RVE divided by the given grid
+        :param grid: number of divisions in each direction [x, y, z]
+        :param phasePerRaster: if True, returns list of phases
+
+        :return: list of Phases if required
+        """
+        solidList: list[cq.Solid] = self.buildSolids(rve, grid)
+
+        if phasePerRaster:
+            return self.generatePhasePerRaster(grid, rve, solidList)
+        self._solids = solidList
+        compound = cq.Compound.makeCompound(self._solids)
+        self._shape = cq.Shape(compound.wrapped)
+
+    @staticmethod
+    def generatePhasePerRaster(grid, rve, solidList):
+        solids_phases = [
+            [] for _ in range(grid[0] * grid[1] * grid[2])
+        ]  # type: list[list[cq.Solid]]
+        for solid in solidList:
+            center = solid.Center()
+            i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))
+            j = int(round((center.y - rve.y_min) / (rve.dy / grid[1])))
+            k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
+            ind = i + grid[0] * j + grid[0] * grid[1] * k
+            solids_phases[ind].append(solid)
+        return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
+
