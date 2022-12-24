@@ -2,14 +2,12 @@
 Boolean operations
 """
 
-import os
 from typing import Union, Tuple, List
 
+import OCP
 import cadquery as cq
 import numpy as np
 import pyvista as pv
-
-import OCP
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
@@ -311,26 +309,7 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
 
     :return: cq shape of the repeated geometry
     """
-
-    center = unit_geom.Center()
-
-    xyz_repeat = cq.Assembly()
-    for i_x in range(grid[0]):
-        for i_y in range(grid[1]):
-            for i_z in range(grid[2]):
-                xyz_repeat.add(
-                    unit_geom,
-                    loc=cq.Location(
-                        cq.Vector(
-                            center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
-                            center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
-                            center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z),
-                        )
-                    ),
-                )
-    compound = xyz_repeat.toCompound()
-    shape = cq.Shape(compound.wrapped)
-    return shape
+    return Phase.repeatShape(unit_geom, rve, grid)
 
 
 def repeatPolyData(

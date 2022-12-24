@@ -155,22 +155,26 @@ class Phase:
         )
         self._shape = self._shape.transformGeometry(transform_mat)
 
-    def repeat(self, rve: Rve, grid: Tuple[int, int, int]):
+    @staticmethod
+    def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
         """
-        Repeats phase in each direction according to the given grid
+        Repeats unit geometry in each direction according to the given grid
 
-        :param rve: RVE of the phase to repeat
-        :param grid: list of number of phase repetitions in each direction
+        :param unit_geom: Shape to repeat
+        :param rve: RVE of the geometry to repeat
+        :param grid: list of number of geometry repetitions in each direction
+
+        :return: cq shape of the repeated geometry
         """
 
-        center = self.shape.Center()
+        center = unit_geom.Center()
 
         xyz_repeat = cq.Assembly()
         for i_x in range(grid[0]):
             for i_y in range(grid[1]):
                 for i_z in range(grid[2]):
                     xyz_repeat.add(
-                        self.shape,
+                        unit_geom,
                         loc=cq.Location(
                             cq.Vector(
                                 center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
@@ -180,7 +184,17 @@ class Phase:
                         ),
                     )
         compound = xyz_repeat.toCompound()
-        self._shape = cq.Shape(compound.wrapped)
+        shape = cq.Shape(compound.wrapped)
+        return shape
+
+    def repeat(self, rve: Rve, grid: Tuple[int, int, int]):
+        """
+        Repeats phase in each direction according to the given grid
+
+        :param rve: RVE of the phase to repeat
+        :param grid: list of number of phase repetitions in each direction
+        """
+        self._shape = self.repeatShape(self.shape, rve, grid)
 
     def buildSolids(self, rve: Rve, grid: list[int]) -> list[cq.Solid]:
         """
@@ -234,6 +248,7 @@ class Phase:
         self._solids = solidList
         compound = cq.Compound.makeCompound(self._solids)
         self._shape = cq.Shape(compound.wrapped)
+        return None
 
     @staticmethod
     def generatePhasePerRaster(grid, rve, solidList):
