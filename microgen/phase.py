@@ -131,19 +131,25 @@ class Phase:
             self._shape.move(cq.Location(cq.Vector(vec[0], vec[1], vec[2])))
         self._computeCenterOfMass()
 
-    def rescale(self, scale: Union[float, tuple[float, float, float]]) -> None:
+    @staticmethod
+    def rescaleShape(
+        shape: cq.Shape, scale: Union[float, tuple[float, float, float]]
+    ) -> cq.Shape:
         """
-        Rescale phase according to scale parameters [dim_x, dim_y, dim_z]
+        Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
+        :param shape: Shape
         :param scale: float or list of scale factor in each direction
+
+        :return shape: rescaled Shape
         """
         if isinstance(scale, float):
             scale = (scale, scale, scale)
 
-        center = self._shape.Center()
+        center = shape.Center()
 
         # move the shape at (0, 0, 0) to rescale it
-        self._shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
+        shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
 
         # then move it back to its center with transform Matrix
         transform_mat = cq.Matrix(
@@ -153,10 +159,22 @@ class Phase:
                 [0, 0, scale[2], center.z],
             ]
         )
-        self._shape = self._shape.transformGeometry(transform_mat)
+        shape = shape.transformGeometry(transform_mat)
+
+        return shape
+
+    def rescale(self, scale: Union[float, tuple[float, float, float]]) -> None:
+        """
+        Rescale phase according to scale parameters [dim_x, dim_y, dim_z]
+
+        :param scale: float or list of scale factor in each direction
+        """
+        self._shape = self.rescaleShape(self._shape, scale)
 
     @staticmethod
-    def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
+    def repeatShape(
+        unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]
+    ) -> cq.Shape:
         """
         Repeats unit geometry in each direction according to the given grid
 
@@ -244,14 +262,25 @@ class Phase:
         solidList: list[cq.Solid] = self.buildSolids(rve, grid)
 
         if phasePerRaster:
-            return self.generatePhasePerRaster(grid, rve, solidList)
+            return self.generatePhasePerRaster(solidList, rve, grid)
         self._solids = solidList
         compound = cq.Compound.makeCompound(self._solids)
         self._shape = cq.Shape(compound.wrapped)
         return None
 
-    @staticmethod
-    def generatePhasePerRaster(grid, rve, solidList):
+    @classmethod
+    def generatePhasePerRaster(
+        cls, solidList: list[cq.Solid], rve: Rve, grid: list[int]
+    ) -> list["Phase"]:
+        """
+        Rasters solids from phase according to the rve divided by the given grid
+
+        :param solidList: list of solids
+        :param grid: number of divisions in each direction [x, y, z]
+        :param rve: RVE divided by the given grid
+
+        :return: list of Phases
+        """
         solids_phases = [
             [] for _ in range(grid[0] * grid[1] * grid[2])
         ]  # type: list[list[cq.Solid]]
@@ -262,5 +291,4 @@ class Phase:
             k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
             ind = i + grid[0] * j + grid[0] * grid[1] * k
             solids_phases[ind].append(solid)
-        return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
-
+        return [cls(solids=solids) for solids in solids_phases if len(solids) > 0]

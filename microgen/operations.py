@@ -106,25 +106,7 @@ def rescale(
 
     :return shape: rescaled Shape
     """
-    if isinstance(scale, float):
-        scale = (scale, scale, scale)
-
-    center = shape.Center()
-
-    # move the shape at (0, 0, 0) to rescale it
-    shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
-
-    # then move it back to its center with transform Matrix
-    transform_mat = cq.Matrix(
-        [
-            [scale[0], 0, 0, center.x],
-            [0, scale[1], 0, center.y],
-            [0, 0, scale[2], center.z],
-        ]
-    )
-    shape = shape.transformGeometry(transform_mat)
-
-    return shape
+    return Phase.rescaleShape(shape, scale)
 
 
 def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
@@ -295,7 +277,7 @@ def rasterPhase(
     solidList: list[cq.Solid] = phase.buildSolids(rve, grid)
 
     if phasePerRaster:
-        return Phase.generatePhasePerRaster(grid, rve, solidList)
+        return Phase.generatePhasePerRaster(solidList, rve, grid)
     return Phase(solids=solidList)
 
 
