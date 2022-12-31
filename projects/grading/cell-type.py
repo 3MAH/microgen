@@ -1,9 +1,7 @@
-from microgen import Tpms, tpms
-
 import numpy as np
 import pyvista as pv
-import cadquery as cq
 
+from microgen import Tpms, pv_tpms
 
 # def G(x, y, z):
 #     t = 2 # radius
@@ -39,7 +37,7 @@ import cadquery as cq
 # p = pv.Plotter()
 # p.add_mesh(shape, color='w')
 # p.camera_position = 'xy'
-# p.parallel_projection = True 
+# p.parallel_projection = True
 # p.show()
 
 # # geometry = Tpms(
@@ -50,54 +48,55 @@ import cadquery as cq
 # # shape = geometry.generate(resolution=20, smoothing=0)
 # # cq.exporters.export(shape, "test.stl")
 
-
-l = 1
+repeat = 2
 k = 5
 p1 = (-0.5, 0, 0)
 p2 = (0.5, 0, 0)
 p3 = (0, 0.5, 0)
-phi1 = tpms.schwarzP
-phi2 = tpms.gyroid
-def phi3(x, y, z, q, l):
-    kx = 2* np.pi * q[0] / l[0]
-    ky = 2* np.pi * q[1] / l[1]
-    kz = 2* np.pi * q[2] / l[2]
-    return np.cos(kx * x) * np.cos(ky * y) * np.cos(kz * z) - np.sin(kx * x) * np.sin(ky * y) * np.sin(kz * z)
+phi1 = pv_tpms.schwarzP
+phi2 = pv_tpms.gyroid
+phi3 = pv_tpms.fischerKochS
+
+
+# def phi3(x, y, z):
+#     return np.cos(x) * np.cos(y) * np.cos(z) - np.sin(x) * np.sin(y) * np.sin(z)
+
 
 def exp_func(x, y, z):
     norm = x**2 + y**2 + z**2
     return 1 + np.exp(k * norm)
 
+
 def weight(x, y, z, p, i):
-    denom = 0.
+    denom = 0.0
     for j in range(len(p)):
         denom += exp_func(x - p[j][0], y - p[j][1], z - p[j][2])
     return exp_func(x - p[i][0], y - p[i][1], z - p[i][2]) / denom
 
-def multi_morph(phi, x, y, z, p, q, l):
-    result = 0.
+
+def multi_morph(phi, x, y, z, p):
+    result = 0.0
     for i in range(len(phi)):
         weight_func = weight(x, y, z, p, i)
-        result += weight_func * phi[i](x, y, z, q, l)
+        result += weight_func * phi[i](repeat * x, repeat * y, repeat * z)
     return result
 
-def trigraded(x, y, z, q, l):
-    return multi_morph(phi=[phi1, phi2, phi3], x=x, y=y, z=z, p=[p1, p2, p3], q=q, l=l)
+
+def trigraded(x, y, z):
+    return multi_morph(phi=[phi1, phi2, phi3], x=x, y=y, z=z, p=[p1, p2, p3])
+
 
 geometry = Tpms(
-    surface_function=tpms.gyroid,
-    type_part="sheet",
-    thickness=0.1,
-    repeat_cell=5,
-    cell_size=5
+    surface_function=trigraded,
+    repeat_cell=repeat,
+    cell_size=1.,
+    resolution=100
 )
-# shape = geometry.cylinder(isovalue=0., resolution=20, smoothing=0)
-# shape = geometry.generate(resolution=100, smoothing=0)
-shape = geometry.generate(resolution=100)
-cq.exporters.export(shape, "test.stl")
-# p = pv.Plotter()
-# p.add_mesh(shape, color='w')
-# p.camera_position = 'xy'
-# p.parallel_projection = True 
-# p.show_axes()
-# p.show()
+
+
+p = pv.Plotter()
+p.add_mesh(geometry.surface, color='w')
+p.camera_position = 'xy'
+p.parallel_projection = True
+p.show_axes()
+p.show()
