@@ -27,12 +27,12 @@ def rotateEuler(
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param psi, theta, phi: Euler angles
+    :param psi: first Euler angle
+    :param theta: first Euler angle
+    :param phi: first Euler angle
 
     :return object_r: Rotated object
     """
-
-    u = np.array([0.0, 0.0, 1.0])
     u = np.array([np.cos(psi * np.pi / 180.0), np.sin(psi * np.pi / 180.0), 0.0])
     z2 = np.array(
         [
@@ -61,7 +61,7 @@ def rotateEuler(
 
 
 def rotatePvEuler(
-    object: pv.PolyData,
+    obj: pv.PolyData,
     center: np.ndarray,
     psi: float,
     theta: float,
@@ -70,24 +70,17 @@ def rotatePvEuler(
     """
     Rotates object according to XZX Euler angle convention
 
-    Parameters
-    ----------
-    object :
-        Object to rotate
-    center :
-        numpy array (x, y, z)
-    psi, theta, phi :
-        Euler angles
-
-    Returns
-    -------
-    object_r :
-        Rotated object
+    :param obj: Object to rotate
+    :param center: numpy array (x, y, z)
+    :param psi: first Euler angle
+    :param theta: second Euler angle
+    :param phi: third Euler angle
+    :return: Rotated object
     """
 
     u = (np.cos(psi), np.sin(psi), 0.0)
     z2 = (np.sin(psi) * np.sin(theta), -np.sin(theta) * np.cos(psi), np.cos(theta))
-    object_r = object.rotate_vector(
+    object_r = obj.rotate_vector(
         vector=(0, 0, 1), angle=psi, point=tuple(center), inplace=False
     )
     object_r.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)

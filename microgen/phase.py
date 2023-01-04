@@ -2,7 +2,7 @@
 Phase class to manage list of solids belonging to the same phase
 """
 
-from typing import Union, Tuple, Optional
+from typing import Sequence, Optional, Union
 
 import cadquery as cq
 import numpy as np
@@ -29,8 +29,8 @@ class Phase:
         self,
         shape: cq.Shape = None,
         solids: Optional[list[cq.Solid]] = None,
-        center: tuple[float, float, float] = None,
-        orientation: tuple[float, float, float] = None,
+        center: Optional[tuple[float, float, float]] = None,
+        orientation: Optional[tuple[float, float, float]] = None,
     ) -> None:
 
         if shape is None and solids == []:
@@ -61,7 +61,7 @@ class Phase:
 
     centerOfMass = property(getCenterOfMass)
 
-    def _computeCenterOfMass(self):
+    def _computeCenterOfMass(self) -> None:
         """
         Calculates the center of 'mass' of an object.
         """
@@ -84,7 +84,7 @@ class Phase:
 
     inertiaMatrix = property(getInertiaMatrix)
 
-    def _computeInertiaMatrix(self):
+    def _computeInertiaMatrix(self) -> None:
         """
         Calculates the inertia Matrix of an object.
         """
@@ -101,7 +101,7 @@ class Phase:
         )
 
     @property
-    def shape(self) -> Union[cq.Shape, None]:
+    def shape(self) -> Optional[cq.Shape]:
         if self._shape is not None:
             return self._shape
         elif len(self._solids) > 0:
@@ -124,11 +124,8 @@ class Phase:
             print("No solids or shape")
             return []
 
-    def translate(self, vec: Union[tuple, np.ndarray]) -> None:
-        if type(vec) == tuple:
-            self._shape.move(cq.Location(cq.Vector(vec)))
-        else:
-            self._shape.move(cq.Location(cq.Vector(vec[0], vec[1], vec[2])))
+    def translate(self, vec: Sequence[float]) -> None:
+        self._shape.move(cq.Location(cq.Vector(*vec)))
         self._computeCenterOfMass()
 
     @staticmethod
@@ -173,7 +170,7 @@ class Phase:
 
     @staticmethod
     def repeatShape(
-        unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]
+        unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]
     ) -> cq.Shape:
         """
         Repeats unit geometry in each direction according to the given grid
@@ -205,7 +202,7 @@ class Phase:
         shape = cq.Shape(compound.wrapped)
         return shape
 
-    def repeat(self, rve: Rve, grid: Tuple[int, int, int]):
+    def repeat(self, rve: Rve, grid: tuple[int, int, int]) -> None:
         """
         Repeats phase in each direction according to the given grid
 
