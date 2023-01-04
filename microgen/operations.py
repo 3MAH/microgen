@@ -2,7 +2,7 @@
 Boolean operations
 """
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Sequence
 
 import OCP
 import cadquery as cq
@@ -13,6 +13,30 @@ from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 from .phase import Phase
 from .rve import Rve
+
+
+def _getRotationAxes(
+    psi: float, theta: float, phi: float
+) -> list[tuple[float, float, float]]:
+    """
+    Retrieve the 3 Euler rotation axes
+
+    :param psi: first Euler angle, in degrees
+    :param theta: first Euler angle, in degrees
+    :param phi: first Euler angle, in degrees
+
+    :return: a list containing the three 3D Euler rotation axes
+    """
+    psi_rad, theta_rad, phi_rad = np.deg2rad((psi, theta, phi))
+    return [
+        (0.0, 0.0, 1.0),
+        (np.cos(psi_rad), np.sin(psi_rad), 0.0),
+        (
+            np.sin(psi_rad) * np.sin(theta_rad),
+            -np.sin(theta_rad) * np.cos(psi_rad),
+            np.cos(theta_rad),
+        ),
+    ]
 
 
 def rotateEuler(
@@ -33,37 +57,20 @@ def rotateEuler(
 
     :return object_r: Rotated object
     """
-    psi_rad, theta_rad, phi_rad = np.deg2rad((psi, theta, phi))
-    u = np.array([np.cos(psi_rad), np.sin(psi_rad), 0.0])
-    z2 = np.array(
-        [
-            np.sin(psi_rad) * np.sin(theta_rad),
-            -np.sin(theta_rad) * np.cos(psi_rad),
-            np.cos(theta_rad),
-        ]
-    )
 
-    object_r = obj.rotate(
-        cq.Vector(center[0], center[1], center[2]),
-        cq.Vector(center[0], center[1], center[2] + 1.0),
-        psi,
-    )
-    object_r = object_r.rotate(
-        cq.Vector(center[0], center[1], center[2]),
-        cq.Vector(center[0] + u[0], center[1] + u[1], center[2] + u[2]),
-        theta,
-    )
-    object_r = object_r.rotate(
-        cq.Vector(center[0], center[1], center[2]),
-        cq.Vector(center[0] + z2[0], center[1] + z2[1], center[2] + z2[2]),
-        phi,
-    )
-    return object_r
+    center_vector = cq.Vector(*center)
+
+    z, u, z2 = _getRotationAxes(psi, theta, phi)
+
+    obj = obj.rotate(center_vector, center_vector + cq.Vector(*z), psi)
+    obj = obj.rotate(center_vector, center_vector + cq.Vector(*u), theta)
+    obj = obj.rotate(center_vector, center_vector + cq.Vector(*z2), phi)
+    return obj
 
 
 def rotatePvEuler(
     obj: pv.PolyData,
-    center: np.ndarray,
+    center: Sequence[float],
     psi: float,
     theta: float,
     phi: float,
@@ -76,13 +83,13 @@ def rotatePvEuler(
     :param psi: first Euler angle, in degrees
     :param theta: second Euler angle, in degrees
     :param phi: third Euler angle, in degrees
+
     :return: Rotated object
     """
+    z, u, z2 = _getRotationAxes(psi, theta, phi)
 
-    u = (np.cos(psi), np.sin(psi), 0.0)
-    z2 = (np.sin(psi) * np.sin(theta), -np.sin(theta) * np.cos(psi), np.cos(theta))
     object_r = obj.rotate_vector(
-        vector=(0, 0, 1), angle=psi, point=tuple(center), inplace=False
+        vector=z, angle=psi, point=tuple(center), inplace=False
     )
     object_r.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
     object_r.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
