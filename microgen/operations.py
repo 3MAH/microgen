@@ -27,18 +27,19 @@ def rotateEuler(
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param psi: first Euler angle
-    :param theta: first Euler angle
-    :param phi: first Euler angle
+    :param psi: first Euler angle, in degrees
+    :param theta: first Euler angle, in degrees
+    :param phi: first Euler angle, in degrees
 
     :return object_r: Rotated object
     """
-    u = np.array([np.cos(psi * np.pi / 180.0), np.sin(psi * np.pi / 180.0), 0.0])
+    psi_rad, theta_rad, phi_rad = np.deg2rad((psi, theta, phi))
+    u = np.array([np.cos(psi_rad), np.sin(psi_rad), 0.0])
     z2 = np.array(
         [
-            np.sin(psi * np.pi / 180.0) * np.sin(theta * np.pi / 180.0),
-            -np.sin(theta * np.pi / 180.0) * np.cos(psi * np.pi / 180.0),
-            np.cos(theta * np.pi / 180.0),
+            np.sin(psi_rad) * np.sin(theta_rad),
+            -np.sin(theta_rad) * np.cos(psi_rad),
+            np.cos(theta_rad),
         ]
     )
 
@@ -72,9 +73,9 @@ def rotatePvEuler(
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param psi: first Euler angle
-    :param theta: second Euler angle
-    :param phi: third Euler angle
+    :param psi: first Euler angle, in degrees
+    :param theta: second Euler angle, in degrees
+    :param phi: third Euler angle, in degrees
     :return: Rotated object
     """
 
