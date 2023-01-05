@@ -27,19 +27,19 @@ class Phase:
 
     def __init__(
         self,
-        shape: cq.Shape = None,
+        shape: Optional[cq.Shape] = None,
         solids: Optional[list[cq.Solid]] = None,
         center: Optional[tuple[float, float, float]] = None,
         orientation: Optional[tuple[float, float, float]] = None,
     ) -> None:
 
-        if shape is None and solids == []:
-            print("Empty phase")
-
         self._shape = shape
-        self._solids = solids if solids is not None else []
+        self._solids: list[cq.Solid] = solids if solids is not None else []
         self.center = center
         self.orientation = orientation
+
+        if shape is None and solids == []:
+            print("Empty phase")
 
         self.name = "Phase_" + str(self.numInstances)
 
@@ -105,7 +105,7 @@ class Phase:
         if self._shape is not None:
             return self._shape
         elif len(self._solids) > 0:
-            # there may be a fastest way
+            # there may be a faster way
             compound = cq.Compound.makeCompound(self._solids)
             self._shape = cq.Shape(compound.wrapped)
             return self._shape
