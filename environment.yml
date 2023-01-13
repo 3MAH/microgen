@@ -4,7 +4,7 @@ channels:
   - set3mah
 
 dependencies:
-  - cadquery=master
+  - cadquery=merge
   - pyvista
   - python-gmsh
   - meshio
