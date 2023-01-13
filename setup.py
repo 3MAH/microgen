@@ -14,5 +14,5 @@ setup(name='microgen',
       author_email="set3mah@gmail.com",
       url='https://github.com/3MAH/microgen',
       packages=find_packages(),
-      python_requires=">=3.7",
+      python_requires=">=3.9",
 )
