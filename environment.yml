@@ -8,5 +8,6 @@ dependencies:
   - pyvista
   - python-gmsh
   - mmg
+  - neper # [unix]
   - pytest-cov
 
