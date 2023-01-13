@@ -1,6 +1,6 @@
 package:
   name: microgen
-  version: 1.0.0
+  version: 1.0.1
 
 source:
   git_url: https://github.com/3MAH/microgen.git
@@ -13,16 +13,13 @@ requirements:
   host:
     - python
   run:
-    - python
-    - vtk
-    - cadquery=master
+    - cadquery=merge
+    - pyvista
     - python-gmsh
+    - meshio
     - mmg
     - neper # [unix]
     - pytest-cov
-    - libtiff<4.4
-    - pyvista
-    - meshio
 
 test:
   imports:

@@ -39,7 +39,7 @@ With conda:
 conda install -c conda-forge -c cadquery -c set3mah microgen
 ```
 
-With pip (Linux only):
+With pip:
 ```
 pip install microgen
 ```
