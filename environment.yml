@@ -5,12 +5,8 @@ channels:
 
 dependencies:
   - cadquery=master
-  - vtk
   - pyvista
   - python-gmsh
-  - meshio
   - mmg
-  - neper # [unix]
   - pytest-cov
-  - libtiff<4.4
 
