@@ -4,13 +4,11 @@ channels:
   - set3mah
 
 dependencies:
-  - cadquery=master
-  - vtk
+  - cadquery=merge
   - pyvista
   - python-gmsh
   - meshio
   - mmg
   - neper # [unix]
   - pytest-cov
-  - libtiff<4.4
 
