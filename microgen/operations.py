@@ -55,16 +55,12 @@ def rotateEuler(
     :param theta: first Euler angle, in degrees
     :param phi: first Euler angle, in degrees
 
-    :return object_r: Rotated object
+    :return: Rotated object
     """
-
     center_vector = cq.Vector(*center)
-
     z, u, z2 = _getRotationAxes(psi, theta, phi)
-
-    obj = obj.rotate(center_vector, center_vector + cq.Vector(*z), psi)
-    obj = obj.rotate(center_vector, center_vector + cq.Vector(*u), theta)
-    obj = obj.rotate(center_vector, center_vector + cq.Vector(*z2), phi)
+    for axis, angle in zip((z, u, z2), (psi, theta, phi)):
+        obj = obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
     return obj
 
 
@@ -88,12 +84,12 @@ def rotatePvEuler(
     """
     z, u, z2 = _getRotationAxes(psi, theta, phi)
 
-    object_r = obj.rotate_vector(
+    rotated_obj = obj.rotate_vector(
         vector=z, angle=psi, point=tuple(center), inplace=False
     )
-    object_r.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
-    object_r.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
-    return object_r
+    rotated_obj.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
+    rotated_obj.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
+    return rotated_obj
 
 
 def rescale(
