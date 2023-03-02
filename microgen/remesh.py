@@ -26,7 +26,7 @@ def remesh_periodic(
     surface_triangles = _build_surface_triangles()
     boundary_triangles_tags = _extract_boundary_triangles_tags(surface_triangles, rve)
 
-    _write_output(boundary_triangles_tags, mesh_file, output_file)
+    _write_output(boundary_triangles_tags, output_file)
 
 
 def _get_surface_triangles() -> tuple[list[int], list[int]]:
@@ -148,16 +148,16 @@ def _extract_boundary_triangles_tags(
     return boundary_triangles_tags
 
 
-def _write_output(boundary_triangles_tags: list[int], mesh_file: str, output_file: str = "mesh_reqtri.mesh") -> None:
+def _write_output(boundary_triangles_tags: list[int], output_file: str = "mesh_reqtri.mesh") -> None:
     n_boundary_triangles = len(boundary_triangles_tags)
-    gmsh.write(mesh_file[:-5] + "_triangles.mesh")
+    gmsh.write(output_file)
     gmsh.finalize()
 
-    with open(mesh_file[:-5] + "_triangles.mesh", "r") as file:
-        lines = file.readlines()
+    with open(output_file, "r") as file:
+        lines = file.readlines()[:-1] # Delete last line End
 
-    with open(output_file, "w+") as outfile:
-        outfile.writelines(lines[:-1])
+    with open(output_file, "w") as outfile:
+        outfile.writelines(lines)
         outfile.write("RequiredTriangles\n")
         outfile.write(str(n_boundary_triangles) + "\n")
         for tag in boundary_triangles_tags:
