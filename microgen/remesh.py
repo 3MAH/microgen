@@ -9,24 +9,29 @@ Triangle = namedtuple("Triangle", ["node1", "node2", "node3", "tag"])
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
+def remesh_keeping_periodicity(input_mesh_file: str, rve: Rve,
+                                           output_mesh_file: str) -> None:
+    ...
 
-def remesh_periodic(
-        mesh_file: str, rve: Rve, output_file: str = "mesh_reqtri.mesh"
-) -> None:
+def identify_boundary_triangles_from_mesh_file(input_mesh_file: str, rve: Rve,
+                                               output_mesh_file: str) -> None:
     """
-    Prepares the mesh file for periodic remeshing
+    Prepares the mesh file for periodic remeshing by tagging boundary triangles
 
-    :param mesh_file: mesh file to remesh
-    :param rve: RVE for periodicity
-    :param output_file: output file (must be .mesh)
+    This function adds a "RequiredTriangles" field
+    in the ".mesh" file that stores the boundary triangles tags.
+    mmg recognizes this field as triangles it must not remesh
+    :param input_mesh_file: mesh file to remesh (must be .mesh)
+    :param rve: Representative Volume Element for periodicity
+    :param output_mesh_file: output file (must be .mesh)
     """
     gmsh.initialize()
-    gmsh.open(mesh_file)
+    gmsh.open(input_mesh_file)
 
-    surface_triangles = _build_surface_triangles()
-    boundary_triangles_tags = _extract_boundary_triangles_tags(surface_triangles, rve)
+    surface_triangles: list[Triangle] = _build_surface_triangles()
+    boundary_triangles_tags: list[int] = _extract_boundary_triangles_tags(surface_triangles, rve)
 
-    _write_output(boundary_triangles_tags, output_file)
+    _write_output(boundary_triangles_tags, output_mesh_file)
 
 
 def _get_surface_triangles() -> tuple[list[int], list[int]]:
@@ -154,7 +159,7 @@ def _write_output(boundary_triangles_tags: list[int], output_file: str = "mesh_r
     gmsh.finalize()
 
     with open(output_file, "r") as file:
-        lines = file.readlines()[:-1] # Delete last line End
+        lines = file.readlines()[:-1]  # Delete last line End
 
     with open(output_file, "w") as outfile:
         outfile.writelines(lines)
