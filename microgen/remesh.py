@@ -1,17 +1,35 @@
 import gmsh
-from microgen import Rve
+from microgen import Rve, Mmg
 import numpy as np
 import math as m
 from collections import namedtuple
+from tempfile import NamedTemporaryFile
 
 Triangle = namedtuple("Triangle", ["node1", "node2", "node3", "tag"])
 
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
+
 def remesh_keeping_periodicity(input_mesh_file: str, rve: Rve,
-                                           output_mesh_file: str) -> None:
-    ...
+                               output_mesh_file: str, hausd=None,
+                               hgrad=None,
+                               hmax=None,
+                               hmin=None,
+                               hsiz=None) -> None:
+    """
+    Remeshes a mesh (.mesh file format) using mmg while keeping periodicity
+
+    :param input_mesh_file: mesh file to remesh (must be .mesh)
+    :param rve: Representative Volume Element for periodicity
+    :param output_mesh_file: output file (must be .mesh)
+    """
+    boundary_triangles_file = NamedTemporaryFile(suffix='.mesh')
+    identify_boundary_triangles_from_mesh_file(input_mesh_file, rve, boundary_triangles_file.name)
+    Mmg.mmg3d(input=boundary_triangles_file.name, output=output_mesh_file, hausd=hausd, hgrad=hgrad, hmax=hmax,
+              hmin=hmin, hsiz=hsiz)
+    boundary_triangles_file.close()
+
 
 def identify_boundary_triangles_from_mesh_file(input_mesh_file: str, rve: Rve,
                                                output_mesh_file: str) -> None:
