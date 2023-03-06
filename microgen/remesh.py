@@ -91,24 +91,8 @@ def _get_surface_nodes_coords(surface_nodes: list[int]) -> np.ndarray:
     return surface_nodes_coords
 
 
-def _compute_normal(triangle: Triangle) -> np.ndarray:
-    """Computes normal vector of a triangle in mesh, defined by the coordinates of its three vertices"""
-    u = triangle.node2 - triangle.node1
-    v = triangle.node3 - triangle.node1
-    n = np.cross(u, v)
-    normal = n / np.linalg.norm(n)
-    return normal
-
-
 def _is_triangle_on_boundary(triangle: Triangle, rve: Rve) -> bool:
     """Determines whether a triangle (defined by its 3 nodes) is on the boundary of a parallelepipedic rve"""
-
-    xmin_normal = np.array([-1.0, 0.0, 0.0])
-    ymin_normal = np.array([0.0, -1.0, 0.0])
-    zmin_normal = np.array([0.0, 0.0, -1.0])
-    xmax_normal = -xmin_normal
-    ymax_normal = -ymin_normal
-    zmax_normal = -zmin_normal
 
     # there must be a better way:
 
@@ -116,42 +100,36 @@ def _is_triangle_on_boundary(triangle: Triangle, rve: Rve) -> bool:
             m.isclose(triangle.node1[0], rve.x_min)
             and m.isclose(triangle.node2[0], rve.x_min)
             and m.isclose(triangle.node3[0], rve.x_min)
-            and np.allclose(_compute_normal(triangle), xmin_normal)
     )
 
     bool_xmax = (
             m.isclose(triangle.node1[0], rve.x_max)
             and m.isclose(triangle.node2[0], rve.x_max)
             and m.isclose(triangle.node3[0], rve.x_max)
-            and np.allclose(_compute_normal(triangle), xmax_normal)
     )
 
     bool_ymin = (
             m.isclose(triangle.node1[1], rve.y_min)
             and m.isclose(triangle.node2[1], rve.y_min)
             and m.isclose(triangle.node3[1], rve.y_min)
-            and np.allclose(_compute_normal(triangle), ymin_normal)
     )
 
     bool_ymax = (
             m.isclose(triangle.node1[1], rve.y_max)
             and m.isclose(triangle.node2[1], rve.y_max)
             and m.isclose(triangle.node3[1], rve.y_max)
-            and np.allclose(_compute_normal(triangle), ymax_normal)
     )
 
     bool_zmin = (
             m.isclose(triangle.node1[2], rve.z_min)
             and m.isclose(triangle.node2[2], rve.z_min)
             and m.isclose(triangle.node3[2], rve.z_min)
-            and np.allclose(_compute_normal(triangle), zmin_normal)
     )
 
     bool_zmax = (
             m.isclose(triangle.node1[2], rve.z_max)
             and m.isclose(triangle.node2[2], rve.z_max)
             and m.isclose(triangle.node3[2], rve.z_max)
-            and np.allclose(_compute_normal(triangle), zmax_normal)
     )
 
     return bool_xmin or bool_xmax or bool_ymin or bool_ymax or bool_zmin or bool_zmax
