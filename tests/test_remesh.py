@@ -1,12 +1,14 @@
-from microgen import Box, meshPeriodic, Phase, Rve, remesh
+import pytest
+
+from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms
 import cadquery as cq
 import numpy as np
 import gmsh
-
+from pathlib import Path
 MESH_DIM = 3
 
-def get_mesh_nodes_coords(mesh_name: str):
 
+def get_mesh_nodes_coords(mesh_name: str):
     gmsh.initialize()
     gmsh.open(mesh_name)
 
@@ -15,26 +17,8 @@ def get_mesh_nodes_coords(mesh_name: str):
 
     return nodes_coords
 
+
 def is_periodic(nodes_coords, tol=1e-8, dim=MESH_DIM):
-    """
-        Test if a list of node coordinates is periodic (have nodes at the same positions on adjacent faces)
-
-        Parameters
-        ----------
-        nodes_coords: numpy array with shape = [n_nodes, ndim]
-            list of node coordinates associated to a mesh
-        tol : float (default = 1e-8)
-            Tolerance used to test the nodes positions.
-        dim : 1,2 or 3 (default = 3)
-            Dimension of the periodicity. If dim = 1, the periodicity is tested only over the 1st axis (x axis).
-            if dim = 2, the periodicity is tested on the 2 first axis (x and y axis).
-            if dim = 3, the periodicity is tested in 3 directions (x,y,z).
-
-        Returns
-        -------
-        True if the mesh is periodic else return False.
-        """
-
     # bounding box
     xmax = np.max(nodes_coords[:, 0])
     xmin = np.min(nodes_coords[:, 0])
@@ -66,14 +50,44 @@ def is_periodic(nodes_coords, tol=1e-8, dim=MESH_DIM):
 
     elif nodes_coords.shape[1] > 2:
         decimal_round = int(-np.log10(tol) - 1)
-        left = left[np.lexsort((nodes_coords[left, 1], nodes_coords[left, 2].round(decimal_round)))]
-        right = right[np.lexsort((nodes_coords[right, 1], nodes_coords[right, 2].round(decimal_round)))]
+        left = left[
+            np.lexsort(
+                (nodes_coords[left, 1], nodes_coords[left, 2].round(decimal_round))
+            )
+        ]
+        right = right[
+            np.lexsort(
+                (nodes_coords[right, 1], nodes_coords[right, 2].round(decimal_round))
+            )
+        ]
         if dim > 1:
-            bottom = bottom[np.lexsort((nodes_coords[bottom, 0], nodes_coords[bottom, 2].round(decimal_round)))]
-            top = top[np.lexsort((nodes_coords[top, 0], nodes_coords[top, 2].round(decimal_round)))]
+            bottom = bottom[
+                np.lexsort(
+                    (
+                        nodes_coords[bottom, 0],
+                        nodes_coords[bottom, 2].round(decimal_round),
+                    )
+                )
+            ]
+            top = top[
+                np.lexsort(
+                    (nodes_coords[top, 0], nodes_coords[top, 2].round(decimal_round))
+                )
+            ]
         if dim > 2:
-            back = back[np.lexsort((nodes_coords[back, 0], nodes_coords[back, 1].round(decimal_round)))]
-            front = front[np.lexsort((nodes_coords[front, 0], nodes_coords[front, 1].round(decimal_round)))]
+            back = back[
+                np.lexsort(
+                    (nodes_coords[back, 0], nodes_coords[back, 1].round(decimal_round))
+                )
+            ]
+            front = front[
+                np.lexsort(
+                    (
+                        nodes_coords[front, 0],
+                        nodes_coords[front, 1].round(decimal_round),
+                    )
+                )
+            ]
 
     # ==========================
     # test if mesh is periodic:
@@ -97,24 +111,59 @@ def is_periodic(nodes_coords, tol=1e-8, dim=MESH_DIM):
 
     return True
 
-def test_given_periodic_mesh_box_remesh_keeping_periodicity_must_maintain_periodicity():
+
+@pytest.fixture(scope="function")
+def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    tmp_dir_name = "test_tmp_dir"
+    return tmp_path_factory.mktemp(tmp_dir_name)
+
+
+@pytest.fixture(scope="function")
+def tmp_step_filename(tmp_dir: Path) -> str:
+    return (tmp_dir / "box.step").as_posix()
+
+
+@pytest.fixture(scope="function")
+def tmp_mesh_filename(tmp_dir: Path) -> str:
+    return (tmp_dir / "box_per.mesh").as_posix()
+
+
+@pytest.fixture(scope="function")
+def tmp_output_mesh_filename(tmp_dir: Path) -> str:
+    return (tmp_dir / "box_per.o.mesh").as_posix()
+
+def test_given_periodic_mesh_box_remesh_keeping_periodicity_must_maintain_periodicity(
+    tmp_step_filename: str, tmp_mesh_filename: str, tmp_output_mesh_filename: str
+) -> None:
     # Arrange
     rve = Rve()
+    box: cq.Shape = Box().generate()
+    phase = Phase(box)
 
-    geometry = Box()
+    cq.exporters.export(box, tmp_step_filename)
 
-    shape = geometry.generate()
-    phase = Phase(shape)
-    # TODO replace this using tmp dir
-    cq.exporters.export(shape, 'box.step')
-
-    mesh_name = 'box_per.mesh'
-    output_mesh_name = 'box_per.o.mesh'
-
-    meshPeriodic('box.step', rve, [phase], size=1, order=1, output_file=mesh_name, mshFileVersion=4)
+    meshPeriodic(
+        tmp_step_filename,
+        rve,
+        [phase],
+        size=1,
+        order=1,
+        output_file=tmp_mesh_filename,
+        mshFileVersion=4,
+    )
 
     # Act
-    remesh.remesh_keeping_periodicity(mesh_name, rve, output_mesh_name, hgrad=1.1)
+    remesh.remesh_keeping_periodicity(
+        tmp_mesh_filename, rve, tmp_output_mesh_filename, hgrad=1.1
+    )
 
     # Assert
-    assert is_periodic(get_mesh_nodes_coords(output_mesh_name))
+    assert is_periodic(get_mesh_nodes_coords(tmp_output_mesh_filename))
+
+
+def test_given_periodic_mesh_box_identify_boundary_triangles_from_mesh_file_must_count_and_tag_boundary_triangles():
+    ...
+
+
+def test_given_periodic_mesh_gyroid_with_surface_triangles_not_on_boundary_remesh_keeping_periodicity_must_maintain_periodicity():
+    ...
