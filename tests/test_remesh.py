@@ -1,10 +1,12 @@
 import pytest
 
+import microgen
 from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms
 import cadquery as cq
 import numpy as np
 import gmsh
 from pathlib import Path
+
 MESH_DIM = 3
 
 
@@ -13,6 +15,8 @@ def get_mesh_nodes_coords(mesh_name: str):
     gmsh.open(mesh_name)
 
     _, nodes_coords, _ = gmsh.model.mesh.getNodes()
+    gmsh.finalize()
+
     nodes_coords = nodes_coords.reshape(-1, MESH_DIM)
 
     return nodes_coords
@@ -120,33 +124,52 @@ def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 @pytest.fixture(scope="function")
 def tmp_step_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "box.step").as_posix()
+    return (tmp_dir / "shape.step").as_posix()
 
 
 @pytest.fixture(scope="function")
 def tmp_mesh_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "box_per.mesh").as_posix()
+    return (tmp_dir / "shape.mesh").as_posix()
 
 
 @pytest.fixture(scope="function")
 def tmp_output_mesh_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "box_per.o.mesh").as_posix()
+    return (tmp_dir / "shape.o.mesh").as_posix()
 
-def test_given_periodic_mesh_box_remesh_keeping_periodicity_must_maintain_periodicity(
-    tmp_step_filename: str, tmp_mesh_filename: str, tmp_output_mesh_filename: str
+
+@pytest.mark.parametrize(
+    "shape, mesh_element_size",
+    [
+        (Box(), 1.0),
+        (
+            Tpms(
+                surface_function=tpms.gyroid,
+                type_part="sheet",
+                thickness=0.05,
+            ),
+            0.05,
+        ),
+    ],
+)
+def test_given_periodic_mesh_remesh_keeping_periodicity_must_maintain_periodicity(
+    shape,
+    mesh_element_size,
+    tmp_step_filename: str,
+    tmp_mesh_filename: str,
+    tmp_output_mesh_filename: str,
 ) -> None:
     # Arrange
     rve = Rve()
-    box: cq.Shape = Box().generate()
-    phase = Phase(box)
+    cad_geometry: cq.Shape = shape.generate()
+    phase = Phase(cad_geometry)
 
-    cq.exporters.export(box, tmp_step_filename)
+    cq.exporters.export(cad_geometry, tmp_step_filename)
 
     meshPeriodic(
         tmp_step_filename,
         rve,
         [phase],
-        size=1,
+        size=mesh_element_size,
         order=1,
         output_file=tmp_mesh_filename,
         mshFileVersion=4,
@@ -159,11 +182,3 @@ def test_given_periodic_mesh_box_remesh_keeping_periodicity_must_maintain_period
 
     # Assert
     assert is_periodic(get_mesh_nodes_coords(tmp_output_mesh_filename))
-
-
-def test_given_periodic_mesh_box_identify_boundary_triangles_from_mesh_file_must_count_and_tag_boundary_triangles():
-    ...
-
-
-def test_given_periodic_mesh_gyroid_with_surface_triangles_not_on_boundary_remesh_keeping_periodicity_must_maintain_periodicity():
-    ...
