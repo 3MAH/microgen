@@ -25,19 +25,20 @@ def remesh_keeping_periodicity(input_mesh_file: str, rve: Rve,
     :param output_mesh_file: output file (must be .mesh)
     """
     with NamedTemporaryFile(suffix='.mesh') as boundary_triangles_file:
-        identify_boundary_triangles_from_mesh_file(input_mesh_file, rve, boundary_triangles_file.name)
+        _identify_boundary_triangles_from_mesh_file(input_mesh_file, rve, boundary_triangles_file.name)
         Mmg.mmg3d(input=boundary_triangles_file.name, output=output_mesh_file, hausd=hausd, hgrad=hgrad, hmax=hmax,
                   hmin=hmin, hsiz=hsiz)
 
 
-def identify_boundary_triangles_from_mesh_file(input_mesh_file: str, rve: Rve,
-                                               output_mesh_file: str) -> None:
+def _identify_boundary_triangles_from_mesh_file(input_mesh_file: str, rve: Rve,
+                                                output_mesh_file: str) -> None:
     """
     Prepares the mesh file for periodic remeshing by tagging boundary triangles
 
     This function adds a "RequiredTriangles" field
     in the ".mesh" file that stores the boundary triangles tags.
     mmg recognizes this field as triangles it must not remesh
+
     :param input_mesh_file: mesh file to remesh (must be .mesh)
     :param rve: Representative Volume Element for periodicity
     :param output_mesh_file: output file (must be .mesh)
