@@ -4,13 +4,14 @@ import microgen
 from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms
 import cadquery as cq
 import numpy as np
+import numpy.typing as npt
 import gmsh
 from pathlib import Path
 
 MESH_DIM = 3
 
 
-def get_mesh_nodes_coords(mesh_name: str):
+def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float64]:
     gmsh.initialize()
     gmsh.open(mesh_name)
 
@@ -22,7 +23,7 @@ def get_mesh_nodes_coords(mesh_name: str):
     return nodes_coords
 
 
-def is_periodic(nodes_coords, tol=1e-8, dim=MESH_DIM):
+def _is_periodic(nodes_coords, tol=1e-8, dim=MESH_DIM) -> bool:
     # bounding box
     xmax = np.max(nodes_coords[:, 0])
     xmin = np.min(nodes_coords[:, 0])
@@ -152,8 +153,8 @@ def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_must_maintain_periodicity(
-    shape,
-    mesh_element_size,
+    shape : microgen.BasicGeometry,
+    mesh_element_size : float,
     tmp_step_filename: str,
     tmp_mesh_filename: str,
     tmp_output_mesh_filename: str,
@@ -181,4 +182,4 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_must_maintain_periodicit
     )
 
     # Assert
-    assert is_periodic(get_mesh_nodes_coords(tmp_output_mesh_filename))
+    assert _is_periodic(_get_mesh_nodes_coords(tmp_output_mesh_filename))
