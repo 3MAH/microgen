@@ -1,7 +1,5 @@
 import pytest
-
-import microgen
-from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms
+from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms, BasicGeometry
 import cadquery as cq
 import numpy as np
 import numpy.typing as npt
@@ -11,7 +9,7 @@ from pathlib import Path
 MESH_DIM = 3
 
 
-def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float64]:
+def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
     gmsh.initialize()
     gmsh.open(mesh_name)
 
@@ -153,7 +151,7 @@ def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_must_maintain_periodicity(
-    shape : microgen.BasicGeometry,
+    shape : BasicGeometry,
     mesh_element_size : float,
     tmp_step_filename: str,
     tmp_mesh_filename: str,

@@ -2,27 +2,41 @@ import gmsh
 from microgen import Rve, Mmg
 import numpy as np
 import math as m
-from collections import namedtuple
 from tempfile import NamedTemporaryFile
 
-Triangle = namedtuple("Triangle", ["node1", "node2", "node3", "tag"])
+from typing import NamedTuple
+import numpy.typing as npt
+
+
+class Triangle(NamedTuple):
+    node1: npt.NDArray[np.float_]
+    node2: npt.NDArray[np.float_]
+    node3: npt.NDArray[np.float_]
+    tag: int
 
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
 
 def remesh_keeping_periodicity(input_mesh_file: str, rve: Rve,
-                               output_mesh_file: str, hausd=None,
-                               hgrad=None,
-                               hmax=None,
-                               hmin=None,
-                               hsiz=None) -> None:
+                               output_mesh_file: str, hausd: float = None,
+                               hgrad: float = None,
+                               hmax: float = None,
+                               hmin: float = None,
+                               hsiz: float = None) -> None:
     """
     Remeshes a mesh (.mesh file format) using mmg while keeping periodicity
 
     :param input_mesh_file: mesh file to remesh (must be .mesh)
     :param rve: Representative Volume Element for periodicity
     :param output_mesh_file: output file (must be .mesh)
+
+    The following parameters are used to control mmg remeshing, see here for more info : https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
+    :param hausd: Maximal Hausdorff distance for the boundaries approximation
+    :param hgrad: Gradation value, ie ratio between lengths of adjacent mesh edges
+    :param hmax: Maximal edge size
+    :param hmin: Minimal edge size
+    :param hsiz: Build a constant size map of size hsiz
     """
     with NamedTemporaryFile(suffix='.mesh') as boundary_triangles_file:
         _identify_boundary_triangles_from_mesh_file(input_mesh_file, rve, boundary_triangles_file.name)
