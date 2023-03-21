@@ -3,6 +3,7 @@ from microgen import Rve, Mmg
 import numpy as np
 import math as m
 from tempfile import NamedTemporaryFile
+import os
 
 from typing import NamedTuple
 import numpy.typing as npt
@@ -38,10 +39,11 @@ def remesh_keeping_periodicity(input_mesh_file: str, rve: Rve,
     :param hmin: Minimal edge size
     :param hsiz: Build a constant size map of size hsiz
     """
-    with NamedTemporaryFile(suffix='.mesh') as boundary_triangles_file:
+    with NamedTemporaryFile(suffix='.mesh', delete=False) as boundary_triangles_file:
         _identify_boundary_triangles_from_mesh_file(input_mesh_file, rve, boundary_triangles_file.name)
         Mmg.mmg3d(input=boundary_triangles_file.name, output=output_mesh_file, hausd=hausd, hgrad=hgrad, hmax=hmax,
                   hmin=hmin, hsiz=hsiz)
+    os.remove(boundary_triangles_file.name)  # to solve compatibility issues of NamedTemporaryFiles with Windows
 
 
 def _identify_boundary_triangles_from_mesh_file(input_mesh_file: str, rve: Rve,
