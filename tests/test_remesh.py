@@ -6,7 +6,7 @@ import numpy.typing as npt
 import gmsh
 from pathlib import Path
 
-MESH_DIM = 3
+_MESH_DIM = 3
 
 
 def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
@@ -16,12 +16,12 @@ def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
     _, nodes_coords, _ = gmsh.model.mesh.getNodes()
     gmsh.finalize()
 
-    nodes_coords = nodes_coords.reshape(-1, MESH_DIM)
+    nodes_coords = nodes_coords.reshape(-1, _MESH_DIM)
 
     return nodes_coords
 
 
-def _is_periodic(nodes_coords, tol=1e-8, dim=MESH_DIM) -> bool:
+def _is_periodic(nodes_coords, tol=1e-8, dim=_MESH_DIM) -> bool:
     # bounding box
     xmax = np.max(nodes_coords[:, 0])
     xmin = np.min(nodes_coords[:, 0])
@@ -136,26 +136,127 @@ def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.o.mesh").as_posix()
 
 
+def dummy_simple_box_mesh(tmp_step_filename: str, tmp_mesh_filename: str) -> None:
+    rve = Rve()
+    box: cq.Shape = Box().generate()
+    phase = Phase(box)
+
+    cq.exporters.export(box, tmp_step_filename)
+
+    meshPeriodic(tmp_step_filename, rve, [phase], size=1.0, order=1, output_file=tmp_mesh_filename, mshFileVersion=4)
+
+
+def _get_all_triangles_from_mesh(tmp_mesh_filename: str) -> tuple[list[int], list[int]]:
+    gmsh.open(tmp_mesh_filename)
+    element_type = gmsh.model.mesh.getElementType("tetrahedron", 1)
+    triangles_nodes_tags = gmsh.model.mesh.getElementFaceNodes(element_type, 3)
+    gmsh.model.mesh.createFaces()
+    triangles_tags, _ = gmsh.model.mesh.getFaces(3, triangles_nodes_tags)
+    return triangles_tags, triangles_nodes_tags
+
+
+def _get_all_triangles_nodes_coords(triangles_nodes_tags: list[int]) -> npt.NDArray[np.float_]:
+    n_nodes = len(triangles_nodes_tags)
+    triangles_nodes_coords = np.zeros((n_nodes, _MESH_DIM))
+    for i in range(n_nodes):
+        triangles_nodes_coords[i] = gmsh.model.mesh.getNode(triangles_nodes_tags[i])[0]
+
+    return triangles_nodes_coords
+
+
+def _remove_duplicate_triangles(triangles_list: list[remesh.Triangle]) -> list[remesh.Triangle]:
+    triangles_tags = []
+    triangles_list_without_duplicates = []
+    for triangle in triangles_list:
+        if triangle.tag not in triangles_tags:
+            triangles_tags.append(triangle.tag)
+            triangles_list_without_duplicates.append(triangle)
+    return triangles_list_without_duplicates
+
+
+def _build_triangles(tmp_mesh_filename) -> list[remesh.Triangle]:
+    gmsh.initialize()
+    triangles_tags, triangles_nodes_tags = _get_all_triangles_from_mesh(tmp_mesh_filename)
+    triangles_nodes_coords = _get_all_triangles_nodes_coords(triangles_nodes_tags)
+    gmsh.finalize()
+
+    n_triangles = len(triangles_tags)
+    all_triangles_with_duplicates = [
+        remesh.Triangle(
+            triangles_nodes_coords[_MESH_DIM * i],
+            triangles_nodes_coords[_MESH_DIM * i + 1],
+            triangles_nodes_coords[_MESH_DIM * i + 2],
+            triangles_tags[i],
+        )
+        for i in range(n_triangles)
+    ]
+
+    return _remove_duplicate_triangles(all_triangles_with_duplicates)
+
+
+def test_given_simple_box_mesh_is_triangle_on_boundary_must_return_true_for_all_boundary_triangles(
+        tmp_step_filename: str,
+        tmp_mesh_filename: str) -> None:
+    # Arrange
+    dummy_simple_box_mesh(tmp_step_filename, tmp_mesh_filename)
+    rve = Rve()
+
+    all_triangles = _build_triangles(tmp_mesh_filename)
+
+    boundary_triangles_tags = [13, 15, 17, 19, 23, 24, 25, 28, 29, 31, 35, 36, 39, 40, 42, 43, 45, 46, 49, 51, 54, 56,
+                               59, 60]
+
+    boundary_triangles = []
+    [boundary_triangles.append(triangle) for triangle in all_triangles if triangle.tag in boundary_triangles_tags]
+
+    # Act
+    boundary_triangles_bool_list = [remesh._is_triangle_on_boundary(triangle, rve) for triangle in boundary_triangles]
+
+    # Assert
+    assert all(bool_triangle_on_boundary == True for bool_triangle_on_boundary in boundary_triangles_bool_list)
+
+
+def test_given_simple_box_mesh_is_triangle_on_boundary_must_return_false_for_all_internal_triangles(
+        tmp_step_filename: str, tmp_mesh_filename: str) -> None:
+    # Arrange
+    dummy_simple_box_mesh(tmp_step_filename, tmp_mesh_filename)
+    rve = Rve()
+
+    all_triangles = _build_triangles(tmp_mesh_filename)
+
+    boundary_triangles_tags = [13, 15, 17, 19, 23, 24, 25, 28, 29, 31, 35, 36, 39, 40, 42, 43, 45, 46, 49, 51, 54, 56,
+                               59, 60]
+
+    internal_triangles = []
+    [internal_triangles.append(triangle) for triangle in all_triangles if triangle.tag not in boundary_triangles_tags]
+
+    # Act
+    internal_triangles_bool_list = [remesh._is_triangle_on_boundary(triangle, rve) for triangle in internal_triangles]
+
+    # Assert
+    assert all(bool_internal_triangle == False for bool_internal_triangle in internal_triangles_bool_list)
+
+
 @pytest.mark.parametrize(
     "shape, mesh_element_size",
     [
         (Box(), 1.0),
         (
-            Tpms(
-                surface_function=tpms.gyroid,
-                type_part="sheet",
-                thickness=0.05,
-            ),
-            0.05,
+                Tpms(
+                    surface_function=tpms.gyroid,
+                    type_part="sheet",
+                    thickness=0.05,
+                ),
+                0.05,
         ),
     ],
 )
-def test_given_periodic_mesh_remesh_keeping_periodicity_must_maintain_periodicity(
-    shape : BasicGeometry,
-    mesh_element_size : float,
-    tmp_step_filename: str,
-    tmp_mesh_filename: str,
-    tmp_output_mesh_filename: str,
+def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
+        shape: BasicGeometry,
+        mesh_element_size: float,
+        tmp_step_filename: str,
+        tmp_mesh_filename: str,
+        tmp_output_mesh_filename: str,
 ) -> None:
     # Arrange
     rve = Rve()
@@ -175,7 +276,7 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_must_maintain_periodicit
     )
 
     # Act
-    remesh.remesh_keeping_periodicity(
+    remesh.remesh_keeping_periodicity_for_fem(
         tmp_mesh_filename, rve, tmp_output_mesh_filename, hgrad=1.1
     )
 

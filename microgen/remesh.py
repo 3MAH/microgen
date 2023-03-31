@@ -19,12 +19,12 @@ _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
 
-def remesh_keeping_periodicity(input_mesh_file: str, rve: Rve,
-                               output_mesh_file: str, hausd: float = None,
-                               hgrad: float = None,
-                               hmax: float = None,
-                               hmin: float = None,
-                               hsiz: float = None) -> None:
+def remesh_keeping_periodicity_for_fem(input_mesh_file: str, rve: Rve,
+                                       output_mesh_file: str, hausd: float = None,
+                                       hgrad: float = None,
+                                       hmax: float = None,
+                                       hmin: float = None,
+                                       hsiz: float = None) -> None:
     """
     Remeshes a mesh (.mesh file format) using mmg while keeping periodicity
 
@@ -99,7 +99,7 @@ def _build_surface_triangles() -> list[Triangle]:
     return surface_triangles
 
 
-def _get_surface_nodes_coords(surface_nodes: list[int]) -> np.ndarray:
+def _get_surface_nodes_coords(surface_nodes: list[int]) -> npt.NDArray[np.float_]:
     n_nodes = len(surface_nodes)
     surface_nodes_coords = np.zeros((n_nodes, _MESH_DIM))
     for i in range(n_nodes):
