@@ -7,6 +7,7 @@ import gmsh
 from pathlib import Path
 
 _MESH_DIM = 3
+_BOUNDARY_DIM = 2
 
 
 def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
@@ -136,105 +137,41 @@ def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.o.mesh").as_posix()
 
 
-def dummy_simple_box_mesh(tmp_step_filename: str, tmp_mesh_filename: str) -> None:
-    rve = Rve()
-    box: cq.Shape = Box().generate()
-    phase = Phase(box)
-
-    cq.exporters.export(box, tmp_step_filename)
-
-    meshPeriodic(tmp_step_filename, rve, [phase], size=1.0, order=1, output_file=tmp_mesh_filename, mshFileVersion=4)
-
-
-def _get_all_triangles_from_mesh(tmp_mesh_filename: str) -> tuple[list[int], list[int]]:
-    gmsh.open(tmp_mesh_filename)
-    element_type = gmsh.model.mesh.getElementType("tetrahedron", 1)
-    triangles_nodes_tags = gmsh.model.mesh.getElementFaceNodes(element_type, 3)
-    gmsh.model.mesh.createFaces()
-    triangles_tags, _ = gmsh.model.mesh.getFaces(3, triangles_nodes_tags)
-    return triangles_tags, triangles_nodes_tags
-
-
-def _get_all_triangles_nodes_coords(triangles_nodes_tags: list[int]) -> npt.NDArray[np.float_]:
-    n_nodes = len(triangles_nodes_tags)
-    triangles_nodes_coords = np.zeros((n_nodes, _MESH_DIM))
-    for i in range(n_nodes):
-        triangles_nodes_coords[i] = gmsh.model.mesh.getNode(triangles_nodes_tags[i])[0]
-
-    return triangles_nodes_coords
-
-
-def _remove_duplicate_triangles(triangles_list: list[remesh.Triangle]) -> list[remesh.Triangle]:
-    triangles_tags = []
-    triangles_list_without_duplicates = []
-    for triangle in triangles_list:
-        if triangle.tag not in triangles_tags:
-            triangles_tags.append(triangle.tag)
-            triangles_list_without_duplicates.append(triangle)
-    return triangles_list_without_duplicates
-
-
-def _build_triangles(tmp_mesh_filename) -> list[remesh.Triangle]:
-    gmsh.initialize()
-    triangles_tags, triangles_nodes_tags = _get_all_triangles_from_mesh(tmp_mesh_filename)
-    triangles_nodes_coords = _get_all_triangles_nodes_coords(triangles_nodes_tags)
-    gmsh.finalize()
-
-    n_triangles = len(triangles_tags)
-    all_triangles_with_duplicates = [
-        remesh.Triangle(
-            triangles_nodes_coords[_MESH_DIM * i],
-            triangles_nodes_coords[_MESH_DIM * i + 1],
-            triangles_nodes_coords[_MESH_DIM * i + 2],
-            triangles_tags[i],
-        )
-        for i in range(n_triangles)
-    ]
-
-    return _remove_duplicate_triangles(all_triangles_with_duplicates)
-
-
-def test_given_simple_box_mesh_is_triangle_on_boundary_must_return_true_for_all_boundary_triangles(
-        tmp_step_filename: str,
-        tmp_mesh_filename: str) -> None:
+def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_must_return_true() -> None:
     # Arrange
-    dummy_simple_box_mesh(tmp_step_filename, tmp_mesh_filename)
-    rve = Rve()
 
-    all_triangles = _build_triangles(tmp_mesh_filename)
+    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
+    triangle_xmax = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]), np.array([0.5, -0.5, 0.5]),
+                                    1)
+    triangle_xmin = remesh.Triangle(np.array([-0.5, -0.5, -0.5]), np.array([-0.5, 0.5, -0.5]),
+                                    np.array([-0.5, -0.5, 0.5]),
+                                    2)
+    triangle_ymax = remesh.Triangle(np.array([0.5, 0.5, -0.5]), np.array([-0.5, 0.5, -0.5]), np.array([0.5, 0.5, 0.5]),
+                                    3)
+    triangle_ymin = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([-0.5, -0.5, -0.5]),
+                                    np.array([0.5, -0.5, 0.5]),
+                                    4)
+    triangle_zmax = remesh.Triangle(np.array([0.5, -0.5, 0.5]), np.array([0.5, 0.5, 0.5]), np.array([-0.5, -0.5, 0.5]),
+                                    5)
+    triangle_zmin = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]),
+                                    np.array([-0.5, -0.5, -0.5]),
+                                    6)
 
-    boundary_triangles_tags = [13, 15, 17, 19, 23, 24, 25, 28, 29, 31, 35, 36, 39, 40, 42, 43, 45, 46, 49, 51, 54, 56,
-                               59, 60]
+    face_triangles = [triangle_xmax, triangle_xmin, triangle_ymax, triangle_ymin, triangle_zmax, triangle_zmin]
 
-    boundary_triangles = []
-    [boundary_triangles.append(triangle) for triangle in all_triangles if triangle.tag in boundary_triangles_tags]
-
-    # Act
-    boundary_triangles_bool_list = [remesh._is_triangle_on_boundary(triangle, rve) for triangle in boundary_triangles]
-
-    # Assert
-    assert all(bool_triangle_on_boundary == True for bool_triangle_on_boundary in boundary_triangles_bool_list)
+    # Act & Assert
+    assert all([remesh._is_triangle_on_boundary(triangle, rve)] for triangle in face_triangles)
 
 
-def test_given_simple_box_mesh_is_triangle_on_boundary_must_return_false_for_all_internal_triangles(
-        tmp_step_filename: str, tmp_mesh_filename: str) -> None:
+def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_false() -> None:
     # Arrange
-    dummy_simple_box_mesh(tmp_step_filename, tmp_mesh_filename)
-    rve = Rve()
 
-    all_triangles = _build_triangles(tmp_mesh_filename)
+    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
+    triangle = remesh.Triangle(np.array([0.2, -0.25, -0.25]), np.array([0.2, 0.25, -0.25]),
+                               np.array([0.2, -0.25, 0.25]), 1)
 
-    boundary_triangles_tags = [13, 15, 17, 19, 23, 24, 25, 28, 29, 31, 35, 36, 39, 40, 42, 43, 45, 46, 49, 51, 54, 56,
-                               59, 60]
-
-    internal_triangles = []
-    [internal_triangles.append(triangle) for triangle in all_triangles if triangle.tag not in boundary_triangles_tags]
-
-    # Act
-    internal_triangles_bool_list = [remesh._is_triangle_on_boundary(triangle, rve) for triangle in internal_triangles]
-
-    # Assert
-    assert all(bool_internal_triangle == False for bool_internal_triangle in internal_triangles_bool_list)
+    # Act & Assert
+    assert not remesh._is_triangle_on_boundary(triangle, rve)
 
 
 @pytest.mark.parametrize(
@@ -259,7 +196,7 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
         tmp_output_mesh_filename: str,
 ) -> None:
     # Arrange
-    rve = Rve()
+    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
     cad_geometry: cq.Shape = shape.generate()
     phase = Phase(cad_geometry)
 
