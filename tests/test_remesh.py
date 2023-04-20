@@ -167,11 +167,11 @@ def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_fal
     # Arrange
 
     rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-    triangle = remesh.Triangle(np.array([0.2, -0.25, -0.25]), np.array([0.2, 0.25, -0.25]),
+    internal_triangle = remesh.Triangle(np.array([0.2, -0.25, -0.25]), np.array([0.2, 0.25, -0.25]),
                                np.array([0.2, -0.25, 0.25]), 1)
 
     # Act & Assert
-    assert not remesh._is_triangle_on_boundary(triangle, rve)
+    assert not remesh._is_triangle_on_boundary(internal_triangle, rve)
 
 
 @pytest.mark.parametrize(
