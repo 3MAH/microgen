@@ -110,45 +110,18 @@ def _get_surface_nodes_coords(surface_nodes: list[int]) -> npt.NDArray[np.float_
 def _is_triangle_on_boundary(triangle: Triangle, rve: Rve) -> bool:
     """Determines whether a triangle (defined by its 3 nodes) is on the boundary of a parallelepipedic rve"""
 
-    # there must be a better way:
+    # Define the boundary conditions
+         boundary_conditions = [
+             m.isclose(triangle.node1[0], rve.x_min) and m.isclose(triangle.node2[0], rve.x_min) and m.isclose(triangle.node3[0], rve.x_min),
+             m.isclose(triangle.node1[0], rve.x_max) and m.isclose(triangle.node2[0], rve.x_max) and m.isclose(triangle.node3[0], rve.x_max),
+             m.isclose(triangle.node1[1], rve.y_min) and m.isclose(triangle.node2[1], rve.y_min) and m.isclose(triangle.node3[1], rve.y_min),
+             m.isclose(triangle.node1[1], rve.y_max) and m.isclose(triangle.node2[1], rve.y_max) and m.isclose(triangle.node3[1], rve.y_max),
+             m.isclose(triangle.node1[2], rve.z_min) and m.isclose(triangle.node2[2], rve.z_min) and m.isclose(triangle.node3[2], rve.z_min),
+             m.isclose(triangle.node1[2], rve.z_max) and m.isclose(triangle.node2[2], rve.z_max) and m.isclose(triangle.node3[2], rve.z_max)
+         ]
 
-    bool_xmin = (
-            m.isclose(triangle.node1[0], rve.x_min)
-            and m.isclose(triangle.node2[0], rve.x_min)
-            and m.isclose(triangle.node3[0], rve.x_min)
-    )
-
-    bool_xmax = (
-            m.isclose(triangle.node1[0], rve.x_max)
-            and m.isclose(triangle.node2[0], rve.x_max)
-            and m.isclose(triangle.node3[0], rve.x_max)
-    )
-
-    bool_ymin = (
-            m.isclose(triangle.node1[1], rve.y_min)
-            and m.isclose(triangle.node2[1], rve.y_min)
-            and m.isclose(triangle.node3[1], rve.y_min)
-    )
-
-    bool_ymax = (
-            m.isclose(triangle.node1[1], rve.y_max)
-            and m.isclose(triangle.node2[1], rve.y_max)
-            and m.isclose(triangle.node3[1], rve.y_max)
-    )
-
-    bool_zmin = (
-            m.isclose(triangle.node1[2], rve.z_min)
-            and m.isclose(triangle.node2[2], rve.z_min)
-            and m.isclose(triangle.node3[2], rve.z_min)
-    )
-
-    bool_zmax = (
-            m.isclose(triangle.node1[2], rve.z_max)
-            and m.isclose(triangle.node2[2], rve.z_max)
-            and m.isclose(triangle.node3[2], rve.z_max)
-    )
-
-    return bool_xmin or bool_xmax or bool_ymin or bool_ymax or bool_zmin or bool_zmax
+         # Check if any of the boundary conditions are True
+         return any(boundary_conditions)
 
 
 def _extract_boundary_triangles_tags(
