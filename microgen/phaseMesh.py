@@ -3,6 +3,8 @@
 Cubic mesh for FE
 """
 
+from typing import Sequence, Optional, Union
+
 import pyvista as pv
 import numpy as np
 from .rve import Rve
@@ -17,9 +19,9 @@ class PhaseMesh:
     """
     def __init__(
         self,
-        nodes : Optional[np.ndarray] = None,
-        elements : Optional[np.ndarray] = None,
-        elm_type : Optional[str] = None,
+        nodes : np.ndarray,
+        elements : np.ndarray,
+        elm_type : np.ndarray,
         nodes_index : Optional[np.ndarray] = None,
     ) -> None:
     
@@ -28,4 +30,7 @@ class PhaseMesh:
         self.elm_type = elm_type
         self.nodes_index = nodes_index
 
-        self.pv_mesh = pv.UnstructuredGrid(self.nodes, self.elements, self.elm_type)
+        cells = np.hstack(np.insert(self.elements, 0, 4, axis=1))
+        print(cells)
+
+        self.pv_mesh = pv.UnstructuredGrid(cells, self.elm_type, self.nodes)
