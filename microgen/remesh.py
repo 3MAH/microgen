@@ -60,9 +60,9 @@ def remesh_keeping_periodicity_for_fem(
             hmin=hmin,
             hsiz=hsiz,
         )
-    os.remove(
-        boundary_triangles_file.name
-    )  # to solve compatibility issues of NamedTemporaryFiles with Windows
+        os.remove(
+            boundary_triangles_file.name
+        )  # to solve compatibility issues of NamedTemporaryFiles with Windows
 
 
 def _identify_boundary_triangles_from_mesh_file(
