@@ -160,7 +160,7 @@ def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_m
     face_triangles = [triangle_xmax, triangle_xmin, triangle_ymax, triangle_ymin, triangle_zmax, triangle_zmin]
 
     # Act & Assert
-    assert all([remesh._is_triangle_on_boundary(triangle, rve)] for triangle in face_triangles)
+    assert all(remesh._is_triangle_on_boundary(triangle, rve) for triangle in face_triangles)
 
 
 def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_false() -> None:
