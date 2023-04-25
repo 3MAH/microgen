@@ -63,7 +63,7 @@ def remesh_keeping_periodicity_for_fem(
         os.remove(
             boundary_triangles_file.name
         )  # to solve compatibility issues of NamedTemporaryFiles with Windows
-
+    os.remove(output_mesh_file.replace(".mesh",".sol")) # Remove unused .sol file created by mmg
 
 def _identify_boundary_triangles_from_mesh_file(
     input_mesh_file: str, rve: Rve, output_mesh_file: str
