@@ -28,6 +28,7 @@ dependencies = [
     "cadquery",
     "gmsh",
     "cadquery-ocp",
+    "meshio"
 ]
 dynamic = ["version"]
 
