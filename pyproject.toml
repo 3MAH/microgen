@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "microgen"
 authors = [
-    {name = "3MAH"},
+    {name = "3MAH", email = 'set3mah@gmail.com'},
 ]
 description = "Microstructure generation"
 readme = "README.md"
