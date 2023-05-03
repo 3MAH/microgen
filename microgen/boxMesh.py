@@ -10,11 +10,13 @@ import numpy as np
 from .rve import Rve
 from .phaseMesh import PhaseMesh
 
-class CubicMesh(PhaseMesh):
+class BoxMesh(PhaseMesh):
     """
     CubicMesh class to manage list of Nodes and Elements inside an Rve
-    :param node_list: list of nodes
-    :param node_list_name : name of node lists
+    :param nodes: list of nodes (np.ndarray)
+    :param elements : list of elements (np.ndarray)
+    :param elm_type : type of elements (np.ndarray)
+    :param nodes_index : index of node list (if different from the natural index of nodes array)   
     """
     def __init__(
         self,
@@ -161,6 +163,53 @@ class CubicMesh(PhaseMesh):
         self.face_list_Zm = self.face_list_Zm[np.lexsort((crd[self.face_list_Zm, 0], crd[self.face_list_Zm, 1].round(decimal_round)))]
         self.face_list_Zp = self.face_list_Zp[np.lexsort((crd[self.face_list_Zp ,0], crd[self.face_list_Zp ,1].round(decimal_round)))]
 
-        print(self.edge_list_XmYm)
-        print("ouille\n")
-    
+        self.corners = np.vstack((self.corner_list_XmYmZm, self.corner_list_XmYpZm, self.corner_list_XpYmZm, self.corner_list_XpYpZm,
+                              self.corner_list_XmYmZp, self.corner_list_XmYpZp, self.corner_list_XpYmZp, self.corner_list_XpYpZp))  
+
+        self.edges = np.vstack((self.edge_list_XmYm, self.edge_list_XpYm, self.edge_list_XpYp, self.edge_list_XmYp, self.edge_list_XmZm, self.edge_list_XpZm,
+                                self.edge_list_XpZp, self.edge_list_XmZp, self.edge_list_YmZm, self.edge_list_YpZm, self.edge_list_YpZp, self.edge_list_YmZp))
+
+        self.faces = np.vstack((self.face_list_Xm, self.face_list_Xp, self.face_list_Ym, self.face_list_Yp, self.face_list_Zm, self.face_list_Zp))
+
+
+    @staticmethod
+    def from_pyvista(pvmesh, name = ""):
+        """Build a Mesh from a pyvista UnstructuredGrid or PolyData mesh. 
+        Node and element data are not copied.
+        For now, only mesh with single element type may be imported.
+        Multi-element meshes will be integrated later. """                        
+
+        if isinstance(pvmesh, pv.PolyData):
+            pvmesh = pvmesh.cast_to_unstructured_grid()
+                
+            if len(pvmesh.cells_dict) != 1: return NotImplemented
+            
+            elm_type =  {3:'lin2',
+                         5:'tri3',
+                         9:'quad4',
+                         10:'tet4',
+                         12:'hex8',
+                         13:'wed6',
+                         14:'pyr5',
+                         21:'lin3',
+                         22:'tri6',
+                         23:'quad8', 
+                         24:'tet10',
+                         25:'hex20'
+                         }.get(pvmesh.celltypes[0], None)
+                                   
+            if elm_type is None: raise NameError('Element Type '+ str(elm_type) + ' not available in pyvista')            
+            
+            elm = list(pvmesh.cells_dict.values())[0]
+            # elm = pvmesh.cells.reshape(-1,pvmesh.cells[0]+1)[1:]            
+            
+            return Mesh(pvmesh.points, elm, elm_type, name=name)
+        else:
+            raise NameError('Pyvista not installed.')
+
+    # def find_neighbours(
+    #     self,
+    #     rve: Rve,
+    #     tol: float = 1.e-8,
+    # ) -> None:
+       
