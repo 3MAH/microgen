@@ -43,3 +43,29 @@ class Rve:
         )
         self.is_matrix = False
         self.matrix_number = 0
+
+    @classmethod
+    def from_min_max(
+        cls, 
+        x_min: float = -0.5, 
+        x_max: float = 0.5, 
+        y_min: float = -0.5, 
+        y_max: float = 0.5, 
+        z_min: float = -0.5, 
+        z_max: float = 0.5,
+        ) -> None:
+        """ 
+        :param x_min: min X dimension of the RVE
+        :param x_max: max X dimension of the RVE
+        :param x_min: min Y dimension of the RVE
+        :param x_max: max Y dimension of the RVE
+        :param x_min: min Z dimension of the RVE
+        :param x_max: max Z dimension of the RVE     
+        Generate a Rve from the min - max values   
+        """        
+
+        self.center = (0.5*(x_min + x_max), 0.5*(y_min + y_max), 0.5*(z_min + z_max))
+        self.dim_x = abs(x_max - x_min)
+        self.dim_y = abs(y_max - y_min)
+        self.dim_z = abs(z_max - z_min)
+        return cls(center, dim_x, dim_y, dim_z)        
