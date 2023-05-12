@@ -34,18 +34,20 @@ class PhaseMesh:
         The “padding” indicating the number of points per cell in introduced
         exactly as a pyvista UnstructuredGrid.cells property"""
     
-        cells = np.empty((0,), dtype='int64')
-        cells_type = np.empty((0,), dtype='int64')
+        cells = np.empty((0,), dtype=int)
+        cells_type = np.empty((0,), dtype=int)
 
         for key in self.elements.keys():
             
             padding = self.elements[key].shape[1]
-            cells_temp = np.insert(self.elements.get(key), 0, padding)
+            cells_temp = np.empty((self.elements[key].shape[0], padding+1), dtype=int)
+            cells_temp[:,0] = padding
+            cells_temp[:,1:] = self.elements[key][:,:padding]
             cells_type_temp = np.full((self.elements[key].shape[0]), key)
             print(cells_temp)
             print(cells_type_temp)    
             cells = np.append(cells, cells_temp)
-            cells_type = np.append(cells_type, cells_temp)            
+            cells_type = np.append(cells_type, cells_type_temp)            
 
         return (cells.ravel(), cells_type.ravel())
     
@@ -54,7 +56,8 @@ class PhaseMesh:
         Node and element data are not copied (to be verified with pyvista).
         Mesh with multiple element type are handled."""
     
-        cells, celltypes = self._to_cells_and_celltype()
+        cells, celltypes = self._to_cells_and_celltype()      
+
         return pv.UnstructuredGrid(cells, celltypes, self.nodes)
 
     @staticmethod
