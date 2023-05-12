@@ -7,6 +7,7 @@ from typing import Sequence, Optional, Union
 
 import pyvista as pv
 import numpy as np
+from scipy.spatial import KDTree
 from .rve import Rve
 from .phaseMesh import PhaseMesh
 
@@ -21,11 +22,13 @@ class BoxMesh(PhaseMesh):
     def __init__(
         self,
         nodes : np.ndarray,
-        elements : np.ndarray,
-        elm_type : np.ndarray,
+        elements : dict,
+        name : Optional[np.ndarray] = None,
         nodes_index : Optional[np.ndarray] = None,
     ) -> None:
-        super().__init__(nodes=nodes, elements=elements, elm_type=elm_type, nodes_index=nodes_index)
+        super().__init__(nodes=nodes, elements=elements, name=name, nodes_index=nodes_index)
+
+        self._rve = None
 
         self.center = None
 
@@ -67,13 +70,15 @@ class BoxMesh(PhaseMesh):
 
     def construct(
         self,
-        rve: Rve,
-        tol: float = 1.e-8,
+        rve: Optional[Rve] = None,
+        tol: Optional[float] = 1.e-8,
     ) -> None:
             
+        if(isinstance(rve, Rve) == False) : 
+            rve = self.rve
+
         crd = self.nodes
-        pv_mesh = self.pv_mesh
-        closest_point_to_rve_center = pv_mesh.find_closest_point(rve.center)
+        closest_point_to_rve_center = np.linalg.norm(crd-rve.center, axis=1).argmin()
         self.center = crd[closest_point_to_rve_center]
 
         self.face_list_Xm = np.where( np.abs(crd[:,0] - rve.x_min) < tol )[0]
@@ -171,45 +176,154 @@ class BoxMesh(PhaseMesh):
 
         self.faces = np.vstack((self.face_list_Xm, self.face_list_Xp, self.face_list_Ym, self.face_list_Yp, self.face_list_Zm, self.face_list_Zp))
 
+    @property
+    def rve(
+        self,
+    ) -> Rve:
+        """Return a representative volume element (Rve)
+        of the considered mesh"""
 
-    @staticmethod
-    def from_pyvista(pvmesh, name = ""):
-        """Build a Mesh from a pyvista UnstructuredGrid or PolyData mesh. 
-        Node and element data are not copied.
-        For now, only mesh with single element type may be imported.
-        Multi-element meshes will be integrated later. """                        
-
-        if isinstance(pvmesh, pv.PolyData):
-            pvmesh = pvmesh.cast_to_unstructured_grid()
-                
-            if len(pvmesh.cells_dict) != 1: return NotImplemented
-            
-            elm_type =  {3:'lin2',
-                         5:'tri3',
-                         9:'quad4',
-                         10:'tet4',
-                         12:'hex8',
-                         13:'wed6',
-                         14:'pyr5',
-                         21:'lin3',
-                         22:'tri6',
-                         23:'quad8', 
-                         24:'tet10',
-                         25:'hex20'
-                         }.get(pvmesh.celltypes[0], None)
-                                   
-            if elm_type is None: raise NameError('Element Type '+ str(elm_type) + ' not available in pyvista')            
-            
-            elm = list(pvmesh.cells_dict.values())[0]
-            # elm = pvmesh.cells.reshape(-1,pvmesh.cells[0]+1)[1:]            
-            
-            return Mesh(pvmesh.points, elm, elm_type, name=name)
+        if(isinstance(self._rve, Rve)):
+            return self._rve
         else:
-            raise NameError('Pyvista not installed.')
+            return self._build_rve()
+
+    @rve.setter
+    def rve(
+        self,
+        value: Rve,
+    ) -> None:
+        self._rve = value
+
+    def _build_rve(
+        self,
+    ) -> Rve:
+        pvmesh = self.to_pyvista()
+        xmin, xmax, ymin, ymax, zmin, zmax = pvmesh.bounds
+        return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def closest_points_on_faces(
+        self,
+        k_neighbours: float = 3,
+        rve: Optional[Rve] = None,
+        tol: Optional[float] = 1.e-8,
+    ) -> None:
+            
+        if(isinstance(rve, Rve) == False) : 
+            rve = self.rve       
+
+        crd = self.nodes
+
+        all_face_Xp = np.hstack((self.face_list_Xp,self.edge_list_XpYm,self.edge_list_XpYp,self.edge_list_XpZm,self.edge_list_XpZp))
+        all_face_Yp = np.hstack((self.face_list_Yp,self.edge_list_YpZm,self.edge_list_YpZp,self.edge_list_XmYp,self.edge_list_XpYp))
+        all_face_Zp = np.hstack((self.face_list_Zp,self.edge_list_YmZp,self.edge_list_YpZp,self.edge_list_XmZp,self.edge_list_XpZp))
+
+        kdtree_Xp = KDTree(crd[all_face_Xp])
+        kdtree_Yp = KDTree(crd[all_face_Yp])
+        kdtree_Zp = KDTree(crd[all_face_Zp])
+
+        offset = np.array([rve.dim_x, 0.0, 0.0])
+        crd_XmXp = crd[self.face_list_Xm] + offset
+        offset = np.array([0.0, rve.dim_y, 0.0])        
+        crd_YmYp = crd[self.face_list_Ym] + offset   
+        offset = np.array([0.0, 0.0, rve.dim_z])  
+        crd_ZmZp = crd[self.face_list_Zm] + offset              
+
+        dist_XmXp, index_XmXp = kdtree_Xp.query(crd_XmXp, k_neighbours)
+        dist_YmYp, index_YmYp = kdtree_Yp.query(crd_YmYp, k_neighbours)
+        dist_ZmZp, index_ZmZp = kdtree_Zp.query(crd_ZmZp, k_neighbours)        
+
+        return (all_face_Xp[index_XmXp], dist_XmXp, all_face_Yp[index_YmYp], dist_YmYp, all_face_Zp[index_ZmZp], dist_ZmZp)
+
+    def closest_points_on_edges(
+        self,
+        rve: Optional[Rve] = None,
+        tol: Optional[float] = 1.e-8,
+    ) -> None:
+            
+        if(isinstance(rve, Rve) == False) : 
+            rve = self.rve       
+
+        crd = self.nodes
+
+        all_edge_XpYm = np.hstack((self.edge_list_XpYm,self.corner_list_XpYmZm,self.corner_list_XpYmZp))
+        all_edge_XpYp = np.hstack((self.edge_list_XpYp,self.corner_list_XpYpZm,self.corner_list_XpYpZp))
+        all_edge_XmYp = np.hstack((self.edge_list_XmYp,self.corner_list_XmYpZm,self.corner_list_XmYpZp))
+
+        all_edge_XpZm = np.hstack((self.edge_list_XpZm,self.corner_list_XpYmZm,self.corner_list_XpYpZm))
+        all_edge_XpZp = np.hstack((self.edge_list_XpZp,self.corner_list_XpYmZp,self.corner_list_XpYpZp))                
+        all_edge_XmZp = np.hstack((self.edge_list_XmZp,self.corner_list_XmYmZp,self.corner_list_XmYpZp))                
+
+        all_edge_YpZm = np.hstack((self.edge_list_YmZm,self.corner_list_XmYpZm,self.corner_list_XpYpZm))
+        all_edge_YpZp = np.hstack((self.edge_list_YpZp,self.corner_list_XmYpZp,self.corner_list_XpYpZp))        
+        all_edge_YmZp = np.hstack((self.edge_list_YmZp,self.corner_list_XmYmZp,self.corner_list_XpYmZp))        
+
+        kdtree_XpYm = KDTree(crd[all_edge_XpYm])
+        kdtree_XpYp = KDTree(crd[all_edge_XpYp])
+        kdtree_XmYp = KDTree(crd[all_edge_XmYp])
+
+        kdtree_XpZm = KDTree(crd[all_edge_XpZm])
+        kdtree_XpZp = KDTree(crd[all_edge_XpZp])
+        kdtree_XmZp = KDTree(crd[all_edge_XmZp])
+
+        kdtree_YpZm = KDTree(crd[all_edge_YpZm])
+        kdtree_YpZp = KDTree(crd[all_edge_YpZp])
+        kdtree_YmZp = KDTree(crd[all_edge_YmZp])
+
+        offset = np.array([rve.dim_x, 0.0, 0.0])
+        crd_XpYm = crd[self.edge_list_XmYm] + offset
+        offset = np.array([rve.dim_x, rve.dim_y, 0.0])        
+        crd_XpYp = crd[self.edge_list_XmYm] + offset   
+        offset = np.array([0.0, rve.dim_y, 0.0])  
+        crd_XmYp = crd[self.edge_list_XmYm] + offset       
+
+        offset = np.array([rve.dim_x, 0.0, 0.0])
+        crd_XpZm = crd[self.edge_list_XmZm] + offset
+        offset = np.array([rve.dim_x, 0.0, rve.dim_z])        
+        crd_XpZp = crd[self.edge_list_XmZm] + offset   
+        offset = np.array([0.0, 0.0, rve.dim_z])  
+        crd_XmZp = crd[self.edge_list_XmZm] + offset               
+
+        offset = np.array([0.0, rve.dim_y, 0.0])
+        crd_YpZm = crd[self.edge_list_YmZm] + offset
+        offset = np.array([0.0, rve.dim_y, rve.dim_z])        
+        crd_YpZp = crd[self.edge_list_YmZm] + offset   
+        offset = np.array([0.0, 0.0, rve.dim_z])  
+        crd_YmZp = crd[self.edge_list_YmZm] + offset
+
+        dist_XpYm, index_XpYm = kdtree_XpYm.query(crd_XpYm, 2)
+        dist_XpYp, index_XpYp = kdtree_XpYp.query(crd_XpYp, 2)
+        dist_XmYp, index_XmYp = kdtree_XmYp.query(crd_XmYp, 2)
+
+        dist_XpZm, index_XpZm = kdtree_XpZm.query(crd_XpZm, 2)
+        dist_XpZp, index_XpZp = kdtree_XpZp.query(crd_XpZp, 2)
+        dist_XmZp, index_XmZp = kdtree_XmZp.query(crd_XmZp, 2)       
+
+        dist_YpZm, index_YpZm = kdtree_YpZm.query(crd_YpZm, 2)
+        dist_YpZp, index_YpZp = kdtree_YpZp.query(crd_YpZp, 2)
+        dist_YmZp, index_YmZp = kdtree_YmZp.query(crd_YmZp, 2)
+
+        return (all_edge_XpYm[index_XpYm], dist_XpYm,
+                all_edge_XpYp[index_XpYp], dist_XpYp,
+                all_edge_XmYp[index_XmYp], dist_XmYp,
+                all_edge_XpZm[index_XpZm], dist_XpZm,
+                all_edge_XpZp[index_XpZp], dist_XpZp,
+                all_edge_XmZp[index_XmZp], dist_XmZp,
+                all_edge_YpZm[index_YpZm], dist_YpZm,
+                all_edge_YpZp[index_YpZp], dist_YpZp,
+                all_edge_YmZp[index_YmZp], dist_YmZp,
+            )
+
+#    def _translate_faces(self, axis, rve: Rve)
+        
+        
+        
 
     # def find_neighbours(
     #     self,
     #     rve: Rve,
     #     tol: float = 1.e-8,
     # ) -> None:
+        
+
        
