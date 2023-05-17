@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microgen"
+authors = [
+    {name = "3MAH", email = 'set3mah@gmail.com'},
+]
+description = "Microstructure generation"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["microstructure", "lattice"]
+license = {text = "GPLv3"}
+classifiers = [
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Information Analysis',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: MacOS',
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "pyvista",
+    "numpy",
+    "cadquery",
+    "gmsh",
+    "cadquery-ocp",
+    "meshio"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+all = [
+    'pytest',
+    'pytest-cov',
+]
+test = [
+    'pytest',
+    'pytest-cov',
+]
+
+[project.urls]
+Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
+"Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
+"Source Code" = 'https://github.com/3MAH/microgen'
+
+[tool.setuptools.dynamic]
+version = {attr = 'microgen._version.__version__'}
+
+[tool.setuptools.packages.find]
+include = [
+    'microgen',
+    'microgen.*',
+]

@@ -30,6 +30,14 @@ class Neper:
 
         .. _neper's documentation: https://neper.info/doc/neper_t.html#cmdoption-domain
         """
+        
+        try:
+            # Check if neper is installed and available in the PATH
+            subprocess.run(["neper", "--version"], check=True)
+        except subprocess.CalledProcessError:
+            print("Neper is not installed. Please install Neper before running this command.")
+            return
+
         command = "neper -T -n " + str(nbCell) + " -id 1 -dim 3"
         command = (
             command

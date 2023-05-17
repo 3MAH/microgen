@@ -1,6 +1,7 @@
 """
 Mesh using gmsh
 """
+from typing import Iterator
 
 import gmsh
 import numpy as np
@@ -8,14 +9,18 @@ import numpy as np
 from .phase import Phase
 from .rve import Rve
 
+_DIM_COUNT = 3
+_BOUNDS_COUNT = 2
+_Point3D = np.ndarray
+
 
 def mesh(
-    mesh_file: str,
-    listPhases: list[Phase],
-    size: float,
-    order: int,
-    output_file: str = "Mesh.msh",
-    mshFileVersion: int = 4,
+        mesh_file: str,
+        listPhases: list[Phase],
+        size: float,
+        order: int,
+        output_file: str = "Mesh.msh",
+        mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes step file with gmsh with list of phases management
@@ -30,58 +35,18 @@ def mesh(
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
-    gmsh.initialize()
-    gmsh.option.setNumber(
-        name="General.Verbosity", value=1
-    )  # this would still print errors, but not warnings
-
-    gmsh.model.mesh.setOrder(order=order)
-    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
-
-    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
-    nbTags = len(flatListSolids)
-    FlatListTags = list(range(1, nbTags + 1, 1))
-
-    listTags = []
-    index = 0
-    for i, phase in enumerate(listPhases):
-        temp = []
-        for j, solid in enumerate(phase.solids):
-            index = index + 1
-            temp.append(index)
-        listTags.append(temp)
-
-    listDimTags = [(3, tag) for tag in FlatListTags]
-
-    gmsh.model.occ.importShapes(fileName=mesh_file, highestDimOnly=True)
-
-    if len(listDimTags) > 1:
-        gmsh.model.occ.fragment(
-            objectDimTags=listDimTags[:-1], toolDimTags=[listDimTags[-1]]
-        )
-
-    gmsh.model.occ.synchronize()
-
-    for i, tag in enumerate(listTags):
-        ps_i = gmsh.model.addPhysicalGroup(dim=3, tags=tag)
-        gmsh.model.setPhysicalName(dim=3, tag=ps_i, name="Mat" + str(i))
-
-    p = gmsh.model.getEntities()
-
-    gmsh.model.mesh.setSize(dimTags=p, size=size)
-    gmsh.model.mesh.generate(dim=3)
-    gmsh.write(fileName=output_file)
-    gmsh.finalize()
+    _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
+    _finalize_mesh(size, output_file)
 
 
 def meshPeriodic(
-    mesh_file: str,
-    rve: Rve,
-    listPhases: list[Phase],
-    size: float,
-    order: int,
-    output_file: str = "MeshPeriodic.msh",
-    mshFileVersion: int = 4,
+        mesh_file: str,
+        rve: Rve,
+        listPhases: list[Phase],
+        size: float,
+        order: int,
+        output_file: str = "MeshPeriodic.msh",
+        mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes periodic geometries with gmsh
@@ -97,174 +62,113 @@ def meshPeriodic(
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
+    _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
+    _set_periodic(rve)
+    _finalize_mesh(size, output_file)
+
+
+def _generate_list_tags(listPhases: list[Phase]) -> list[list[int]]:
+    listTags: list[list[int]] = []
+    start: int = 1
+    for phase in listPhases:
+        stop = start + len(phase.solids)
+        listTags.append(list(range(start, stop)))
+        start = stop
+    return listTags
+
+
+def _generate_list_dim_tags(listPhases: list[Phase]) -> list[tuple[int, int]]:
+    nbTags = sum(len(phase.solids) for phase in listPhases)
+    return [(_DIM_COUNT, tag) for tag in range(1, nbTags + 1)]
+
+
+def _initialize_mesh(
+        mesh_file: str,
+        listPhases: list[Phase],
+        order: int,
+        mshFileVersion: int = 4,
+) -> None:
     gmsh.initialize()
     gmsh.option.setNumber(
-        "General.Verbosity", 1
+        name="General.Verbosity", value=1
     )  # this would still print errors, but not warnings
 
-    gmsh.model.mesh.setOrder(order)
-    gmsh.option.setNumber("Mesh.MshFileVersion", mshFileVersion)
+    gmsh.model.mesh.setOrder(order=order)
+    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
+    gmsh.model.occ.importShapes(fileName=mesh_file, highestDimOnly=True)
 
-    flatListSolids = [solid for phase in listPhases for solid in phase.solids]
-    nbTags = len(flatListSolids)
-
-    flatListTags = list(range(1, nbTags + 1, 1))
-
-    listTags = []
-    index = 0
-    for i, phase in enumerate(listPhases):
-        temp = []
-        for j, solid in enumerate(phase.solids):
-            index = index + 1
-            temp.append(index)
-        listTags.append(temp)
-
-    listDimTags = [(3, tag) for tag in flatListTags]
-
-    gmsh.model.occ.importShapes(mesh_file, highestDimOnly=True)
-
-    size_box = np.min(np.array([rve.dx, rve.dy, rve.dz]))
-    eps = 1.0e-3 * size_box
+    listDimTags = _generate_list_dim_tags(listPhases)
     if len(listDimTags) > 1:
-        outDimTags, outDimTagsMap = gmsh.model.occ.fragment(
-            listDimTags[:-1], [listDimTags[-1]]
+        gmsh.model.occ.fragment(
+            objectDimTags=listDimTags[:-1], toolDimTags=[listDimTags[-1]]
         )
+
     gmsh.model.occ.synchronize()
 
-    for i, tag in enumerate(listTags):
-        ps_i = gmsh.model.addPhysicalGroup(3, tag)
-        gmsh.model.setPhysicalName(3, ps_i, "Mat" + str(i))
+    listTags = _generate_list_tags(listPhases)
+    for i, tags in enumerate(listTags):
+        ps_i = gmsh.model.addPhysicalGroup(dim=_DIM_COUNT, tags=tags)
+        gmsh.model.setPhysicalName(dim=_DIM_COUNT, tag=ps_i, name="Mat" + str(i))
 
-    p = gmsh.model.getEntities()
 
-    # We now identify corresponding surfaces on the left and right sides of the
-    # geometry automatically.
-
-    # We get all the entities on the Xm
-    translation = [1, 0, 0, rve.dx, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-    sxmin = gmsh.model.getEntitiesInBoundingBox(
-        0 - eps, -eps, -eps, eps, rve.dy + eps, rve.dy + eps, 2
-    )
-
-    for tup_min in sxmin:
-        # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
-            tup_min[0], tup_min[1]
-        )
-        # We translate the bounding box to the right and look for surfaces inside
-        # it:
-        sxmax = gmsh.model.getEntitiesInBoundingBox(
-            xmin - eps + 1,
-            ymin - eps,
-            zmin - eps,
-            xmax + eps + 1,
-            ymax + eps,
-            zmax + eps,
-            2,
-        )
-        # For all the matches, we compare the corresponding bounding boxes...
-        for tup_max in sxmax:
-            xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = gmsh.model.getBoundingBox(
-                tup_max[0], tup_max[1]
-            )
-            xmin2 -= 1
-            xmax2 -= 1
-
-            # ...and if they match, we apply the periodicity constraint
-            if (
-                abs(xmin2 - xmin) < eps
-                and abs(xmax2 - xmax) < eps
-                and abs(ymin2 - ymin) < eps
-                and abs(ymax2 - ymax) < eps
-                and abs(zmin2 - zmin) < eps
-                and abs(zmax2 - zmax) < eps
-            ):
-                gmsh.model.mesh.setPeriodic(2, [tup_max[1]], [tup_min[1]], translation)
-
-    # We get all the entities on the Ym
-    translation = [1, 0, 0, 0, 0, 1, 0, rve.dy, 0, 0, 1, 0, 0, 0, 0, 1]
-    symin = gmsh.model.getEntitiesInBoundingBox(
-        0 - eps, -eps, -eps, rve.dx + eps, eps, rve.dz + eps, 2
-    )
-
-    for tup_min in symin:
-        # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
-            tup_min[0], tup_min[1]
-        )
-        # We translate the bounding box to the right and look for surfaces inside
-        # it:
-        symax = gmsh.model.getEntitiesInBoundingBox(
-            xmin - eps,
-            ymin - eps + 1,
-            zmin - eps,
-            xmax + eps,
-            ymax + eps + 1,
-            zmax + eps,
-            2,
-        )
-        # For all the matches, we compare the corresponding bounding boxes...
-        for tup_max in symax:
-            xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = gmsh.model.getBoundingBox(
-                tup_max[0], tup_max[1]
-            )
-            ymin2 -= 1
-            ymax2 -= 1
-
-            # ...and if they match, we apply the periodicity constraint
-            if (
-                abs(xmin2 - xmin) < eps
-                and abs(xmax2 - xmax) < eps
-                and abs(ymin2 - ymin) < eps
-                and abs(ymax2 - ymax) < eps
-                and abs(zmin2 - zmin) < eps
-                and abs(zmax2 - zmax) < eps
-            ):
-                gmsh.model.mesh.setPeriodic(2, [tup_max[1]], [tup_min[1]], translation)
-
-    # We get all the entities on the Zm
-    translation = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, rve.dz, 0, 0, 0, 1]
-    szmin = gmsh.model.getEntitiesInBoundingBox(
-        0 - eps, -eps, -eps, rve.dx + eps, rve.dy + eps, eps, 2
-    )
-
-    for tup_min in szmin:
-        # Then we get the bounding box of each left surface
-        xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
-            tup_min[0], tup_min[1]
-        )
-        # We translate the bounding box to the right and look for surfaces inside
-        # it:
-        szmax = gmsh.model.getEntitiesInBoundingBox(
-            xmin - eps,
-            ymin - eps,
-            zmin - eps + 1,
-            xmax + eps,
-            ymax + eps,
-            zmax + eps + 1,
-            2,
-        )
-        # For all the matches, we compare the corresponding bounding boxes...
-        for tup_max in szmax:
-            xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = gmsh.model.getBoundingBox(
-                tup_max[0], tup_max[1]
-            )
-            zmin2 -= 1
-            zmax2 -= 1
-
-            # ...and if they match, we apply the periodicity constraint
-            if (
-                abs(xmin2 - xmin) < eps
-                and abs(xmax2 - xmax) < eps
-                and abs(ymin2 - ymin) < eps
-                and abs(ymax2 - ymax) < eps
-                and abs(zmin2 - zmin) < eps
-                and abs(zmax2 - zmax) < eps
-            ):
-                gmsh.model.mesh.setPeriodic(2, [tup_max[1]], [tup_min[1]], translation)
-
-    p = gmsh.model.getEntities()
-    gmsh.model.mesh.setSize(p, size)
-    gmsh.model.mesh.generate(3)
-    gmsh.write(output_file)
+def _finalize_mesh(
+        size: float,
+        output_file: str = "Mesh.msh",
+) -> None:
+    list_dim_tags: list[tuple[int, int]] = gmsh.model.getEntities()
+    gmsh.model.mesh.setSize(dimTags=list_dim_tags, size=size)
+    gmsh.model.mesh.generate(dim=_DIM_COUNT)
+    gmsh.write(fileName=output_file)
     gmsh.finalize()
+
+
+def _set_periodic(rve: Rve) -> None:
+    for axis in range(_DIM_COUNT):
+        _set_periodic_on_axis(rve, axis)
+
+
+def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> Iterator[tuple[np.ndarray, int]]:
+    entities: list[tuple[int, int]] = gmsh.model.getEntitiesInBoundingBox(
+        *np.subtract(minimum, eps),
+        *np.add(maximum, eps),
+        dim=2
+    )
+    for dim, tag in entities:
+        bounds = np.asarray(gmsh.model.getBoundingBox(
+            dim, tag
+        )).reshape((_BOUNDS_COUNT, _DIM_COUNT))
+        yield bounds, tag
+
+
+def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
+    return np.array([rve.dx, rve.dy, rve.dz])
+
+
+def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
+    deltas = _get_deltas(rve)
+    eps: float = 1.0e-3 * min(deltas)
+    minimum = np.zeros(_DIM_COUNT)
+    maximum = deltas
+    maximum[axis] = 0.
+    for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
+        bounds_min[:, axis] += 1
+        for bounds_max, tag_max in _iter_bounding_boxes(bounds_min[0], bounds_min[1], eps):
+            bounds_max[:, axis] -= 1
+            if (
+                    np.all(np.abs(np.subtract(bounds_max, bounds_min)) < eps)
+            ):
+                yield tag_min, tag_max
+
+
+def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
+    deltas = _get_deltas(rve)
+    translation_matrix = np.eye(_DIM_COUNT + 1)
+    translation_matrix[axis, _DIM_COUNT] = deltas[axis]
+    translation: list[float] = list(translation_matrix.flatten())
+    for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
+        gmsh.model.mesh.setPeriodic(
+            dim=2,
+            tags=[tag_max],
+            tagsMaster=[tag_min],
+            affineTransform=translation
+        )

@@ -17,8 +17,8 @@ Here are the main features:
 </p>
 
 [![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
-[![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/installer/conda.svg)](https://conda.anaconda.org/set3mah)
-[![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/1.0.0/)
+[![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/version.svg)](https://conda.anaconda.org/set3mah)
+[![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/)
 [![3MAH](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/)
 [![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/3MAH/microgen/HEAD?urlpath=lab%2Ftree%2Fexamples%2Fjupyter_notebooks)
@@ -34,12 +34,7 @@ Read the Docs | [![Documentation Status](https://readthedocs.org/projects/microg
 ## Installation
 
 -------------------------------------------------------------------------------------------------------
-With conda: 
-```
-conda install -c conda-forge -c cadquery -c set3mah microgen
-```
-
-With pip (Linux only):
+With pip:
 ```
 pip install microgen
 ```
@@ -47,6 +42,12 @@ pip install microgen
 You may need to install dependencies mentioned in the requirements.txt file
 ```
 pip install -r requirements.txt
+```
+
+
+With conda:
+```
+conda install -c conda-forge -c cadquery -c set3mah microgen
 ```
 -------------------------------------------------------------------------------------------------------
 
@@ -58,9 +59,9 @@ conda env create -f environment.yml -n microgen-dev
 conda activate microgen-dev
 ```
 
-Then install microgen: 
+Then install microgen using pip:
 ```
-python setup.py install
+pip install .
 ```
 
 
@@ -68,19 +69,19 @@ python setup.py install
 Click on the image to be redirected to the corresponding example on Microgen's documentation
 
 ### Basic shapes
-<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#basic-shapes"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#basic-shapes">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/shapes.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#platon-polyhedra"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#platon-polyhedra">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/platon.png" height="250">
 </a>
 
 ### Repeated cells
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#octet-truss"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#octet-truss">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/octettruss.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#honeycomb"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#honeycomb">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/honeycomb.png" height="250">
 </a>
 

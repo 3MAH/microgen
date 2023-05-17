@@ -2,19 +2,41 @@
 Boolean operations
 """
 
-import os
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Sequence
 
+import OCP
 import cadquery as cq
 import numpy as np
 import pyvista as pv
-
-import OCP
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 from .phase import Phase
 from .rve import Rve
+
+
+def _getRotationAxes(
+    psi: float, theta: float, phi: float
+) -> list[tuple[float, float, float]]:
+    """
+    Retrieve the 3 Euler rotation axes
+
+    :param psi: first Euler angle, in degrees
+    :param theta: first Euler angle, in degrees
+    :param phi: first Euler angle, in degrees
+
+    :return: a list containing the three 3D Euler rotation axes
+    """
+    psi_rad, theta_rad, phi_rad = np.deg2rad((psi, theta, phi))
+    return [
+        (0.0, 0.0, 1.0),
+        (np.cos(psi_rad), np.sin(psi_rad), 0.0),
+        (
+            np.sin(psi_rad) * np.sin(theta_rad),
+            -np.sin(theta_rad) * np.cos(psi_rad),
+            np.cos(theta_rad),
+        ),
+    ]
 
 
 def rotateEuler(
@@ -29,42 +51,22 @@ def rotateEuler(
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param psi, theta, phi: Euler angles
+    :param psi: first Euler angle, in degrees
+    :param theta: first Euler angle, in degrees
+    :param phi: first Euler angle, in degrees
 
-    :return object_r: Rotated object
+    :return: Rotated object
     """
-
-    u = np.array([0.0, 0.0, 1.0])
-    u = np.array([np.cos(psi * np.pi / 180.0), np.sin(psi * np.pi / 180.0), 0.0])
-    z2 = np.array(
-        [
-            np.sin(psi * np.pi / 180.0) * np.sin(theta * np.pi / 180.0),
-            -np.sin(theta * np.pi / 180.0) * np.cos(psi * np.pi / 180.0),
-            np.cos(theta * np.pi / 180.0),
-        ]
-    )
-
-    object_r = obj.rotate(
-        cq.Vector(center[0], center[1], center[2]),
-        cq.Vector(center[0], center[1], center[2] + 1.0),
-        psi,
-    )
-    object_r = object_r.rotate(
-        cq.Vector(center[0], center[1], center[2]),
-        cq.Vector(center[0] + u[0], center[1] + u[1], center[2] + u[2]),
-        theta,
-    )
-    object_r = object_r.rotate(
-        cq.Vector(center[0], center[1], center[2]),
-        cq.Vector(center[0] + z2[0], center[1] + z2[1], center[2] + z2[2]),
-        phi,
-    )
-    return object_r
+    center_vector = cq.Vector(*center)
+    z, u, z2 = _getRotationAxes(psi, theta, phi)
+    for axis, angle in zip((z, u, z2), (psi, theta, phi)):
+        obj = obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
+    return obj
 
 
 def rotatePvEuler(
-    object: pv.PolyData,
-    center: np.ndarray,
+    obj: pv.PolyData,
+    center: Sequence[float],
     psi: float,
     theta: float,
     phi: float,
@@ -72,29 +74,22 @@ def rotatePvEuler(
     """
     Rotates object according to XZX Euler angle convention
 
-    Parameters
-    ----------
-    object :
-        Object to rotate
-    center :
-        numpy array (x, y, z)
-    psi, theta, phi :
-        Euler angles
+    :param obj: Object to rotate
+    :param center: numpy array (x, y, z)
+    :param psi: first Euler angle, in degrees
+    :param theta: second Euler angle, in degrees
+    :param phi: third Euler angle, in degrees
 
-    Returns
-    -------
-    object_r :
-        Rotated object
+    :return: Rotated object
     """
+    z, u, z2 = _getRotationAxes(psi, theta, phi)
 
-    u = (np.cos(psi), np.sin(psi), 0.0)
-    z2 = (np.sin(psi) * np.sin(theta), -np.sin(theta) * np.cos(psi), np.cos(theta))
-    object_r = object.rotate_vector(
-        vector=(0, 0, 1), angle=psi, point=tuple(center), inplace=False
+    rotated_obj = obj.rotate_vector(
+        vector=z, angle=psi, point=tuple(center), inplace=False
     )
-    object_r.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
-    object_r.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
-    return object_r
+    rotated_obj.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
+    rotated_obj.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
+    return rotated_obj
 
 
 def rescale(
@@ -108,25 +103,7 @@ def rescale(
 
     :return shape: rescaled Shape
     """
-    if isinstance(scale, float):
-        scale = (scale, scale, scale)
-
-    center = shape.Center()
-
-    # move the shape at (0, 0, 0) to rescale it
-    shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
-
-    # then move it back to its center with transform Matrix
-    transform_mat = cq.Matrix(
-        [
-            [scale[0], 0, 0, center.x],
-            [0, scale[1], 0, center.y],
-            [0, 0, scale[2], center.z],
-        ]
-    )
-    shape = shape.transformGeometry(transform_mat)
-
-    return shape
+    return Phase.rescaleShape(shape, scale)
 
 
 def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
@@ -294,43 +271,11 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solidList = []  # type: list[cq.Solid]
-
-    for solid in phase.solids:
-        wk_plane = cq.Workplane().add(solid)
-        xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
-        ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
-        zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
-        np.delete(xgrid, 0)
-        np.delete(ygrid, 0)
-        np.delete(zgrid, 0)
-        for i in xgrid:
-            Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
-        for j in ygrid:
-            Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
-        for k in zgrid:
-            Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
-            wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
-
-        for subsolid in wk_plane.val().Solids():
-            solidList.append(subsolid)
+    solidList: list[cq.Solid] = phase.buildSolids(rve, grid)
 
     if phasePerRaster:
-        solids_phases = [
-            [] for _ in range(grid[0] * grid[1] * grid[2])
-        ]  # type: list[list[cq.Solid]]
-        for solid in solidList:
-            center = solid.Center()
-            i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))
-            j = int(round((center.y - rve.y_min) / (rve.dy / grid[1])))
-            k = int(round((center.z - rve.z_min) / (rve.dz / grid[2])))
-            ind = i + grid[0] * j + grid[0] * grid[1] * k
-            solids_phases[ind].append(solid)
-        return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
-    else:
-        return Phase(solids=solidList)
+        return Phase.generatePhasePerRaster(solidList, rve, grid)
+    return Phase(solids=solidList)
 
 
 def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
@@ -343,26 +288,7 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
 
     :return: cq shape of the repeated geometry
     """
-
-    center = unit_geom.Center()
-
-    xyz_repeat = cq.Assembly()
-    for i_x in range(grid[0]):
-        for i_y in range(grid[1]):
-            for i_z in range(grid[2]):
-                xyz_repeat.add(
-                    unit_geom,
-                    loc=cq.Location(
-                        cq.Vector(
-                            center.x - rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
-                            center.y - rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
-                            center.z - rve.dim_z * (0.5 * grid[2] - 0.5 - i_z),
-                        )
-                    ),
-                )
-    compound = xyz_repeat.toCompound()
-    shape = cq.Shape(compound.wrapped)
-    return shape
+    return Phase.repeatShape(unit_geom, rve, grid)
 
 
 def repeatPolyData(
