@@ -73,7 +73,12 @@ class BoxMesh(PhaseMesh):
         rve: Optional[Rve] = None,
         tol: Optional[float] = 1.e-8,
     ) -> None:
-            
+        """
+        Construct a box Mesh with list of points in faces (excluding edges), edges (excluding corners) and corners.
+
+        :param rve: RVE of the box
+        :param tol: tolerance to find the points on a face or a edge
+        """            
         if(isinstance(rve, Rve) == False) : 
             rve = self.rve
 
@@ -180,8 +185,9 @@ class BoxMesh(PhaseMesh):
     def rve(
         self,
     ) -> Rve:
-        """Return a representative volume element (Rve)
-        of the considered mesh"""
+        """
+        Return a representative volume element (Rve) of the considered mesh
+        """            
 
         if(isinstance(self._rve, Rve)):
             return self._rve
@@ -193,21 +199,39 @@ class BoxMesh(PhaseMesh):
         self,
         value: Rve,
     ) -> None:
+        """
+        set a RVE value
+
+        :param rve: RVE of the box to set
+        """            
+
         self._rve = value
 
     def _build_rve(
         self,
     ) -> Rve:
+        """
+        build a RVE value from the mesh bounding box
+
+        :return rve: RVE of the mesh bounding box
+        """                    
         pvmesh = self.to_pyvista()
         xmin, xmax, ymin, ymax, zmin, zmax = pvmesh.bounds
         return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def closest_points_on_faces(
+    def _closest_points_on_faces(
         self,
-        k_neighbours: float = 3,
+        k_neighbours: int = 3,
         rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.e-8,
-    ) -> None:
+    ) -> dict[str, tuple[np.array, np.array]]:
+
+        """
+        Find the closest points on a opposite face to write interpolation relationship
+        if a displacement condition between pair nodes is defined on such opposite surfaces
+
+        :param k_neighbours : number of closest points
+        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        """                            
             
         if(isinstance(rve, Rve) == False) : 
             rve = self.rve       
@@ -233,14 +257,24 @@ class BoxMesh(PhaseMesh):
         dist_YmYp, index_YmYp = kdtree_Yp.query(crd_YmYp, k_neighbours)
         dist_ZmZp, index_ZmZp = kdtree_Zp.query(crd_ZmZp, k_neighbours)        
 
-        return (all_face_Xp[index_XmXp], dist_XmXp, all_face_Yp[index_YmYp], dist_YmYp, all_face_Zp[index_ZmZp], dist_ZmZp)
+        return {
+            'face_Xp' : (all_face_Xp[index_XmXp], dist_XmXp), 
+            'face_Yp' : (all_face_Yp[index_YmYp], dist_YmYp), 
+            'face_Zp' : (all_face_Zp[index_ZmZp], dist_ZmZp)
+        }
 
-    def closest_points_on_edges(
+    def _closest_points_on_edges(
         self,
-        rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.e-8,
-    ) -> None:
-            
+        rve: Rve = None,
+    ) -> dict[str, tuple[np.array, np.array]]:
+        """
+        Find the closest points on a opposite edges to write interpolation relationship
+        if a displacement condition between pair nodes is defined on such opposite surfaces
+        Note : the closest neighbours is set as 2 for edges
+
+        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        """
+
         if(isinstance(rve, Rve) == False) : 
             rve = self.rve       
 
@@ -303,27 +337,39 @@ class BoxMesh(PhaseMesh):
         dist_YpZp, index_YpZp = kdtree_YpZp.query(crd_YpZp, 2)
         dist_YmZp, index_YmZp = kdtree_YmZp.query(crd_YmZp, 2)
 
-        return (all_edge_XpYm[index_XpYm], dist_XpYm,
-                all_edge_XpYp[index_XpYp], dist_XpYp,
-                all_edge_XmYp[index_XmYp], dist_XmYp,
-                all_edge_XpZm[index_XpZm], dist_XpZm,
-                all_edge_XpZp[index_XpZp], dist_XpZp,
-                all_edge_XmZp[index_XmZp], dist_XmZp,
-                all_edge_YpZm[index_YpZm], dist_YpZm,
-                all_edge_YpZp[index_YpZp], dist_YpZp,
-                all_edge_YmZp[index_YmZp], dist_YmZp,
-            )
+        return {
+            'edge_XpYm' : (all_edge_XpYm[index_XpYm], dist_XpYm),
+            'edge_XpYp' : (all_edge_XpYp[index_XpYp], dist_XpYp),
+            'edge_XmYp' : (all_edge_XmYp[index_XmYp], dist_XmYp),
+            'edge_XpZm' : (all_edge_XpZm[index_XpZm], dist_XpZm),
+            'edge_XpZp' : (all_edge_XpZp[index_XpZp], dist_XpZp),
+            'edge_XmZp' : (all_edge_XmZp[index_XmZp], dist_XmZp),
+            'edge_YpZm' : (all_edge_YpZm[index_YpZm], dist_YpZm),
+            'edge_YpZp' : (all_edge_YpZp[index_YpZp], dist_YpZp),
+            'edge_YmZp' : (all_edge_YmZp[index_YmZp], dist_YmZp)
+        }
 
-#    def _translate_faces(self, axis, rve: Rve)
-        
-        
-        
+    def closest_points_on_boundaries(
+        self,
+        k_neighbours: int = 3,
+        rve: Optional[Rve] = None,
+    ) -> None:
+        """
+        Find the closest points on a faces and edges to write interpolation relationship
+        if a displacement condition between pair nodes is defined
 
-    # def find_neighbours(
-    #     self,
-    #     rve: Rve,
-    #     tol: float = 1.e-8,
-    # ) -> None:
+        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        """    
+
+        if(isinstance(rve, Rve) == False) : 
+            rve = self.rve    
+
+        dict_faces = self._closest_points_on_faces(k_neighbours, rve)
+        dict_edges = self._closest_points_on_edges(rve)
+
+        return {**dict_faces, **dict_edges}
+
+
         
 
        
