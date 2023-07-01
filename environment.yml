@@ -4,11 +4,11 @@ channels:
   - set3mah
 
 dependencies:
-  - cadquery=merge
   - pyvista
   - python-gmsh
   - meshio
-  - mmg
-  - neper # [unix]
   - pytest-cov
-
+  - occt=7.7.0
+  - cadquery=2.3.1
+  - mmg
+  - neper
