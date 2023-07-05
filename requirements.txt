@@ -1,5 +1,0 @@
-cadquery==2.2.0b0
-pygmsh
-pyvista
-meshio
-pytest-cov
