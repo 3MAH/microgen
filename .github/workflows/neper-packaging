@@ -1,4 +1,4 @@
-name: Create conda package
+name: Create conda package for neper
 
 on:
   workflow_dispatch:
