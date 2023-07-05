@@ -1,0 +1,54 @@
+{% set name = "neper" %}
+{% set version = "4.6.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  git_url: https://github.com/neperfepx/neper.git
+  git_rev: v4.6.0
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - cmake
+    - make # [unix]    
+  host:
+    - cmake
+    - libblas
+    - llvm-openmp  # [osx]
+    - gsl
+    - scotch 6.0.*
+    - nlopt
+    - openmp #[not osx]
+    - occt 7.7.0
+  run:
+    - gsl
+    - scotch 6.*
+    - llvm-openmp  # [osx]    
+    - nlopt
+    - openmp #[not osx]
+    - gmsh
+    - occt 7.7.0    
+    
+about:
+  home: https://github.com/neperfepx/neper
+  license: GPL-3.0-or-later
+  license_family: GPL
+  license_file:
+    - COPYING
+    - CREDITS 
+  summary: 'Software package for polycrystal generation and meshing'
+  description: |
+    Neper is a software package for polycrystal generation and meshing. It can deal with 2D and 3D polycrystals with very large numbers of grains.
+  doc_url: https://neper.info/index.html
+  dev_url: https://github.com/neperfepx/neper
+
+extra:
+  recipe-maintainers:
+    - Romain Quey
