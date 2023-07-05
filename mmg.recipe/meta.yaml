@@ -17,6 +17,11 @@ requirements:
     - libcxx
     - cmake
     - make # [unix]
+  host:
+    - cmake
+    - scotch 6.0.*
+  run:
+    - scotch 6.0.*
     
 about:
   home: https://github.com/MmgTools/mmg
