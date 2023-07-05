@@ -1,6 +1,5 @@
 channels:
   - conda-forge
-  - cadquery
   - set3mah
 
 dependencies:
