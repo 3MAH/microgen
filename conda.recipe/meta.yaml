@@ -18,9 +18,9 @@ requirements:
     - python-gmsh
     - meshio
     - cadquery
-    - mmg
-    - neper
     - pytest-cov
+#    - mmg
+#    - neper
 
 test:
   imports:
