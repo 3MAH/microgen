@@ -9,6 +9,15 @@ from pathlib import Path
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
+USE_MMG = False
+try:
+    subprocess.check_output("mmg3d_O3", stderr=subprocess.STDOUT)
+    USE_MMG= True    
+except subprocess.CalledProcessError:
+    print(
+        "mmg command did not work, check if it is installed or contact a developer"
+    )
+    USE_MMG= False 
 
 def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
     gmsh.initialize()
@@ -218,4 +227,5 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
     )
 
     # Assert
-    assert _is_periodic(_get_mesh_nodes_coords(tmp_output_mesh_filename))
+    if USE_MMG == True:
+        assert _is_periodic(_get_mesh_nodes_coords(tmp_output_mesh_filename))

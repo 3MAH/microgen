@@ -2,6 +2,15 @@ import microgen
 
 from sys import platform
 
+USE_NEPER = False
+try:
+    # Check if neper is installed and available in the PATH
+    subprocess.run(["neper", "--version"], check=True)
+    USE_NEPER = True    
+except subprocess.CalledProcessError:
+    print("Neper is not installed. Please install Neper before running this command.")
+    USE_NEPER = False
+
 def test_misc():
     if platform != 'win32':
         microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
@@ -27,5 +36,6 @@ def test_operations():
 
 
 if __name__ == "__main__":
-    test_misc()
+    if USE_NEPER == True:
+        test_misc()
     test_operations()
