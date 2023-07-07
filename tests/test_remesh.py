@@ -1,3 +1,4 @@
+import subprocess
 import pytest
 from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms, BasicGeometry
 import cadquery as cq
