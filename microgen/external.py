@@ -34,7 +34,7 @@ class Neper:
         try:
             # Check if neper is installed and available in the PATH
             subprocess.run(["neper", "--version"], check=True)
-        except(subprocess.CalledProcessError, FileNotFoundError): :
+        except(subprocess.CalledProcessError, FileNotFoundError):
             print("Neper is not installed. Please install Neper before running this command.")
             return
 
