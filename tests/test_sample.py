@@ -8,7 +8,7 @@ try:
     # Check if neper is installed and available in the PATH
     subprocess.run(["neper", "--version"], check=True)
     USE_NEPER = True    
-except subprocess.CalledProcessError:
+except(subprocess.CalledProcessError, FileNotFoundError):
     print("Neper is not installed. Please install Neper before running this command.")
     USE_NEPER = False
 
