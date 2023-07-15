@@ -616,6 +616,7 @@ class Mmg:
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
+            return
 
     @staticmethod
     def mmgs(
@@ -734,6 +735,7 @@ class Mmg:
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
+            return
 
     @staticmethod
     def mmg3d(
@@ -875,3 +877,4 @@ class Mmg:
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
+            return
