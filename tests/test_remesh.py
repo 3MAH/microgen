@@ -14,7 +14,7 @@ USE_MMG = False
 try:
     subprocess.check_output("mmg3d_O3", stderr=subprocess.STDOUT)
     USE_MMG= True    
-except subprocess.CalledProcessError:
+except(subprocess.CalledProcessError, FileNotFoundError):
     print(
         "mmg command did not work, check if it is installed or contact a developer"
     )
