@@ -1,11 +1,11 @@
-from microgen import Tpms, tpms
+from microgen import Tpms
+from microgen.shape.surface_functions import gyroid
 import cadquery as cq
 
 geometry = Tpms(
-    surface_function=tpms.gyroid,
-    type_part="sheet",
-    thickness=0.05
+    surface_function=gyroid,
+    offset=0.3,
+    resolution=100,
 )
-shape = geometry.generate()
-
-cq.exporters.export(shape, "gyroid.stl")
+shape = geometry.generateVtk(type_part="sheet")
+shape.save("gyroid.stl")

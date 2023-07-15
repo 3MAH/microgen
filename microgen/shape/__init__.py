@@ -24,11 +24,9 @@ from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extrudedPolygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
-from .pv_tpms import Tpms, CylindricalTpms
+from .tpms import Tpms, CylindricalTpms
 from . import surface_functions
 from .sphere import Sphere
-
-# from .tpms import Tpms
 
 
 def newGeometry(

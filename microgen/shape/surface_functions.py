@@ -60,11 +60,12 @@ def schwarzD(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    a = sin(x) * sin(y) * sin(z)
-    b = sin(x) * cos(y) * cos(z)
-    c = cos(x) * sin(y) * cos(z)
-    d = cos(x) * cos(y) * sin(z)
-    return a + b + c + d
+    return (
+        sin(x) * sin(y) * sin(z) +
+        sin(x) * cos(y) * cos(z) +
+        cos(x) * sin(y) * cos(z) +
+        cos(x) * cos(y) * sin(z)
+    )
 
 
 def neovius(x: float, y: float, z: float) -> float:
@@ -85,10 +86,10 @@ def neovius(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    a = 3 * cos(x) + cos(y) + cos(z)
-    b = 4 * cos(x) * cos(y) * cos(z)
-
-    return a + b
+    return (
+        3 * cos(x) + cos(y) + cos(z) +
+        4 * cos(x) * cos(y) * cos(z)
+    )
 
 
 def schoenIWP(x: float, y: float, z: float) -> float:
@@ -109,10 +110,10 @@ def schoenIWP(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    a = 2 * (cos(x) * cos(y) + cos(y) * cos(z) + cos(z) * cos(x))
-    b = cos(2 * x) + cos(2 * y) + cos(2 * z)
-
-    return a - b
+    return (
+        2 * (cos(x) * cos(y) + cos(y) * cos(z) + cos(z) * cos(x)) -
+        (cos(2 * x) + cos(2 * y) + cos(2 * z))
+    )
 
 
 def schoenFRD(x: float, y: float, z: float) -> float:
@@ -133,9 +134,10 @@ def schoenFRD(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    a = 4 * cos(x) * cos(y) * cos(z)
-    b = cos(2 * x) * cos(2 * y) + cos(2 * y) * cos(2 * z) + cos(2 * z) * cos(2 * x)
-    return a - b
+    return (
+        4 * cos(x) * cos(y) * cos(z) -
+        (cos(2 * x) * cos(2 * y) + cos(2 * y) * cos(2 * z) + cos(2 * z) * cos(2 * x))
+    )
 
 
 def fischerKochS(x: float, y: float, z: float) -> float:
@@ -156,11 +158,11 @@ def fischerKochS(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    a = cos(2 * x) * sin(y) * cos(z)
-    b = cos(x) * cos(2 * y) * sin(z)
-    c = sin(x) * cos(y) * cos(2 * z)
-
-    return a + b + c
+    return (
+        cos(2 * x) * sin(y) * cos(z) +
+        cos(x) * cos(2 * y) * sin(z) +
+        sin(x) * cos(y) * cos(2 * z)
+    )
 
 
 def pmy(x: float, y: float, z: float) -> float:
@@ -181,12 +183,12 @@ def pmy(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    a = 2 * cos(x) * cos(y) * cos(z)
-    b = sin(2 * x) * sin(y)
-    c = sin(x) * sin(2 * z)
-    d = sin(2 * y) * sin(z)
-
-    return a + b + c + d
+    return (
+        2 * cos(x) * cos(y) * cos(z) +
+        sin(2 * x) * sin(y) +
+        sin(x) * sin(2 * z) +
+        sin(2 * y) * sin(z)
+    )
 
 
 def honeycomb(x: float, y: float, z: float) -> float:

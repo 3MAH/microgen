@@ -9,25 +9,23 @@ TPMS (:mod:`microgen.shape.tpms`)
    pyvista.global_theme.smooth_shading = True
 
 """
-from typing import Callable, Union
+import logging
+from typing import Callable, List, Union, Sequence, Literal
 
-import numpy as np
 import cadquery as cq
+import numpy as np
 import pyvista as pv
-from numpy import cos, pi, sin
-import progressbar
+from tqdm import tqdm
 
-from microgen.operations import fuseShapes
 from microgen.shape.basicGeometry import BasicGeometry
 
-SHEET = "sheet"
-SKELETAL = "skeletal"
-ALL = "all"
+Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
+
 
 class Tpms(BasicGeometry):
     """
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
-    geometry from a given mathematical function, with given thickness
+    geometry from a given mathematical function, with given offset
 
     functions available :
         - :class:`~microgen.shape.tpms.gyroid`
@@ -39,586 +37,289 @@ class Tpms(BasicGeometry):
         - :class:`~microgen.shape.tpms.fischerKochS`
         - :class:`~microgen.shape.tpms.pmy`
         - :class:`~microgen.shape.tpms.honeycomb`
+        - :class:`~microgen.shape.tpms.lidinoid`
+        - :class:`~microgen.shape.tpms.split_p`
     """
 
     def __init__(
         self,
+        surface_function: Field,
+        offset: Union[float, Field] = 0.0,
+        cell_size: Union[float, Sequence[float]] = 1.0,
+        repeat_cell: Union[int, Sequence[int]] = 1,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
-        surface_function: Callable = None,
-        offset: Union[float, Callable] = 0.,
-        cell_size: Union[float, np.ndarray] = np.array([1., 1., 1.]),
-        repeat_cell: Union[int, np.ndarray] = np.array([1, 1, 1]),
+        resolution: int = 20,
     ) -> None:
         """
+        Class used to generate TPMS geometries (sheet or skeletals parts).
+        TPMS are created by default in a cube.
+        The geometry of the cube can be modified using 'cell_size' parameter.
+        The number of repetitions in each direction of the created geometry can be modified with the 'repeat_cell' parameter.
+
         :param center: center of the geometry
         :param orientation: orientation of the geometry
         :param surface_function: tpms function or custom function (f(x, y, z, t) = 0)
-        :param type_part: 'sheet' or 'skeletal'
+        :param type_part: 'sheet', 'skeletal' or 'all'
         :param offset: offset of the isosurface to generate thickness
-        :param cell_size: By default, the tpms is generated for (1, 1, 1) dimensions but this can be modified by passing 'cell_size' scaling parameter (float or list of float for each dimension)
-        :param repeat_cell: By default, the tpms is generated for one unit_cell. 'repeat_cell' parameter allows to repeat the geometry in the three dimensions
+        :param cell_size: float or list of float for each dimension to set unit cell dimensions
+        :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
+        :param resolution: unit cell resolution of the grid to compute tpms scalar fields
         """
         super().__init__(shape="TPMS", center=center, orientation=orientation)
 
         self.surface_function = surface_function
         self.offset = offset
 
-        if type(cell_size) in [float, int]:
+        self.grid = pv.StructuredGrid()
+        self._sheet: pv.PolyData = None
+        self._upper_skeletal: pv.PolyData = None
+        self._lower_skeletal: pv.PolyData = None
+        self._surface: pv.PolyData = None
+
+        if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
-        else:
+        elif len(cell_size) == 3:
             self.cell_size = np.array(cell_size)
-
-        if type(repeat_cell) == int:
-            self.repeat_cell = np.array([repeat_cell, repeat_cell, repeat_cell])
         else:
+            raise ValueError("cell_size must be a float or a sequence of 3 floats")
+
+        if isinstance(repeat_cell, int):
+            self.repeat_cell = np.array([repeat_cell, repeat_cell, repeat_cell])
+        elif len(repeat_cell) == 3:
             self.repeat_cell = np.array(repeat_cell)
+        else:
+            raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
-    def _computeSurfaceFunction(
-        self,
-        surface_function: Callable,
-        resolution: int = 20
-    ) -> tuple[pv.UniformGrid, np.ndarray]:
+        self.resolution = resolution
 
-        n_points = resolution * self.repeat_cell 
-        grid = pv.UniformGrid()
-        grid.dimensions = n_points
-        grid.origin = -0.5 * self.cell_size
-        grid.spacing = self.cell_size / (n_points - 1)
-        
-        x, y, z = (grid.points * 2 * np.pi * self.repeat_cell / self.cell_size).T
+    @property
+    def sheet(self) -> pv.PolyData:
+        """
+        Returns sheet part
+        """
+        if self._sheet is not None:
+            return self._sheet
 
-        surface = surface_function(x, y, z)
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
-        return grid, surface
+        self._sheet: pv.PolyData = (
+            self.grid.clip_scalar(scalars="upper_surface", invert=False)
+            .clip_scalar(scalars="lower_surface")
+            .extract_surface()
+        )
+        return self._sheet
 
-    # def computeSurfaceFunctionOnCylinder(
-    #     self,
-    #     resolution: int
-    # ) -> tuple[pv.StructuredGrid, np.ndarray]:
-    #     res = 100j
-    #     a, b, c = lattice_params = 1, 1, 1
-    #     kx, ky, kz = [2*np.pi/lattice_param for lattice_param in lattice_params]
-    #     r_aux, phi, z = np.mgrid[0:a:res, 0:b:res, 0:3*c:res]
+    @property
+    def upper_skeletal(self) -> pv.PolyData:
+        """
+        Returns upper skeletal part
+        """
+        if self._upper_skeletal is not None:
+            return self._upper_skeletal
 
-    #     # convert r_aux range to actual radii
-    #     r1, r2 = 1.5, 2
-    #     r = r2/a*r_aux + r1/a*(1 - r_aux)
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
-    #     surface = self.surface_function(r_aux, phi / 12, z, self.repeat_cell, self.cell_size)
+        self._upper_skeletal: pv.PolyData = self.grid.clip_scalar(
+            scalars="upper_surface"
+        ).extract_surface()
+        return self._upper_skeletal
 
-    #     x = r * np.cos(phi*kx)
-    #     y = r * np.sin(phi*ky)
-    #     grid = pv.StructuredGrid(x, y, z)
+    @property
+    def lower_skeletal(self) -> pv.PolyData:
+        """
+        Returns lower skeletal part
+        """
+        if self._lower_skeletal is not None:
+            return self._lower_skeletal
 
-    #     return grid, surface
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
-    # def cylinder(self, isovalue, resolution, smoothing):
-    #     grid, surface = self.computeSurfaceFunctionOnCylinder(resolution)
-        
-    #     return self.computeSurfaceVtk(grid, surface, isovalue, smoothing)
+        self._lower_skeletal: pv.PolyData = self.grid.clip_scalar(
+            scalars="lower_surface", invert=False
+        ).extract_surface()
+        return self._lower_skeletal
 
-    def _computeSurfaceVtk(
-        self,
-        grid : pv.UniformGrid,
-        surface: np.ndarray,
-        smoothing: int = 100
-    ) -> pv.PolyData:
-        # mesh = grid.contour(
-        #     1, scalars=surface, method="flying_edges", rng=(isovalue, 1)
-        # )
-        mesh = grid.contour(isosurfaces=[0.], scalars=surface)
-        if smoothing > 0:
-            mesh = mesh.smooth(n_iter=smoothing)
+    @property
+    def skeletals(self) -> tuple[pv.PolyData, pv.PolyData]:
+        """
+        Returns both skeletal parts
+        """
+        return (self.upper_skeletal, self.lower_skeletal)
+
+    @property
+    def surface(self) -> pv.PolyData:
+        """
+        Returns isosurface f(x, y, z) = 0
+        """
+        if self._surface is not None:
+            return self._surface
+
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
+
+        mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars="surface")
+        mesh.smooth(n_iter=100, inplace=True)
         mesh.clean(inplace=True)
-
         return mesh
 
-    def _createShell(
-        self,
-        mesh: pv.PolyData,
-        verbose: bool
-    ) -> cq.Shell:
-        list_of_triangles = mesh.faces.reshape(-1, 4)[:, 1:]
-        list_of_triangles = np.c_[list_of_triangles, list_of_triangles[:, 0]]
+    def _create_grid(self, x, y, z):
+        return pv.StructuredGrid(x, y, z)
 
-        pbar = progressbar.ProgressBar(max_value=len(list_of_triangles))
-        if not verbose: pbar = progressbar.NullBar
+    def _compute_tpms_field(self):
+        linspaces: List[np.ndarray] = [
+            np.linspace(
+                -0.5 * cell_size_axis * repeat_cell_axis,
+                0.5 * cell_size_axis * repeat_cell_axis,
+                self.resolution * repeat_cell_axis,
+            )
+            for repeat_cell_axis, cell_size_axis in zip(
+                self.repeat_cell, self.cell_size
+            )
+        ]
+
+        x, y, z = np.meshgrid(*linspaces)
+
+        self.grid = self._create_grid(x, y, z)
+
+        k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        surface_function = self.surface_function(k_x * x, k_y * y, k_z * z)
+
+        offset: Union[float, np.ndarray] = 0.0
+        if isinstance(self.offset, float):
+            offset = self.offset
+        elif isinstance(self.offset, Callable):
+            offset = self.offset(x, y, z)
+
+        self.grid["surface"] = surface_function.ravel(order="F")
+        self.grid["lower_surface"] = (surface_function - 0.5 * offset).ravel(order="F")
+        self.grid["upper_surface"] = (surface_function + 0.5 * offset).ravel(order="F")
+
+    def _create_shell(self, mesh: pv.PolyData, verbose: bool) -> cq.Shell:
+        triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+        triangles = np.c_[triangles, triangles[:, 0]]
 
         faces = []
-        for i, ixs in enumerate(list_of_triangles):
-            lines = []
-            for v1, v2 in zip(ixs[:], ixs[1:]):
-                vertice_coords1 = mesh.points[v1]
-                vertice_coords2 = mesh.points[v2]
-                lines.append(
-                    cq.Edge.makeLine(
-                        cq.Vector(*vertice_coords1), cq.Vector(*vertice_coords2)
-                    )
+        for i in tqdm(range(len(triangles)), disable=not verbose):
+            tri = triangles[i]
+            lines = [
+                cq.Edge.makeLine(
+                    cq.Vector(*mesh.points[start]), cq.Vector(*mesh.points[end])
                 )
+                for start, end in zip(tri[:], tri[1:])
+            ]
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
-            pbar.update(i)
-        
-        if verbose: print("\nGenerating shell surface\n")
+
+        if verbose:
+            logging.warning("\nGenerating shell surface\n")
         return cq.Shell.makeShell(faces)
 
-    def _createSurface(
-        self,
-        grid: pv.UniformGrid, 
-        surface: np.ndarray, 
-        smoothing: int, 
-        verbose: bool
-    ) -> cq.Shell:
+    def generate(self, type_part="sheet", verbose=True) -> cq.Shape:
         """
-        Create TPMS surface for the corresponding isovalue, return a cq.Shell
+        :param type_part: part of the TPMS desired ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
+        :param verbose: display progressbar of the conversion to CadQuery object
 
-        :param isovalue: height isovalue of the given tpms function
-        :param resolution: grid resolution for marching cubes algorithm
-        :param smoothing: smoothing loop iterations
+        :return: CadQuery Shape object of the required TPMS part
         """
-        mesh = self._computeSurfaceVtk(grid=grid,
-                                       surface=surface,
-                                       smoothing=smoothing)
-        return self._createShell(mesh=mesh, verbose=verbose)
-
-    def _createSurfaces(
-        self,
-        isovalues: list[float],
-        resolution: int = 20,
-        smoothing: int = 100,
-    ) -> list[cq.Shell]:
-        """
-        Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
-
-        :param numsber_surfaces: number of surfaces
-        :param isovalues: height isovalues of the given tpms function
-        :param resolution: surface file name
-        :param smoothing: smoothing loop iterations
-        """
-        grid, surface = self._computeSurfaceFunction(self.surface_function, resolution)
-
-        shells = []
-        for isovalue in isovalues:
-            mesh = self._computeSurfaceVtk(grid, surface, isovalue, smoothing)
-            shells.append(self._createShell(mesh))
-        return shells
-
-    def generateSurfaceVtk(
-        self,
-        isovalue: float = 0,
-        resolution: int = 20,
-        smoothing: int = 100,
-    ) -> pv.PolyData:
-        """
-        Create TPMS surface for the corresponding isovalue, returns a pv.Polydata
-
-        example:
-            shape = geometry.generateSurfaceVtk(isovalue=0, resolution=100, smoothing=100)
-            shape.plot()
-
-        :param isovalue: height isovalue of the given tpms function
-        :param resolution: surface file name
-        :param smoothing: smoothing loop iterations
-        """
-        grid, surface = self._computeSurfaceFunction(self.surface_function, resolution)
-        
-        return self._computeSurfaceVtk(grid, surface, isovalue, smoothing)
-
-    def generateSurface(
-        self,
-        isovalue: float = 0.0,
-        resolution: int = 20,
-        smoothing: int = 100,
-    ) -> cq.Shape:
-
-        shell = self._createSurface(isovalue=isovalue, resolution=resolution, smoothing=smoothing)
-
-        return cq.Shape(shell.wrapped)
-
-    def _get_sheet(self, listShapes):
-        sheet = [shape for (n_shapes, shape) in listShapes if n_shapes > 1]
-        # to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
-        return fuseShapes(cqShapeList=sheet, retain_edges=True)
-
-    def _get_skeletals(self, listShapes):
-        skeletals = [shape for (n_shapes, shape) in listShapes if n_shapes == 1]
-        return fuseShapes(cqShapeList=skeletals, retain_edges=False)
-
-
-    def _separate_sheet_and_skeletal_parts(self,
-                                           type_part: str,
-                                           solids: list[cq.Workplane],
-                                           grid: pv.UniformGrid,
-                                           surface_function: np.ndarray,
-                                           isosurface: Union[float, np.ndarray],
-                                           smoothing: int,
-                                           verbose: bool):
-        if verbose: print(f"Extracting {type_part} part(s) from generated solids\n")
-
-        if verbose: print("Converting upper test surface")
-        upper_test_surface_function = surface_function + isosurface / 6.
-        upper_test_surface = self._createSurface(grid=grid,
-                                                 surface=upper_test_surface_function, 
-                                                 smoothing=smoothing, 
-                                                 verbose=verbose)
-
-        if verbose: print("Converting lower test surface")
-        lower_test_surface_function = surface_function - isosurface / 6.
-        lower_test_surface = self._createSurface(grid=grid,
-                                                 surface=lower_test_surface_function, 
-                                                 smoothing=smoothing, 
-                                                 verbose=verbose)
-
-        
-        if verbose: print("Splitting solids\n")
-        listShapes: list[tuple[int, cq.Shape]] = []
-        for solid in solids:
-            # if solid is splitted in several parts by test surfaces then the solid is in the sheet part
-            shape = solid.val()
-            n_shapes = (solid.split(upper_test_surface)
-                             .split(lower_test_surface)
-                             .solids().size())
-            listShapes.append((n_shapes, shape))
-
-        if verbose: print("Return required part(s)")
-        if type_part == SHEET:
-            shape = self._get_sheet(listShapes)
-        elif type_part == SKELETAL:
-            shape = self._get_skeletals(listShapes)
-        elif type_part == ALL:
-            shape = (self._get_sheet(listShapes), self._get_skeletals(listShapes))
-        return shape
-
-    def generate(
-        self,
-        type_part: str,
-        resolution: int = 20,
-        smoothing: int = 100,
-        verbose: bool=True,
-        preview: bool=False
-    ) -> cq.Shape:
-        """
-        Creates thick TPMS geometry (sheet or skeletal part) from surface
-
-        :param resolution: surface file name
-        :param smoothing: smoothing loop iterations
-        """
-        
-        if type_part not in [SHEET, SKELETAL, ALL]:
-            raise ValueError("type_part must be 'sheet' or 'skeletal' or 'all'")
-
-        n_points = resolution * self.repeat_cell 
-        grid = pv.UniformGrid()
-        grid.dimensions = n_points
-        grid.origin = -0.5 * self.cell_size
-        grid.spacing = self.cell_size / (n_points - 1)
-        
-        x, y, z = (grid.points * 2 * np.pi * self.repeat_cell / self.cell_size).T
-        
-        surface_function = self.surface_function(x, y, z)
-        # f(x, y, z) = isosurface
-        isosurface = 2 * np.pi
-        if isinstance(self.offset, Callable):
-            isosurface *= self.offset(x, y, z)
+        shell = None
+        if type_part == "sheet":
+            # shell = self._create_shell(mesh=self.sheet, verbose=verbose)
+            raise NotImplementedError
+        elif type_part == "lower skeletal":
+            # shell = self._create_shell(mesh=self.lower_skeletal, verbose=verbose)
+            raise NotImplementedError
+        elif type_part == "upper skeletal":
+            # shell = self._create_shell(mesh=self.upper_skeletal, verbose=verbose)
+            raise NotImplementedError
+        elif type_part == "surface":
+            shell = self._create_shell(mesh=self.surface, verbose=verbose)
         else:
-            isosurface *= self.offset
-
-        upper_surface_function = surface_function + isosurface / 2.
-        mesh_upper_surface = self._computeSurfaceVtk(grid=grid,
-                                                     surface=upper_surface_function,
-                                                     smoothing=smoothing)
-        
-        lower_surface_function = surface_function - isosurface / 2.
-        mesh_lower_surface = self._computeSurfaceVtk(grid=grid,
-                                                     surface=lower_surface_function,
-                                                     smoothing=smoothing)
-
-        if preview: 
-            pl = pv.Plotter()
-            pl.add_mesh(mesh_upper_surface, color="w")
-            pl.add_mesh(mesh_lower_surface, color="w")
-            pl.add_axes()
-            pl.view_xz()
-            pl.show()
-            return
-                                           
-        if verbose: print("Converting upper surface")          
-        upper_surface = self._createShell(mesh=mesh_upper_surface, verbose=verbose)
-        
-        if verbose: print("Converting lower surface")
-        lower_surface = self._createShell(mesh=mesh_lower_surface, verbose=verbose)
-
-        
-        if verbose: print("Splitting box with generated surfaces\n")
-        box = cq.Workplane("front").box(*self.cell_size)
-        splitted = box.split(upper_surface).split(lower_surface)
-        solids: list[cq.Workplane] = splitted.solids().all()
-
-        return self._separate_sheet_and_skeletal_parts(type_part,
-                                                       solids,
-                                                       grid,
-                                                       surface_function,
-                                                       isosurface,
-                                                       smoothing=smoothing,
-                                                       verbose=verbose)
-
+            logging.error(
+                "'type_part' (%s) must be 'sheet', 'lower skeletal', 'upper skeletal' or 'surface'",
+                type_part,
+            )
+        return cq.Shape(shell.wrapped)
 
     def generateVtk(
         self,
-        resolution: int = 20,
-        smoothing: int = 100,
-        verbose: bool=True
+        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
     ) -> pv.PolyData:
         """
-        Creates thick TPMS geometry (sheet or skeletal part) from surface
-        Calls generate function and converts cq.Shape to pv.Polydata
-
-        :param resolution: surface file name
-        :param smoothing: smoothing loop iterations
+        :param type_part: part of the TPMS desired
+        :return: VTK PolyData object of the required TPMS part
         """
-        shape = self.generate(resolution=resolution, smoothing=smoothing, verbose=verbose)
-        return pv.PolyData(
-            shape.toVtkPolyData(tolerance=0.01, angularTolerance=0.1, normals=True)
+        if type_part == "sheet":
+            return self.sheet
+        if type_part == "lower skeletal":
+            return self.lower_skeletal
+        if type_part == "upper skeletal":
+            return self.upper_skeletal
+        if type_part == "surface":
+            return self.surface
+
+        raise ValueError(
+            f"type_part ({type_part}) must be 'sheet', 'lower skeletal', 'upper skeletal' or 'surface'"
         )
 
 
-def gyroid(x: float, y: float, z: float) -> float:
+class CylindricalTpms(Tpms):
     """
-    .. math:: 
-       sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) cos(2 \pi z) + sin(2 \pi z) cos(2 \pi x) = 0
-
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.gyroid,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white')
+    Class used to generate cylindrical TPMS geometries (sheet or skeletals parts).
     """
-    return (
-        sin(x) * cos(y)
-        + sin(y) * cos(z)
-        + sin(z) * cos(x)
-    )
+    def __init__(
+        self,
+        radius: float,
+        surface_function: Field,
+        offset: Union[float, Field] = 0.0,
+        cell_size: Union[float, Sequence[float]] = 1.0,
+        repeat_cell: Union[int, Sequence[int]] = 1,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        resolution: int = 20,
+    ):
+        """
+        Directions of cell_size and repeat_cell must be taken as the cylindrical coordinate system $\left(\rho, \theta, z\right)$.
 
+        The $\theta$ component of cell_size is automatically updated to the closest value that matches the periodicity of the TPMS.
+        If the $\theta$ component of repeat_cell is 0 or higher than the periodicity of the TPMS, it is automatically set the correct number to make the full cylinder.
 
-def schwarzP(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) = 0
+        :param radius: radius of the cylinder on which the center of the TPMS is located
+        :param surface_function: tpms function or custom function (f(x, y, z, t) = 0)
+        :param offset: offset of the isosurface to generate thickness
+        :param cell_size: float or list of float for each dimension to set unit cell dimensions
+        :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
+        :param center: center of the geometry
+        :param orientation: orientation of the geometry
+        :param resolution: unit cell resolution of the grid to compute tpms scalar fields
+        """
+        super().__init__(
+            surface_function=surface_function,
+            center=center,
+            orientation=orientation,
+            offset=offset,
+            cell_size=cell_size,
+            repeat_cell=repeat_cell,
+            resolution=resolution,
+        )
 
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
+        self.cylinder_radius = radius
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schwarzP,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
+        unit_theta = self.cell_size[1] / radius
+        n_repeat_to_full_circle = int(2 * np.pi / unit_theta)
+        self.unit_theta = 2 * np.pi / n_repeat_to_full_circle
+        self.cell_size[1] = self.unit_theta * radius # TODO : check if this is correct
+        if self.repeat_cell[1] == 0 or self.repeat_cell[1] > n_repeat_to_full_circle:
+            logging.warning(
+                "%d cells repeated in circular direction", n_repeat_to_full_circle
+            )
+            self.repeat_cell[1] = n_repeat_to_full_circle
 
-       shape.plot(color='white')    
-    """
-    return cos(x) + cos(y) + cos(z)
+    def _create_grid(self, x, y, z):
+        rho = x + self.cylinder_radius
+        theta = y * self.unit_theta
 
-
-def schwarzD(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       \displaylines{sin(2 \pi x) sin(2 \pi y) sin(2 \pi z) + \\\ sin(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi x) sin(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi x) cos(2 \pi y) sin(2 \pi z) = 0}
-
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schwarzD,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    a = sin(x) * sin(y) * sin(z)
-    b = sin(x) * cos(y) * cos(z)
-    c = cos(x) * sin(y) * cos(z)
-    d = cos(x) * cos(y) * sin(z)
-    return a + b + c + d
-
-
-def neovius(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       \displaylines{3 cos(2 \pi x) + cos(2 \pi y) + cos(2 \pi z) + \\\ 4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) = 0}
-           
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.neovius,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    a = 3 * cos(x) + cos(y) + cos(z)
-    b = 4 * cos(x) * cos(y) * cos(z)
-
-    return a + b
-
-
-def schoenIWP(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       \displaylines{2 ( cos(2 \pi x) cos(2 \pi y) + \\\ cos(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi z) cos(2 \pi x)) - \\\ (cos(4 \pi x) + cos(4 \pi y) + cos(4 \pi z)) = 0}
-    
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schoenIWP,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    a = 2 * (
-        cos(x) * cos(y)
-        + cos(y) * cos(z)
-        + cos(z) * cos(x)
-    )
-    b = cos(4 * pi * x) + cos(4 * pi * y) + cos(4 * pi * z)
-
-    return a - b
-
-
-def schoenFRD(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       \displaylines{4 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) - \\\ (cos(4 \pi x) cos(4 \pi y) + \\\ cos(4 \pi y) cos(4 \pi z) + \\\ cos(4 \pi z) cos(4 \pi x)) = 0}
-            
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schoenFRD,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    a = 4 * cos(x) * cos(y) * cos(z)
-    b = (
-        cos(2 * x) * cos(2 * y)
-        + cos(2 * y) * cos(2 * z)
-        + cos(2 * z) * cos(2 * x)
-    )
-    return a - b
-
-
-def fischerKochS(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       \displaylines{cos(4 \pi x) sin(2 \pi y) cos(2 \pi z) + \\\ cos(2 \pi x) cos(4 \pi y) sin(2 \pi z) + \\\ sin(2 \pi x) cos(2 \pi y) cos(4 \pi z) = 0}
-    
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.fischerKochS,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    a = cos(2 * x) * sin(y) * cos(z)
-    b = cos(x) * cos(2 * y) * sin(z)
-    c = sin(x) * cos(y) * cos(2 * z)
-
-    return a + b + c
-
-
-def pmy(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       \displaylines{2 cos(2 \pi x) cos(2 \pi y) cos(2 \pi z) + \\\ sin(4 \pi x) sin(2 \pi y) + \\\ sin(2 \pi x) sin(4 \pi z) + \\\ sin(4 \pi y) sin(2 \pi z) = 0}
-           
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.pmy,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    a = 2 * cos(x) * cos(y) * cos(z)
-    b = sin(2 * x) * sin(y)
-    c = sin(x) * sin(2 * z)
-    d = sin(2 * y) * sin(z)
-
-    return a + b + c + d
-
-
-def honeycomb(x: float, y: float, z: float) -> float:
-    """
-    .. math::
-       sin(2 \pi x) cos(2 \pi y) + sin(2 \pi y) + cos(2 \pi z) = 0
-       
-    .. jupyter-execute::
-       :hide-code:
-   
-       import microgen
-
-       geometry = microgen.Tpms(
-           surface_function=microgen.tpms.honeycomb,
-           type_part="sheet"
-       )
-       shape = geometry.generateSurfaceVtk()
-
-       shape.plot(color='white') 
-    """
-    return sin(x) * cos(y) + sin(y) + cos(z)
-
-
-def lidinoid(x: float, y: float, z: float) -> float:
-    return 0.5 * (sin(2 * x) * cos(y) * sin(z) + 
-                  sin(2 * y) * cos(z) * sin(x) + 
-                  sin(2 * z) * cos(x) * sin(y)) - \
-           0.5 * (cos(2 * x) * cos(2 * y) +
-                  cos(2 * y) * cos(2 * z) + 
-                  cos(2 * z) * cos(2 * x)) + 0.3
-
-
-def split_p(x: float, y: float, z: float) -> float:
-    return 1.1 * (sin(2 * x) * cos(y) * sin(z) + 
-                  sin(2 * y) * cos(z) * sin(x) + 
-                  sin(2 * z) * cos(x) * sin(y)) - \
-           0.2 * (cos(2 * x) * cos(2 * y) +
-                  cos(2 * y) * cos(2 * z) + 
-                  cos(2 * z) * cos(2 * x)) - \
-           0.4 * (cos(2 * x) + cos(2 * y) + cos(2 * z))
+        return pv.StructuredGrid(rho * np.cos(theta), rho * np.sin(theta), z)
