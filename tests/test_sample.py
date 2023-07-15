@@ -13,11 +13,11 @@ except(subprocess.CalledProcessError, FileNotFoundError):
     USE_NEPER = False
 
 def test_misc():
-    if platform != 'win32':
-        microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
-        microgen.parseNeper("tests/data/neper")
-        microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
-
+    if USE_NEPER == True:
+        if platform != 'win32':
+            microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
+            microgen.parseNeper("tests/data/neper")
+            microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
 
 def test_operations():
     elem = microgen.shape.Box(center=(0.5, 0.5, 0.5), dim_x=1, dim_y=1, dim_z=1)
@@ -37,6 +37,5 @@ def test_operations():
 
 
 if __name__ == "__main__":
-    if USE_NEPER == True:
-        test_misc()
+    test_misc()
     test_operations()

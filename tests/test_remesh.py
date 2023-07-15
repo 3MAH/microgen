@@ -183,7 +183,6 @@ def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_fal
     # Act & Assert
     assert not remesh._is_triangle_on_boundary(internal_triangle, rve)
 
-
 @pytest.mark.parametrize(
     "shape, mesh_element_size",
     [
@@ -205,28 +204,29 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
         tmp_mesh_filename: str,
         tmp_output_mesh_filename: str,
 ) -> None:
-    # Arrange
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-    cad_geometry: cq.Shape = shape.generate()
-    phase = Phase(cad_geometry)
-
-    cq.exporters.export(cad_geometry, tmp_step_filename)
-
-    meshPeriodic(
-        tmp_step_filename,
-        rve,
-        [phase],
-        size=mesh_element_size,
-        order=1,
-        output_file=tmp_mesh_filename,
-        mshFileVersion=4,
-    )
-
-    # Act
-    remesh.remesh_keeping_periodicity_for_fem(
-        tmp_mesh_filename, rve, tmp_output_mesh_filename, hgrad=1.1
-    )
-
-    # Assert
     if USE_MMG == True:
+        # Arrange
+        rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
+        cad_geometry: cq.Shape = shape.generate()
+        phase = Phase(cad_geometry)
+
+        cq.exporters.export(cad_geometry, tmp_step_filename)
+
+        meshPeriodic(
+            tmp_step_filename,
+            rve,
+            [phase],
+            size=mesh_element_size,
+            order=1,
+            output_file=tmp_mesh_filename,
+            mshFileVersion=4,
+        )
+
+        # Act
+        
+        remesh.remesh_keeping_periodicity_for_fem(
+            tmp_mesh_filename, rve, tmp_output_mesh_filename, hgrad=1.1
+        )
+
+        # Assert
         assert _is_periodic(_get_mesh_nodes_coords(tmp_output_mesh_filename))
