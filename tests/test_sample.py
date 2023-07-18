@@ -1,13 +1,23 @@
+import subprocess
 import microgen
 
 from sys import platform
 
-def test_misc():
-    if platform != 'win32':
-        microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
-        microgen.parseNeper("tests/data/neper")
-        microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
+USE_NEPER = False
+try:
+    # Check if neper is installed and available in the PATH
+    subprocess.run(["neper", "--version"], check=True)
+    USE_NEPER = True    
+except(subprocess.CalledProcessError, FileNotFoundError):
+    print("Neper is not installed. Please install Neper before running this command.")
+    USE_NEPER = False
 
+def test_misc():
+    if USE_NEPER == True:
+        if platform != 'win32':
+            microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
+            microgen.parseNeper("tests/data/neper")
+            microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
 
 def test_operations():
     elem = microgen.shape.Box(center=(0.5, 0.5, 0.5), dim_x=1, dim_y=1, dim_z=1)
