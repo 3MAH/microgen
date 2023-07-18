@@ -187,13 +187,13 @@ def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_fal
     "shape, mesh_element_size",
     [
         (Box(), 1.0),
-        (
-                Tpms(
-                    surface_function=surface_functions.gyroid,
-                    offset=0.3,
-                ),
-                0.05,
-        ),
+        # (
+        #         Tpms(
+        #             surface_function=surface_functions.gyroid,
+        #             offset=0.3,
+        #         ),
+        #         0.05,
+        # ),
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(

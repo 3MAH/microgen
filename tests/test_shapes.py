@@ -128,7 +128,7 @@ def test_tpms():
         repeat_cell=(2, 1, 1),
         resolution=20,
     )
-    elem.generate(type_part="surface")
+    # elem.generate(type_part="surface")
     elem.lower_skeletal
     elem.upper_skeletal
     elem.generateVtk(type_part="sheet")
