@@ -3,9 +3,8 @@ import microgen
 
 def test_profiling_generate_gyroid() -> None:
     geometry = microgen.Tpms(
-        surface_function=microgen.tpms.gyroid,
-        type_part="sheet",
-        thickness=0.1,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.3,
         repeat_cell=1,
     )
-    geometry.generate(resolution=20)
+    geometry.generateVtk(type_part="sheet")
