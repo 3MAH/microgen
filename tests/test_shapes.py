@@ -126,7 +126,7 @@ def test_tpms():
         offset=0.3,
         cell_size=(1, 2, 1),
         repeat_cell=(2, 1, 1),
-        resolution=10,
+        resolution=20,
     )
     elem.generate(type_part="surface")
     elem.lower_skeletal
@@ -134,11 +134,7 @@ def test_tpms():
     elem.generateVtk(type_part="sheet")
 
     with pytest.raises(ValueError):
-        microgen.shape.tpms.Tpms(
-            center=(0.5, 0.5, 0.5),
-            surface_function=microgen.shape.surface_functions.schwarzD,
-            offset=0.3,
-        )
+        elem.generateVtk(type_part="fake")
 
     assert microgen.shape.surface_functions.schwarzP(0, 0, 0) == 3
     assert microgen.shape.surface_functions.schwarzD(0, 0, 0) == 0 + 0 + 0 + 0
