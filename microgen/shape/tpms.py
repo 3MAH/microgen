@@ -219,7 +219,7 @@ class Tpms(BasicGeometry):
             logging.warning("\nGenerating shell surface\n")
         return cq.Shell.makeShell(faces)
 
-    def generate(self, type_part="sheet", verbose=True) -> cq.Shape:
+    def generate(self, type_part="surface", verbose=True) -> cq.Shape:
         """
         :param type_part: part of the TPMS desired ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
         :param verbose: display progressbar of the conversion to CadQuery object

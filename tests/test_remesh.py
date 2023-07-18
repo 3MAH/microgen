@@ -190,8 +190,7 @@ def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_fal
         (
                 Tpms(
                     surface_function=surface_functions.gyroid,
-                    type_part="sheet",
-                    thickness=0.05,
+                    offset=0.3,
                 ),
                 0.05,
         ),
