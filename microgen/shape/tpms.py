@@ -28,17 +28,17 @@ class Tpms(BasicGeometry):
     geometry from a given mathematical function, with given offset
 
     functions available :
-        - :class:`~microgen.shape.tpms.gyroid`
-        - :class:`~microgen.shape.tpms.schwarzP`
-        - :class:`~microgen.shape.tpms.schwarzD`
-        - :class:`~microgen.shape.tpms.neovius`
-        - :class:`~microgen.shape.tpms.schoenIWP`
-        - :class:`~microgen.shape.tpms.schoenFRD`
-        - :class:`~microgen.shape.tpms.fischerKochS`
-        - :class:`~microgen.shape.tpms.pmy`
-        - :class:`~microgen.shape.tpms.honeycomb`
-        - :class:`~microgen.shape.tpms.lidinoid`
-        - :class:`~microgen.shape.tpms.split_p`
+        - :class:`~microgen.shape.surface_functions.gyroid`
+        - :class:`~microgen.shape.surface_functions.schwarzP`
+        - :class:`~microgen.shape.surface_functions.schwarzD`
+        - :class:`~microgen.shape.surface_functions.neovius`
+        - :class:`~microgen.shape.surface_functions.schoenIWP`
+        - :class:`~microgen.shape.surface_functions.schoenFRD`
+        - :class:`~microgen.shape.surface_functions.fischerKochS`
+        - :class:`~microgen.shape.surface_functions.pmy`
+        - :class:`~microgen.shape.surface_functions.honeycomb`
+        - :class:`~microgen.shape.surface_functions.lidinoid`
+        - :class:`~microgen.shape.surface_functions.split_p`
     """
 
     def __init__(
