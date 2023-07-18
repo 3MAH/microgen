@@ -110,33 +110,34 @@ def test_tpms():
         shape="tpms",
         param_geom={
             "surface_function": microgen.shape.tpms.gyroid,
-            "type_part": "skeletal",
-            "thickness": 0.075,
+            "offset": 0.3,
             "cell_size": 1,
             "repeat_cell": 1,
+            "resolution": 10,
         },
     )
-    elem.generate()
-    elem.generateVtk()
+    elem.sheet
+    elem.surface
+    elem.skeletals
 
     elem = microgen.shape.tpms.Tpms(
         center=(0.5, 0.5, 0.5),
         surface_function=microgen.shape.tpms.schwarzD,
-        type_part="sheet",
-        thickness=0.05,
+        offset=0.3,
         cell_size=(1, 2, 1),
         repeat_cell=(2, 1, 1),
+        resolution=10,
     )
-    elem.generate()
-    elem.generateSurface(isovalue=0.1)
-    elem.generateSurfaceVtk()
+    elem.generate(type_part="surface")
+    elem.lower_skeletal
+    elem.upper_skeletal
+    elem.generateVtk(type_part="sheet")
 
     with pytest.raises(ValueError):
         microgen.shape.tpms.Tpms(
             center=(0.5, 0.5, 0.5),
             surface_function=microgen.shape.tpms.schwarzD,
-            type_part="fake",
-            thickness=0.3,
+            offset=0.3,
         )
 
     assert microgen.shape.tpms.schwarzP(0, 0, 0) == 3

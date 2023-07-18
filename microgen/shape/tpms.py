@@ -203,7 +203,8 @@ class Tpms(BasicGeometry):
         triangles = np.c_[triangles, triangles[:, 0]]
 
         faces = []
-        for i in tqdm(range(len(triangles)), disable=not verbose):
+        # for i in tqdm(range(len(triangles)), disable=not verbose):
+        for i in range(len(triangles)):
             tri = triangles[i]
             lines = [
                 cq.Edge.makeLine(
@@ -284,8 +285,8 @@ class CylindricalTpms(Tpms):
         """
         Directions of cell_size and repeat_cell must be taken as the cylindrical coordinate system $\left(\rho, \theta, z\right)$.
 
-        The $\theta$ component of cell_size is automatically updated to the closest value that matches the periodicity of the TPMS.
-        If the $\theta$ component of repeat_cell is 0 or higher than the periodicity of the TPMS, it is automatically set the correct number to make the full cylinder.
+        The $\theta$ component of cell_size is automatically updated to the closest value that matches the cylindrical periodicity of the TPMS.
+        If the $\theta$ component of repeat_cell is 0 or greater than the periodicity of the TPMS, it is automatically set the correct number to make the full cylinder.
 
         :param radius: radius of the cylinder on which the center of the TPMS is located
         :param surface_function: tpms function or custom function (f(x, y, z, t) = 0)

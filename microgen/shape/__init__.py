@@ -89,10 +89,10 @@ def newGeometry(
             center=center,
             orientation=orientation,
             surface_function=param_geom["surface_function"],
-            type_part=param_geom["type_part"],
-            thickness=param_geom["thickness"],
+            offset=param_geom["offset"],
             cell_size=param_geom["cell_size"],
             repeat_cell=param_geom["repeat_cell"],
+            resolution=param_geom["resolution"],
         )
     elif shape.lower() == "polyhedron":
         return Polyhedron(dic=param_geom["dic"])
