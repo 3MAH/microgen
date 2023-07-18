@@ -15,9 +15,11 @@ from typing import Callable, List, Union, Sequence, Literal
 import cadquery as cq
 import numpy as np
 import pyvista as pv
-# from tqdm import tqdm
+from tqdm import tqdm
 
 from microgen.shape.basicGeometry import BasicGeometry
+from ..operations import fuseShapes, rescale, repeatShape
+from ..rve import Rve
 
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 
@@ -203,8 +205,8 @@ class Tpms(BasicGeometry):
         triangles = np.c_[triangles, triangles[:, 0]]
 
         faces = []
-        # for i in tqdm(range(len(triangles)), disable=not verbose):
-        for i in range(len(triangles)):
+        for i in tqdm(range(len(triangles)), disable=not verbose):
+        # for i in range(len(triangles)):
             tri = triangles[i]
             lines = [
                 cq.Edge.makeLine(
@@ -226,24 +228,17 @@ class Tpms(BasicGeometry):
 
         :return: CadQuery Shape object of the required TPMS part
         """
-        shell = None
-        if type_part == "sheet":
-            # shell = self._create_shell(mesh=self.sheet, verbose=verbose)
-            raise NotImplementedError
-        elif type_part == "lower skeletal":
-            # shell = self._create_shell(mesh=self.lower_skeletal, verbose=verbose)
-            raise NotImplementedError
-        elif type_part == "upper skeletal":
-            # shell = self._create_shell(mesh=self.upper_skeletal, verbose=verbose)
-            raise NotImplementedError
-        elif type_part == "surface":
-            shell = self._create_shell(mesh=self.surface, verbose=verbose)
-        else:
-            logging.error(
-                "'type_part' (%s) must be 'sheet', 'lower skeletal', 'upper skeletal' or 'surface'",
-                type_part,
+        if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
+            raise ValueError(
+                f"'type_part' ({type_part}) must be 'sheet', \
+                    'lower skeletal', 'upper skeletal' or 'surface'",
             )
-        return cq.Shape(shell.wrapped)
+
+        if type_part == "surface":
+            shell = self._create_shell(mesh=self.surface, verbose=verbose)
+            return cq.Shape(shell.wrapped)
+
+        raise NotImplementedError("Only 'surface' is implemented for now")
 
     def generateVtk(
         self,
@@ -263,7 +258,8 @@ class Tpms(BasicGeometry):
             return self.surface
 
         raise ValueError(
-            f"type_part ({type_part}) must be 'sheet', 'lower skeletal', 'upper skeletal' or 'surface'"
+            f"type_part ({type_part}) must be 'sheet', \
+                'lower skeletal', 'upper skeletal' or 'surface'"
         )
 
 

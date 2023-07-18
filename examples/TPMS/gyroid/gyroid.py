@@ -1,6 +1,5 @@
 from microgen import Tpms
 from microgen.shape.surface_functions import gyroid
-import cadquery as cq
 
 geometry = Tpms(
     surface_function=gyroid,

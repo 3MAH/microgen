@@ -1,21 +1,17 @@
-from microgen import Tpms, Sphere, tpms
-import cadquery as cq
+from microgen import Tpms, surface_functions
+import pyvista as pv
 
 geometry = Tpms(
-    surface_function=tpms.gyroid,
-    type_part="sheet",
-    thickness=0.05,
-    repeat_cell=3
+    surface_function=surface_functions.gyroid,
+    offset=0.3,
+    repeat_cell=3,
+    resolution=30,
 )
-shape = geometry.generate()
-cq.exporters.export(shape, "gyroid.stl")
-print('gyroid')
+shape = geometry.generateVtk(type_part="sheet")
+shape.triangulate(inplace=True)
+shape.flip_normals()
 
-sphere = Sphere(radius=1.45)
-sphere_shape = sphere.generate()
-cq.exporters.export(sphere_shape, "sphere.stl")
-print('sphere')
+sphere = pv.Sphere(radius=1.45)
 
-result = shape.intersect(sphere_shape)
-cq.exporters.export(result, "tpms_sphere.stl")
-print('intersect')
+result = shape.boolean_intersection(sphere)
+result.plot(color='w')
