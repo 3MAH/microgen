@@ -9,7 +9,6 @@ import numpy.typing as npt
 
 from microgen import Mmg, Rve
 
-
 class Triangle(NamedTuple):
     node1: npt.NDArray[np.float_]
     node2: npt.NDArray[np.float_]

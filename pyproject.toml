@@ -23,12 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 dependencies = [
-    "pyvista",
     "numpy",
-    "cadquery",
+    "pyvista",
     "gmsh",
-    "cadquery-ocp",
-    "meshio"
+    "meshio",
+    "cadquery"
 ]
 dynamic = ["version"]
 

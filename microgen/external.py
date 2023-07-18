@@ -34,7 +34,7 @@ class Neper:
         try:
             # Check if neper is installed and available in the PATH
             subprocess.run(["neper", "--version"], check=True)
-        except subprocess.CalledProcessError:
+        except(subprocess.CalledProcessError, FileNotFoundError):
             print("Neper is not installed. Please install Neper before running this command.")
             return
 
@@ -612,10 +612,11 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+        except(subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
+            return
 
     @staticmethod
     def mmgs(
@@ -730,10 +731,11 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+        except(subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
+            return
 
     @staticmethod
     def mmg3d(
@@ -871,7 +873,8 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+        except(subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
+            return

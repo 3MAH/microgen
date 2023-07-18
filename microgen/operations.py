@@ -124,10 +124,18 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
     if retain_edges:
         return cq.Shape(occ_Solids)
     else:
-        upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
-        upgrader.Build()
-        shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
-        return cq.Shape(shape)
+        try:
+            upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
+            upgrader.Build()
+            shape = upgrader.Shape()  # type: OCP.TopoDS_Shape            
+            return cq.Shape(shape)            
+        except Exception:
+            return cq.Shape(occ_Solids)
+
+
+
+
+
 
 
 def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
