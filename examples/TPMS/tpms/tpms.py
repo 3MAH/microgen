@@ -42,5 +42,5 @@ for i, surface in enumerate(surfaces):
     )
     meshes.append(mesh)
 
-pv.MultiBlock(meshes).save("surfaces.vtk")
+pv.MultiBlock(meshes).save("surfaces.vtm")
 # pv.MultiBlock(meshes).plot(color="w")
