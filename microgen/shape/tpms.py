@@ -15,7 +15,7 @@ from typing import Callable, List, Union, Sequence, Literal
 import cadquery as cq
 import numpy as np
 import pyvista as pv
-from tqdm import tqdm
+# from tqdm import tqdm
 
 from microgen.shape.basicGeometry import BasicGeometry
 from ..operations import fuseShapes, rescale, repeatShape
@@ -210,8 +210,8 @@ class Tpms(BasicGeometry):
         triangles = np.c_[triangles, triangles[:, 0]]
 
         faces = []
-        for i in tqdm(range(len(triangles)), disable=not verbose):
-        # for i in range(len(triangles)):
+        # for i in tqdm(range(len(triangles)), disable=not verbose):
+        for i in range(len(triangles)):
             tri = triangles[i]
             lines = [
                 cq.Edge.makeLine(
