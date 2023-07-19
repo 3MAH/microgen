@@ -1,10 +1,10 @@
-import microgen
+import os
+import pytest
 
 import cadquery as cq
 import numpy as np
 
-import os
-import pytest
+import microgen
 
 
 def test_shapes():

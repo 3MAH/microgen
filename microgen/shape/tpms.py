@@ -15,12 +15,13 @@ from typing import Callable, List, Union, Sequence, Literal
 import cadquery as cq
 import numpy as np
 import pyvista as pv
-# from tqdm import tqdm
+from tqdm import tqdm
 
 from microgen.shape.basicGeometry import BasicGeometry
 from ..operations import fuseShapes, rescale, repeatShape
-# from ..rve import Rve
+from ..rve import Rve
 
+logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 
 
@@ -166,8 +167,6 @@ class Tpms(BasicGeometry):
             self._compute_tpms_field()
 
         mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars="surface")
-        mesh.smooth(n_iter=100, inplace=True)
-        mesh.clean(inplace=True)
         return mesh
 
     def _create_grid(self, x, y, z):
@@ -196,23 +195,23 @@ class Tpms(BasicGeometry):
             k_z * (z + self.phase_shift[2])
         )
 
-        offset: Union[float, np.ndarray] = 0.0
+        # offset: Union[float, np.ndarray] = 0.0
         if isinstance(self.offset, float):
-            offset = self.offset
+            self.offset = self.offset
         elif isinstance(self.offset, Callable):
-            offset = self.offset(x, y, z)
+            self.offset = self.offset(x, y, z)
 
         self.grid["surface"] = surface_function.ravel(order="F")
-        self.grid["lower_surface"] = (surface_function - 0.5 * offset).ravel(order="F")
-        self.grid["upper_surface"] = (surface_function + 0.5 * offset).ravel(order="F")
+        self.grid["lower_surface"] = (surface_function - 0.5 * self.offset).ravel(order="F")
+        self.grid["upper_surface"] = (surface_function + 0.5 * self.offset).ravel(order="F")
 
     def _create_shell(self, mesh: pv.PolyData, verbose: bool) -> cq.Shell:
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
         triangles = np.c_[triangles, triangles[:, 0]]
 
         faces = []
-        # for i in tqdm(range(len(triangles)), disable=not verbose):
-        for i in range(len(triangles)):
+        for i in tqdm(range(len(triangles)), disable=not verbose):
+        # for i in range(len(triangles)):
             tri = triangles[i]
             lines = [
                 cq.Edge.makeLine(
@@ -224,58 +223,88 @@ class Tpms(BasicGeometry):
             faces.append(cq.Face.makeFromWires(wire))
 
         if verbose:
-            logging.warning("\nGenerating shell surface\n")
+            logging.info("\nGenerating shell surface\n")
         return cq.Shell.makeShell(faces)
-    
+
+    def _create_surface(
+        self,
+        isovalue: float = 0,
+        smoothing: int = 20,
+        verbose: bool = False,
+    ) -> cq.Shell:
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
+
+        mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
+        mesh.smooth(n_iter=smoothing, inplace=True)
+        mesh.clean(inplace=True)
+
+        try:
+            return self._create_shell(mesh=mesh, verbose=verbose)
+        except ValueError as exc:
+            logging.error("Cannot create shell, try to use a higher smoothing value: %s", exc)
+
     def _create_surfaces(
         self,
         isovalues: list[float] = [0],
+        smoothing: int = 20,
+        verbose: bool = False
     ) -> list[cq.Shell]:
         """
         Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
 
-        :param numsber_surfaces: number of surfaces
-        :param isovalues: height isovalues of the given tpms function
-        :param nSample: surface file name
+        :param isovalues: list of isovalues corresponding to the required surfaces
         :param smoothing: smoothing loop iterations
+        :param verbose: display progressbar of the conversion to CadQuery object
         """
-        self._compute_tpms_field()
-
         shells = []
-        for isovalue in isovalues:
-            mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
-            mesh.smooth(n_iter=100, inplace=True)
-            mesh.clean(inplace=True)
-
-            shell = self._create_shell(mesh=mesh, verbose=False)
+        for i, isovalue in enumerate(isovalues):
+            if verbose:
+                logging.info(
+                    "\nGenerating surface (%d/%d) for \
+                        isovalue %.2f\n",
+                        i, len(isovalues), isovalue
+                )
+            shell = self._create_surface(isovalue=isovalue, smoothing=smoothing, verbose=verbose)
             shells.append(shell)
 
         return shells
 
-    def generate(self, type_part="sheet", verbose=True) -> cq.Shape:
+    def generate(
+        self,
+        type_part: Literal["sheet", "skeletals", "surface"] = "sheet",
+        smoothing: int=20,
+        verbose: bool=True
+    ) -> cq.Shape:
         """
-        :param type_part: part of the TPMS desired ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
+        :param type_part: part of the TPMS desired ('sheet', 'skeletals' or 'surface')
+        :param smoothing: smoothing loop iterations
         :param verbose: display progressbar of the conversion to CadQuery object
 
         :return: CadQuery Shape object of the required TPMS part
         """
-        if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
+        if type_part in ["lower skeletal", "upper skeletal"]:
+            raise NotImplementedError(
+                "Only 'sheet', 'skeletals' and \
+                    'surface' are implemented for now"
+            )
+        if type_part not in ["sheet", "skeletals", "surface"]:
             raise ValueError(
                 f"'type_part' ({type_part}) must be 'sheet', \
-                    'lower skeletal', 'upper skeletal' or 'surface'",
+                    'skeletals' or 'surface'",
             )
 
         if type_part == "surface":
-            shell = self._create_shell(mesh=self.surface, verbose=verbose)
-            return cq.Shape(shell.wrapped)
+            return self._create_surface(isovalue=0, smoothing=smoothing, verbose=verbose)
 
         isovalues = [
-            -self.offset,
-            -self.offset / 3.0,
-            self.offset / 3.0,
-            self.offset,
+            -self.offset / 2.0,
+            -self.offset / 6.0,
+            self.offset / 6.0,
+            self.offset / 2.0,
         ]
-        shells = self._create_surfaces(isovalues=isovalues)
+
+        shells = self._create_surfaces(isovalues=isovalues, smoothing=smoothing, verbose=verbose)
 
         face_cut_tp = shells[2]
         face_cut_tm = shells[1]
@@ -293,14 +322,31 @@ class Tpms(BasicGeometry):
             (wp.split(face_cut_tp).split(face_cut_tm).solids().size(), wp.val())
             for wp in box_workplanes
         ]
+
         if type_part == "sheet":
             sheet = [shape for (number, shape) in list_shapes if number > 1]
             to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
-            shape = fuseShapes(to_fuse, True)
-        elif type_part == "skeletal":
+            shape = fuseShapes(cqShapeList=to_fuse, retain_edges=True)
+
+        if type_part == "skeletals":
             skeletal = [shape for (number, shape) in list_shapes if number == 1]
             to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
-            shape = fuseShapes(to_fuse, False)
+            shape = fuseShapes(cqShapeList=to_fuse, retain_edges=False)
+
+        if not np.array_equal(self.cell_size, np.array([1.0, 1.0, 1.0])):
+            shape = rescale(shape=shape, scale=self.cell_size)
+
+        if not np.array_equal(self.repeat_cell, np.array([1, 1, 1])):
+            shape = repeatShape(
+                unit_geom=shape,
+                rve=Rve(
+                    dim_x=self.cell_size[0],
+                    dim_y=self.cell_size[1],
+                    dim_z=self.cell_size[2],
+                    center=self.center,
+                ),
+                grid=self.repeat_cell,
+            )
 
         return shape
         # raise NotImplementedError("Only 'surface' is implemented for now")
@@ -378,7 +424,7 @@ class CylindricalTpms(Tpms):
         self.unit_theta = 2 * np.pi / n_repeat_to_full_circle
         self.cell_size[1] = self.unit_theta * radius # TODO : check if this is correct
         if self.repeat_cell[1] == 0 or self.repeat_cell[1] > n_repeat_to_full_circle:
-            logging.warning(
+            logging.info(
                 "%d cells repeated in circular direction", n_repeat_to_full_circle
             )
             self.repeat_cell[1] = n_repeat_to_full_circle
