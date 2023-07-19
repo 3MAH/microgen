@@ -220,8 +220,33 @@ class Tpms(BasicGeometry):
         if verbose:
             logging.warning("\nGenerating shell surface\n")
         return cq.Shell.makeShell(faces)
+    
+    def _create_surfaces(
+        self,
+        isovalues: list[float] = [0],
+    ) -> list[cq.Shell]:
+        """
+        Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
 
-    def generate(self, type_part="surface", verbose=True) -> cq.Shape:
+        :param numsber_surfaces: number of surfaces
+        :param isovalues: height isovalues of the given tpms function
+        :param nSample: surface file name
+        :param smoothing: smoothing loop iterations
+        """
+        self._compute_tpms_field()
+
+        shells = []
+        for isovalue in isovalues:
+            mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
+            mesh.smooth(n_iter=100, inplace=True)
+            mesh.clean(inplace=True)
+
+            shell = self._create_shell(mesh=mesh, verbose=False)
+            shells.append(shell)
+
+        return shells
+
+    def generate(self, type_part="sheet", verbose=True) -> cq.Shape:
         """
         :param type_part: part of the TPMS desired ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
         :param verbose: display progressbar of the conversion to CadQuery object
@@ -238,7 +263,41 @@ class Tpms(BasicGeometry):
             shell = self._create_shell(mesh=self.surface, verbose=verbose)
             return cq.Shape(shell.wrapped)
 
-        raise NotImplementedError("Only 'surface' is implemented for now")
+        isovalues = [
+            -self.offset,
+            -self.offset / 3.0,
+            self.offset / 3.0,
+            self.offset,
+        ]
+        shells = self._create_surfaces(isovalues=isovalues)
+
+        face_cut_tp = shells[2]
+        face_cut_tm = shells[1]
+        face_cut_p = shells[3]
+        face_cut_m = shells[0]
+
+        box_wp = cq.Workplane("front").box(1, 1, 1)
+
+        box_cut_wp = box_wp.split(face_cut_p)
+        box_cut_wp = box_cut_wp.split(face_cut_m)
+
+        box_workplanes = box_cut_wp.solids().all()  # type: list[cq.Workplane]
+
+        list_shapes = [
+            (wp.split(face_cut_tp).split(face_cut_tm).solids().size(), wp.val())
+            for wp in box_workplanes
+        ]
+        if type_part == "sheet":
+            sheet = [shape for (number, shape) in list_shapes if number > 1]
+            to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
+            shape = fuseShapes(to_fuse, True)
+        elif type_part == "skeletal":
+            skeletal = [shape for (number, shape) in list_shapes if number == 1]
+            to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
+            shape = fuseShapes(to_fuse, False)
+
+        return shape
+        # raise NotImplementedError("Only 'surface' is implemented for now")
 
     def generateVtk(
         self,
