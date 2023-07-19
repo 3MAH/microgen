@@ -26,9 +26,10 @@ geometry = CylindricalTpms(
 min_offset = 0.
 max_offset = 3.
 
-plotter = pv.Plotter()
-plotter.add_mesh(geometry.sheet, color="w")
-plotter.view_xy()
-plotter.enable_parallel_projection()
-plotter.show_axes()
-plotter.show()
+geometry.sheet.save("cylindrical_graded.vtk")
+# plotter = pv.Plotter()
+# plotter.add_mesh(geometry.sheet, color="w")
+# plotter.view_xy()
+# plotter.enable_parallel_projection()
+# plotter.show_axes()
+# plotter.show()

@@ -14,4 +14,5 @@ shape.flip_normals()
 sphere = pv.Sphere(radius=1.45)
 
 result = shape.boolean_intersection(sphere)
-result.plot(color='w')
+result.save("tpmsSphere.vtk")
+# result.plot(color='w')

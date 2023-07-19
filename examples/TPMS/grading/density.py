@@ -25,9 +25,10 @@ geometry = Tpms(
     resolution=100
 )
 
-plotter = pv.Plotter()
-plotter.add_mesh(geometry.sheet, color="w")
-plotter.view_xy()
-plotter.enable_parallel_projection()
-plotter.show_axes()
-plotter.show()
+geometry.sheet.save("density.vtk")
+# plotter = pv.Plotter()
+# plotter.add_mesh(geometry.sheet, color="w")
+# plotter.view_xy()
+# plotter.enable_parallel_projection()
+# plotter.show_axes()
+# plotter.show()
