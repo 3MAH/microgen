@@ -8,6 +8,8 @@ geometry = Tpms(
 )
 mesh = geometry.generateVtk(type_part="surface")
 
-pl = pv.Plotter()
-pl.add_mesh(mesh)
-pl.save_graphic('fischerKochS.pdf')
+mesh.save("surface.vtk")
+
+# pl = pv.Plotter()
+# pl.add_mesh(mesh)
+# pl.save_graphic('fischerKochS.pdf')
