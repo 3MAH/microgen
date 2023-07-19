@@ -13,7 +13,7 @@ geometry = Tpms(
     surface_function=surface_functions.gyroid,
     offset=0.5,
     repeat_cell=3,
-    resolution=20,
+    resolution=15,
 )
 shape = geometry.generate(type_part="sheet", smoothing=0)
 

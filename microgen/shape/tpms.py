@@ -263,7 +263,7 @@ class Tpms(BasicGeometry):
                 logging.info(
                     "\nGenerating surface (%d/%d) for \
                         isovalue %.2f\n",
-                        i, len(isovalues), isovalue
+                        i + 1, len(isovalues), isovalue
                 )
             shell = self._create_surface(isovalue=isovalue, smoothing=smoothing, verbose=verbose)
             shells.append(shell)
