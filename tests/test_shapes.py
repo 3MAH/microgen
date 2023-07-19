@@ -124,6 +124,7 @@ def test_tpms():
         center=(0.5, 0.5, 0.5),
         surface_function=microgen.shape.surface_functions.schwarzD,
         offset=0.3,
+        phase_shift=(0.1, 0.2, 0.3),
         cell_size=(1, 2, 1),
         repeat_cell=(2, 1, 1),
         resolution=20,

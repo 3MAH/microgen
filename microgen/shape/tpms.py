@@ -47,11 +47,12 @@ class Tpms(BasicGeometry):
         self,
         surface_function: Field,
         offset: Union[float, Field] = 0.0,
+        phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: Union[float, Sequence[float]] = 1.0,
         repeat_cell: Union[int, Sequence[int]] = 1,
+        resolution: int = 20,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
-        resolution: int = 20,
     ) -> None:
         """
         Class used to generate TPMS geometries (sheet or skeletals parts).
@@ -61,9 +62,9 @@ class Tpms(BasicGeometry):
 
         :param center: center of the geometry
         :param orientation: orientation of the geometry
-        :param surface_function: tpms function or custom function (f(x, y, z, t) = 0)
-        :param type_part: 'sheet', 'skeletal' or 'all'
+        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
+        :param phase_shift: phase shift of the isosurface $f(x + \phi_x, y + \phi_y, z + \phi_z, t) = 0$
         :param cell_size: float or list of float for each dimension to set unit cell dimensions
         :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
         :param resolution: unit cell resolution of the grid to compute tpms scalar fields
@@ -72,6 +73,7 @@ class Tpms(BasicGeometry):
 
         self.surface_function = surface_function
         self.offset = offset
+        self.phase_shift = phase_shift
 
         self.grid = pv.StructuredGrid()
         self._sheet: pv.PolyData = None
@@ -188,7 +190,11 @@ class Tpms(BasicGeometry):
         self.grid = self._create_grid(x, y, z)
 
         k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
-        surface_function = self.surface_function(k_x * x, k_y * y, k_z * z)
+        surface_function = self.surface_function(
+            k_x * (x + self.phase_shift[0]),
+            k_y * (y + self.phase_shift[1]),
+            k_z * (z + self.phase_shift[2])
+        )
 
         offset: Union[float, np.ndarray] = 0.0
         if isinstance(self.offset, float):
@@ -331,6 +337,7 @@ class CylindricalTpms(Tpms):
         radius: float,
         surface_function: Field,
         offset: Union[float, Field] = 0.0,
+        phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: Union[float, Sequence[float]] = 1.0,
         repeat_cell: Union[int, Sequence[int]] = 1,
         center: tuple[float, float, float] = (0, 0, 0),
@@ -344,8 +351,9 @@ class CylindricalTpms(Tpms):
         If the $\theta$ component of repeat_cell is 0 or greater than the periodicity of the TPMS, it is automatically set the correct number to make the full cylinder.
 
         :param radius: radius of the cylinder on which the center of the TPMS is located
-        :param surface_function: tpms function or custom function (f(x, y, z, t) = 0)
+        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
+        :param phase_shift: phase shift of the tpms function $f(x + \phi_x, y + \phi_y, z + \phi_z) = 0$
         :param cell_size: float or list of float for each dimension to set unit cell dimensions
         :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
         :param center: center of the geometry
@@ -354,12 +362,13 @@ class CylindricalTpms(Tpms):
         """
         super().__init__(
             surface_function=surface_function,
-            center=center,
-            orientation=orientation,
             offset=offset,
+            phase_shift=phase_shift,
             cell_size=cell_size,
             repeat_cell=repeat_cell,
             resolution=resolution,
+            center=center,
+            orientation=orientation,
         )
 
         self.cylinder_radius = radius
