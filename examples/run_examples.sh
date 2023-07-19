@@ -52,7 +52,7 @@ cd TPMS
 echo "cylindrical"
 cd cylindrical
 python cylindrical.py
-python cylindrical_graded.py
+# python cylindrical_graded.py
 cd ..
 echo "grading"
 cd grading
