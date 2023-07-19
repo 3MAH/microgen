@@ -15,8 +15,8 @@ geometry = CylindricalTpms(
     resolution=100,
     radius=1,
 )
+sheet = geometry.sheet
 
-geometry.sheet.save("cylindrical.vtk")
 # plotter = pv.Plotter()
 # plotter.add_mesh(geometry.sheet, color="w")
 # plotter.view_xy()

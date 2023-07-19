@@ -44,8 +44,8 @@ geometry = Tpms(
     repeat_cell=repeat,
     resolution=100
 )
+sheet = geometry.sheet
 
-geometry.sheet.save("trigraded.vtk")
 # plotter = pv.Plotter()
 # plotter.add_mesh(geometry.sheet, color="w")
 # plotter.view_xy()

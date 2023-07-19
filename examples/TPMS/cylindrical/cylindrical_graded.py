@@ -14,6 +14,10 @@ def grading(x, y, z):
 
     return a * x + b
 
+
+min_offset = 0.
+max_offset = 3.
+
 geometry = CylindricalTpms(
     radius=10,
     surface_function=swapped_gyroid,
@@ -21,12 +25,8 @@ geometry = CylindricalTpms(
     cell_size=(1, 1, 1),
     repeat_cell=(10, 0, 1),
 )
+sheet = geometry.sheet
 
-
-min_offset = 0.
-max_offset = 3.
-
-geometry.sheet.save("cylindrical_graded.vtk")
 # plotter = pv.Plotter()
 # plotter.add_mesh(geometry.sheet, color="w")
 # plotter.view_xy()

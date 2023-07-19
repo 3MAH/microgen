@@ -24,8 +24,8 @@ geometry = Tpms(
     cell_size=(5, 5, 1),
     resolution=100
 )
+sheet = geometry.sheet
 
-geometry.sheet.save("density.vtk")
 # plotter = pv.Plotter()
 # plotter.add_mesh(geometry.sheet, color="w")
 # plotter.view_xy()
