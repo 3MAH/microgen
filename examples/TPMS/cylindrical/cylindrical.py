@@ -12,8 +12,8 @@ geometry = CylindricalTpms(
     offset=0.5,
     cell_size=(1, 1, 1),
     repeat_cell=(1, 0, 1),
-    resolution=100,
     radius=1,
+    resolution=20,
 )
 sheet = geometry.sheet
 

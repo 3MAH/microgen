@@ -24,6 +24,7 @@ geometry = CylindricalTpms(
     offset=grading,
     cell_size=(1, 1, 1),
     repeat_cell=(10, 0, 1),
+    resolution=20,
 )
 sheet = geometry.sheet
 
