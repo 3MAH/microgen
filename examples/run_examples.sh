@@ -56,8 +56,11 @@ python cylindrical.py
 cd ..
 echo "grading"
 cd grading
+echo "cell_size"
 python cell_size.py
+echo "cell_type"
 python cell_type.py
+echo "density"
 python density.py
 cd ..
 echo "gyroid"

@@ -22,7 +22,7 @@ geometry = Tpms(
     offset=circular_graded_density,
     repeat_cell=(5, 5, 1),
     cell_size=(5, 5, 1),
-    resolution=100
+    resolution=30,
 )
 sheet = geometry.sheet
 

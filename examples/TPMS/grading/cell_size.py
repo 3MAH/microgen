@@ -29,7 +29,12 @@ def graded(x: float, y: float, z: float) -> float:
     return gyroid(5 * x, qy * y, z)
 
 
-geometry = Tpms(surface_function=graded, offset=0.3, cell_size=(5, 2, 1), resolution=100)
+geometry = Tpms(
+    surface_function=graded,
+    offset=0.3,
+    cell_size=(5, 2, 1),
+    resolution=30,
+)
 sheet = geometry.sheet
 
 # plotter = pv.Plotter()
