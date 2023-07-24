@@ -42,7 +42,7 @@ geometry = Tpms(
     offset=0.3,
     cell_size=1.,
     repeat_cell=(repeat, repeat, repeat),
-    resolution=200,
+    resolution=50,
 )
 sheet = geometry.sheet
 
