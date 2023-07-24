@@ -246,7 +246,7 @@ class Tpms(BasicGeometry):
 
     def _create_surfaces(
         self,
-        isovalues: list[float] = [0],
+        isovalues: list[float],
         smoothing: int = 20,
         verbose: bool = False
     ) -> list[cq.Shell]:
@@ -297,6 +297,10 @@ class Tpms(BasicGeometry):
         if type_part == "surface":
             return self._create_surface(isovalue=0, smoothing=smoothing, verbose=verbose)
 
+        if not isinstance(self.offset, float):
+            raise NotImplementedError(
+                "Graded offset is not supported yet with the `generate` function"
+            )
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 6.0,
@@ -422,7 +426,7 @@ class CylindricalTpms(Tpms):
         unit_theta = self.cell_size[1] / radius
         n_repeat_to_full_circle = int(2 * np.pi / unit_theta)
         self.unit_theta = 2 * np.pi / n_repeat_to_full_circle
-        self.cell_size[1] = self.unit_theta * radius # TODO : check if this is correct
+        self.cell_size[1] = self.unit_theta * radius
         if self.repeat_cell[1] == 0 or self.repeat_cell[1] > n_repeat_to_full_circle:
             logging.info(
                 "%d cells repeated in circular direction", n_repeat_to_full_circle
@@ -434,3 +438,80 @@ class CylindricalTpms(Tpms):
         theta = y * self.unit_theta
 
         return pv.StructuredGrid(rho * np.cos(theta), rho * np.sin(theta), z)
+
+
+class SphericalTpms(Tpms):
+    """
+    Class used to generate spherical TPMS geometries (sheet or skeletals parts).
+    """
+    def __init__(
+        self,
+        radius: float,
+        surface_function: Field,
+        offset: Union[float, Field] = 0.0,
+        phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
+        cell_size: Union[float, Sequence[float]] = 1.0,
+        repeat_cell: Union[int, Sequence[int]] = 1,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        resolution: int = 20,
+    ):
+        """
+        Directions of cell_size and repeat_cell must be taken as the spherical coordinate system $\left(r, \theta, \phi\right)$.
+
+        The $\theta$ and $\phi$ components of cell_size are automatically updated to the closest values that matches the spherical periodicity of the TPMS.
+        If the $\theta$ or $\phi$ components of repeat_cell are 0 or greater than the periodicity of the TPMS, they are automatically set the correct number to make the full sphere.
+
+        :param radius: radius of the sphere on which the center of the TPMS is located
+        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
+        :param offset: offset of the isosurface to generate thickness
+        :param phase_shift: phase shift of the tpms function $f(x + \phi_x, y + \phi_y, z + \phi_z) = 0$
+        :param cell_size: float or list of float for each dimension to set unit cell dimensions
+        :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
+        :param center: center of the geometry
+        :param orientation: orientation of the geometry
+        :param resolution: unit cell resolution of the grid to compute tpms scalar fields
+        """
+        super().__init__(
+            surface_function=surface_function,
+            offset=offset,
+            phase_shift=phase_shift,
+            cell_size=cell_size,
+            repeat_cell=repeat_cell,
+            resolution=resolution,
+            center=center,
+            orientation=orientation,
+        )
+
+        self.sphere_radius = radius
+
+        unit_theta = self.cell_size[1] / radius
+        n_repeat_theta_to_join = int(np.pi / unit_theta)
+        self.unit_theta = np.pi / n_repeat_theta_to_join
+        self.cell_size[1] = self.unit_theta * radius # true only on theta = pi/2
+        if self.repeat_cell[1] == 0 or self.repeat_cell[1] > n_repeat_theta_to_join:
+            logging.info(
+                "%d cells repeated in theta direction", n_repeat_theta_to_join
+            )
+            self.repeat_cell[1] = n_repeat_theta_to_join
+
+        unit_phi = self.cell_size[2] / radius
+        n_repeat_phi_to_join = int(2 * np.pi / unit_phi)
+        self.unit_phi = 2 * np.pi / n_repeat_phi_to_join
+        self.cell_size[2] = self.unit_phi * radius
+        if self.repeat_cell[2] == 0 or self.repeat_cell[2] > n_repeat_phi_to_join:
+            logging.info(
+                "%d cells repeated in phi direction", n_repeat_phi_to_join
+            )
+            self.repeat_cell[2] = n_repeat_phi_to_join
+
+    def _create_grid(self, x, y, z):
+        rho = x + self.sphere_radius
+        theta = y * self.unit_theta + np.pi / 2.0
+        phi = z * self.unit_phi
+
+        return pv.StructuredGrid(
+            rho * np.sin(theta) * np.cos(phi),
+            rho * np.sin(theta) * np.sin(phi),
+            rho * np.cos(theta),
+        )

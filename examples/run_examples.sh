@@ -49,10 +49,11 @@ cd ..
 
 echo "--TPMS--"
 cd TPMS
-echo "cylindrical"
-cd cylindrical
+echo "coordinate_system"
+cd coordinate_system
 python cylindrical.py
-# python cylindrical_graded.py
+python cylindrical_graded.py
+python spherical.py
 cd ..
 echo "grading"
 cd grading

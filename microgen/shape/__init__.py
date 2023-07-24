@@ -24,7 +24,7 @@ from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extrudedPolygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
-from .tpms import Tpms, CylindricalTpms
+from .tpms import Tpms, CylindricalTpms, SphericalTpms
 from . import surface_functions
 from .sphere import Sphere
 

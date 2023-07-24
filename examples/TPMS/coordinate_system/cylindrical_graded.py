@@ -6,7 +6,7 @@ from microgen.shape.surface_functions import gyroid
 
 
 def swapped_gyroid(x, y, z):
-    return gyroid(x=y, y=z, z=x)
+    return gyroid(x=z, y=y, z=x)
 
 def grading(x, y, z):
     a = (max_offset - min_offset) / (np.max(x) - np.min(x))
@@ -29,7 +29,7 @@ geometry = CylindricalTpms(
 sheet = geometry.sheet
 
 # plotter = pv.Plotter()
-# plotter.add_mesh(geometry.sheet, color="w")
+# plotter.add_mesh(sheet, color="w")
 # plotter.view_xy()
 # plotter.enable_parallel_projection()
 # plotter.show_axes()

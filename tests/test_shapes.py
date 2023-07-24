@@ -111,31 +111,68 @@ def test_tpms():
         param_geom={
             "surface_function": microgen.shape.surface_functions.gyroid,
             "offset": 0.3,
-            "cell_size": 1,
-            "repeat_cell": 1,
+            "cell_size": (1, 2, 1),
+            "repeat_cell": (1, 2, 1),
             "resolution": 10,
         },
     )
-    elem.sheet
-    elem.surface
-    elem.skeletals
+    _ = elem.surface
+    _ = elem.surface
+    _ = elem.skeletals
+    sheet = elem.sheet
+    _ = elem.sheet
+    assert 0 < sheet.volume < np.prod(elem.cell_size) * np.prod(elem.repeat_cell)
+    _ = elem.generateVtk(type_part="lower skeletal")
+    _ = elem.generateVtk(type_part="upper skeletal")
+    _ = elem.generateVtk(type_part="surface")
+    _ = elem.generate(type_part="sheet")
 
-    elem = microgen.shape.tpms.Tpms(
-        center=(0.5, 0.5, 0.5),
+    def graded_density(x, y, z):
+        return x
+    elem = microgen.shape.tpms.CylindricalTpms(
+        radius=1.0,
         surface_function=microgen.shape.surface_functions.schwarzD,
-        offset=0.3,
+        offset=graded_density,
         phase_shift=(0.1, 0.2, 0.3),
         cell_size=(1, 2, 1),
         repeat_cell=(2, 1, 1),
         resolution=20,
     )
     # elem.generate(type_part="surface")
-    elem.lower_skeletal
-    elem.upper_skeletal
-    elem.generateVtk(type_part="sheet")
+    _ = elem.upper_skeletal
+    _ = elem.upper_skeletal
+    _ = elem.generateVtk(type_part="sheet")
+
+    elem = microgen.shape.tpms.CylindricalTpms(
+        radius=1.0,
+        surface_function=microgen.shape.surface_functions.schwarzD,
+        repeat_cell=(1, 10, 1),
+    )
+    _ = elem.lower_skeletal
+    _ = elem.lower_skeletal
+
+    elem = microgen.shape.tpms.SphericalTpms(
+        radius=1.0,
+        surface_function=microgen.shape.surface_functions.schwarzD,
+        repeat_cell=(1, 10, 10),
+    )
+    _ = elem.surface
+    _ = elem.surface
 
     with pytest.raises(ValueError):
-        elem.generateVtk(type_part="fake")
+        _ = elem.generateVtk(type_part="fake")
+
+    with pytest.raises(ValueError):
+        microgen.shape.tpms.Tpms(
+            surface_function=microgen.shape.surface_functions.gyroid,
+            cell_size=(1, 1),
+        )
+
+    with pytest.raises(ValueError):
+        microgen.shape.tpms.Tpms(
+            surface_function=microgen.shape.surface_functions.gyroid,
+            repeat_cell=(1, 1, 1, 1),
+        )
 
     assert microgen.shape.surface_functions.schwarzP(0, 0, 0) == 3
     assert microgen.shape.surface_functions.schwarzD(0, 0, 0) == 0 + 0 + 0 + 0
@@ -152,6 +189,8 @@ def test_tpms():
     assert microgen.shape.surface_functions.pmy(0, 0, 0) == 2 + 0 + 0 + 0
     assert microgen.shape.surface_functions.honeycomb(0, 0, 0) == 0 + 0 + 1
     assert microgen.shape.surface_functions.gyroid(0, 0, 0) == 0
+    assert round(microgen.shape.surface_functions.lidinoid(0, 0, 0), 2) == -1.2
+    assert round(microgen.shape.surface_functions.split_p(0, 0, 0), 2) == -1.8
 
 
 if __name__ == "__main__":
