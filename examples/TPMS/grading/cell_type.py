@@ -5,7 +5,7 @@ from microgen import Tpms
 from microgen.shape.surface_functions import gyroid, schwarzP, fischerKochS
 
 repeat = 2
-k = 5
+k = 2.0
 point_1 = (-0.5, 0, 0)
 point_2 = (0.5, 0, 0)
 point_3 = (0, 0.5, 0)
@@ -41,8 +41,8 @@ geometry = Tpms(
     surface_function=trigraded,
     offset=0.3,
     cell_size=1.,
-    repeat_cell=repeat,
-    resolution=30,
+    repeat_cell=(repeat, repeat, repeat),
+    resolution=200,
 )
 sheet = geometry.sheet
 

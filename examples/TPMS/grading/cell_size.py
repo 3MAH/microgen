@@ -6,7 +6,7 @@ from microgen.shape.surface_functions import gyroid
 
 
 def sigmoid(x, start, end):
-    k = -2  # transition
+    k = -0.4  # transition
     return start + (end - start) / (1 + np.exp(k * x))
 
 
@@ -16,23 +16,23 @@ def lerp(x, start, end):
 
 
 def gaussian(x, start, end):
-    k = -0.25
+    k = -0.02
     return start + (end - start) * np.exp(k * x**2)
 
 
 def graded(x: float, y: float, z: float) -> float:
     min_cell_size = 2
     max_cell_size = 4
-    # qx = qy = qz = lerp(x, min_cell_size, max_cell_size)
-    qx = qy = qz = sigmoid(x, min_cell_size, max_cell_size)
-    # qx = qy = qz = gaussian(x, max_cell_size, min_cell_size)
-    return gyroid(5 * x, qy * y, z)
+    # dim_x = dim_y = dim_z = lerp(x, min_cell_size, max_cell_size)
+    dim_x = dim_y = dim_z = sigmoid(x, min_cell_size, max_cell_size)
+    # dim_x = dim_y = dim_z = gaussian(x, max_cell_size, min_cell_size)
+    return gyroid(x * max_cell_size / dim_x, y * max_cell_size / dim_y, z * max_cell_size / dim_z)
 
 
 geometry = Tpms(
     surface_function=graded,
     offset=0.3,
-    cell_size=(5, 2, 1),
+    repeat_cell=(5, 5, 1),
     resolution=30,
 )
 sheet = geometry.sheet
