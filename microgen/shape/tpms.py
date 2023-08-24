@@ -229,14 +229,14 @@ class Tpms(BasicGeometry):
     def _create_surface(
         self,
         isovalue: float = 0,
-        smoothing: int = 20,
+        smoothing: int = 100,
         verbose: bool = False,
     ) -> cq.Shell:
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
 
         mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
-        mesh.smooth(n_iter=smoothing, inplace=True)
+        mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
         mesh.clean(inplace=True)
 
         try:
@@ -247,7 +247,7 @@ class Tpms(BasicGeometry):
     def _create_surfaces(
         self,
         isovalues: list[float],
-        smoothing: int = 20,
+        smoothing: int = 100,
         verbose: bool = False
     ) -> list[cq.Shell]:
         """
@@ -273,7 +273,7 @@ class Tpms(BasicGeometry):
     def generate(
         self,
         type_part: Literal["sheet", "skeletals", "surface"] = "sheet",
-        smoothing: int=20,
+        smoothing: int = 100,
         verbose: bool=True
     ) -> cq.Shape:
         """
@@ -357,20 +357,23 @@ class Tpms(BasicGeometry):
 
     def generateVtk(
         self,
-        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
+        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
+        smoothing : int = 100,
     ) -> pv.PolyData:
         """
         :param type_part: part of the TPMS desired
+        :param smoothing: smoothing loop iterations        
         :return: VTK PolyData object of the required TPMS part
         """
+
         if type_part == "sheet":
-            return self.sheet
+            return self.sheet.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
         if type_part == "lower skeletal":
-            return self.lower_skeletal
+            return self.lower_skeletal.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
         if type_part == "upper skeletal":
-            return self.upper_skeletal
+            return self.upper_skeletal.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
         if type_part == "surface":
-            return self.surface
+            return self.surface.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
 
         raise ValueError(
             f"type_part ({type_part}) must be 'sheet', \
