@@ -111,8 +111,7 @@ class Tpms(BasicGeometry):
 
         self._sheet: pv.PolyData = (
             self.grid.clip_scalar(scalars="upper_surface", invert=False)
-            .clip_scalar(scalars="lower_surface")
-            .extract_surface()
+            .clip_scalar(scalars="lower_surface").clean()
         )
         return self._sheet
 
@@ -129,7 +128,7 @@ class Tpms(BasicGeometry):
 
         self._upper_skeletal: pv.PolyData = self.grid.clip_scalar(
             scalars="upper_surface"
-        ).extract_surface()
+        ).clean()
         return self._upper_skeletal
 
     @property
@@ -145,7 +144,7 @@ class Tpms(BasicGeometry):
 
         self._lower_skeletal: pv.PolyData = self.grid.clip_scalar(
             scalars="lower_surface", invert=False
-        ).extract_surface()
+        ).clean()
         return self._lower_skeletal
 
     @property
@@ -229,7 +228,7 @@ class Tpms(BasicGeometry):
     def _create_surface(
         self,
         isovalue: float = 0,
-        smoothing: int = 100,
+        smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
         if self.grid.dimensions == (0, 0, 0):
@@ -247,7 +246,7 @@ class Tpms(BasicGeometry):
     def _create_surfaces(
         self,
         isovalues: list[float],
-        smoothing: int = 100,
+        smoothing: int = 0,
         verbose: bool = False
     ) -> list[cq.Shell]:
         """
@@ -273,7 +272,7 @@ class Tpms(BasicGeometry):
     def generate(
         self,
         type_part: Literal["sheet", "skeletals", "surface"] = "sheet",
-        smoothing: int = 100,
+        smoothing: int = 0,
         verbose: bool=True
     ) -> cq.Shape:
         """
@@ -357,29 +356,24 @@ class Tpms(BasicGeometry):
 
     def generateVtk(
         self,
-        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
-        smoothing : int = 100,
+        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
     ) -> pv.PolyData:
         """
-        :param type_part: part of the TPMS desired
-        :param smoothing: smoothing loop iterations        
+        :param type_part: part of the TPMS desireds
         :return: VTK PolyData object of the required TPMS part
         """
-
         if type_part == "sheet":
-            return self.sheet.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
+            return self.sheet.triangulate()
         if type_part == "lower skeletal":
-            return self.lower_skeletal.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
+            return self.lower_skeletal.triangulate()
         if type_part == "upper skeletal":
-            return self.upper_skeletal.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
+            return self.upper_skeletal.triangulate()
         if type_part == "surface":
-            return self.surface.triangulate().smooth(n_iter=smoothing, feature_smoothing=True, inplace=True).clean(inplace=True)
-
+            return self.surface.triangulate()
         raise ValueError(
             f"type_part ({type_part}) must be 'sheet', \
                 'lower skeletal', 'upper skeletal' or 'surface'"
-        )
-
+            )            
 
 class CylindricalTpms(Tpms):
     """
