@@ -7,13 +7,22 @@ from typing import Sequence, Optional, Union
 
 import pyvista as pv
 import numpy as np
+import warnings
 from scipy.spatial import KDTree
 from .rve import Rve
 from .phaseMesh import PhaseMesh
 
+# try: 
+#     import trimesh    
+#     import rtree
+#     import pyembree    
+#     USE_MULTI_RAY = True
+# except ImportError: 
+USE_MULTI_RAY = False
+
 class BoxMesh(PhaseMesh):
     """
-    CubicMesh class to manage list of Nodes and Elements inside an Rve
+    boxMesh class to manage list of Nodes and Elements inside an Rve
     :param nodes: list of nodes (np.ndarray)
     :param elements : list of elements (np.ndarray)
     :param elm_type : type of elements (np.ndarray)
@@ -29,6 +38,7 @@ class BoxMesh(PhaseMesh):
         super().__init__(nodes=nodes, elements=elements, name=name, nodes_index=nodes_index)
 
         self._rve = None
+        self._closest_points_on_boundaries = None
 
         self.center = None
 
@@ -67,6 +77,17 @@ class BoxMesh(PhaseMesh):
 
         self.faces = []
 
+    @staticmethod
+    def from_pyvista(pvmesh, name = ""):
+        """Build a Mesh from a pyvista UnstructuredGrid or PolyData mesh. 
+        Node and element data are not copied.
+        Mesh with multiple element type are handled."""                       
+
+        if isinstance(pvmesh, pv.PolyData):
+            pvmesh = pvmesh.cast_to_unstructured_grid()
+        
+        elements = pvmesh.cells_dict
+        return BoxMesh(pvmesh.points, elements)
 
     def construct(
         self,
@@ -173,13 +194,13 @@ class BoxMesh(PhaseMesh):
         self.face_list_Zm = self.face_list_Zm[np.lexsort((crd[self.face_list_Zm, 0], crd[self.face_list_Zm, 1].round(decimal_round)))]
         self.face_list_Zp = self.face_list_Zp[np.lexsort((crd[self.face_list_Zp ,0], crd[self.face_list_Zp ,1].round(decimal_round)))]
 
-        self.corners = np.vstack((self.corner_list_XmYmZm, self.corner_list_XmYpZm, self.corner_list_XpYmZm, self.corner_list_XpYpZm,
-                              self.corner_list_XmYmZp, self.corner_list_XmYpZp, self.corner_list_XpYmZp, self.corner_list_XpYpZp))  
+        self.corners = [self.corner_list_XmYmZm, self.corner_list_XmYpZm, self.corner_list_XpYmZm, self.corner_list_XpYpZm,
+                              self.corner_list_XmYmZp, self.corner_list_XmYpZp, self.corner_list_XpYmZp, self.corner_list_XpYpZp]  
 
-        self.edges = np.vstack((self.edge_list_XmYm, self.edge_list_XpYm, self.edge_list_XpYp, self.edge_list_XmYp, self.edge_list_XmZm, self.edge_list_XpZm,
-                                self.edge_list_XpZp, self.edge_list_XmZp, self.edge_list_YmZm, self.edge_list_YpZm, self.edge_list_YpZp, self.edge_list_YmZp))
+        self.edges = [self.edge_list_XmYm, self.edge_list_XpYm, self.edge_list_XpYp, self.edge_list_XmYp, self.edge_list_XmZm, self.edge_list_XpZm,
+                                self.edge_list_XpZp, self.edge_list_XmZp, self.edge_list_YmZm, self.edge_list_YpZm, self.edge_list_YpZp, self.edge_list_YmZp]
 
-        self.faces = np.vstack((self.face_list_Xm, self.face_list_Xp, self.face_list_Ym, self.face_list_Yp, self.face_list_Zm, self.face_list_Zp))
+        self.faces = [self.face_list_Xm, self.face_list_Xp, self.face_list_Ym, self.face_list_Yp, self.face_list_Zm, self.face_list_Zp]
 
     @property
     def rve(
@@ -202,7 +223,7 @@ class BoxMesh(PhaseMesh):
         """
         set a RVE value
 
-        :param rve: RVE of the box to set
+        :param value: Rve of the box to set
         """            
 
         self._rve = value
@@ -219,10 +240,19 @@ class BoxMesh(PhaseMesh):
         xmin, xmax, ymin, ymax, zmin, zmax = pvmesh.bounds
         return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    # def _is_intersection_node_coincide(
+    #         intersection_node : np.array,
+    #         node_list : np.array,
+    #         threshold_distance : float=1.E-6,
+    # ) -> bool:
+    #     distances = np.linalg.norm(node_list - intersection_node, axis=1)
+    #     return np.any(distances < threshold_distance)
+
     def _closest_points_on_faces(
         self,
         k_neighbours: int = 3,
         rve: Optional[Rve] = None,
+        tol: Optional[float] = 1.e-8,        
     ) -> dict[str, tuple[np.array, np.array]]:
 
         """
@@ -238,34 +268,60 @@ class BoxMesh(PhaseMesh):
 
         crd = self.nodes
 
-        all_face_Xp = np.hstack((self.face_list_Xp,self.edge_list_XpYm,self.edge_list_XpYp,self.edge_list_XpZm,self.edge_list_XpZp))
-        all_face_Yp = np.hstack((self.face_list_Yp,self.edge_list_YpZm,self.edge_list_YpZp,self.edge_list_XmYp,self.edge_list_XpYp))
-        all_face_Zp = np.hstack((self.face_list_Zp,self.edge_list_YmZp,self.edge_list_YpZp,self.edge_list_XmZp,self.edge_list_XpZp))
+        all_face_Xp = np.hstack((self.face_list_Xp,self.edge_list_XpYm,self.edge_list_XpYp,self.edge_list_XpZm,self.edge_list_XpZp, self.corner_list_XpYmZm, self.corner_list_XpYpZm, self.corner_list_XpYmZp, self.corner_list_XpYpZp))
+        all_face_Yp = np.hstack((self.face_list_Yp,self.edge_list_YpZm,self.edge_list_YpZp,self.edge_list_XmYp,self.edge_list_XpYp, self.corner_list_XmYpZm, self.corner_list_XpYpZm, self.corner_list_XmYpZp, self.corner_list_XpYpZp))
+        all_face_Zp = np.hstack((self.face_list_Zp,self.edge_list_YmZp,self.edge_list_YpZp,self.edge_list_XmZp,self.edge_list_XpZp, self.corner_list_XmYmZp, self.corner_list_XpYmZp, self.corner_list_XmYpZp, self.corner_list_XpYpZp))
 
-        kdtree_Xp = KDTree(crd[all_face_Xp])
-        kdtree_Yp = KDTree(crd[all_face_Yp])
-        kdtree_Zp = KDTree(crd[all_face_Zp])
+        kdTrees = [KDTree(crd[all_face_Xp]), KDTree(crd[all_face_Yp]), KDTree(crd[all_face_Zp])]
 
-        offset = np.array([rve.dim_x, 0.0, 0.0])
-        crd_XmXp = crd[self.face_list_Xm] + offset
-        offset = np.array([0.0, rve.dim_y, 0.0])        
-        crd_YmYp = crd[self.face_list_Ym] + offset   
-        offset = np.array([0.0, 0.0, rve.dim_z])  
-        crd_ZmZp = crd[self.face_list_Zm] + offset              
+        offsets = [
+            np.array([rve.dim_x, 0.0, 0.0]),
+            np.array([0.0, rve.dim_y, 0.0]),
+            np.array([0.0, 0.0, rve.dim_z])
+        ]
 
-        dist_XmXp, index_XmXp = kdtree_Xp.query(crd_XmXp, k_neighbours)
-        dist_YmYp, index_YmYp = kdtree_Yp.query(crd_YmYp, k_neighbours)
-        dist_ZmZp, index_ZmZp = kdtree_Zp.query(crd_ZmZp, k_neighbours)        
+        faces_m = [self.face_list_Xm, self.face_list_Ym, self.face_list_Zm]
+        all_faces_p = [all_face_Xp, all_face_Yp, all_face_Zp]        
+
+        dist = []
+        index = []
+
+        for i, face in enumerate(faces_m):
+            offset = offsets[i]
+            crd_face = crd[face] + offset
+            minimum_query_points = min(len(all_faces_p[i]), k_neighbours)
+
+            if minimum_query_points < k_neighbours :
+                warnings.warn("Number of query points is greater than the number of points in the KDTree.")
+
+            dist_temp, index_temp = kdTrees[i].query(crd_face,minimum_query_points)
+            all_faces_p_i = all_faces_p[i]            
+            index_temp_list = all_faces_p_i[index_temp].tolist()            
+            if k_neighbours == 1:
+                dist_temp_list = [[d] for d in dist_temp]
+                index_temp_list = [[i] for i in index_temp_list]
+            else:
+                dist_temp_list = dist_temp.tolist()
+
+            if k_neighbours>1:
+                for i in range(0, len(dist_temp)):
+                    if dist_temp_list[i][0]<tol:
+                        dist_temp_list[i] = dist_temp_list[i][0:1]
+                        index_temp_list[i] = index_temp_list[i][0:1]
+
+            dist.append(dist_temp_list)
+            index.append(index_temp_list)
 
         return {
-            'face_Xp' : (all_face_Xp[index_XmXp], dist_XmXp), 
-            'face_Yp' : (all_face_Yp[index_YmYp], dist_YmYp), 
-            'face_Zp' : (all_face_Zp[index_ZmZp], dist_ZmZp)
+            'face_Xp' : (index[0], dist[0]), 
+            'face_Yp' : (index[1], dist[1]), 
+            'face_Zp' : (index[2], dist[2])
         }
 
     def _closest_points_on_edges(
         self,
         rve: Rve = None,
+        tol: Optional[float] = 1.e-8,        
     ) -> dict[str, tuple[np.array, np.array]]:
         """
         Find the closest points on a opposite edges to write interpolation relationship
@@ -292,68 +348,64 @@ class BoxMesh(PhaseMesh):
         all_edge_YpZp = np.hstack((self.edge_list_YpZp,self.corner_list_XmYpZp,self.corner_list_XpYpZp))        
         all_edge_YmZp = np.hstack((self.edge_list_YmZp,self.corner_list_XmYmZp,self.corner_list_XpYmZp))        
 
-        kdtree_XpYm = KDTree(crd[all_edge_XpYm])
-        kdtree_XpYp = KDTree(crd[all_edge_XpYp])
-        kdtree_XmYp = KDTree(crd[all_edge_XmYp])
+        kdTrees = [
+            KDTree(crd[all_edge_XpYm]), KDTree(crd[all_edge_XpYp]), KDTree(crd[all_edge_XmYp]),
+            KDTree(crd[all_edge_XpZm]), KDTree(crd[all_edge_XpZp]), KDTree(crd[all_edge_XmZp]),
+            KDTree(crd[all_edge_YpZm]), KDTree(crd[all_edge_YpZp]), KDTree(crd[all_edge_YmZp])
+        ]
 
-        kdtree_XpZm = KDTree(crd[all_edge_XpZm])
-        kdtree_XpZp = KDTree(crd[all_edge_XpZp])
-        kdtree_XmZp = KDTree(crd[all_edge_XmZp])
+        offsets = [
+            np.array([rve.dim_x, 0.0, 0.0]), np.array([rve.dim_x, rve.dim_y, 0.0]), np.array([0.0, rve.dim_y, 0.0]),
+            np.array([rve.dim_x, 0.0, 0.0]), np.array([rve.dim_x, 0.0, rve.dim_z]), np.array([0.0, 0.0, rve.dim_z]),
+            np.array([0.0, rve.dim_y, 0.0]), np.array([0.0, rve.dim_y, rve.dim_z]), np.array([0.0, 0.0, rve.dim_z])
+        ]        
 
-        kdtree_YpZm = KDTree(crd[all_edge_YpZm])
-        kdtree_YpZp = KDTree(crd[all_edge_YpZp])
-        kdtree_YmZp = KDTree(crd[all_edge_YmZp])
+        edges_m = [
+            self.edge_list_XmYm, self.edge_list_XmYm, self.edge_list_XmYm,
+            self.edge_list_XmZm, self.edge_list_XmZm, self.edge_list_XmZm,
+            self.edge_list_YmZm, self.edge_list_YmZm, self.edge_list_YmZm
+        ]
 
-        offset = np.array([rve.dim_x, 0.0, 0.0])
-        crd_XpYm = crd[self.edge_list_XmYm] + offset
-        offset = np.array([rve.dim_x, rve.dim_y, 0.0])        
-        crd_XpYp = crd[self.edge_list_XmYm] + offset   
-        offset = np.array([0.0, rve.dim_y, 0.0])  
-        crd_XmYp = crd[self.edge_list_XmYm] + offset       
+        all_edges_p = [
+            all_edge_XpYm, all_edge_XpYp, all_edge_XmYp,
+            all_edge_XpZm, all_edge_XpZp, all_edge_XmZp,
+            all_edge_YpZm, all_edge_YpZp, all_edge_YmZp            
+        ]        
 
-        offset = np.array([rve.dim_x, 0.0, 0.0])
-        crd_XpZm = crd[self.edge_list_XmZm] + offset
-        offset = np.array([rve.dim_x, 0.0, rve.dim_z])        
-        crd_XpZp = crd[self.edge_list_XmZm] + offset   
-        offset = np.array([0.0, 0.0, rve.dim_z])  
-        crd_XmZp = crd[self.edge_list_XmZm] + offset               
+        dist = []
+        index = []        
 
-        offset = np.array([0.0, rve.dim_y, 0.0])
-        crd_YpZm = crd[self.edge_list_YmZm] + offset
-        offset = np.array([0.0, rve.dim_y, rve.dim_z])        
-        crd_YpZp = crd[self.edge_list_YmZm] + offset   
-        offset = np.array([0.0, 0.0, rve.dim_z])  
-        crd_YmZp = crd[self.edge_list_YmZm] + offset
+        for i, edge in enumerate(edges_m):
+            offset = offsets[i]
+            crd_edge = crd[edge] + offset
 
-        dist_XpYm, index_XpYm = kdtree_XpYm.query(crd_XpYm, 2)
-        dist_XpYp, index_XpYp = kdtree_XpYp.query(crd_XpYp, 2)
-        dist_XmYp, index_XmYp = kdtree_XmYp.query(crd_XmYp, 2)
+            dist_temp, index_temp = kdTrees[i].query(crd_edge,2)
 
-        dist_XpZm, index_XpZm = kdtree_XpZm.query(crd_XpZm, 2)
-        dist_XpZp, index_XpZp = kdtree_XpZp.query(crd_XpZp, 2)
-        dist_XmZp, index_XmZp = kdtree_XmZp.query(crd_XmZp, 2)       
+            dist_temp_list = dist_temp.tolist()
+            all_edges_p_i = all_edges_p[i]
+            index_temp_list = all_edges_p_i[index_temp].tolist()
 
-        dist_YpZm, index_YpZm = kdtree_YpZm.query(crd_YpZm, 2)
-        dist_YpZp, index_YpZp = kdtree_YpZp.query(crd_YpZp, 2)
-        dist_YmZp, index_YmZp = kdtree_YmZp.query(crd_YmZp, 2)
+            dist.append(dist_temp_list)
+            index.append(index_temp_list)
 
         return {
-            'edge_XpYm' : (all_edge_XpYm[index_XpYm], dist_XpYm),
-            'edge_XpYp' : (all_edge_XpYp[index_XpYp], dist_XpYp),
-            'edge_XmYp' : (all_edge_XmYp[index_XmYp], dist_XmYp),
-            'edge_XpZm' : (all_edge_XpZm[index_XpZm], dist_XpZm),
-            'edge_XpZp' : (all_edge_XpZp[index_XpZp], dist_XpZp),
-            'edge_XmZp' : (all_edge_XmZp[index_XmZp], dist_XmZp),
-            'edge_YpZm' : (all_edge_YpZm[index_YpZm], dist_YpZm),
-            'edge_YpZp' : (all_edge_YpZp[index_YpZp], dist_YpZp),
-            'edge_YmZp' : (all_edge_YmZp[index_YmZp], dist_YmZp)
+            'edge_XpYm' : (index[0], dist[0]),
+            'edge_XpYp' : (index[1], dist[1]),
+            'edge_XmYp' : (index[2], dist[2]),
+            'edge_XpZm' : (index[3], dist[3]),
+            'edge_XpZp' : (index[4], dist[4]),
+            'edge_XmZp' : (index[5], dist[5]),
+            'edge_YpZm' : (index[6], dist[6]),
+            'edge_YpZp' : (index[7], dist[7]),
+            'edge_YmZp' : (index[8], dist[8])
         }
 
     def closest_points_on_boundaries(
         self,
         k_neighbours: int = 3,
         rve: Optional[Rve] = None,
-    ) -> None:
+        tol: Optional[float] = 1.e-8,        
+    ) -> dict:
         """
         Find the closest points on a faces and edges to write interpolation relationship
         if a displacement condition between pair nodes is defined
@@ -361,15 +413,84 @@ class BoxMesh(PhaseMesh):
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
         """    
 
+        if(isinstance(self._closest_points_on_boundaries, dict)):
+            return self._closest_points_on_boundaries
+        else:
+            if(isinstance(rve, Rve) == False) : 
+                rve = self.rve    
+
+            dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
+            dict_edges = self._closest_points_on_edges(rve, tol)
+
+            self._dict_faces = dict_faces
+            self._dict_edges = dict_edges
+                        
+            self._closest_points_on_boundaries = {**dict_faces, **dict_edges}
+            return self._closest_points_on_boundaries            
+
+    def closest_cells_on_boundaries(
+        self,
+        rve: Optional[Rve] = None,
+        tol: Optional[float] = 1.e-8,        
+    ) -> None:
+        """
+        Find the cells to which a given point belong to while using a ray tracing normal to the face on which it belongs
+        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        """    
+
         if(isinstance(rve, Rve) == False) : 
             rve = self.rve    
 
-        dict_faces = self._closest_points_on_faces(k_neighbours, rve)
-        dict_edges = self._closest_points_on_edges(rve)
+        crd = self.nodes
 
-        return {**dict_faces, **dict_edges}
+        normals = [
+            np.array([1., 0.0, 0.0]),
+            np.array([0.0, 1., 0.0]),
+            np.array([0.0, 0.0, 1.])
+        ]
+        origin_p = [
+            np.array([rve.x_max,rve.center[1],rve.center[2]]),
+            np.array([rve.center[0],rve.y_max,rve.center[2]]),
+            np.array([rve.center[0],rve.center[1],rve.z_max])
+        ]
+        size_plane = [2.0*rve.dx,2.0*rve.dy,2.0*rve.dz]
 
+        faces_m = [crd[self.face_list_Xm], crd[self.face_list_Ym], crd[self.face_list_Zm]]
+        surface = self.surface
 
-        
+        list_p = []
+        list_ray_trace = []
 
-       
+        for i, face in enumerate(faces_m):
+
+            plane = pv.Plane(center=origin_p[i], direction=normals[i], i_size=size_plane[i], j_size=size_plane[i])            
+            surface.compute_implicit_distance(plane, inplace=True)      
+
+            surface_p = surface.threshold([-tol, tol], all_scalars=True, scalars='implicit_distance').extract_surface()
+            list_p.append(surface_p)
+
+            directions = np.tile(normals[i], (np.shape(faces_m[i])[0],1))
+
+            raytraceresult = []
+            if USE_MULTI_RAY:
+                raytraceresult = surface_p.multi_ray_trace(origins=faces_m[i], directions=directions)
+            else:
+                intersection_points = []
+                intersection_rays = []
+                intersection_cells = []
+                for j, face_m_i in enumerate(faces_m[i]):
+                    end_point = face_m_i + size_plane[i]*directions[j]
+                    intersection_point, intersection_cell = surface_p.ray_trace(origin=face_m_i, end_point=end_point)
+                    intersection_ray = np.full_like(intersection_cell, j)
+                    intersection_points.extend(intersection_point.tolist())
+                    intersection_rays.extend(intersection_ray.tolist())
+                    intersection_cells.extend(intersection_cell.tolist())                    
+                raytraceresult = (np.asarray(intersection_points), np.asarray(intersection_rays), np.asarray(intersection_cells))
+
+            list_ray_trace.append(raytraceresult)
+
+        return {
+            'face_Xp' : (list_p[0], list_ray_trace[0][0], list_ray_trace[0][2]),
+            'face_Yp' : (list_p[1], list_ray_trace[1][0], list_ray_trace[1][2]), 
+            'face_Zp' : (list_p[2], list_ray_trace[2][0], list_ray_trace[2][2])
+        }    
