@@ -1,6 +1,6 @@
 import subprocess
 import pytest
-from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, tpms, BasicGeometry
+from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, surface_functions, BasicGeometry
 import cadquery as cq
 import numpy as np
 import numpy.typing as npt
@@ -189,9 +189,8 @@ def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_fal
         (Box(), 1.0),
         (
                 Tpms(
-                    surface_function=tpms.gyroid,
-                    type_part="sheet",
-                    thickness=0.05,
+                    surface_function=surface_functions.gyroid,
+                    offset=0.3,
                 ),
                 0.05,
         ),

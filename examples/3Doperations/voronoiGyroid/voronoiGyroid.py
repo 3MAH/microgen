@@ -1,17 +1,16 @@
 import cadquery as cq
 from microgen import parseNeper, Tpms, Polyhedron, Phase, mesh, Neper
-from microgen.shape import tpms
+from microgen.shape import surface_functions
 
 # We import the Polyhedra from Nepoer tesselation file
 polyhedra = Neper.generateVoronoiFromTessFile("test1")
 
 gyroid = Tpms(
     center=(0.5, 0.5, 0.5),
-    surface_function=tpms.gyroid,
-    type_part="sheet",
-    thickness=0.2
+    surface_function=surface_functions.gyroid,
+    offset=0.2,
 )
-gyroid = gyroid.generate().translate(
+gyroid = gyroid.generate(type_part="sheet").translate(
     (0.5, 0.5, 0.5)
 )
 
