@@ -1,3 +1,4 @@
+import sys
 import subprocess
 import os
 
@@ -6,15 +7,15 @@ import meshio
 
 USE_MMG = False
 try:
-    subprocess.check_output("mmg3d_O3", stderr=subprocess.STDOUT)
-    USE_MMG= True    
-except(subprocess.CalledProcessError, FileNotFoundError):
+    subprocess.run(["mmg3d_O3", "-h"])    
+    USE_MMG = True    
+except:
     print(
         "mmg command did not work, check if it is installed or contact a developer"
     )
-    USE_MMG= False 
 
 if USE_MMG:
+
     meshIni = "Mesh.msh"
 
     if "data" not in os.listdir("."):
