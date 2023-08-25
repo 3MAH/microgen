@@ -121,7 +121,7 @@ def test_tpms():
     _ = elem.skeletals
     sheet = elem.sheet
     _ = elem.sheet
-    assert 0 < sheet.volume < np.prod(elem.cell_size) * np.prod(elem.repeat_cell)
+    assert 0 < sheet.extract_surface().volume < np.prod(elem.cell_size) * np.prod(elem.repeat_cell)
     _ = elem.generateVtk(type_part="lower skeletal")
     _ = elem.generateVtk(type_part="upper skeletal")
     _ = elem.generateVtk(type_part="surface")
