@@ -28,6 +28,7 @@ class PhaseMesh:
         self.elements = elements #element dictionnary
         self.name = name
         self.nodes_index = nodes_index #indices of nodes (i.e, if they come from a bigger mesh)
+        self._surface = None
 
     def _to_cells_and_celltype(self):
         """Return a numpy array, with the indices of the cells
@@ -44,8 +45,6 @@ class PhaseMesh:
             cells_temp[:,0] = padding
             cells_temp[:,1:] = self.elements[key][:,:padding]
             cells_type_temp = np.full((self.elements[key].shape[0]), key)
-            print(cells_temp)
-            print(cells_type_temp)    
             cells = np.append(cells, cells_temp)
             cells_type = np.append(cells_type, cells_type_temp)            
 
@@ -79,3 +78,39 @@ class PhaseMesh:
 
         mesh = PhaseMesh.from_pyvista(pv.read(filename), name=name)
         return mesh
+
+    @property
+    def surface(
+        self,
+    ) -> None:
+        """
+        Return the surface mesh of the considered mesh
+        """  
+        if(isinstance(self._surface, pv.PolyData)):
+            return self._surface
+        else:
+            return self._extract_surface()
+
+    @surface.setter
+    def surface(
+        self,
+        value: pv.PolyData,
+    ) -> None:
+        """
+        set a the surface of the mesh
+
+        :param value: surface of the mesh
+        """            
+
+        self._surface = value
+
+    def _extract_surface(
+        self,
+    ) -> pv.PolyData:
+        """
+        extract the surface mesh of a pv.UnstructuredGrid using the pyvista extract_surface filter.
+
+        :return pv.PolyData: surface mesh
+        """                    
+        pvmesh = self.to_pyvista()
+        return pvmesh.extract_surface()
