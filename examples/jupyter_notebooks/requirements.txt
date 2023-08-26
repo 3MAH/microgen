@@ -1,0 +1,6 @@
+jupyterlab
+jupyter-cadquery
+ipyvtklink
+ipygany
+sidecar
+jupyterview

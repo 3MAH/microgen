@@ -1,47 +1,32 @@
 package:
   name: microgen
-  version: 1.0.0
+  version: 1.1.0
 
 source:
   git_url: https://github.com/3MAH/microgen.git
 
 build:
-  noarch: python
-  script: python setup.py install
+  # noarch: python
+  script: pip install .
 
 requirements:
   host:
     - python
+    - pip    
   run:
-    - python
-    - cadquery=master
-    - python-gmsh=4.8
-    - pygalmesh
-    - mmg
+    - pyvista>=0.39
+    - python-gmsh
+    - meshio
+    - cadquery
+    - pytest-cov
+#    - mmg
+#    - neper
 
 test:
   imports:
     - microgen
   source_files:
+    - tests
     - examples
   commands:
-    - cd $SRC_DIR/examples/mmg
-    - $PYTHON test_mmg.py
-          
-    - cd $SRC_DIR/examples/mmg-voro
-    - $PYTHON test_mmg.py
-          
-    - cd $SRC_DIR/examples/octetTruss
-    - $PYTHON testOctet.py
-          
-    - cd $SRC_DIR/examples/rasterEllipsoid
-    - $PYTHON rasterEllipsoid.py
-          
-    - cd $SRC_DIR/examples/rasterGyroid
-    - $PYTHON rasterGyroid.py
-          
-    - cd $SRC_DIR/examples/triplyPeriodicMinimalSurfaces
-    - $PYTHON testTPMS.py
-          
-    - cd $SRC_DIR/examples/Voronoi
-    - $PYTHON testNeper.py
+    - pytest tests
