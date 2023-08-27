@@ -3,6 +3,7 @@ sphinx
 sphinx-rtd-theme
 sphinxcontrib-napoleon
 jupyter-sphinx
+pythreejs
 mock
 microgen @ git+https://github.com/3MAH/microgen@main
 numpy
