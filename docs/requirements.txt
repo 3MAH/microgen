@@ -1,13 +1,13 @@
 ipykernel
-sphinx
+sphinx=7.1.2
 sphinx-rtd-theme
 sphinxcontrib-napoleon
-jupyter-sphinx
-pythreejs
+jupyter-sphinx=0.4.0
+# pythreejs
 mock
 microgen @ git+https://github.com/3MAH/microgen@main
 numpy
 pyvista
 gmsh
-meshio
+meshio=5.3.4
 cadquery

@@ -15,7 +15,7 @@ def gyroid(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -37,7 +37,7 @@ def schwarzP(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -59,7 +59,7 @@ def schwarzD(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -86,7 +86,7 @@ def neovius(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -111,7 +111,7 @@ def schoenIWP(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -136,7 +136,7 @@ def schoenFRD(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -161,7 +161,7 @@ def fischerKochS(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -187,7 +187,7 @@ def pmy(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -214,7 +214,7 @@ def honeycomb(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -241,7 +241,7 @@ def lidinoid(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -279,7 +279,7 @@ def split_p(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -310,7 +310,7 @@ def honeycomb_gyroid(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -332,7 +332,7 @@ def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -353,7 +353,7 @@ def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -374,7 +374,7 @@ def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -396,7 +396,7 @@ def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
            offset=0.3,
            resolution=30,
        )
-       shape = geometry.sheet.extract_surface()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
