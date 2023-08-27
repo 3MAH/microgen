@@ -65,10 +65,9 @@ Brief examples
 
    geometry = microgen.Tpms(
       surface_function=microgen.surface_functions.gyroid,
-      type_part="sheet",
-      thickness=0.05
+      offset=0.3
    )
-   shape = geometry.generateVtk()
+   shape = geometry.sheet
 
    shape.plot(color='white')
 
@@ -84,11 +83,10 @@ Brief examples
 
    gyroid = microgen.Tpms(center=(0., 0., 0),
                 surface_function=microgen.surface_functions.gyroid,
-                type_part='sheet',
-                thickness=0.05,
+                offset=0.3,
                 cell_size=1,
                 repeat_cell=(5, 3, 1))
-   shape_gyroid = gyroid.generate()
+   shape_gyroid = gyroid.generate(type_part="sheet")
 
    inner_gyroid = shape_gyroid.intersect(half_capsule)
    fuse = inner_gyroid.fuse(shell)
