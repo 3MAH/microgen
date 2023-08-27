@@ -1,22 +1,34 @@
+import sys
+import subprocess
 import os
 
 import microgen
 import meshio
 
+USE_MMG = False
+try:
+    subprocess.run(["mmg3d_O3", "-h"])    
+    USE_MMG = True    
+except:
+    print(
+        "mmg command did not work, check if it is installed or contact a developer"
+    )
 
-meshIni = "Mesh.msh"
+if USE_MMG:
 
-if "data" not in os.listdir("."):
-    os.mkdir("data")
+    meshIni = "Mesh.msh"
 
-mesh = meshio.read(meshIni)
-mesh.write("data/meshIni.mesh")
+    if "data" not in os.listdir("."):
+        os.mkdir("data")
 
-microgen.external.Mmg.mmg3d(input="data/meshIni.mesh", output="data/intermesh.mesh")
-microgen.external.Mmg.mmg3d(
-    input="data/intermesh.mesh", output="data/finalmesh.mesh", ls=True, hsiz=0.03
-)
+    mesh = meshio.read(meshIni)
+    mesh.write("data/meshIni.mesh")
 
-meshFinal = meshio.read("data/finalmesh.mesh")
-meshFinal.write("finalmesh.msh", file_format="gmsh22")
-meshFinal.write("finalmesh.vtk")
+    microgen.external.Mmg.mmg3d(input="data/meshIni.mesh", output="data/intermesh.mesh")
+    microgen.external.Mmg.mmg3d(
+        input="data/intermesh.mesh", output="data/finalmesh.mesh", ls=True, hsiz=0.03
+    )
+
+    meshFinal = meshio.read("data/finalmesh.mesh")
+    meshFinal.write("finalmesh.msh", file_format="gmsh22")
+    meshFinal.write("finalmesh.vtk")

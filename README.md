@@ -45,7 +45,7 @@ pip install -r requirements.txt
 ```
 
 
-With conda: 
+With conda:
 ```
 conda install -c conda-forge -c cadquery -c set3mah microgen
 ```
@@ -59,9 +59,9 @@ conda env create -f environment.yml -n microgen-dev
 conda activate microgen-dev
 ```
 
-Then install microgen: 
+Then install microgen using pip:
 ```
-python setup.py install
+pip install .
 ```
 
 
@@ -69,19 +69,19 @@ python setup.py install
 Click on the image to be redirected to the corresponding example on Microgen's documentation
 
 ### Basic shapes
-<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#basic-shapes"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#basic-shapes">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/shapes.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#platon-polyhedra"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#platon-polyhedra">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/platon.png" height="250">
 </a>
 
 ### Repeated cells
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#octet-truss"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#octet-truss">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/octettruss.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#honeycomb"> 
+<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#honeycomb">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/honeycomb.png" height="250">
 </a>
 
