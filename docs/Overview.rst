@@ -47,30 +47,30 @@ Here are the main features:
 
 Brief examples
 --------------
+..
+ .. jupyter-execute::
+..    :hide-code:
 
-.. jupyter-execute::
-   :hide-code:
+..    import pyvista
+..    pyvista.set_jupyter_backend('pythreejs')
+..    pyvista.global_theme.background = 'white'
+..    pyvista.global_theme.window_size = [600, 400]
+..    pyvista.global_theme.axes.show = False
+..    pyvista.global_theme.smooth_shading = True
+..    pyvista.global_theme.antialiasing = 'fxaa'
 
-   import pyvista
-   pyvista.set_jupyter_backend('pythreejs')
-   pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.antialiasing = 'fxaa'
-
-
-.. jupyter-execute::
+..
+ .. jupyter-execute::
    
-   import microgen
+..    import microgen
 
-   geometry = microgen.Tpms(
-      surface_function=microgen.surface_functions.gyroid,
-      offset=0.3
-   )
-   shape = geometry.sheet
+..    geometry = microgen.Tpms(
+..       surface_function=microgen.surface_functions.gyroid,
+..       offset=0.3
+..    )
+..    shape = geometry.sheet
 
-   shape.plot(color='white')
+..    shape.plot(color='white')
 
 .. 
    .. jupyter-execute::
