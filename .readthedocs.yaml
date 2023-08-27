@@ -11,7 +11,8 @@ conda:
 build:
   os: "ubuntu-20.04"
   tools:
-    python: "mambaforge-4.10"
+    # python: "mambaforge-4.10"
+    python: "3.11"
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
@@ -26,6 +27,6 @@ sphinx:
 #   - pdf
 
 # Optionally set the version of Python and requirements required to build your docs
-# python:
-#   install:
-#     - requirements: docs/requirements.txt
+python:
+  install:
+    - requirements: docs/requirements.txt
