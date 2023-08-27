@@ -6,12 +6,12 @@ channels:
 
 dependencies:
   - microgen
-  - vtk
-  - cadquery=master
-  - python-gmsh
+  - pyvista>=0.39
+  - cadquery=2.3.1
+  - occt=7.7.0
+  - meshio
   - pythreejs=2.3.0
-  - jupyter-sphinx 
-  - pyvista
+  - jupyter-sphinx
   - pip
   - pip:
     - sphinx_rtd_theme

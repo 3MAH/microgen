@@ -38,6 +38,8 @@ def schwarzP(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return cos(x) + cos(y) + cos(z)
 
@@ -58,6 +60,8 @@ def schwarzD(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         sin(x) * sin(y) * sin(z) +
@@ -83,6 +87,8 @@ def neovius(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         3 * cos(x) + cos(y) + cos(z) +
@@ -106,6 +112,8 @@ def schoenIWP(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         2 * (cos(x) * cos(y) + cos(y) * cos(z) + cos(z) * cos(x)) -
@@ -129,6 +137,8 @@ def schoenFRD(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         4 * cos(x) * cos(y) * cos(z) -
@@ -152,6 +162,8 @@ def fischerKochS(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         cos(2 * x) * sin(y) * cos(z) +
@@ -176,6 +188,8 @@ def pmy(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         2 * cos(x) * cos(y) * cos(z) +
@@ -201,6 +215,8 @@ def honeycomb(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return sin(x) * cos(y) + sin(y) + cos(z)
 
@@ -226,6 +242,8 @@ def lidinoid(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         0.5
@@ -262,6 +280,8 @@ def split_p(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         1.1
@@ -291,6 +311,8 @@ def honeycomb_gyroid(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return sin(x) * cos(y) + sin(y) + cos(x)
 
@@ -311,6 +333,8 @@ def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return cos(x) + cos(y)
 
@@ -330,6 +354,8 @@ def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return cos(x) * cos(y) + sin(x) * sin(y) + sin(x) * cos(y) + cos(x) * sin(y)
 
@@ -349,6 +375,8 @@ def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return cos(x) * cos(y) + cos(y) + cos(x)
 
@@ -369,6 +397,8 @@ def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
            resolution=30,
        )
        shape = geometry.sheet.extract_surface()
+
+       shape.plot(color='white')
     """
     return (
         1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y))
