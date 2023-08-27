@@ -4,6 +4,7 @@ sphinx-rtd-theme
 sphinxcontrib-napoleon
 jupyter-sphinx
 mock
+microgen
 numpy
 pyvista
 gmsh
