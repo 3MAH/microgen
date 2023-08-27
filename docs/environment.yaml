@@ -5,7 +5,7 @@ channels:
   - set3mah
 
 dependencies:
-  - microgen
+  - microgen=1.0.1
   - pyvista>=0.39
   - cadquery=2.3.1
   - occt=7.7.0
