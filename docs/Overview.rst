@@ -64,7 +64,7 @@ Brief examples
    import microgen
 
    geometry = microgen.Tpms(
-      surface_function=microgen.tpms.gyroid,
+      surface_function=microgen.surface_functions.gyroid,
       type_part="sheet",
       thickness=0.05
    )
@@ -83,7 +83,7 @@ Brief examples
    half_capsule = cq.Workplane().add(shape).split(keepBottom=True).val()
 
    gyroid = microgen.Tpms(center=(0., 0., 0),
-                surface_function=microgen.tpms.gyroid,
+                surface_function=microgen.surface_functions.gyroid,
                 type_part='sheet',
                 thickness=0.05,
                 cell_size=1,
