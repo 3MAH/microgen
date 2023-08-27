@@ -6,7 +6,7 @@ jupyter-sphinx==0.4.0
 # pythreejs==2.4.2
 mock==5.1.0
 microgen @ git+https://github.com/3MAH/microgen@new_tpms
-vtk==9.0.3
+vtk==9.1
 numpy==1.25.2
 pyvista==0.41.1
 gmsh==4.11.1
