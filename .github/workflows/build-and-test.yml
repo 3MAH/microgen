@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest", "macos-latest"]
 
     steps:
       - uses: actions/checkout@v3
@@ -67,6 +67,35 @@ jobs:
       - name: Update environment
         run: mamba env update -n microgen -f environment.yml
         if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Install
+        shell: bash -l {0}
+        run: python setup.py install
+
+      - name: Test
+        shell: bash -l {0}
+        run: pytest --cov-report term-missing --cov=microgen tests
+
+      - name: Examples
+        shell: bash -l {0}
+        run: cd examples && bash run_examples.sh
+
+  build-and-test-windows:
+    runs-on: "windows-latest"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: microgen
+          use-mamba: true
+
+      - name: Update environment
+        run: mamba env update -n microgen -f environment.yml
 
       - name: Install
         shell: bash -l {0}
