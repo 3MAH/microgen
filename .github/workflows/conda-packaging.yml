@@ -4,44 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Linux:
-  #   name: Linux
-  #   runs-on: "ubuntu-latest"
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         miniconda-version: "latest"
-  #         activate-environment: packaging
-  #     - name: Conda build for Linux
-  #       shell: bash -l {0}
-  #       run: |
-  #         conda install python=3.9 conda-build anaconda-client
-  #         anaconda logout
-  #         anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-  #         conda-build conda.recipe -c conda-forge -c set3mah --output-folder  .
-  #         anaconda upload linux-64/*.tar.bz2 --force
-
-  # macos:
-  #   name: MacOS
-  #   runs-on: "macos-latest"
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         miniconda-version: "latest"
-  #         activate-environment: packaging
-  #     - name: Conda build for MacOS
-  #       shell: bash -l {0}
-  #       run: |
-  #         conda install python=3.9 conda-build anaconda-client
-  #         anaconda logout
-  #         anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-  #         conda-build conda.recipe -c conda-forge -c set3mah --output-folder  .
-  #         anaconda upload osx-64/*.tar.bz2 --force
-
-  windows:
-    name: Windows
+  conda-packaging:
+    name: Conda packaging
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v2
@@ -49,11 +13,11 @@ jobs:
         with:
           miniconda-version: "latest"
           activate-environment: packaging
-      - name: Conda build for Windows
+      - name: Conda build
         shell: pwsh
         run: |
-          conda install python=3.9 conda-build anaconda-client
+          conda install python conda-build conda-verify anaconda-client
           anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload win-64/*.tar.bz2 --force
+          anaconda upload noarch/*.tar.bz2 --force
