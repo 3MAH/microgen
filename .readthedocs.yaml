@@ -12,9 +12,11 @@ build:
   os: "ubuntu-22.04"
   tools:
     # python: "mambaforge-4.10"
-    python: "3.10"
+    python: "3.11"
   apt_packages:
     - libglu1-mesa
+    - libgl1-mesa-glx
+    - mesalib
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
