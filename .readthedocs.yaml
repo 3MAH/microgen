@@ -14,7 +14,6 @@ build:
     post_install:
       - pip uninstall vtk -y
       - pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
-      - 
   apt_packages:
     - libosmesa6-dev
     - libgl1-mesa-dev
