@@ -11,7 +11,7 @@ build:
     # python: "mambaforge-22.9"
     python: "3.11"
   jobs:
-    post_create_environment:
+    post_install:
       - pip uninstall vtk -y
       - pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
   # apt_packages:
