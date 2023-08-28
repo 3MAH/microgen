@@ -17,6 +17,7 @@ build:
   apt_packages:
     - libosmesa6-dev
     - libgl1-mesa-dev
+    - libglu1-mesa
     # - xvfb
 
 # conda:
