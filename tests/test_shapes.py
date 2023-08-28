@@ -127,6 +127,36 @@ def test_tpms():
     _ = elem.generateVtk(type_part="surface")
     _ = elem.generate(type_part="sheet")
 
+    tpms = microgen.Tpms(
+        surface_function=microgen.shape.surface_functions.gyroid,
+        offset=0.0,
+    )
+    shape = tpms.generate(type_part="lower skeletal", smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part="lower skeletal")
+    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+    shape = tpms.generate(type_part="upper skeletal", smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part="upper skeletal")
+    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+
+    tpms = microgen.Tpms(
+        surface_function=microgen.shape.surface_functions.schwarzP,
+        offset=1.0,
+    )
+    volume = 0.0
+    shape = tpms.generate(type_part="lower skeletal", smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part="lower skeletal")
+    volume += np.abs(shape_check.volume)
+    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+    shape = tpms.generate(type_part="upper skeletal", smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part="upper skeletal")
+    volume += np.abs(shape_check.volume)
+    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+    shape = tpms.generate(type_part="sheet", smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part="sheet")
+    volume += np.abs(shape_check.volume)
+    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+    assert np.isclose(volume, 1.0, rtol=1e-2)
+
     def graded_density(x, y, z):
         return x
     elem = microgen.shape.tpms.CylindricalTpms(

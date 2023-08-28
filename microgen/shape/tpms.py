@@ -15,7 +15,6 @@ from typing import Callable, List, Union, Sequence, Literal
 import cadquery as cq
 import numpy as np
 import pyvista as pv
-# from tqdm import tqdm
 
 from microgen.shape.basicGeometry import BasicGeometry
 from ..operations import fuseShapes, rescale, repeatShape
@@ -110,8 +109,8 @@ class Tpms(BasicGeometry):
             self._compute_tpms_field()
 
         self._sheet: pv.PolyData = (
-            self.grid.clip_scalar(scalars="upper_surface", invert=False)
-            .clip_scalar(scalars="lower_surface").clean()
+            self.grid.clip_scalar(scalars="upper_surface")
+            .clip_scalar(scalars="lower_surface", invert=False).clean()
         )
         return self._sheet
 
@@ -127,7 +126,7 @@ class Tpms(BasicGeometry):
             self._compute_tpms_field()
 
         self._upper_skeletal: pv.PolyData = self.grid.clip_scalar(
-            scalars="upper_surface"
+            scalars="upper_surface", invert=False
         ).clean()
         return self._upper_skeletal
 
@@ -143,7 +142,7 @@ class Tpms(BasicGeometry):
             self._compute_tpms_field()
 
         self._lower_skeletal: pv.PolyData = self.grid.clip_scalar(
-            scalars="lower_surface", invert=False
+            scalars="lower_surface"
         ).clean()
         return self._lower_skeletal
 
@@ -194,24 +193,21 @@ class Tpms(BasicGeometry):
             k_z * (z + self.phase_shift[2])
         )
 
-        # offset: Union[float, np.ndarray] = 0.0
         if isinstance(self.offset, float):
             self.offset = self.offset
         elif isinstance(self.offset, Callable):
             self.offset = self.offset(x, y, z)
 
         self.grid["surface"] = surface_function.ravel(order="F")
-        self.grid["lower_surface"] = (surface_function - 0.5 * self.offset).ravel(order="F")
-        self.grid["upper_surface"] = (surface_function + 0.5 * self.offset).ravel(order="F")
+        self.grid["lower_surface"] = (surface_function + 0.5 * self.offset).ravel(order="F")
+        self.grid["upper_surface"] = (surface_function - 0.5 * self.offset).ravel(order="F")
 
     def _create_shell(self, mesh: pv.PolyData, verbose: bool) -> cq.Shell:
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
         triangles = np.c_[triangles, triangles[:, 0]]
 
         faces = []
-        # for i in tqdm(range(len(triangles)), disable=not verbose):
-        for i in range(len(triangles)):
-            tri = triangles[i]
+        for tri in triangles:
             lines = [
                 cq.Edge.makeLine(
                     cq.Vector(*mesh.points[start]), cq.Vector(*mesh.points[end])
@@ -271,70 +267,105 @@ class Tpms(BasicGeometry):
 
     def generate(
         self,
-        type_part: Literal["sheet", "skeletals", "surface"] = "sheet",
+        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"] = "sheet",
         smoothing: int = 0,
-        verbose: bool=True
+        verbose: bool=True,
     ) -> cq.Shape:
         """
-        :param type_part: part of the TPMS desired ('sheet', 'skeletals' or 'surface')
+        :param type_part: part of the TPMS desired \
+            ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
         :param smoothing: smoothing loop iterations
         :param verbose: display progressbar of the conversion to CadQuery object
 
         :return: CadQuery Shape object of the required TPMS part
         """
-        if type_part in ["lower skeletal", "upper skeletal"]:
-            raise NotImplementedError(
-                "Only 'sheet', 'skeletals' and \
-                    'surface' are implemented for now"
-            )
-        if type_part not in ["sheet", "skeletals", "surface"]:
+        if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
             raise ValueError(
                 f"'type_part' ({type_part}) must be 'sheet', \
-                    'skeletals' or 'surface'",
+                    'lower skeletal', 'upper skeletal' or 'surface'",
+            )
+        
+        if type_part == "sheet" and self.offset == 0.0:
+            raise ValueError(
+                "offset must be greater than 0 to generate 'sheet' part"
             )
 
         if type_part == "surface":
+            logging.warning("offset is ignored for 'surface' part")
             return self._create_surface(isovalue=0, smoothing=smoothing, verbose=verbose)
 
         if not isinstance(self.offset, float):
             raise NotImplementedError(
                 "Graded offset is not supported yet with the `generate` function"
             )
-        isovalues = [
-            -self.offset / 2.0,
-            -self.offset / 6.0,
-            self.offset / 6.0,
-            self.offset / 2.0,
-        ]
 
-        shells = self._create_surfaces(isovalues=isovalues, smoothing=smoothing, verbose=verbose)
-
-        face_cut_tp = shells[2]
-        face_cut_tm = shells[1]
-        face_cut_p = shells[3]
-        face_cut_m = shells[0]
+        eps = self.offset / 3.0
+        if self.offset == 0.0:
+            eps = 0.1 * np.min(self.cell_size)
 
         box_wp = cq.Workplane("front").box(1, 1, 1)
-
-        box_cut_wp = box_wp.split(face_cut_p)
-        box_cut_wp = box_cut_wp.split(face_cut_m)
-
-        box_workplanes = box_cut_wp.solids().all()  # type: list[cq.Workplane]
-
-        list_shapes = [
-            (wp.split(face_cut_tp).split(face_cut_tm).solids().size(), wp.val())
-            for wp in box_workplanes
-        ]
-
         if type_part == "sheet":
-            sheet = [shape for (number, shape) in list_shapes if number > 1]
-            to_fuse = [cq.Shape(shape.wrapped) for shape in sheet]
-            shape = fuseShapes(cqShapeList=to_fuse, retain_edges=True)
+            isovalues = [
+                -self.offset / 2.0,
+                -self.offset / 2.0 + eps,
+                self.offset / 2.0 - eps,
+                self.offset / 2.0,
+            ]
 
-        if type_part == "skeletals":
-            skeletal = [shape for (number, shape) in list_shapes if number == 1]
-            to_fuse = [cq.Shape(shape.wrapped) for shape in skeletal]
-            shape = fuseShapes(cqShapeList=to_fuse, retain_edges=False)
+            shells = self._create_surfaces(isovalues, smoothing, verbose)
+
+            lower_surface = shells[0]
+            lower_test_surface = shells[1]
+            upper_test_surface = shells[2]
+            upper_surface = shells[3]
+            box_cut_wp = box_wp.split(upper_surface).split(lower_surface)
+
+            box_workplanes: List[cq.Workplane] = box_cut_wp.solids().all()
+
+            list_shapes = [
+                (wp.split(upper_test_surface).split(lower_test_surface).solids().size(), wp.val())
+                for wp in box_workplanes
+            ]
+        elif type_part == "lower skeletal":
+            isovalues = [
+                -self.offset / 2.0,
+                -self.offset / 2.0 - eps,
+            ]
+
+            shells = self._create_surfaces(isovalues, smoothing, verbose)
+
+            surface = shells[0]
+            surface_test = shells[1]
+            box_cut_wp = box_wp.split(surface)
+
+            box_workplanes: List[cq.Workplane] = box_cut_wp.solids().all()
+
+            list_shapes = [
+                (wp.split(surface_test).solids().size(), wp.val())
+                for wp in box_workplanes
+            ]
+        elif type_part == "upper skeletal":
+            isovalues = [
+                self.offset / 2.0,
+                self.offset / 2.0 + eps,
+            ]
+
+            shells = self._create_surfaces(isovalues, smoothing, verbose)
+
+            surface = shells[0]
+            surface_test = shells[1]
+            box_cut_wp = box_wp.split(surface)
+
+            box_workplanes: List[cq.Workplane] = box_cut_wp.solids().all()
+
+            list_shapes = [
+                (wp.split(surface_test).solids().size(), wp.val())
+                for wp in box_workplanes
+            ]
+
+        part = [shape for (number, shape) in list_shapes if number > 1]
+        to_fuse = [cq.Shape(shape.wrapped) for shape in part]
+        shape = fuseShapes(cqShapeList=to_fuse, retain_edges=False) # True or False ?
 
         if not np.array_equal(self.cell_size, np.array([1.0, 1.0, 1.0])):
             shape = rescale(shape=shape, scale=self.cell_size)
@@ -363,17 +394,17 @@ class Tpms(BasicGeometry):
         :return: VTK PolyData object of the required TPMS part
         """
         if type_part == "sheet":
-            return self.sheet.triangulate()
+            return self.sheet#.triangulate()
         if type_part == "lower skeletal":
-            return self.lower_skeletal.triangulate()
+            return self.lower_skeletal#.triangulate()
         if type_part == "upper skeletal":
-            return self.upper_skeletal.triangulate()
+            return self.upper_skeletal#.triangulate()
         if type_part == "surface":
-            return self.surface.triangulate()
+            return self.surface#.triangulate()
         raise ValueError(
             f"type_part ({type_part}) must be 'sheet', \
                 'lower skeletal', 'upper skeletal' or 'surface'"
-            )            
+            )
 
 class CylindricalTpms(Tpms):
     """
