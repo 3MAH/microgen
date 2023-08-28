@@ -24,7 +24,7 @@ copyright = '2022, 3MAH'
 author = '3MAH'
 
 # The full version, including alpha/beta/rc tags
-release = microgen.__version__
+release = '1.0.1'
 
 
 # -- General configuration ---------------------------------------------------
