@@ -383,7 +383,6 @@ class Tpms(BasicGeometry):
             )
 
         return shape
-        # raise NotImplementedError("Only 'surface' is implemented for now")
 
     def generateVtk(
         self,
@@ -394,13 +393,13 @@ class Tpms(BasicGeometry):
         :return: VTK PolyData object of the required TPMS part
         """
         if type_part == "sheet":
-            return self.sheet#.triangulate()
+            return self.sheet.triangulate()
         if type_part == "lower skeletal":
-            return self.lower_skeletal#.triangulate()
+            return self.lower_skeletal.triangulate()
         if type_part == "upper skeletal":
-            return self.upper_skeletal#.triangulate()
+            return self.upper_skeletal.triangulate()
         if type_part == "surface":
-            return self.surface#.triangulate()
+            return self.surface.triangulate()
         raise ValueError(
             f"type_part ({type_part}) must be 'sheet', \
                 'lower skeletal', 'upper skeletal' or 'surface'"
