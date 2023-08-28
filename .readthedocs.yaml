@@ -13,6 +13,7 @@ build:
   apt_packages:
     - libglu1-mesa
     - libgl1-mesa-glx
+    - xvfb
 
 # conda:
 #   environment: docs/environment.yaml

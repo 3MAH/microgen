@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python=3.11
   - ipykernel
-  - vtk-osmesa
+  # - vtk-osmesa
   - microgen=1.0.1
   - pyvista>=0.39
   - cadquery=2.3.1
