@@ -11,8 +11,8 @@ conda:
 build:
   os: "ubuntu-22.04"
   tools:
-    # python: "mambaforge-4.10"
-    python: "3.11"
+    python: "mambaforge-22.09"
+    # python: "3.11"
   apt_packages:
     - libglu1-mesa
     - libgl1-mesa-glx
