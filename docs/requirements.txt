@@ -1,3 +1,4 @@
+--extra-index-url https://wheels.vtk.org
 ipykernel==6.25.1
 sphinx==7.2.3
 sphinx-rtd-theme==1.3.0
