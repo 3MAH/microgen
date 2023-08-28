@@ -97,8 +97,6 @@ class Tpms(BasicGeometry):
 
         self.resolution = resolution
 
-        self._compute_tpms_field()
-
     @property
     def sheet(self) -> pv.PolyData:
         """
@@ -106,6 +104,9 @@ class Tpms(BasicGeometry):
         """
         if self._sheet is not None:
             return self._sheet
+        
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         self._sheet: pv.PolyData = (
             self.grid.clip_scalar(scalars="upper_surface")
@@ -120,6 +121,9 @@ class Tpms(BasicGeometry):
         """
         if self._upper_skeletal is not None:
             return self._upper_skeletal
+        
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         self._upper_skeletal: pv.PolyData = self.grid.clip_scalar(
             scalars="upper_surface", invert=False
@@ -133,6 +137,9 @@ class Tpms(BasicGeometry):
         """
         if self._lower_skeletal is not None:
             return self._lower_skeletal
+        
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         self._lower_skeletal: pv.PolyData = self.grid.clip_scalar(
             scalars="lower_surface"
@@ -153,6 +160,9 @@ class Tpms(BasicGeometry):
         """
         if self._surface is not None:
             return self._surface
+        
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars="surface")
         return mesh
@@ -220,6 +230,8 @@ class Tpms(BasicGeometry):
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
         mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
@@ -291,7 +303,9 @@ class Tpms(BasicGeometry):
                 "Graded offset is not supported yet with the `generate` function"
             )
 
-        offset_limit = 2.0 *  np.max(self.grid["surface"])
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
+        offset_limit = 2.0 * np.max(self.grid["surface"])
         if isinstance(self.offset, Union[float, int]) and self.offset > offset_limit:
             raise ValueError(
                 f"offset ({self.offset}) must be lower \
