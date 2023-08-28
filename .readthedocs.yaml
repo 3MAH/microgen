@@ -9,11 +9,11 @@ build:
   tools:
     python: "3.11"
   jobs:
-    post_install:
+    post_install: # https://github.com/pyvista/pyvista/discussions/4024
       - pip uninstall vtk -y
       - pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
-  # apt_packages:
-  #   - libglu1-mesa
+  apt_packages:
+    - libglu1-mesa
 
 sphinx:
   configuration: docs/conf.py
