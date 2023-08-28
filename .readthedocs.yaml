@@ -11,8 +11,8 @@ build:
     # python: "mambaforge-22.9"
     python: "3.11"
   apt_packages:
-    - libglu1-mesa
-    - libgl1-mesa-glx
+    - libosmesa6-dev
+    - libgl1-mesa-dev
     - xvfb
 
 # conda:
