@@ -284,7 +284,7 @@ class Tpms(BasicGeometry):
                 f"'type_part' ({type_part}) must be 'sheet', \
                     'lower skeletal', 'upper skeletal' or 'surface'",
             )
-        
+
         if type_part == "sheet" and self.offset == 0.0:
             raise ValueError(
                 "offset must be greater than 0 to generate 'sheet' part"
@@ -303,7 +303,7 @@ class Tpms(BasicGeometry):
         if self.offset == 0.0:
             eps = 0.1 * np.min(self.cell_size)
 
-        box_wp = cq.Workplane("front").box(1, 1, 1)
+        box = cq.Workplane("front").box(1, 1, 1)
         if type_part == "sheet":
             isovalues = [
                 -self.offset / 2.0,
@@ -318,14 +318,10 @@ class Tpms(BasicGeometry):
             lower_test_surface = shells[1]
             upper_test_surface = shells[2]
             upper_surface = shells[3]
-            box_cut_wp = box_wp.split(upper_surface).split(lower_surface)
 
-            box_workplanes: List[cq.Workplane] = box_cut_wp.solids().all()
+            surface = lower_surface.fuse(upper_surface)
+            test_surface = lower_test_surface.fuse(upper_test_surface)
 
-            list_shapes = [
-                (wp.split(upper_test_surface).split(lower_test_surface).solids().size(), wp.val())
-                for wp in box_workplanes
-            ]
         elif type_part == "lower skeletal":
             isovalues = [
                 -self.offset / 2.0,
@@ -335,15 +331,8 @@ class Tpms(BasicGeometry):
             shells = self._create_surfaces(isovalues, smoothing, verbose)
 
             surface = shells[0]
-            surface_test = shells[1]
-            box_cut_wp = box_wp.split(surface)
+            test_surface = shells[1]
 
-            box_workplanes: List[cq.Workplane] = box_cut_wp.solids().all()
-
-            list_shapes = [
-                (wp.split(surface_test).solids().size(), wp.val())
-                for wp in box_workplanes
-            ]
         elif type_part == "upper skeletal":
             isovalues = [
                 self.offset / 2.0,
@@ -353,19 +342,22 @@ class Tpms(BasicGeometry):
             shells = self._create_surfaces(isovalues, smoothing, verbose)
 
             surface = shells[0]
-            surface_test = shells[1]
-            box_cut_wp = box_wp.split(surface)
+            test_surface = shells[1]
 
-            box_workplanes: List[cq.Workplane] = box_cut_wp.solids().all()
+        splitted_box = box.split(surface)
+        tpms_solids = splitted_box.solids().all()
 
-            list_shapes = [
-                (wp.split(surface_test).solids().size(), wp.val())
-                for wp in box_workplanes
-            ]
+        # split each solid with the test surface to identify to what part type the solid belongs to
+        list_solids = [
+            (solid.split(test_surface).solids().size(), solid.val())
+            for solid in tpms_solids
+        ]
 
-        part = [shape for (number, shape) in list_shapes if number > 1]
-        to_fuse = [cq.Shape(shape.wrapped) for shape in part]
-        shape = fuseShapes(cqShapeList=to_fuse, retain_edges=False) # True or False ?
+        # if the number of shapes is greater than 1, it means that the solid is splitted
+        # so it belongs to the required part
+        part_solids = [solid for (number, solid) in list_solids if number > 1]
+        part_shapes = [cq.Shape(solid.wrapped) for solid in part_solids]
+        shape = fuseShapes(cqShapeList=part_shapes, retain_edges=False) # True or False ?
 
         if not np.array_equal(self.cell_size, np.array([1.0, 1.0, 1.0])):
             shape = rescale(shape=shape, scale=self.cell_size)
