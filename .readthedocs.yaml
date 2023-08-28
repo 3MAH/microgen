@@ -15,10 +15,9 @@ build:
       - pip uninstall vtk -y
       - pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
   apt_packages:
-    - libosmesa6-dev
-    - libgl1-mesa-dev
+    # - libosmesa6-dev
+    # - libgl1-mesa-dev
     - libglu1-mesa
-    # - xvfb
 
 # conda:
 #   environment: docs/environment.yaml
