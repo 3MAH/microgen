@@ -10,10 +10,14 @@ build:
   tools:
     # python: "mambaforge-22.9"
     python: "3.11"
-  apt_packages:
-    - libosmesa6-dev
-    - libgl1-mesa-dev
-    - xvfb
+  jobs:
+    post_create_environment:
+      - pip uninstall vtk -y
+      - pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
+  # apt_packages:
+  #   - libosmesa6-dev
+  #   - libgl1-mesa-dev
+  #   - xvfb
 
 # conda:
 #   environment: docs/environment.yaml
