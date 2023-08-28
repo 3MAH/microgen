@@ -97,6 +97,8 @@ class Tpms(BasicGeometry):
 
         self.resolution = resolution
 
+        self._compute_tpms_field()
+
     @property
     def sheet(self) -> pv.PolyData:
         """
@@ -104,9 +106,6 @@ class Tpms(BasicGeometry):
         """
         if self._sheet is not None:
             return self._sheet
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         self._sheet: pv.PolyData = (
             self.grid.clip_scalar(scalars="upper_surface")
@@ -122,9 +121,6 @@ class Tpms(BasicGeometry):
         if self._upper_skeletal is not None:
             return self._upper_skeletal
 
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
-
         self._upper_skeletal: pv.PolyData = self.grid.clip_scalar(
             scalars="upper_surface", invert=False
         ).clean()
@@ -137,9 +133,6 @@ class Tpms(BasicGeometry):
         """
         if self._lower_skeletal is not None:
             return self._lower_skeletal
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         self._lower_skeletal: pv.PolyData = self.grid.clip_scalar(
             scalars="lower_surface"
@@ -160,9 +153,6 @@ class Tpms(BasicGeometry):
         """
         if self._surface is not None:
             return self._surface
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars="surface")
         return mesh
@@ -203,6 +193,8 @@ class Tpms(BasicGeometry):
         self.grid["upper_surface"] = (surface_function - 0.5 * self.offset).ravel(order="F")
 
     def _create_shell(self, mesh: pv.PolyData, verbose: bool) -> cq.Shell:
+        if not mesh.is_all_triangles:
+            mesh.triangulate(inplace=True)
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
         triangles = np.c_[triangles, triangles[:, 0]]
 
@@ -214,6 +206,7 @@ class Tpms(BasicGeometry):
                 )
                 for start, end in zip(tri[:], tri[1:])
             ]
+
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
 
@@ -227,17 +220,16 @@ class Tpms(BasicGeometry):
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
         mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
         mesh.clean(inplace=True)
 
         try:
-            return self._create_shell(mesh=mesh, verbose=verbose)
+            shell = self._create_shell(mesh=mesh, verbose=verbose)
         except ValueError as exc:
             logging.error("Cannot create shell, try to use a higher smoothing value: %s", exc)
+        return shell
 
     def _create_surfaces(
         self,
@@ -294,9 +286,16 @@ class Tpms(BasicGeometry):
             logging.warning("offset is ignored for 'surface' part")
             return self._create_surface(isovalue=0, smoothing=smoothing, verbose=verbose)
 
-        if not isinstance(self.offset, float):
+        if not isinstance(self.offset, Union[float, int]):
             raise NotImplementedError(
                 "Graded offset is not supported yet with the `generate` function"
+            )
+
+        offset_limit = 2.0 *  np.max(self.grid["surface"])
+        if isinstance(self.offset, Union[float, int]) and self.offset > offset_limit:
+            raise ValueError(
+                f"offset ({self.offset}) must be lower \
+                        than {offset_limit} for the given TPMS function"
             )
 
         eps = self.offset / 3.0
