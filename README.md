@@ -64,6 +64,11 @@ Then install microgen using pip:
 pip install .
 ```
 
+Run tests with pytest:
+```
+pytest tests -n auto
+```
+
 
 ## Examples
 Click on the image to be redirected to the corresponding example on Microgen's documentation

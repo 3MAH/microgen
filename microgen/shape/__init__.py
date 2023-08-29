@@ -97,4 +97,4 @@ def newGeometry(
     elif shape.lower() == "polyhedron":
         return Polyhedron(dic=param_geom["dic"])
     else:
-        raise ValueError(shape + " name not recognised")
+        raise ValueError(f"{shape} name not recognised")

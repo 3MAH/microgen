@@ -32,14 +32,12 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-all = [
-    'pytest',
-    'pytest-cov',
-]
 test = [
     'pytest',
     'pytest-cov',
+    'pytest-xdist',
 ]
+all = ["microgen[test]"]
 
 [project.urls]
 Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'

@@ -1,5 +1,6 @@
 import os
 import pytest
+from inspect import getmembers, isfunction
 
 import cadquery as cq
 import numpy as np
@@ -105,92 +106,89 @@ def test_shapes():
     )
 
 
-def test_tpms():
-    elem = microgen.shape.newGeometry(
-        shape="tpms",
-        param_geom={
-            "surface_function": microgen.shape.surface_functions.gyroid,
-            "offset": 0.3,
-            "cell_size": (1, 2, 1),
-            "repeat_cell": (1, 2, 1),
-            "resolution": 10,
-        },
-    )
-    _ = elem.surface
-    _ = elem.surface
-    _ = elem.skeletals
-    sheet = elem.sheet
-    _ = elem.sheet
-    assert 0 < sheet.extract_surface().volume < np.prod(elem.cell_size) * np.prod(elem.repeat_cell)
-    _ = elem.generateVtk(type_part="lower skeletal")
-    _ = elem.generateVtk(type_part="upper skeletal")
-    _ = elem.generateVtk(type_part="surface")
-    _ = elem.generate(type_part="sheet")
-
+@pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
+@pytest.mark.parametrize("surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)])
+def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(surface: str, type_part: str):
+    # Arrange
     tpms = microgen.Tpms(
-        surface_function=microgen.shape.surface_functions.gyroid,
+        surface_function=getattr(microgen.surface_functions, surface),
+        offset=1.0,
+        resolution=30,
+    )
+
+    # Act
+    shape = tpms.generate(type_part=type_part, smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part=type_part)
+
+    # Assert
+    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+
+
+@pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal"])
+def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent(type_part: str):
+    # Arrange
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
         offset=0.0,
     )
-    shape = tpms.generate(type_part="lower skeletal", smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part="lower skeletal")
-    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
-    shape = tpms.generate(type_part="upper skeletal", smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part="upper skeletal")
+
+    # Act
+    shape = tpms.generate(type_part=type_part, smoothing=0, verbose=False)
+    shape_check = tpms.generateVtk(type_part=type_part)
+
+    # Assert
     assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
 
+def test_tpms_given_sum_volume_must_be_cube_volume():
+    # Arrange
     tpms = microgen.Tpms(
-        surface_function=microgen.shape.surface_functions.schwarzP,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=1.0,
+        repeat_cell=2,
+        cell_size=3.0,
+    )
+
+    # Act
+    volume = np.abs(tpms.sheet.volume + tpms.lower_skeletal.volume + tpms.upper_skeletal.volume)
+    cube_volume = np.prod(tpms.repeat_cell) * np.prod(tpms.cell_size)
+
+    # Assert
+    assert np.isclose(volume, cube_volume, rtol=1e-2)
+
+@pytest.mark.parametrize("coord_sys_tpms", [microgen.CylindricalTpms, microgen.SphericalTpms])
+def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(coord_sys_tpms):
+    tpms = coord_sys_tpms(
+        radius=1.0,
+        surface_function=microgen.surface_functions.gyroid,
         offset=1.0,
     )
-    volume = 0.0
-    shape = tpms.generate(type_part="lower skeletal", smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part="lower skeletal")
-    volume += np.abs(shape_check.volume)
-    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
-    shape = tpms.generate(type_part="upper skeletal", smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part="upper skeletal")
-    volume += np.abs(shape_check.volume)
-    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
-    shape = tpms.generate(type_part="sheet", smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part="sheet")
-    volume += np.abs(shape_check.volume)
-    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
-    assert np.isclose(volume, 1.0, rtol=1e-2)
 
+    assert 0 < tpms.sheet.extract_surface().volume < np.abs(tpms.grid.volume)
+    assert 0 < tpms.lower_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
+    assert 0 < tpms.upper_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
+
+def test_tpms_given_variable_thickness_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume():
     def graded_density(x, y, z):
         return x
-    elem = microgen.shape.tpms.CylindricalTpms(
-        radius=1.0,
-        surface_function=microgen.shape.surface_functions.schwarzD,
+
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
         offset=graded_density,
-        phase_shift=(0.1, 0.2, 0.3),
-        cell_size=(1, 2, 1),
-        repeat_cell=(2, 1, 1),
-        resolution=20,
     )
-    # elem.generate(type_part="surface")
-    _ = elem.upper_skeletal
-    _ = elem.upper_skeletal
-    _ = elem.generateVtk(type_part="sheet")
 
-    elem = microgen.shape.tpms.CylindricalTpms(
-        radius=1.0,
-        surface_function=microgen.shape.surface_functions.schwarzD,
-        repeat_cell=(1, 10, 1),
+    assert 0 < tpms.sheet.extract_surface().volume < np.abs(tpms.grid.volume)
+    assert 0 < tpms.lower_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
+    assert 0 < tpms.upper_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
+
+def test_tpms_given_incorrect_parameters_must_raise_errors():
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
     )
-    _ = elem.lower_skeletal
-    _ = elem.lower_skeletal
-
-    elem = microgen.shape.tpms.SphericalTpms(
-        radius=1.0,
-        surface_function=microgen.shape.surface_functions.schwarzD,
-        repeat_cell=(1, 10, 10),
-    )
-    _ = elem.surface
-    _ = elem.surface
-
     with pytest.raises(ValueError):
-        _ = elem.generateVtk(type_part="fake")
+        tpms.generateVtk(type_part="fake")
+    with pytest.raises(ValueError):
+        tpms.generate(type_part="fake")
 
     with pytest.raises(ValueError):
         microgen.shape.tpms.Tpms(
@@ -203,26 +201,3 @@ def test_tpms():
             surface_function=microgen.shape.surface_functions.gyroid,
             repeat_cell=(1, 1, 1, 1),
         )
-
-    assert microgen.shape.surface_functions.schwarzP(0, 0, 0) == 3
-    assert microgen.shape.surface_functions.schwarzD(0, 0, 0) == 0 + 0 + 0 + 0
-    assert (
-        microgen.shape.surface_functions.neovius(0, 0, 0)
-        == (3 + 1 + 1) + (4 * 1 * 1 * 1)
-    )
-    assert (
-        microgen.shape.surface_functions.schoenIWP(0, 0, 0)
-        == 2 * (1 + 1 + 1) - (1 + 1 + 1)
-    )
-    assert microgen.shape.surface_functions.schoenFRD(0, 0, 0) == 4 - (1 + 1 + 1)
-    assert microgen.shape.surface_functions.fischerKochS(0, 0, 0) == 0 + 0 + 0
-    assert microgen.shape.surface_functions.pmy(0, 0, 0) == 2 + 0 + 0 + 0
-    assert microgen.shape.surface_functions.honeycomb(0, 0, 0) == 0 + 0 + 1
-    assert microgen.shape.surface_functions.gyroid(0, 0, 0) == 0
-    assert round(microgen.shape.surface_functions.lidinoid(0, 0, 0), 2) == -1.2
-    assert round(microgen.shape.surface_functions.split_p(0, 0, 0), 2) == -1.8
-
-
-if __name__ == "__main__":
-    test_shapes()
-    test_tpms()

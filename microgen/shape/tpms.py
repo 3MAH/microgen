@@ -167,7 +167,7 @@ class Tpms(BasicGeometry):
         mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars="surface")
         return mesh
 
-    def _create_grid(self, x, y, z):
+    def _create_grid(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> pv.StructuredGrid:
         return pv.StructuredGrid(x, y, z)
 
     def _compute_tpms_field(self):
@@ -452,7 +452,7 @@ class CylindricalTpms(Tpms):
             )
             self.repeat_cell[1] = n_repeat_to_full_circle
 
-    def _create_grid(self, x, y, z):
+    def _create_grid(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> pv.StructuredGrid:
         rho = x + self.cylinder_radius
         theta = y * self.unit_theta
 
@@ -524,7 +524,7 @@ class SphericalTpms(Tpms):
             )
             self.repeat_cell[2] = n_repeat_phi_to_join
 
-    def _create_grid(self, x, y, z):
+    def _create_grid(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> pv.StructuredGrid:
         rho = x + self.sphere_radius
         theta = y * self.unit_theta + np.pi / 2.0
         phi = z * self.unit_phi

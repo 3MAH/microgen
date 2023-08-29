@@ -103,7 +103,7 @@ jobs:
 
       - name: Test
         shell: bash -l {0}
-        run: pytest --cov-report term-missing --cov=microgen tests
+        run: pytest tests --cov-report term-missing --cov=microgen --numprocesses=auto
 
       - name: Examples
         shell: bash -l {0}
