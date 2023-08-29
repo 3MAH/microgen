@@ -7,6 +7,7 @@ from typing import Sequence, Optional, Union
 
 import pyvista as pv
 import numpy as np
+import warnings
 from .rve import Rve
 
 class PhaseMesh:
@@ -14,18 +15,21 @@ class PhaseMesh:
     PhaseMesh class to manage list of Nodes and Elements inside a Phase
     :param nodes: list of nodes (np.ndarray)
     :param elements : dictionnary of elements (key: int, values : np.ndarray). The key is the element type
+    :param mesh : The pyvista mesh, if it exists already (this could be further generated)
     :param nodes_index : index of node list (if different from the natural index of nodes array)       
     """
     def __init__(
         self,
         nodes : np.ndarray,
         elements : dict,
-        name : Optional[np.ndarray] = None,
+        mesh :Optional[pv.UnstructuredGrid] = None,
+        name : Optional[str] = None,
         nodes_index : Optional[np.ndarray] = None,
     ) -> None:
     
         self.nodes = nodes #node coordinates
         self.elements = elements #element dictionnary
+        self._mesh = mesh
         self.name = name
         self.nodes_index = nodes_index #indices of nodes (i.e, if they come from a bigger mesh)
         self._surface = None
@@ -54,7 +58,7 @@ class PhaseMesh:
         """Build a pyvista UnstructuredGrid. 
         Node and element data are not copied (to be verified with pyvista).
         Mesh with multiple element type are handled."""
-    
+
         cells, celltypes = self._to_cells_and_celltype()      
 
         return pv.UnstructuredGrid(cells, celltypes, self.nodes)
@@ -67,17 +71,52 @@ class PhaseMesh:
 
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
-        
-        elements = pvmesh.cells_dict
-        return PhaseMesh(pvmesh.points, elements)
-    
+                
+        try: 
+            _check_if_only_tetra(pvmesh)
+            elements = {10: pvmesh.cells_dict(10)}
+            return PhaseMesh(pvmesh.points, elements, pvmesh)            
+        except ValueError as e:     
+            print(e)  
+
+        #extract only the tetrahedral elements
+        elements = {10: pvmesh.cells_dict(10)}
+
     @staticmethod
-    def read(filename, name = ""):
+    def read(
+        filename : str,
+        name : Optional[str] = None
+    ):
         """Build a Mesh from a mesh. This function use the pyvista load method. 
         The file type is inferred from the file name."""
 
         mesh = PhaseMesh.from_pyvista(pv.read(filename), name=name)
         return mesh
+
+    @property
+    def mesh(
+        self,
+    ) -> None:
+        """
+        Return the pyvista mesh (UnstructuredGrid) of the considered boxMesh
+        """  
+        if not(isinstance(self._mesh, pv.UnstructuredGrid)):
+            self._mesh = self.to_pyvista()
+
+        return self._mesh
+
+    @mesh.setter
+    def mesh(
+        self,
+        value: pv.UnstructuredGrid,
+    ) -> None:
+        """
+        set a the pyvista mesh
+
+        :param value: Pyvista mesh (UnstructuredGrid)
+        """            
+
+        self._mesh = value
 
     @property
     def surface(
@@ -86,10 +125,10 @@ class PhaseMesh:
         """
         Return the surface mesh of the considered mesh
         """  
-        if(isinstance(self._surface, pv.PolyData)):
-            return self._surface
-        else:
-            return self._extract_surface()
+        if not(isinstance(self._surface, pv.PolyData)):       
+            self._surface = self._extract_surface()
+
+        return self._surface
 
     @surface.setter
     def surface(
@@ -111,6 +150,41 @@ class PhaseMesh:
         extract the surface mesh of a pv.UnstructuredGrid using the pyvista extract_surface filter.
 
         :return pv.PolyData: surface mesh
-        """                    
-        pvmesh = self.to_pyvista()
-        return pvmesh.extract_surface()
+        """    
+        if not(isinstance(self._mesh, pv.UnstructuredGrid)):
+            self._mesh = self.to_pyvista()            
+
+        return self._mesh.extract_surface()
+    
+def _check_if_only_tetra(
+    pvmesh : pv.UnstructuredGrid
+)-> None:
+    
+        # 3:'lin2',
+        # 5:'tri3',
+        # 9:'quad4',
+        # 10:'tet4',
+        # 12:'hex8',
+        # 13:'wed6',
+        # 14:'pyr5',
+        # 21:'lin3',
+        # 22:'tri6',
+        # 23:'quad8', 
+        # 24:'tet10',
+        # 25:'hex20'
+    
+    set_elm1d_type = {3, 21}
+    set_elm2d_type = {5, 9, 22}
+    set_elm3d_type_other_than_10 = {10, 12, 13, 14, 23, 24, 25}
+
+    set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
+
+    if set_cells_in_pvmesh.intersection(set_elm1d_type) > 0:
+        warnings.warn("1D elements are present in the PyVista UnstructuredGrid. There will be ignored.")
+    if set_cells_in_pvmesh.intersection(set_elm2d_type) > 0:
+        warnings.warn("2D elements are present in the PyVista UnstructuredGrid. There will be ignored \n", 
+            "Surface elements shall be extracted automatically from the 3d mesh")
+        
+    if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_10) > 0:
+        raise ValueError("Mesh contains elements other than linear tetrahedra \n",
+            "You shall use triangulate to ensure that only linear tetrahedra are used ")
