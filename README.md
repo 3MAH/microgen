@@ -39,30 +39,19 @@ With pip:
 pip install microgen
 ```
 
-You may need to install dependencies mentioned in the requirements.txt file
-```
-pip install -r requirements.txt
-```
-
-
 With conda:
 ```
-conda install -c conda-forge -c cadquery -c set3mah microgen
+conda install -c conda-forge -c set3mah microgen
 ```
 -------------------------------------------------------------------------------------------------------
 
-To modify the sources, clone this repository and set up the following environment:
-
-Create a conda environment with all the required dependencies
+To modify the sources, clone this repository and install microgen:
 ```
-conda env create -f environment.yml -n microgen-dev
-conda activate microgen-dev
+git clone https://github.com/3MAH/microgen.git
+cd microgen
+pip install -e .[all]
 ```
-
-Then install microgen using pip:
-```
-pip install .
-```
+The `-e` or `--editable` option allows to modify the sources without having to reinstall the package and `[all]` installs the optional development dependencies.
 
 
 ## Examples
