@@ -7,42 +7,26 @@ Conda and PyPI packages are available for Microgen
 
 ----------------------------------------------------------------------------------
 
-With conda
-~~~~~~~~~~~
-
-.. code-block:: none
-
-   $ conda install -c conda-forge -c cadquery -c set3mah microgen
-
-
-With pip (Linux only)
+With pip
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: none
 
    $ pip install microgen
 
-You may need to install dependencies mentioned in the requirements.txt file
+With conda
+~~~~~~~~~~~
 
 .. code-block:: none
 
-   $ pip install -r requirements.txt
-
+   $ conda install -c conda-forge -c set3mah microgen
 
 ----------------------------------------------------------------------------------
 
-To modify the sources, clone this repository and set up the following environment:
-
-Create a conda environment with all the required dependencies
-
-.. code-block:: none
-
-   $ conda env create -f environment.yml -n microgen-dev
-   $ conda activate microgen-dev
-
-
-Then install microgen: 
-
-.. code-block:: none
-
-   $ python setup.py install
+To modify the sources, clone this repository and install microgen:
+```
+git clone https://github.com/3MAH/microgen.git
+cd microgen
+pip install -e .[all]
+```
+The `-e` or `--editable` option allows to modify the sources without having to reinstall the package and `[all]` installs the optional development dependencies.
