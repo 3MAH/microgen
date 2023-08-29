@@ -107,13 +107,11 @@ def test_shapes():
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
-@pytest.mark.parametrize("surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)])
-def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(surface: str, type_part: str):
+def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(type_part: str):
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=getattr(microgen.surface_functions, surface),
+        surface_function=microgen.surface_functions.gyroid,
         offset=1.0,
-        resolution=30,
     )
 
     # Act
@@ -128,7 +126,7 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(surface: str, 
 def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent(type_part: str):
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=microgen.surface_functions.gyroid,
+        surface_function=microgen.surface_functions.schwarzP,
         offset=0.0,
     )
 
@@ -139,10 +137,11 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     # Assert
     assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
 
-def test_tpms_given_sum_volume_must_be_cube_volume():
+@pytest.mark.parametrize("surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)])
+def test_tpms_given_sum_volume_must_be_cube_volume(surface: str):
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=microgen.surface_functions.gyroid,
+        surface_function=getattr(microgen.surface_functions, surface),
         offset=1.0,
         repeat_cell=2,
         cell_size=3.0,

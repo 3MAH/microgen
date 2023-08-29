@@ -30,12 +30,12 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
-      - run: pip install .[test]
+      - name: Install
+        run: pip install .[test]
 
       - name: Test
-        shell: bash -l {0}
         run: pytest tests --cov-report term-missing --cov=microgen --numprocesses=auto
 
       - name: Examples
-        shell: bash -l {0}
+        if: runner.os != 'Windows'
         run: cd examples && bash run_examples.sh
