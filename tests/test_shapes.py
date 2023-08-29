@@ -166,18 +166,19 @@ def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lowe
     assert 0 < tpms.lower_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
     assert 0 < tpms.upper_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
 
-def test_tpms_given_variable_thickness_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume():
+def test_tpms_given_variable_thickness_cadquery_and_vtk_volumes_must_correspond():
     def graded_density(x, y, z):
-        return x
+        return x + 1.5
 
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=graded_density,
     )
 
-    assert 0 < tpms.sheet.extract_surface().volume < np.abs(tpms.grid.volume)
-    assert 0 < tpms.lower_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
-    assert 0 < tpms.upper_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
+    cadquery_part = tpms.generate(type_part="sheet", smoothing=0, verbose=False)
+    vtk_part = tpms.generateVtk(type_part="sheet")
+
+    assert np.isclose(cadquery_part.Volume(), np.abs(vtk_part.volume), rtol=1e-2)
 
 def test_tpms_given_incorrect_parameters_must_raise_errors():
     tpms = microgen.Tpms(

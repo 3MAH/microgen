@@ -223,14 +223,19 @@ class Tpms(BasicGeometry):
 
     def _create_surface(
         self,
-        isovalue: float = 0,
+        isovalue: float | np.ndarray = 0.0,
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
 
-        mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
+        if isinstance(isovalue, float):
+            scalars = self.grid["surface"] - isovalue
+        elif isinstance(isovalue, np.ndarray):
+            scalars = self.grid["surface"] - isovalue.ravel(order="F")
+
+        mesh = self.grid.contour(isosurfaces=[0.0], scalars=scalars)
         mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
         mesh.clean(inplace=True)
 
@@ -294,13 +299,16 @@ class Tpms(BasicGeometry):
             logging.warning("offset is ignored for 'surface' part")
             return self._create_surface(isovalue=0, smoothing=smoothing, verbose=verbose)
 
-        if not isinstance(self.offset, float):
-            raise NotImplementedError(
-                "Graded offset is not supported yet with the `generate` function"
-            )
+        # if not isinstance(self.offset, float):
+        #     raise NotImplementedError(
+        #         "Graded offset is not supported yet with the `generate` function"
+        #     )
+
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         eps = self.offset / 3.0
-        if self.offset == 0.0:
+        if isinstance(self.offset, float) and self.offset == 0.0:
             eps = 0.1 * np.min(self.cell_size)
 
         box = cq.Workplane("front").box(1, 1, 1)
