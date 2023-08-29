@@ -40,6 +40,15 @@ test = [
     'pytest',
     'pytest-cov',
 ]
+docs = [
+    'ipykernel',
+    'sphinx',
+    'sphinx-rtd-theme',
+    'sphinxcontrib-napoleon',
+    'jupyter-sphinx',
+    'pythreejs',
+    'mock',
+]
 
 [project.urls]
 Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
