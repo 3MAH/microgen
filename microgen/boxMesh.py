@@ -32,10 +32,11 @@ class BoxMesh(PhaseMesh):
         self,
         nodes : np.ndarray,
         elements : dict,
+        mesh :Optional[pv.UnstructuredGrid] = None,        
         name : Optional[np.ndarray] = None,
         nodes_index : Optional[np.ndarray] = None,
     ) -> None:
-        super().__init__(nodes=nodes, elements=elements, name=name, nodes_index=nodes_index)
+        super().__init__(nodes=nodes, elements=elements, mesh=mesh, name=name, nodes_index=nodes_index)
 
         self._rve = None
         self._closest_points_on_boundaries = None
@@ -235,9 +236,10 @@ class BoxMesh(PhaseMesh):
         build a RVE value from the mesh bounding box
 
         :return rve: RVE of the mesh bounding box
-        """                    
-        pvmesh = self.to_pyvista()
-        xmin, xmax, ymin, ymax, zmin, zmax = pvmesh.bounds
+        """          
+        if not(isinstance(self._mesh, pv.UnstructuredGrid)):
+            self._mesh = self.to_pyvista()
+        xmin, xmax, ymin, ymax, zmin, zmax = self._mesh.bounds
         return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)
 
     # def _is_intersection_node_coincide(
@@ -405,7 +407,7 @@ class BoxMesh(PhaseMesh):
         k_neighbours: int = 3,
         rve: Optional[Rve] = None,
         tol: Optional[float] = 1.e-8,        
-    ) -> dict:
+    ) -> dict[str, tuple[np.array, np.array]]:
         """
         Find the closest points on a faces and edges to write interpolation relationship
         if a displacement condition between pair nodes is defined
@@ -428,11 +430,51 @@ class BoxMesh(PhaseMesh):
             self._closest_points_on_boundaries = {**dict_faces, **dict_edges}
             return self._closest_points_on_boundaries            
 
+    def boundary_elements(
+        self,
+        rve: Optional[Rve] = None,
+        tol: Optional[float] = 1.e-4,                    
+    ) -> list[int]:
+        
+        if(isinstance(rve, Rve) == False) : 
+            rve = self.rve    
+
+        normals = [
+            np.array([-1., 0.0, 0.0]),
+            np.array([1., 0.0, 0.0]),            
+            np.array([0.0, -1., 0.0]),
+            np.array([0.0, 1., 0.0]),            
+            np.array([0.0, 0.0, -1.]),
+            np.array([0.0, 0.0, 1.])            
+        ]
+        origins_p = [
+            np.array([rve.x_min,rve.center[1],rve.center[2]]),            
+            np.array([rve.x_max,rve.center[1],rve.center[2]]),
+            np.array([rve.center[0],rve.y_min,rve.center[2]]),
+            np.array([rve.center[0],rve.y_max,rve.center[2]]),            
+            np.array([rve.center[0],rve.center[1],rve.z_min]),
+            np.array([rve.center[0],rve.center[1],rve.z_max])            
+        ]
+        size_planes = [2.0*rve.dx,2.0*rve.dx,2.0*rve.dy,2.0*rve.dy,2.0*rve.dz,2.0*rve.dz]
+
+        surface = self.surface 
+        surface["CellIDs"] = np.arange(surface.n_cells)
+
+        boundary_elements = pv.PolyData()
+
+        for (normal, origin_p, size_plane) in zip(normals, origins_p, size_planes):
+            plane = pv.Plane(center=origin_p, direction=normal, i_size=size_plane, j_size=size_plane)  
+            surface.compute_implicit_distance(plane, inplace=True)            
+            surface_p = surface.threshold([-tol, tol], all_scalars=True, scalars='implicit_distance').extract_surface()
+            boundary_elements = boundary_elements.append_polydata(surface_p)
+
+        return boundary_elements, boundary_elements["CellIDs"]
+    
     def closest_cells_on_boundaries(
         self,
         rve: Optional[Rve] = None,
         tol: Optional[float] = 1.e-8,        
-    ) -> None:
+    ) -> dict:
         """
         Find the cells to which a given point belong to while using a ray tracing normal to the face on which it belongs
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
@@ -448,26 +490,27 @@ class BoxMesh(PhaseMesh):
             np.array([0.0, 1., 0.0]),
             np.array([0.0, 0.0, 1.])
         ]
-        origin_p = [
+        origins_p = [
             np.array([rve.x_max,rve.center[1],rve.center[2]]),
             np.array([rve.center[0],rve.y_max,rve.center[2]]),
             np.array([rve.center[0],rve.center[1],rve.z_max])
         ]
-        size_plane = [2.0*rve.dx,2.0*rve.dy,2.0*rve.dz]
+        size_planes = [2.0*rve.dx,2.0*rve.dy,2.0*rve.dz]
 
         faces_m = [crd[self.face_list_Xm], crd[self.face_list_Ym], crd[self.face_list_Zm]]
-        surface = self.surface
+        surface = self.surface 
+        surface["CellIDs"] = np.arange(surface.n_cells)
 
         list_p = []
         list_ray_trace = []
 
         for i, face in enumerate(faces_m):
 
-            plane = pv.Plane(center=origin_p[i], direction=normals[i], i_size=size_plane[i], j_size=size_plane[i])            
+            plane = pv.Plane(center=origins_p[i], direction=normals[i], i_size=size_planes[i], j_size=size_planes[i])            
             surface.compute_implicit_distance(plane, inplace=True)      
 
             surface_p = surface.threshold([-tol, tol], all_scalars=True, scalars='implicit_distance').extract_surface()
-            list_p.append(surface_p)
+            list_p.append(surface_p["CellIDs"])
 
             directions = np.tile(normals[i], (np.shape(faces_m[i])[0],1))
 
@@ -479,7 +522,7 @@ class BoxMesh(PhaseMesh):
                 intersection_rays = []
                 intersection_cells = []
                 for j, face_m_i in enumerate(faces_m[i]):
-                    end_point = face_m_i + size_plane[i]*directions[j]
+                    end_point = face_m_i + size_planes[i]*directions[j]
                     intersection_point, intersection_cell = surface_p.ray_trace(origin=face_m_i, end_point=end_point)
                     intersection_ray = np.full_like(intersection_cell, j)
                     intersection_points.extend(intersection_point.tolist())
@@ -490,7 +533,8 @@ class BoxMesh(PhaseMesh):
             list_ray_trace.append(raytraceresult)
 
         return {
-            'face_Xp' : (list_p[0], list_ray_trace[0][0], list_ray_trace[0][2]),
-            'face_Yp' : (list_p[1], list_ray_trace[1][0], list_ray_trace[1][2]), 
-            'face_Zp' : (list_p[2], list_ray_trace[2][0], list_ray_trace[2][2])
+            'face_Xp' : (list_p[0], list_ray_trace[0][0], list_p[0][list_ray_trace[0][2]]),
+            'face_Yp' : (list_p[1], list_ray_trace[1][0], list_p[1][list_ray_trace[1][2]]), 
+            'face_Zp' : (list_p[2], list_ray_trace[2][0], list_p[2][list_ray_trace[2][2]])
         }    
+       
