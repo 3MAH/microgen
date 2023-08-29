@@ -27,6 +27,9 @@ jobs:
           python-version: "3.x"
           cache: "pip"
 
+      - if: runner.os == 'Linux'
+        run: sudo apt-get install libglu1-mesa
+
       - run: pip install .[test]
 
       - name: Test
