@@ -12,8 +12,8 @@ Here are the main features:
 
 
 <p align="center">
-    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="400"/>
-    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="400"/>
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
 </p>
 
 [![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
@@ -33,7 +33,6 @@ Read the Docs | [![Documentation Status](https://readthedocs.org/projects/microg
 
 ## Installation
 
--------------------------------------------------------------------------------------------------------
 With pip:
 ```
 pip install microgen

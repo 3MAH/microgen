@@ -45,6 +45,7 @@ docs = [
     'jupyter-sphinx',
     'pythreejs',
     'mock',
+    'myst-parser',
 ]
 all = ["microgen[test, docs]"]
 

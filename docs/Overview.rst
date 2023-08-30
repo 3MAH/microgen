@@ -12,8 +12,8 @@ Here are the main features:
 - Regular mesh and periodic mesh are implemented using `Gmsh <https://gmsh.info/>`_, remeshing using `Mmg <https://www.mmgtools.org/>`_ is also implemented.
 
 
-.. image:: https://anaconda.org/set3mah/microgen/badges/installer/conda.svg
-    :target: https://conda.anaconda.org/set3mah/
+.. image:: https://anaconda.org/set3mah/microgen/badges/version.svg
+    :target: https://anaconda.org/set3MAH/microgen
     
 .. image:: https://badge.fury.io/py/microgen.svg
     :target: https://pypi.org/project/microgen/1.0/
