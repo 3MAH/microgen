@@ -1,7 +1,7 @@
 # ARG BASE_IMAGE_TAG=latest
 # FROM ghcr.io/pyvista/pyvista:$BASE_IMAGE_TAG
 
-FROM jupyter/base-notebook:python-3.9
+FROM jupyter/minimal-notebook:python-3.9
 
 USER root
 RUN chown -R ${NB_UID} ${HOME}
