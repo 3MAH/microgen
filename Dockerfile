@@ -9,7 +9,7 @@ USER ${NB_USER}
 
 USER root
 RUN apt-get update \
-   && apt-get install  -yq --no-install-recommends git gcc \
+   && apt-get install  -yq --no-install-recommends gcc \
    libglu1-mesa \
    libgl1-mesa-glx \
    libxrender1 \
@@ -22,13 +22,12 @@ USER ${NB_USER}
 COPY . ${HOME}
 WORKDIR $HOME
 
-# RUN pip install microgen[jupyter] \
-RUN pip install "microgen[jupyter] @ git+https://github.com/3MAH/microgen.git@fix_binder"
-# && pip uninstall vtk -y \
-# && pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
+RUN pip install .[jupyter]
+RUN pip uninstall vtk -y
+RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
 RUN pip list --format=freeze > requirements.txt
 
 # allow jupyterlab for ipyvtk
-# ENV JUPYTER_ENABLE_LAB=yes
-# ENV PYVISTA_USE_IPYVTK=true
+ENV JUPYTER_ENABLE_LAB=yes
+ENV PYVISTA_USE_IPYVTK=true
