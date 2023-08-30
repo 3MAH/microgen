@@ -7,7 +7,7 @@ USER ${NB_USER}
 
 USER root
 RUN apt-get update \
-   && apt-get install  -yq --no-install-recommends \
+   && apt-get install  -yq --no-install-recommends git \
    libglu1-mesa \
    #  libgl1-mesa-glx \
    #  libfontconfig1 \
