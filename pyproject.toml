@@ -46,6 +46,7 @@ docs = [
     'pythreejs',
     'mock',
     'myst-parser',
+    'sphinx-book-theme',
 ]
 all = ["microgen[test, docs]"]
 
