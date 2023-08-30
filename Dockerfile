@@ -18,7 +18,8 @@ RUN apt-get update \
 USER ${NB_USER}
 
 
-RUN pip install microgen[jupyter] \
+# RUN pip install microgen[jupyter] \
+RUN pip install git+https://github.com/3MAH/microgen.git@fix_binder[jupyter] \
    && pip uninstall vtk -y \
    && pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
 
