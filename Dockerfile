@@ -1,4 +1,4 @@
-FROM jupyter/base-notebook
+FROM jupyter/base-notebook:python-3.9
 
 COPY . ${HOME}
 USER root
@@ -7,7 +7,7 @@ USER ${NB_USER}
 
 USER root
 RUN apt-get update \
-   && apt-get install  -yq --no-install-recommends git \
+   && apt-get install  -yq --no-install-recommends git gcc \
    libglu1-mesa \
    #  libgl1-mesa-glx \
    #  libfontconfig1 \
@@ -25,6 +25,8 @@ RUN pip install "microgen[jupyter] @ git+https://github.com/3MAH/microgen.git@fi
 
 
 WORKDIR $HOME
+
+RUN pip freeze > requirements.txt
 
 # allow jupyterlab for ipyvtk
 ENV JUPYTER_ENABLE_LAB=yes
