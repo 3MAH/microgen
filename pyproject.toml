@@ -47,7 +47,15 @@ docs = [
     'mock',
     'myst-parser',
 ]
-all = ["microgen[test, docs]"]
+jupyter = [
+    "jupyterlab",
+    "jupyter-cadquery",
+    "ipyvtklink",
+    "ipygany",
+    "sidecar",
+    "jupyterview",
+]
+all = ["microgen[test, docs, jupyter]"]
 
 [project.urls]
 Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'

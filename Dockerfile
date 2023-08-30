@@ -1,4 +1,4 @@
-FROM jupyter/base-notebook:python-3.9.7
+FROM jupyter/base-notebook
 
 COPY . ${HOME}
 USER root
@@ -7,19 +7,20 @@ USER ${NB_USER}
 
 USER root
 RUN apt-get update \
- && apt-get install  -yq --no-install-recommends \
-    libgl1-mesa-glx \
-    libfontconfig1 \
-    libxrender1 \
-    libosmesa6 \
-    xvfb \
- && apt-get clean && rm -rf /var/lib/apt/lists/*
+   && apt-get install  -yq --no-install-recommends \
+   libglu1-mesa \
+   #  libgl1-mesa-glx \
+   #  libfontconfig1 \
+   #  libxrender1 \
+   #  libosmesa6 \
+   #  xvfb \
+   && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER ${NB_USER}
 
 
-RUN conda install -y -c conda-forge -c cadquery -c set3mah microgen
-
-RUN pip install -r ${HOME}/examples/jupyter_notebooks/requirements.txt
+RUN pip install microgen[jupyter] \
+   && pip uninstall vtk -y \
+   && pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
 
 
 WORKDIR $HOME
