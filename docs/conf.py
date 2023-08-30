@@ -63,29 +63,22 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_book_theme"
+html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    "repository_url": "https://github.com/3MAH/microgen",
-    "use_repository_button": True,
+    'canonical_url': 'https://microgen.readthedocs.io/en/latest/',
+    # 'logo_only': False,
+    # 'display_version': True,
+    # 'prev_next_buttons_location': 'bottom',
+    'style_external_links': True,
+    # 'vcs_pageview_mode': '',
+    'style_nav_header_background': '#24445C',
+    # Toc options
+    'collapse_navigation': False,
+    # 'sticky_navigation': True,
+    # 'navigation_depth': 4,
+    # 'includehidden': True,
+    # 'titles_only': False
 }
-
-
-# html_theme = 'sphinx_rtd_theme'
-# html_theme_options = {
-#     'canonical_url': 'https://microgen.readthedocs.io/en/latest/',
-#     # 'logo_only': False,
-#     # 'display_version': True,
-#     # 'prev_next_buttons_location': 'bottom',
-#     'style_external_links': True,
-#     # 'vcs_pageview_mode': '',
-#     'style_nav_header_background': '#24445C',
-#     # Toc options
-#     'collapse_navigation': False,
-#     # 'sticky_navigation': True,
-#     # 'navigation_depth': 4,
-#     # 'includehidden': True,
-#     # 'titles_only': False
-# }
 
 html_logo = "_static/microgen.png"
 
