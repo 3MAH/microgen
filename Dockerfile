@@ -1,24 +1,23 @@
-ARG BASE_IMAGE_TAG=latest
-FROM ghcr.io/pyvista/pyvista:$BASE_IMAGE_TAG
+# ARG BASE_IMAGE_TAG=latest
+# FROM ghcr.io/pyvista/pyvista:$BASE_IMAGE_TAG
 
-# FROM jupyter/base-notebook:python-3.9
+FROM jupyter/base-notebook:python-3.9
 
-# COPY . ${HOME}
-# USER root
-# RUN chown -R ${NB_UID} ${HOME}
-# USER ${NB_USER}
+USER root
+RUN chown -R ${NB_UID} ${HOME}
+USER ${NB_USER}
 
-# USER root
-# RUN apt-get update \
-#    && apt-get install  -yq --no-install-recommends git gcc \
-#    libglu1-mesa \
-#    libgl1-mesa-glx \
-#    libxrender1 \
-#    #  libfontconfig1 \
-#    #  libosmesa6 \
-#    #  xvfb \
-#    && apt-get clean && rm -rf /var/lib/apt/lists/*
-# USER ${NB_USER}
+USER root
+RUN apt-get update \
+   && apt-get install  -yq --no-install-recommends git gcc \
+   libglu1-mesa \
+   libgl1-mesa-glx \
+   libxrender1 \
+   #  libfontconfig1 \
+   #  libosmesa6 \
+   #  xvfb \
+   && apt-get clean && rm -rf /var/lib/apt/lists/*
+USER ${NB_USER}
 
 COPY . ${HOME}
 WORKDIR $HOME
