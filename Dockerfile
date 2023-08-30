@@ -9,7 +9,7 @@ USER root
 RUN apt-get update \
    && apt-get install  -yq --no-install-recommends git gcc \
    libglu1-mesa \
-   #  libgl1-mesa-glx \
+   libgl1-mesa-glx \
    #  libfontconfig1 \
    #  libxrender1 \
    #  libosmesa6 \
