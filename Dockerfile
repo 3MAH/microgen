@@ -23,9 +23,7 @@ RUN apt-get update \
 USER ${NB_USER}
 
 COPY . ${HOME}
-WORKDIR $HOME
-
-RUN cd examples/jupyter_notebooks
+WORKDIR $HOME/examples/jupyter_notebooks
 
 RUN pip install .[jupyter]
 RUN pip uninstall vtk -y
