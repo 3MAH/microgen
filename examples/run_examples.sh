@@ -49,9 +49,25 @@ cd ..
 
 echo "--TPMS--"
 cd TPMS
+echo "coordinate_system"
+cd coordinate_system
+python cylindrical.py
+python cylindrical_graded.py
+python spherical.py
+cd ..
+echo "grading"
+cd grading
+python cell_size.py
+python cell_type.py
+python density.py
+cd ..
 echo "gyroid"
 cd gyroid
 python gyroid.py
+cd ..
+echo "surface"
+cd surface
+python fischerKochS.py
 cd ..
 echo "tpms"
 cd tpms

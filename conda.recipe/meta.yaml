@@ -1,12 +1,14 @@
+{% set version = "1.0.1" %}
+
 package:
   name: microgen
-  version: 1.1.0
+  version: {{ version }}
 
 source:
   git_url: https://github.com/3MAH/microgen.git
 
 build:
-  # noarch: python
+  noarch: python
   script: pip install .
 
 requirements:
