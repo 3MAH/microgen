@@ -10,9 +10,9 @@ RUN apt-get update \
    libglu1-mesa \
    libgl1-mesa-glx \
    libxrender1 \
-   libxcursor \
-   libxft \
-   libxinerama \
+   libxcursor-dev \
+   libxft-dev \
+   libxinerama-dev \
    && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER ${NB_USER}
 
