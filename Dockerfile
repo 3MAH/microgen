@@ -1,4 +1,4 @@
-FROM jupyter/minimal-notebook:python-3.9
+FROM jupyter/minimal-notebook
 
 USER root
 RUN chown -R ${NB_UID} ${HOME}
@@ -23,7 +23,7 @@ RUN pip install .[jupyter]
 RUN pip uninstall vtk -y
 RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
-RUN mamba install -c conda-forge -c set3mah mmg -y
+RUN mamba install -c set3mah mmg -y
 
 WORKDIR $HOME/examples/jupyter_notebooks
 
