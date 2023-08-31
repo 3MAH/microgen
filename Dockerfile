@@ -24,6 +24,8 @@ USER ${NB_USER}
 COPY . ${HOME}
 WORKDIR $HOME
 
+RUN cd examples/jupyter_notebooks
+
 RUN pip install .[jupyter]
 RUN pip uninstall vtk -y
 RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
