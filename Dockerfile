@@ -14,6 +14,7 @@ RUN apt-get update \
    libgl1-mesa-glx \
    libxrender1 \
    libxcursor-dev \
+   libxft-dev \
    #  libfontconfig1 \
    #  libosmesa6 \
    #  xvfb \
