@@ -23,13 +23,13 @@ RUN apt-get update \
 USER ${NB_USER}
 
 COPY . ${HOME}
-WORKDIR $HOME/examples/jupyter_notebooks
+WORKDIR $HOME
 
 RUN pip install .[jupyter]
 RUN pip uninstall vtk -y
 RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
-RUN pip list --format=freeze > requirements.txt
+WORKDIR $HOME/examples/jupyter_notebooks
 
 # allow jupyterlab for ipyvtk
 ENV JUPYTER_ENABLE_LAB=yes
