@@ -1,6 +1,7 @@
 import os
 import pytest
 from inspect import getmembers, isfunction
+from typing import Type, Union
 
 import cadquery as cq
 import numpy as np
@@ -115,11 +116,11 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(type_part: str
     )
 
     # Act
-    shape = tpms.generate(type_part=type_part, smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part=type_part)
+    shape_cadquery = tpms.generate(type_part=type_part, smoothing=0, verbose=False)
+    shape_vtk = tpms.generateVtk(type_part=type_part)
 
     # Assert
-    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal"])
@@ -131,20 +132,26 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     )
 
     # Act
-    shape = tpms.generate(type_part=type_part, smoothing=0, verbose=False)
-    shape_check = tpms.generateVtk(type_part=type_part)
+    shape_cadquery = tpms.generate(type_part=type_part, smoothing=0, verbose=False)
+    shape_vtk = tpms.generateVtk(type_part=type_part)
 
     # Assert
-    assert np.isclose(shape.Volume(), np.abs(shape_check.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 @pytest.mark.parametrize("surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)])
-def test_tpms_given_sum_volume_must_be_cube_volume(surface: str):
+@pytest.mark.parametrize("repeat_cell", [2, (2, 1, 3)])
+@pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
+def test_tpms_given_sum_volume_must_be_cube_volume(
+    surface: str,
+    repeat_cell: Union[int, tuple[int, int, int]],
+    cell_size: Union[float, tuple[float, float, float]],
+):
     # Arrange
     tpms = microgen.Tpms(
         surface_function=getattr(microgen.surface_functions, surface),
         offset=1.0,
-        repeat_cell=2,
-        cell_size=3.0,
+        repeat_cell=repeat_cell,
+        cell_size=cell_size,
     )
 
     # Act
@@ -155,7 +162,9 @@ def test_tpms_given_sum_volume_must_be_cube_volume(surface: str):
     assert np.isclose(volume, cube_volume, rtol=1e-2)
 
 @pytest.mark.parametrize("coord_sys_tpms", [microgen.CylindricalTpms, microgen.SphericalTpms])
-def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(coord_sys_tpms):
+def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(
+    coord_sys_tpms: Type[microgen.Tpms],
+):
     tpms = coord_sys_tpms(
         radius=1.0,
         surface_function=microgen.surface_functions.gyroid,
@@ -167,20 +176,20 @@ def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lowe
     assert 0 < tpms.upper_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
 
 def test_tpms_given_variable_thickness_cadquery_and_vtk_volumes_must_correspond():
-    def graded_density(x, y, z):
-        return x + 1.5
+    def graded_density(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+        return x + 1.5 # TODO: add tests when offset <= 0 or offset >= offset_limit
 
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=graded_density,
     )
 
-    cadquery_part = tpms.generate(type_part="sheet", smoothing=0, verbose=False)
-    vtk_part = tpms.generateVtk(type_part="sheet")
+    shape_cadquery = tpms.generate(type_part="sheet", smoothing=0, verbose=False)
+    shape_vtk = tpms.generateVtk(type_part="sheet")
 
-    assert np.isclose(cadquery_part.Volume(), np.abs(vtk_part.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
-def test_tpms_given_incorrect_parameters_must_raise_errors():
+def test_tpms_generate_given_wrong_type_part_parameter_must_raise_ValueError():
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=0.5,
@@ -190,14 +199,16 @@ def test_tpms_given_incorrect_parameters_must_raise_errors():
     with pytest.raises(ValueError):
         tpms.generate(type_part="fake")
 
+def test_tpms_generate_given_wrong_cell_size_parameter_must_raise_ValueError():
     with pytest.raises(ValueError):
-        microgen.shape.tpms.Tpms(
-            surface_function=microgen.shape.surface_functions.gyroid,
+        microgen.Tpms(
+            surface_function=microgen.surface_functions.gyroid,
             cell_size=(1, 1),
         )
 
+def test_tpms_generate_given_wrong_repeat_cell_parameter_must_raise_ValueError():
     with pytest.raises(ValueError):
-        microgen.shape.tpms.Tpms(
-            surface_function=microgen.shape.surface_functions.gyroid,
+        microgen.Tpms(
+            surface_function=microgen.surface_functions.gyroid,
             repeat_cell=(1, 1, 1, 1),
         )

@@ -223,7 +223,7 @@ class Tpms(BasicGeometry):
 
     def _create_surface(
         self,
-        isovalue: float | np.ndarray = 0.0,
+        isovalue: Union[float, np.ndarray] = 0.0,
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
