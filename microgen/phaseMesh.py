@@ -37,7 +37,7 @@ class PhaseMesh:
 
     def _to_cells_and_celltype(
         self
-    ) -> tuple(np.array, np.array): 
+    ) -> tuple([np.array, np.array]):
         """
         Returns a numpy array, with the indices of the cells
         The “padding” indicating the number of points per cell in introduced
@@ -84,19 +84,22 @@ class PhaseMesh:
     def from_pyvista(
         pvmesh : pv.UnstructuredGrid,
         name : str = None):
-        """Build a Mesh from a pyvista UnstructuredGrid or PolyData mesh. 
+        """Build a PhaseMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case, 
+        the PolyData object is cast into a Unstructured Grid). 
         Node and element data are not copied (by default a shallow copy is operated)
         Mesh with multiple element type are not handled.
         Note that for now phaseMesh works only considering tetrahedral elements        
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
+
+        :return : A PhaseMesh Object from the tetrahedral elements of the pyvista Unistructured Grid
         """                       
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
                 
         try: 
             _check_if_only_linear_tetrahedral(pvmesh)
-            elements = {10: pvmesh.cells_dict(10)}
+            elements = {10: pvmesh.cells_dict[10]}
             return PhaseMesh(pvmesh.points, elements, pvmesh, name)            
         except ValueError as e:     
             print(e)  
@@ -213,16 +216,20 @@ def _check_if_only_linear_tetrahedral(
     
     set_elm1d_type = {3, 21}
     set_elm2d_type = {5, 9, 22}
-    set_elm3d_type_other_than_10 = {10, 12, 13, 14, 23, 24, 25}
+    set_elm3d_type_other_than_10 = {12, 13, 14, 23, 24, 25}
 
     set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
 
-    if set_cells_in_pvmesh.intersection(set_elm1d_type) > 0:
+    print(pvmesh.cells_dict)
+    print(pvmesh.cells_dict[10])    
+    print(set_cells_in_pvmesh)
+
+    if set_cells_in_pvmesh.intersection(set_elm1d_type):
         warnings.warn("1D elements are present in the PyVista UnstructuredGrid. There will be ignored.")
-    if set_cells_in_pvmesh.intersection(set_elm2d_type) > 0:
+    if set_cells_in_pvmesh.intersection(set_elm2d_type):
         warnings.warn("2D elements are present in the PyVista UnstructuredGrid. There will be ignored \n", 
             "Surface elements shall be extracted automatically from the 3d mesh")
         
-    if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_10) > 0:
-        raise ValueError("Mesh contains elements other than linear tetrahedra \n",
+    if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_10):
+        raise ValueError("Mesh contains elements other than linear tetrahedra",
             "You shall use triangulate to ensure that only linear tetrahedra are used ")
