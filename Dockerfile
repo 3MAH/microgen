@@ -15,6 +15,7 @@ RUN apt-get update \
    libxrender1 \
    libxcursor-dev \
    libxft-dev \
+   libxinerama-dev \
    #  libfontconfig1 \
    #  libosmesa6 \
    #  xvfb \
