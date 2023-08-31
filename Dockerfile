@@ -13,6 +13,7 @@ RUN apt-get update \
    libglu1-mesa \
    libgl1-mesa-glx \
    libxrender1 \
+   libxcursor-dev \
    #  libfontconfig1 \
    #  libosmesa6 \
    #  xvfb \
