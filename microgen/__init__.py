@@ -5,4 +5,6 @@ from .periodic import *
 from .phase import *
 from .rve import *
 from .shape import *
-from ._version import __version__
+
+version_info = 1, 0, 1
+__version__ = '.'.join(map(str, version_info))

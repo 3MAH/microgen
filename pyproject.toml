@@ -55,7 +55,7 @@ Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
 [tool.setuptools.dynamic]
-version = {attr = 'microgen._version.__version__'}
+version = {attr = 'microgen.__version__'}
 
 [tool.setuptools.packages.find]
 include = [
