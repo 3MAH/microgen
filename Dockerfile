@@ -1,6 +1,3 @@
-# ARG BASE_IMAGE_TAG=latest
-# FROM ghcr.io/pyvista/pyvista:$BASE_IMAGE_TAG
-
 FROM jupyter/minimal-notebook:python-3.9
 
 USER root
@@ -13,12 +10,9 @@ RUN apt-get update \
    libglu1-mesa \
    libgl1-mesa-glx \
    libxrender1 \
-   libxcursor-dev \
-   libxft-dev \
-   libxinerama-dev \
-   #  libfontconfig1 \
-   #  libosmesa6 \
-   #  xvfb \
+   libxcursor \
+   libxft \
+   libxinerama \
    && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER ${NB_USER}
 
@@ -29,7 +23,7 @@ RUN pip install .[jupyter]
 RUN pip uninstall vtk -y
 RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
-RUN conda install -c conda-forge -c set3mah mmg -y
+RUN mamba install -c conda-forge -c set3mah mmg -y
 
 WORKDIR $HOME/examples/jupyter_notebooks
 
