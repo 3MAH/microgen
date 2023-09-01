@@ -8,10 +8,10 @@ version = "1.0.1"
 authors = [
     {name = "3MAH", email = 'set3mah@gmail.com'},
 ]
-description = "Microstructure generation"
+description = "Microstructure generation and meshing"
 readme = "README.md"
 requires-python = ">=3.8"
-keywords = ["microstructure", "lattice"]
+keywords = ["microstructure", "lattice", "periodic", "TPMS", "mesh"]
 license = {text = "GPLv3"}
 classifiers = [
     'Intended Audience :: Science/Research',
