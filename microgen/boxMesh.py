@@ -156,7 +156,7 @@ class BoxMesh(PhaseMesh):
         self.corner_list_XpYmZp = np.intersect1d(self.edge_list_XpYm, self.edge_list_YmZp, assume_unique=True)
         self.corner_list_XpYpZp = np.intersect1d(self.edge_list_XpYp, self.edge_list_YpZp, assume_unique=True)
 
-        # Remove nodes that beloing to several sets
+        # Remove nodes that belong to several sets
         all_corners = np.hstack(
             (self.corner_list_XmYmZm, self.corner_list_XmYpZm, self.corner_list_XpYmZm, self.corner_list_XpYpZm,
              self.corner_list_XmYmZp, self.corner_list_XmYpZp, self.corner_list_XpYmZp, self.corner_list_XpYpZp))

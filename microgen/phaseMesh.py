@@ -40,7 +40,7 @@ class PhaseMesh:
     ) -> tuple([np.array, np.array]):
         """
         Returns a numpy array, with the indices of the cells
-        The “padding” indicating the number of points per cell in introduced
+        The “padding” indicating the number of points per cell is introduced
         exactly as a pyvista UnstructuredGrid.cells property
 
         :return cells and cells_type : A tuple of flattened arrays that contains all cells and cells_type
