@@ -2,78 +2,70 @@
     <img src="https://github.com/3MAH/microgen/blob/main/docs/_static/microgen.png?raw=true" alt="Microgen logo" width="100%"/>
 </p>
 
-Microgen is a simple python library that helps to generate and mesh microstructures.
+**Microgen** is a Python library designed to facilitate microstructure generation and meshing. Here are its core features:
 
-Here are the main features:
-- Entirely written in Python 3 and based on CadQuery and PyVista libraries.
-- It allows to generate simple reinforcement geometries (spheres, cylinder, ellipsoids, …) to generate virtual composites microstructures.
-- Three-dimensional Voronoi tessellation rallons to simulate the response granular materials and polycrystalline metals.
-- Regular mesh and periodic mesh are implemented using Gmsh, remeshing using Mmg is also implemented.
+- **Repeated cells**: Generation of lattice structures such as octet trusses and honeycombs.
+- **Triply Periodic Minimal Surfaces (TPMS)**: TPMS-based lattice generation known for favorable physical (mechanical, thermal, ...) properties like low density and large surface area.
+- **Virtual composites microstructures**: Generation of basic reinforcement geometries, including spheres, cylinders, ellipsoids, and more.
+- **3D Voronoi tessellation**: Simulation of granular materials and polycrystalline metals.
+- **Meshing**: Regular and **periodic** meshing using Gmsh, **remeshing** using Mmg.
 
+Generation of 3D objects is achievable through functions that utilize Open CASCADE (via Cadquery) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
 
 <p align="center">
-    <img src="docs/_static/gyroid.gif" alt="Gyroid" width="400"/>
-    <img src="docs/_static/fischerKoch.gif" alt="TPMS" width="400"/>
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
 </p>
 
-[![build-and-test workflow](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen)
-[![Anaconda-Server Badge](https://anaconda.org/set3mah/microgen/badges/version.svg)](https://conda.anaconda.org/set3mah)
-[![PyPI version](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/)
-[![3MAH](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/)
-[![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/3MAH/microgen/HEAD?urlpath=lab%2Ftree%2Fexamples%2Fjupyter_notebooks)
-
-## Documentation
-
-Provider      | Status
---------      | ------
-Read the Docs | [![Documentation Status](https://readthedocs.org/projects/microgen/badge/?version=latest)](https://microgen.readthedocs.io/en/latest/?badge=latest)
-
-
+|        |            |
+| -------------- | ---------------- |
+| PyPI package   | [![PyPI](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/) |
+| Conda package  | [![Conda](https://anaconda.org/set3mah/microgen/badges/version.svg)](https://conda.anaconda.org/set3mah/microgen) |
+| Documentation  | [![Documentation](https://readthedocs.org/projects/microgen/badge/?version=latest)](https://microgen.readthedocs.io/en/latest/?badge=latest) |
+| Status         | [![Status](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen) |
+| Citation       | [![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028) |
+| License        | [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) |
+| Website        | [![Website](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/) |
+| Binder         | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/3MAH/microgen/HEAD?urlpath=lab%2Ftree%2Fexamples%2Fjupyter_notebooks) |
 
 ## Installation
 
--------------------------------------------------------------------------------------------------------
 With pip:
-```
+
+```bash
 pip install microgen
 ```
 
-You may need to install dependencies mentioned in the requirements.txt file
-```
-pip install -r requirements.txt
-```
-
-
 With conda:
+
+```bash
+conda install -c conda-forge -c set3mah microgen
 ```
-conda install -c conda-forge -c cadquery -c set3mah microgen
-```
+
 -------------------------------------------------------------------------------------------------------
 
-To modify the sources, clone this repository and set up the following environment:
+To modify the sources, clone this repository and install microgen:
 
-Create a conda environment with all the required dependencies
-```
-conda env create -f environment.yml -n microgen-dev
-conda activate microgen-dev
+```bash
+git clone https://github.com/3MAH/microgen.git
+cd microgen
+pip install -e .[all]
 ```
 
-Then install microgen using pip:
-```
-pip install .
-```
+The `-e` or `--editable` option allows to modify the sources without having to reinstall the package and `[all]` installs the optional development dependencies.
+
 
 Run tests with pytest:
 ```
 pytest tests -n auto
 ```
 
-
 ## Examples
+
 Click on the image to be redirected to the corresponding example on Microgen's documentation
 
 ### Basic shapes
+
 <a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#basic-shapes">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/shapes.png" height="250">
 </a>
@@ -91,6 +83,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 </a>
 
 ### Triply Periodic Minimal Surfaces (TPMS)
+
 <a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#gyroid">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/gyroid.png"height="250"></a>
 <a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#tpms-available">
@@ -103,6 +96,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 </a>
 
 ### 3D operations
+
 <a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#repeating-unit-geometry">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/repeated_geometry.png" height="250">
 </a>
@@ -117,6 +111,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 </a>
 
 ### Mesh
+
 <a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#id1">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Mesh.png" height="250">
 </a>

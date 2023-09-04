@@ -7,6 +7,7 @@ TPMS (:mod:`microgen.shape.tpms`)
    :hide-code:
 
    pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.split_sharp_edges = True
 
 """
 import logging

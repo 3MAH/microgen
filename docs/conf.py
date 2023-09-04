@@ -15,6 +15,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
+import microgen
 
 # -- Project information -----------------------------------------------------
 
@@ -23,7 +24,7 @@ copyright = '2022, 3MAH'
 author = '3MAH'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = microgen.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -31,16 +32,18 @@ release = '1.0.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.coverage',
-              'sphinx.ext.napoleon',
-              'sphinx.ext.autosummary',
-              'jupyter_sphinx']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary',
+    'jupyter_sphinx',
+    'myst_parser',
+]
 
 # MOCK_MODULES = ["numpy", "cadquery", "OCP"]
 # for mod_name in MOCK_MODULES:
 #     sys.modules[mod_name] = mock.Mock()
-
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -61,7 +64,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-
 html_theme_options = {
     'canonical_url': 'https://microgen.readthedocs.io/en/latest/',
     # 'logo_only': False,
