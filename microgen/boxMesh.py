@@ -83,7 +83,7 @@ class BoxMesh(PhaseMesh):
     def from_pyvista(
             pvmesh: pv.UnstructuredGrid,
             name: str = None):
-        """Build a PhaseMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case, 
+        """Build a BoxMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case,
         the PolyData object is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
         Mesh with multiple element type are not handled.
@@ -91,7 +91,7 @@ class BoxMesh(PhaseMesh):
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
 
-        :return : A PhaseMesh Object from the tetrahedral elements of the pyvista Unstructured Grid
+        :return : A BoxMesh Object from the tetrahedral elements of the pyvista Unstructured Grid
         """
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()

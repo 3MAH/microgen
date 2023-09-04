@@ -132,19 +132,6 @@ class PhaseMesh:
 
         return self._mesh
 
-    @mesh.setter
-    def mesh(
-            self,
-            value: pv.UnstructuredGrid,
-    ) -> None:
-        """
-        set the pyvista mesh (UnstructuredGrid) of the considered PhaseMesh
-
-        :param value: Pyvista mesh (UnstructuredGrid)
-        """
-
-        self._mesh = value
-
     @property
     def surface(
             self,
@@ -159,18 +146,6 @@ class PhaseMesh:
 
         return self._surface
 
-    @surface.setter
-    def surface(
-            self,
-            value: pv.PolyData,
-    ) -> None:
-        """
-        set the surface of the mesh
-
-        :param value: surface of the mesh
-        """
-
-        self._surface = value
 
     def _extract_surface(
             self,
