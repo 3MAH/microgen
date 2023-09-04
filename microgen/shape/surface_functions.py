@@ -11,10 +11,11 @@ def gyroid(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.gyroid,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.gyroid,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -32,10 +33,11 @@ def schwarzP(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schwarzP,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.schwarzP,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -53,10 +55,11 @@ def schwarzD(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schwarzD,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.schwarzD,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -79,10 +82,11 @@ def neovius(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.neovius,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.neovius,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -103,10 +107,11 @@ def schoenIWP(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schoenIWP,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.schoenIWP,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -127,10 +132,11 @@ def schoenFRD(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.schoenFRD,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.schoenFRD,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -151,10 +157,11 @@ def fischerKochS(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.fischerKochS,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.fischerKochS,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -176,10 +183,11 @@ def pmy(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.pmy,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.pmy,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -202,10 +210,11 @@ def honeycomb(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.honeycomb,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.honeycomb,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -215,12 +224,12 @@ def honeycomb(x: float, y: float, z: float) -> float:
 def lidinoid(x: float, y: float, z: float) -> float:
     """
     .. math::
-       0.5 * (sin(2 * x) * cos(y) * sin(z) +
-              sin(2 * y) * cos(z) * sin(x) +
-              sin(2 * z) * cos(x) * sin(y)) -
-       0.5 * (cos(2 * x) * cos(2 * y) +
-              cos(2 * y) * cos(2 * z) +
-              cos(2 * z) * cos(2 * x)) + 0.3 = 0
+       0.5 (sin(2 x) cos(y) sin(z) +
+            sin(2 y) cos(z) sin(x) +
+            sin(2 z) cos(x) sin(y)) -
+       0.5 (cos(2 x) cos(2 y) +
+            cos(2 y) cos(2 z) +
+            cos(2 z) cos(2 x)) + 0.3 = 0
 
     .. jupyter-execute::
        :hide-code:
@@ -228,10 +237,11 @@ def lidinoid(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.lidinoid,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.lidinoid,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -251,13 +261,13 @@ def lidinoid(x: float, y: float, z: float) -> float:
 def split_p(x: float, y: float, z: float) -> float:
     """
     .. math::
-       1.1 * (sin(2 * x) * cos(y) * sin(z) +
-              sin(2 * y) * cos(z) * sin(x) +
-              sin(2 * z) * cos(x) * sin(y)) -
-       0.2 * (cos(2 * x) * cos(2 * y) +
-              cos(2 * y) * cos(2 * z) +
-              cos(2 * z) * cos(2 * x)) -
-       0.4 * (cos(2 * x) + cos(2 * y) + cos(2 * z)) = 0
+       1.1 (sin(2 x) cos(y) sin(z) +
+            sin(2 y) cos(z) sin(x) +
+            sin(2 z) cos(x) sin(y)) -
+       0.2 (cos(2 x) cos(2 y) +
+            cos(2 y) cos(2 z) +
+            cos(2 z) cos(2 x)) -
+       0.4 (cos(2 x) + cos(2 y) + cos(2 z)) = 0
 
     .. jupyter-execute::
        :hide-code:
@@ -265,10 +275,11 @@ def split_p(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.tpms.split_p,
-           type_part="sheet"
+           surface_function=microgen.surface_functions.split_p,
+           offset=0.3,
+           resolution=30,
        )
-       shape = geometry.generateSurfaceVtk()
+       shape = geometry.sheet
 
        shape.plot(color='white')
     """
@@ -282,4 +293,114 @@ def split_p(x: float, y: float, z: float) -> float:
         - 0.2
         * (cos(2 * x) * cos(2 * y) + cos(2 * y) * cos(2 * z) + cos(2 * z) * cos(2 * x))
         - 0.4 * (cos(2 * x) + cos(2 * y) + cos(2 * z))
+    )
+
+def honeycomb_gyroid(x: float, y: float, z: float) -> float:
+    """
+    .. math::
+       sin(x) cos(y) + sin(y) + cos(x) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.surface_functions.honeycomb_gyroid,
+           offset=0.3,
+           resolution=30,
+       )
+       shape = geometry.sheet
+
+       shape.plot(color='white')
+    """
+    return sin(x) * cos(y) + sin(y) + cos(x)
+
+
+def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
+    """
+    .. math::
+       cos(x) + cos(y) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.surface_functions.honeycomb_schwarzP,
+           offset=0.3,
+           resolution=30,
+       )
+       shape = geometry.sheet
+
+       shape.plot(color='white')
+    """
+    return cos(x) + cos(y)
+
+def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
+    """
+    .. math::
+       cos(x) cos(y) + sin(x) sin(y) + sin(x) cos(y) + cos(x) sin(y) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.surface_functions.honeycomb_schwarzD,
+           offset=0.3,
+           resolution=30,
+       )
+       shape = geometry.sheet
+
+       shape.plot(color='white')
+    """
+    return cos(x) * cos(y) + sin(x) * sin(y) + sin(x) * cos(y) + cos(x) * sin(y)
+
+def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
+    """
+    .. math::
+       cos(x) cos(y) + cos(y) + cos(x) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.surface_functions.honeycomb_schoenIWP,
+           offset=0.3,
+           resolution=30,
+       )
+       shape = geometry.sheet
+
+       shape.plot(color='white')
+    """
+    return cos(x) * cos(y) + cos(y) + cos(x)
+
+def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
+    """
+    .. math::
+       1.1 (sin(2 x) cos(y) + sin(2 y) sin(x) + cos(x) sin(y))
+       - (cos(2 x) cos(2 y) + cos(2 y) + cos(2 x)) = 0
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.surface_functions.honeycomb_lidinoid,
+           offset=0.3,
+           resolution=30,
+       )
+       shape = geometry.sheet
+
+       shape.plot(color='white')
+    """
+    return (
+        1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y))
+        - (cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x))
     )
