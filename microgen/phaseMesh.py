@@ -102,10 +102,7 @@ class PhaseMesh:
             elements = {10: pvmesh.cells_dict[10]}
             return PhaseMesh(pvmesh.points, elements, pvmesh, name)            
         except ValueError as e:     
-            print(e)  
-
-        #extract only the tetrahedral elements
-        elements = {10: pvmesh.cells_dict(10)}
+            print(e)
 
     @staticmethod
     def read(
