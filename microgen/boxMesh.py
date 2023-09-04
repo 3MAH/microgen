@@ -404,6 +404,11 @@ class BoxMesh(PhaseMesh):
             all_edges_p_i = all_edges_p[i]
             index_temp_list = all_edges_p_i[index_temp].tolist()
 
+            for i in range(0, len(dist_temp)):
+                if dist_temp_list[i][0]<tol:
+                    dist_temp_list[i] = dist_temp_list[i][0:1]
+                    index_temp_list[i] = index_temp_list[i][0:1]
+
             dist.append(dist_temp_list)
             index.append(index_temp_list)
 
