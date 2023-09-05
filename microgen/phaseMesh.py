@@ -187,8 +187,8 @@ def _check_if_only_linear_tetrahedral(
     # 25:'hex20'
 
     set_elm1d_type = {3, 21}
-    set_elm2d_type = {5, 9, 22}
-    set_elm3d_type_other_than_10 = {12, 13, 14, 23, 24, 25}
+    set_elm2d_type = {5, 9, 22, 23}
+    set_elm3d_type_other_than_10 = {12, 13, 14, 24, 25}
 
     set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
 
