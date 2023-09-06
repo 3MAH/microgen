@@ -170,7 +170,7 @@ def linear_2d_triangle_mesh() -> pv.UnstructuredGrid:
 def quadratic_2d_triangle_mesh() -> pv.UnstructuredGrid:
     points = np.array(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.5, 0.0, 0.0], [0.5, 0.5, 0.0], [0.0, 0.5, 0.0]])
-    cells = [3, 0, 1, 2, 3, 4, 5]
+    cells = [6, 0, 1, 2, 3, 4, 5]
     celltypes = [pv.CellType.QUADRATIC_TRIANGLE]
     grid = pv.UnstructuredGrid(cells, celltypes, points)
 
@@ -324,9 +324,14 @@ def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_phaseMesh_surf
 
     assert surf.n_faces == target_n_cells and surf.faces.all() == target_face_connectivity_array.all()
 
-def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_warning(sample_1d_mesh_list, recwarn) -> None:
+def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_warning(sample_1d_mesh_list) -> None:
     warning_message = "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_1d_mesh_list:
             phaseMesh._check_if_only_linear_tetrahedral(mesh)
 
+def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(sample_2d_mesh_list) -> None:
+    warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
+    with pytest.warns(UserWarning, match=warning_message):
+        for mesh in sample_2d_mesh_list:
+            phaseMesh._check_if_only_linear_tetrahedral(mesh)
