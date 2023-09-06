@@ -1,8 +1,9 @@
 import pytest
 import numpy as np
 import numpy.typing as npt
-from microgen import PhaseMesh
+from microgen import PhaseMesh, phaseMesh
 import pyvista as pv
+import warnings
 
 
 def compare_dict_with_arrays_as_values(dict1: dict[int, npt.NDArray[int]], dict2: dict[int, npt.NDArray[int]]) -> bool:
@@ -257,18 +258,40 @@ def linear_3d_wedge_mesh() -> pv.UnstructuredGrid:
 
     return grid
 
+
+@pytest.fixture(scope='session')
 def linear_3d_pyramid_mesh() -> pv.UnstructuredGrid:
-    points = np.array([[ 1.0        ,  1.0        ,  0.0        ],
-                 [-1.0        ,  1.0        ,  0.0        ],
-                 [-1.0        , -1.0        ,  0.0        ],
-                 [ 1.0        , -1.0        ,  0.0        ],
-                 [ 0.0        ,  0.0        ,  1.60803807]])
+    points = np.array([[1.0, 1.0, 0.0],
+                       [-1.0, 1.0, 0.0],
+                       [-1.0, -1.0, 0.0],
+                       [1.0, -1.0, 0.0],
+                       [0.0, 0.0, 1.60803807]])
     cells = [5, 0, 1, 2, 3, 4]
     celltypes = [pv.CellType.PYRAMID]
     grid = pv.UnstructuredGrid(cells, celltypes, points)
 
     return grid
 
+
+@pytest.fixture(scope='session')
+def sample_1d_mesh_list(linear_1d_mesh: pv.UnstructuredGrid, quadratic_1d_mesh: pv.UnstructuredGrid) -> list[
+    pv.UnstructuredGrid]:
+    return [linear_1d_mesh, quadratic_1d_mesh]
+
+
+@pytest.fixture(scope='session')
+def sample_2d_mesh_list(linear_2d_quad_mesh: pv.UnstructuredGrid, quadratic_2d_quad_mesh, linear_2d_triangle_mesh,
+                        quadratic_2d_triangle_mesh) -> list[pv.UnstructuredGrid]:
+    return [linear_2d_quad_mesh, quadratic_2d_quad_mesh, linear_2d_triangle_mesh, quadratic_2d_triangle_mesh]
+
+
+@pytest.fixture(scope='session')
+def sample_3d_non_linear_tet_mesh_list(quadratic_3d_tet_mesh: pv.UnstructuredGrid,
+                                       linear_3d_hex_mesh: pv.UnstructuredGrid,
+                                       quadratic_3d_hex_mesh: pv.UnstructuredGrid,
+                                       linear_3d_wedge_mesh: pv.UnstructuredGrid,
+                                       linear_3d_pyramid_mesh: pv.UnstructuredGrid) -> list[pv.UnstructuredGrid]:
+    return [quadratic_3d_tet_mesh, linear_3d_hex_mesh, quadratic_3d_hex_mesh, linear_3d_wedge_mesh, linear_3d_pyramid_mesh]
 
 
 def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_phaseMesh_from_pyvista_must_return_the_same_mesh(
@@ -300,3 +323,10 @@ def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_phaseMesh_surf
     surf = mesh.surface
 
     assert surf.n_faces == target_n_cells and surf.faces.all() == target_face_connectivity_array.all()
+
+def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_warning(sample_1d_mesh_list, recwarn) -> None:
+    warning_message = "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
+    with pytest.warns(UserWarning, match=warning_message):
+        for mesh in sample_1d_mesh_list:
+            phaseMesh._check_if_only_linear_tetrahedral(mesh)
+
