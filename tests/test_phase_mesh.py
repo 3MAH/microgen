@@ -67,7 +67,7 @@ def box_phaseMesh_nodes() -> npt.NDArray[np.float_]:
 
 @pytest.fixture(scope='session')
 def box_phaseMesh_elements() -> dict[int, npt.NDArray[np.float_]]:
-    elements_dict = {10: np.array([[11, 6, 0, 14],
+    elements_dict = {pv.CellType.TETRA: np.array([[11, 6, 0, 14],
                                    [0, 9, 1, 11],
                                    [3, 10, 0, 13],
                                    [9, 0, 4, 11],
@@ -334,4 +334,10 @@ def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_wa
     warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_2d_mesh_list:
+            phaseMesh._check_if_only_linear_tetrahedral(mesh)
+
+def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(sample_3d_non_linear_tet_mesh_list) -> None:
+    error_message_snippet = "Mesh contains elements other than linear tetrahedra."
+    with pytest.raises(ValueError, match=error_message_snippet):
+        for mesh in sample_3d_non_linear_tet_mesh_list:
             phaseMesh._check_if_only_linear_tetrahedral(mesh)
