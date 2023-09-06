@@ -99,8 +99,8 @@ class PhaseMesh:
         try:
             _check_if_only_linear_tetrahedral(pvmesh)
             elements = {10: pvmesh.cells_dict[10]}
-            return PhaseMesh(pvmesh.points, elements, pvmesh, name)            
-        except ValueError as e:     
+            return PhaseMesh(pvmesh.points, elements, pvmesh, name)
+        except ValueError as e:
             print(e)
 
     @staticmethod
@@ -145,7 +145,6 @@ class PhaseMesh:
             self._surface = self._extract_surface()
 
         return self._surface
-
 
     def _extract_surface(
             self,
@@ -192,16 +191,11 @@ def _check_if_only_linear_tetrahedral(
 
     set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
 
-    print(pvmesh.cells_dict)
-    print(pvmesh.cells_dict[10])
-    print(set_cells_in_pvmesh)
-
     if set_cells_in_pvmesh.intersection(set_elm1d_type):
         warnings.warn("1D elements are present in the PyVista UnstructuredGrid. They will be ignored.")
     if set_cells_in_pvmesh.intersection(set_elm2d_type):
-        warnings.warn("2D elements are present in the PyVista UnstructuredGrid. They will be ignored \n",
-                      "Surface elements shall be extracted automatically from the 3d mesh")
+        warnings.warn(
+            "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh")
 
     if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_10):
-        raise ValueError("Mesh contains elements other than linear tetrahedra",
-                         "Use triangulate() to ensure that only linear tetrahedra are used ")
+        raise ValueError("Mesh contains elements other than linear tetrahedra. \nUse triangulate() to ensure that only linear tetrahedra are used.")
