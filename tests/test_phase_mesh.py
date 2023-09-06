@@ -341,3 +341,9 @@ def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found
     with pytest.raises(ValueError, match=error_message_snippet):
         for mesh in sample_3d_non_linear_tet_mesh_list:
             phaseMesh._check_if_only_linear_tetrahedral(mesh)
+
+def test_given_linear_tets_only_mesh__check_if_only_linear_tetrahedral_must_not_raise_any_error(box_mesh):
+    try:
+        phaseMesh._check_if_only_linear_tetrahedral(box_mesh)
+    except ValueError:
+        assert False
