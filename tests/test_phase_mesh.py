@@ -3,7 +3,6 @@ import numpy as np
 import numpy.typing as npt
 from microgen import PhaseMesh, phaseMesh
 import pyvista as pv
-import warnings
 
 
 def compare_dict_with_arrays_as_values(dict1: dict[int, npt.NDArray[int]], dict2: dict[int, npt.NDArray[int]]) -> bool:
