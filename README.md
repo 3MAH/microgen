@@ -54,6 +54,12 @@ pip install -e .[all]
 
 The `-e` or `--editable` option allows to modify the sources without having to reinstall the package and `[all]` installs the optional development dependencies.
 
+
+Run tests with pytest:
+```
+pytest tests -n auto
+```
+
 ## Examples
 
 Click on the image to be redirected to the corresponding example on Microgen's documentation
