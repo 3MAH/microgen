@@ -137,3 +137,10 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
     box_BoxMesh.construct(rve)
 
     assert (box_BoxMesh.center == target_center).all() and box_BoxMesh.corners == target_corners and box_BoxMesh.edges == target_edges and box_BoxMesh.faces == target_faces
+
+def test_given_box_mesh__build_rve_must_build_correct_rve(box_BoxMesh) -> None:
+    target_rve = Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+    test_rve = box_BoxMesh._build_rve()
+
+    assert test_rve.center == target_rve.center and test_rve.dim_x == target_rve.dim_x and test_rve.dim_y == target_rve.dim_y and test_rve.dim_z == target_rve.dim_z
+
