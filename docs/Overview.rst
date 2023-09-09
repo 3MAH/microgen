@@ -12,8 +12,8 @@ Here are the main features:
 - Regular mesh and periodic mesh are implemented using `Gmsh <https://gmsh.info/>`_, remeshing using `Mmg <https://www.mmgtools.org/>`_ is also implemented.
 
 
-.. image:: https://anaconda.org/set3mah/microgen/badges/installer/conda.svg
-    :target: https://conda.anaconda.org/set3mah/
+.. image:: https://anaconda.org/set3mah/microgen/badges/version.svg
+    :target: https://anaconda.org/set3MAH/microgen
     
 .. image:: https://badge.fury.io/py/microgen.svg
     :target: https://pypi.org/project/microgen/1.0/
@@ -52,49 +52,50 @@ Brief examples
    :hide-code:
 
    import pyvista
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [690, 400]
+   pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.split_sharp_edges = True
    pyvista.global_theme.antialiasing = True
+
 
 .. jupyter-execute::
    
    import microgen
 
    geometry = microgen.Tpms(
-      surface_function=microgen.tpms.gyroid,
-      type_part="sheet",
-      thickness=0.05
+      surface_function=microgen.surface_functions.gyroid,
+      offset=0.3
    )
-   shape = geometry.generateVtk()
+   shape = geometry.sheet
 
    shape.plot(color='white')
 
-.. jupyter-execute::
+..
+ .. jupyter-execute::
 
-   import cadquery as cq
+..    import cadquery as cq
 
-   capsule = microgen.Capsule(center=(0, 0, 0.5), height=3, radius=1)
-   shape = capsule.generate()
+..    capsule = microgen.Capsule(center=(0, 0, 0.5), height=3, radius=1)
+..    shape = capsule.generate()
 
-   shell = cq.Workplane().add(shape).shell(0.025).split(keepBottom=True).val()
-   half_capsule = cq.Workplane().add(shape).split(keepBottom=True).val()
+..    shell = cq.Workplane().add(shape).shell(0.025).split(keepBottom=True).val()
+..    half_capsule = cq.Workplane().add(shape).split(keepBottom=True).val()
 
-   gyroid = microgen.Tpms(center=(0., 0., 0),
-                surface_function=microgen.tpms.gyroid,
-                type_part='sheet',
-                thickness=0.05,
-                cell_size=1,
-                repeat_cell=(5, 3, 1))
-   shape_gyroid = gyroid.generate()
+..    gyroid = microgen.Tpms(center=(0., 0., 0),
+..                 surface_function=microgen.surface_functions.gyroid,
+..                 offset=0.3,
+..                 cell_size=1,
+..                 repeat_cell=(5, 3, 1))
+..    shape_gyroid = gyroid.generate(type_part="sheet")
 
-   inner_gyroid = shape_gyroid.intersect(half_capsule)
-   fuse = inner_gyroid.fuse(shell)
+..    inner_gyroid = shape_gyroid.intersect(half_capsule)
+..    fuse = inner_gyroid.fuse(shell)
 
-   mesh = pyvista.PolyData(fuse.toVtkPolyData(0.1))
-   pl = pyvista.Plotter()
-   pl.add_mesh(mesh, color='white')
-   pl.camera.zoom(1.5)
-   pl.show()
+..    mesh = pyvista.PolyData(fuse.toVtkPolyData(0.1))
+..    pl = pyvista.Plotter()
+..    pl.add_mesh(mesh, color='white')
+..    pl.camera.zoom(1.5)
+..    pl.show()

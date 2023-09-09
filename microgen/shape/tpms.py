@@ -7,6 +7,7 @@ TPMS (:mod:`microgen.shape.tpms`)
    :hide-code:
 
    pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.split_sharp_edges = True
 
 """
 import logging
@@ -167,7 +168,7 @@ class Tpms(BasicGeometry):
         mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars="surface")
         return mesh
 
-    def _create_grid(self, x, y, z):
+    def _create_grid(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> pv.StructuredGrid:
         return pv.StructuredGrid(x, y, z)
 
     def _compute_tpms_field(self):
@@ -226,14 +227,19 @@ class Tpms(BasicGeometry):
 
     def _create_surface(
         self,
-        isovalue: float = 0,
+        isovalue: Union[float, np.ndarray] = 0.0,
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
 
-        mesh = self.grid.contour(isosurfaces=[isovalue], scalars="surface")
+        if isinstance(isovalue, float):
+            scalars = self.grid["surface"] - isovalue
+        elif isinstance(isovalue, np.ndarray):
+            scalars = self.grid["surface"] - isovalue.ravel(order="F")
+
+        mesh = self.grid.contour(isosurfaces=[0.0], scalars=scalars)
         mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
         mesh.clean(inplace=True)
 
@@ -298,10 +304,8 @@ class Tpms(BasicGeometry):
             logging.warning("offset is ignored for 'surface' part")
             return self._create_surface(isovalue=0, smoothing=smoothing, verbose=verbose)
 
-        if not isinstance(self.offset, Union[float, int]):
-            raise NotImplementedError(
-                "Graded offset is not supported yet with the `generate` function"
-            )
+        if self.grid.dimensions == (0, 0, 0):
+            self._compute_tpms_field()
 
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
@@ -313,7 +317,7 @@ class Tpms(BasicGeometry):
             )
 
         eps = self.offset / 3.0
-        if self.offset == 0.0:
+        if isinstance(self.offset, float) and self.offset == 0.0:
             eps = 0.1 * np.min(self.cell_size)
 
         box = cq.Workplane("front").box(1, 1, 1)
@@ -465,7 +469,7 @@ class CylindricalTpms(Tpms):
             )
             self.repeat_cell[1] = n_repeat_to_full_circle
 
-    def _create_grid(self, x, y, z):
+    def _create_grid(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> pv.StructuredGrid:
         rho = x + self.cylinder_radius
         theta = y * self.unit_theta
 
@@ -537,7 +541,7 @@ class SphericalTpms(Tpms):
             )
             self.repeat_cell[2] = n_repeat_phi_to_join
 
-    def _create_grid(self, x, y, z):
+    def _create_grid(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> pv.StructuredGrid:
         rho = x + self.sphere_radius
         theta = y * self.unit_theta + np.pi / 2.0
         phi = z * self.unit_phi
