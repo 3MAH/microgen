@@ -476,7 +476,7 @@ class BoxMesh(PhaseMesh):
             self,
             rve: Optional[Rve] = None,
             tol: Optional[float] = 1.e-4,
-    ) -> list[int]:
+    ) -> tuple[pv.PolyData ,list[int]]:
 
         if isinstance(rve, Rve) == False:
             rve = self.rve

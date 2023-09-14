@@ -3,6 +3,7 @@ import numpy as np
 import numpy.typing as npt
 from microgen import BoxMesh, Rve
 import pyvista as pv
+import math as m
 
 
 @pytest.fixture(scope='session')
@@ -109,8 +110,30 @@ def box_BoxMesh(box_mesh_points, box_boxMesh_elements) -> BoxMesh:
     return mesh
 
 
-def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(box_BoxMesh) -> None:
-    rve = Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+@pytest.fixture(scope='session')
+def rve() -> Rve:
+    return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+
+
+def _check_triangle_on_boundary(surface_mesh: pv.PolyData, triangle_index: int, rve: Rve):
+    triangle = surface_mesh.get_cell(triangle_index)
+    triangle_nodes_coords = triangle.points.tolist()
+    rve_boundaries = [
+        (rve.x_min, rve.x_max),
+        (rve.y_min, rve.y_max),
+        (rve.z_min, rve.z_max),
+    ]
+    for i, rve_axis_min_max in enumerate(rve_boundaries):
+        for rve_axis_boundary in rve_axis_min_max:
+            is_triangle_on_boundary = all(
+                m.isclose(node[i], rve_axis_boundary) for node in triangle_nodes_coords
+            )
+            if is_triangle_on_boundary:
+                return True
+    return False
+
+
+def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(box_BoxMesh, rve) -> None:
     target_center: npt.NDArray[np.float_] = np.array([0.5, 0.5, 0.5])
     target_corners: list[npt.NDArray[int]] = [np.array([26]),
                                               np.array([24]),
@@ -132,15 +155,26 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
                                             np.array([15]),
                                             np.array([9]),
                                             np.array([11])]
-    target_faces: list[npt.NDArray[int]] = [np.array([22]), np.array([4]), np.array([14]), np.array([12]), np.array([16]), np.array([10])]
+    target_faces: list[npt.NDArray[int]] = [np.array([22]), np.array([4]), np.array([14]), np.array([12]),
+                                            np.array([16]), np.array([10])]
 
     box_BoxMesh.construct(rve)
 
     assert (box_BoxMesh.center == target_center).all() and box_BoxMesh.corners == target_corners and box_BoxMesh.edges == target_edges and box_BoxMesh.faces == target_faces
 
-def test_given_box_mesh__build_rve_must_build_correct_rve(box_BoxMesh) -> None:
-    target_rve = Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+
+def test_given_box_mesh__build_rve_must_build_correct_rve(box_BoxMesh, rve) -> None:
+    target_rve = rve
     test_rve = box_BoxMesh._build_rve()
 
     assert test_rve.center == target_rve.center and test_rve.dim_x == target_rve.dim_x and test_rve.dim_y == target_rve.dim_y and test_rve.dim_z == target_rve.dim_z
 
+
+def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_elements(box_BoxMesh, rve) -> None:
+    expected_number_of_cells = 48
+    boundary, boundary_cells_index = box_BoxMesh.boundary_elements(rve)
+    bool_check_triangle_on_boundary_list = []
+    for triangle_index in boundary_cells_index:
+        bool_check_triangle_on_boundary_list.append(_check_triangle_on_boundary(boundary, triangle_index, rve))
+
+    assert boundary.n_faces == expected_number_of_cells and all(bool_check_triangle_on_boundary_list)
