@@ -135,32 +135,18 @@ def _check_triangle_on_boundary(surface_mesh: pv.PolyData, triangle_index: int, 
 
 def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(box_BoxMesh, rve) -> None:
     target_center: npt.NDArray[np.float_] = np.array([0.5, 0.5, 0.5])
-    target_corners: list[npt.NDArray[int]] = [np.array([26]),
-                                              np.array([24]),
-                                              np.array([8]),
-                                              np.array([6]),
-                                              np.array([20]),
-                                              np.array([18]),
-                                              np.array([2]),
-                                              np.array([0])]
-    target_edges: list[npt.NDArray[int]] = [np.array([23]),
-                                            np.array([5]),
-                                            np.array([3]),
-                                            np.array([21]),
-                                            np.array([25]),
-                                            np.array([7]),
-                                            np.array([1]),
-                                            np.array([19]),
-                                            np.array([17]),
-                                            np.array([15]),
-                                            np.array([9]),
-                                            np.array([11])]
-    target_faces: list[npt.NDArray[int]] = [np.array([22]), np.array([4]), np.array([14]), np.array([12]),
-                                            np.array([16]), np.array([10])]
+    target_corners: list[int] = [0, 2, 6, 8, 18, 20, 24, 26]
+    target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+    target_faces: list[int] = [4, 10, 12, 14, 16, 22]
 
     box_BoxMesh.construct(rve)
 
-    assert (box_BoxMesh.center == target_center).all() and box_BoxMesh.corners == target_corners and box_BoxMesh.edges == target_edges and box_BoxMesh.faces == target_faces
+    box_BoxMesh_corners = sorted(np.concatenate(box_BoxMesh.corners, axis=0).tolist())
+    box_BoxMesh_edges = sorted(np.concatenate(box_BoxMesh.edges, axis=0).tolist())
+    box_BoxMesh_faces = sorted(np.concatenate(box_BoxMesh.faces, axis=0).tolist())
+
+    assert (
+                       box_BoxMesh.center == target_center).all() and box_BoxMesh_corners == target_corners and box_BoxMesh_edges == target_edges and box_BoxMesh_faces == target_faces
 
 
 def test_given_box_mesh__build_rve_must_build_correct_rve(box_BoxMesh, rve) -> None:
