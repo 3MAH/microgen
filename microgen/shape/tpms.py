@@ -305,8 +305,24 @@ class Tpms(BasicGeometry):
                     'lower skeletal', 'upper skeletal' or 'surface'",
             )
 
-        if type_part == "sheet" and self.offset == 0.0:
-            raise ValueError("offset must be greater than 0 to generate 'sheet' part")
+        if "skeletal" in type_part:
+            if np.any(self.offset < 0.0):  # scalar offset = 0 is working
+                raise NotImplementedError(
+                    "generating 'skeletal' parts with negative offset values is not implemented yet"
+                )
+            if isinstance(self.offset, np.ndarray) and np.any(self.offset == 0.0):
+                raise NotImplementedError(
+                    "generating 'skeletal' parts with zero offset values is not implemented yet"
+                )
+        elif type_part == "sheet":
+            if np.all(self.offset <= 0.0):
+                raise ValueError(
+                    "offset must be greater than 0 to generate 'sheet' part"
+                )
+            if np.any(self.offset <= 0.0):
+                raise NotImplementedError(
+                    "generating 'sheet' parts with negative or zero offset values is not implemented yet"
+                )
 
         if type_part == "surface":
             logging.warning("offset is ignored for 'surface' part")
@@ -318,16 +334,11 @@ class Tpms(BasicGeometry):
             self._compute_tpms_field()
 
         offset_limit = 2.0 * np.max(self.grid["surface"])
-        if isinstance(self.offset, Union[float, int]) and self.offset > offset_limit:
+        if np.all(self.offset > offset_limit):
             raise ValueError(
                 f"offset ({self.offset}) must be lower \
                         than {offset_limit} for the given TPMS function"
             )
-        elif isinstance(self.offset, np.ndarray):  # Field
-            if np.any(self.offset <= 0.0) or np.all(self.offset > offset_limit):
-                raise ValueError(
-                    "offset must be greater than 0 for the given TPMS function"
-                )
 
         eps = self.offset / 3.0
         if isinstance(self.offset, float) and self.offset == 0.0:
