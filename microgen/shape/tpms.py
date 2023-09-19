@@ -89,6 +89,12 @@ class Tpms(BasicGeometry):
         self._lower_skeletal = None
         self._surface = None
 
+        self._init_cell_parameters(cell_size, repeat_cell)
+
+        self.resolution = resolution
+        self._compute_tpms_field()
+
+    def _init_cell_parameters(self, cell_size, repeat_cell):
         if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
         elif len(cell_size) == 3:
@@ -103,9 +109,6 @@ class Tpms(BasicGeometry):
         else:
             raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
-        self.resolution = resolution
-
-
     @property
     def sheet(self) -> pv.PolyData:
         """
@@ -113,9 +116,6 @@ class Tpms(BasicGeometry):
         """
         if self._sheet is not None:
             return self._sheet
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         self._sheet = (
             self.grid.clip_scalar(scalars="upper_surface")
@@ -132,9 +132,6 @@ class Tpms(BasicGeometry):
         if self._upper_skeletal is not None:
             return self._upper_skeletal
 
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
-
         self._upper_skeletal = self.grid.clip_scalar(
             scalars="upper_surface", invert=False
         ).clean().triangulate()
@@ -147,9 +144,6 @@ class Tpms(BasicGeometry):
         """
         if self._lower_skeletal is not None:
             return self._lower_skeletal
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         self._lower_skeletal = self.grid.clip_scalar(scalars="lower_surface").clean().triangulate()
         return self._lower_skeletal
@@ -168,9 +162,6 @@ class Tpms(BasicGeometry):
         """
         if self._surface is not None:
             return self._surface
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         return self.grid.contour(isosurfaces=[0.0], scalars="surface").triangulate()
 
@@ -243,9 +234,6 @@ class Tpms(BasicGeometry):
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
-
         if isinstance(isovalue, float):
             scalars = self.grid["surface"] - isovalue
         elif isinstance(isovalue, np.ndarray):
@@ -311,9 +299,6 @@ class Tpms(BasicGeometry):
             return self._create_surface(
                 isovalue=0, smoothing=smoothing, verbose=verbose
             )
-
-        if self.grid.dimensions == (0, 0, 0):
-            self._compute_tpms_field()
 
         if "skeletal" in type_part:
             if (isinstance(self.offset, (int, float)) and self.offset < 0.0):  # scalar offset = 0 is working
@@ -479,16 +464,7 @@ class CylindricalTpms(Tpms):
         :param orientation: orientation of the geometry
         :param resolution: unit cell resolution of the grid to compute tpms scalar fields
         """
-        super().__init__(
-            surface_function=surface_function,
-            offset=offset,
-            phase_shift=phase_shift,
-            cell_size=cell_size,
-            repeat_cell=repeat_cell,
-            resolution=resolution,
-            center=center,
-            orientation=orientation,
-        )
+        self._init_cell_parameters(cell_size, repeat_cell)
 
         self.cylinder_radius = radius
 
@@ -501,6 +477,17 @@ class CylindricalTpms(Tpms):
                 "%d cells repeated in circular direction", n_repeat_to_full_circle
             )
             self.repeat_cell[1] = n_repeat_to_full_circle
+
+        super().__init__(
+            surface_function=surface_function,
+            offset=offset,
+            phase_shift=phase_shift,
+            cell_size=cell_size,
+            repeat_cell=repeat_cell,
+            resolution=resolution,
+            center=center,
+            orientation=orientation,
+        )
 
     def _create_grid(
         self, x: np.ndarray, y: np.ndarray, z: np.ndarray
@@ -549,16 +536,7 @@ class SphericalTpms(Tpms):
         :param orientation: orientation of the geometry
         :param resolution: unit cell resolution of the grid to compute tpms scalar fields
         """
-        super().__init__(
-            surface_function=surface_function,
-            offset=offset,
-            phase_shift=phase_shift,
-            cell_size=cell_size,
-            repeat_cell=repeat_cell,
-            resolution=resolution,
-            center=center,
-            orientation=orientation,
-        )
+        self._init_cell_parameters(cell_size, repeat_cell)
 
         self.sphere_radius = radius
 
@@ -577,6 +555,17 @@ class SphericalTpms(Tpms):
         if self.repeat_cell[2] == 0 or self.repeat_cell[2] > n_repeat_phi_to_join:
             logging.info("%d cells repeated in phi direction", n_repeat_phi_to_join)
             self.repeat_cell[2] = n_repeat_phi_to_join
+
+        super().__init__(
+            surface_function=surface_function,
+            offset=offset,
+            phase_shift=phase_shift,
+            cell_size=cell_size,
+            repeat_cell=repeat_cell,
+            resolution=resolution,
+            center=center,
+            orientation=orientation,
+        )
 
     def _create_grid(
         self, x: np.ndarray, y: np.ndarray, z: np.ndarray
