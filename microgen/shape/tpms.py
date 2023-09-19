@@ -105,6 +105,7 @@ class Tpms(BasicGeometry):
 
         self.resolution = resolution
 
+
     @property
     def sheet(self) -> pv.PolyData:
         """
@@ -119,7 +120,7 @@ class Tpms(BasicGeometry):
         self._sheet = (
             self.grid.clip_scalar(scalars="upper_surface")
             .clip_scalar(scalars="lower_surface", invert=False)
-            .clean()
+            .clean().triangulate()
         )
         return self._sheet
 
@@ -136,7 +137,7 @@ class Tpms(BasicGeometry):
 
         self._upper_skeletal = self.grid.clip_scalar(
             scalars="upper_surface", invert=False
-        ).clean()
+        ).clean().triangulate()
         return self._upper_skeletal
 
     @property
@@ -150,7 +151,7 @@ class Tpms(BasicGeometry):
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
 
-        self._lower_skeletal = self.grid.clip_scalar(scalars="lower_surface").clean()
+        self._lower_skeletal = self.grid.clip_scalar(scalars="lower_surface").clean().triangulate()
         return self._lower_skeletal
 
     @property
@@ -171,7 +172,7 @@ class Tpms(BasicGeometry):
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
 
-        return self.grid.contour(isosurfaces=[0.0], scalars="surface")
+        return self.grid.contour(isosurfaces=[0.0], scalars="surface").triangulate()
 
     def _create_grid(
         self, x: np.ndarray, y: np.ndarray, z: np.ndarray
@@ -427,13 +428,13 @@ class Tpms(BasicGeometry):
         :return: VTK PolyData object of the required TPMS part
         """
         if type_part == "sheet":
-            return self.sheet.triangulate()
+            return self.sheet
         if type_part == "lower skeletal":
-            return self.lower_skeletal.triangulate()
+            return self.lower_skeletal
         if type_part == "upper skeletal":
-            return self.upper_skeletal.triangulate()
+            return self.upper_skeletal
         if type_part == "surface":
-            return self.surface.triangulate()
+            return self.surface
         raise ValueError(
             f"type_part ({type_part}) must be 'sheet', \
                 'lower skeletal', 'upper skeletal' or 'surface'"
