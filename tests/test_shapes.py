@@ -170,6 +170,26 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 
 
 @pytest.mark.parametrize(
+    "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
+)
+@pytest.mark.parametrize("density", [0.3, 0.7])
+def test_tpms_given_density_must_match_computed_density(
+    surface: str,
+    density: float,
+):
+    # Arrange
+    tpms = microgen.Tpms(
+        surface_function=getattr(microgen.surface_functions, surface), density=density
+    )
+
+    # Act
+    computed_density = tpms.generateVtk(type_part="sheet").volume / tpms.grid.volume
+
+    # Assert
+    assert np.isclose(computed_density, density, rtol=1e-2)
+
+
+@pytest.mark.parametrize(
     "coord_sys_tpms", [microgen.CylindricalTpms, microgen.SphericalTpms]
 )
 def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(
@@ -184,6 +204,54 @@ def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lowe
     assert 0 < tpms.sheet.extract_surface().volume < np.abs(tpms.grid.volume)
     assert 0 < tpms.lower_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
     assert 0 < tpms.upper_skeletal.extract_surface().volume < np.abs(tpms.grid.volume)
+
+
+@pytest.mark.parametrize(
+    "coord_sys_tpms,repeat_cell_zero,repeat_cell_max",
+    [
+        (microgen.CylindricalTpms, (1, 0, 1), (1, 100, 1)),
+        (microgen.SphericalTpms, (1, 0, 0), (1, 100, 100)),
+    ],
+)
+def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond_and_be_between_zero_and_grid_volume(
+    coord_sys_tpms: Type[microgen.Tpms],
+    repeat_cell_zero: tuple[int, int, int],
+    repeat_cell_max: tuple[int, int, int],
+):
+    tpms_repeat_zero = coord_sys_tpms(
+        radius=1.0,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=1.0,
+        repeat_cell=repeat_cell_zero,
+    )
+
+    tpms_repeat_max = coord_sys_tpms(
+        radius=1.0,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=1.0,
+        repeat_cell=repeat_cell_max,
+    )
+
+    assert np.abs(tpms_repeat_zero.grid.volume) == np.abs(tpms_repeat_max.grid.volume)
+
+    assert (
+        0
+        < tpms_repeat_zero.sheet.extract_surface().volume
+        == tpms_repeat_max.sheet.extract_surface().volume
+        < np.abs(tpms_repeat_zero.grid.volume)
+    )
+    assert (
+        0
+        < tpms_repeat_zero.lower_skeletal.extract_surface().volume
+        == tpms_repeat_max.lower_skeletal.extract_surface().volume
+        < np.abs(tpms_repeat_zero.grid.volume)
+    )
+    assert (
+        0
+        < tpms_repeat_zero.upper_skeletal.extract_surface().volume
+        == tpms_repeat_max.upper_skeletal.extract_surface().volume
+        < np.abs(tpms_repeat_zero.grid.volume)
+    )
 
 
 def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond():

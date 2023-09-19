@@ -11,7 +11,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 """
 import logging
-from typing import Callable, List, Union, Sequence, Literal
+from typing import Callable, List, Union, Sequence, Literal, Optional
 
 import cadquery as cq
 import numpy as np
@@ -59,6 +59,7 @@ class Tpms(BasicGeometry):
         resolution: int = 20,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
+        density: Optional[float] = None,
     ) -> None:
         """
         Class used to generate TPMS geometries (sheet or skeletals parts).
@@ -76,6 +77,7 @@ class Tpms(BasicGeometry):
         :param cell_size: float or list of float for each dimension to set unit cell dimensions
         :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
         :param resolution: unit cell resolution of the grid to compute tpms scalar fields
+        :param density: density of the generated geometry (0 < density < 1)
         """
         super().__init__(shape="TPMS", center=center, orientation=orientation)
 
@@ -93,6 +95,51 @@ class Tpms(BasicGeometry):
 
         self.resolution = resolution
         self._compute_tpms_field()
+
+        self.density = density
+
+    def _compute_offset_to_fit_density(
+        self,
+        polydata: Callable,
+        rtol: float = 1e-2,
+    ):
+        if not 0.0 < self.density < 1.0:
+            raise ValueError("density must be between 0 and 1")
+
+        grid_volume = self.grid.volume
+
+        lower_bound = 0.0
+        upper_bound = 2.0 * np.max(self.grid["surface"])
+        self._update_offset(lower_bound)
+        lower_density = abs(polydata().volume / grid_volume)
+
+        self._update_offset(upper_bound)
+        upper_density = abs(polydata().volume / grid_volume)
+
+        max_density = max(lower_density, upper_density)
+        min_density = min(lower_density, upper_density)
+        if not min_density < self.density < max_density:
+            raise ValueError(
+                f"density for this part type of this TPMS function \
+                    must be between {min_density:.1%} and {max_density:.1%}"
+            )
+
+        sign = np.sign(upper_density - lower_density)
+        offset = (lower_bound + upper_bound) / 2.0
+        computed_density = abs(polydata().volume / grid_volume)
+        iteration = 0
+        while not np.isclose(computed_density, self.density, rtol=rtol):
+            self._update_offset(offset)
+            computed_density = polydata().volume / grid_volume
+            print(f"offset = {offset:.3f}, density = {computed_density:.2%}")
+            if sign * computed_density < sign * self.density:
+                lower_bound = offset
+            else:
+                upper_bound = offset
+            offset = (lower_bound + upper_bound) / 2.0
+            iteration += 1
+            if iteration > 100:
+                raise RuntimeError("Cannot find offset to fit density")
 
     def _init_cell_parameters(
         self,
@@ -113,6 +160,17 @@ class Tpms(BasicGeometry):
         else:
             raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
+    def vtk_sheet(self) -> pv.PolyData:
+        return self.grid.clip_scalar(scalars="upper_surface").clip_scalar(
+            scalars="lower_surface", invert=False
+        )
+
+    def vtk_upper_skeletal(self) -> pv.PolyData:
+        return self.grid.clip_scalar(scalars="upper_surface", invert=False)
+
+    def vtk_lower_skeletal(self) -> pv.PolyData:
+        return self.grid.clip_scalar(scalars="lower_surface")
+
     @property
     def sheet(self) -> pv.PolyData:
         """
@@ -120,6 +178,9 @@ class Tpms(BasicGeometry):
         """
         if self._sheet is not None:
             return self._sheet
+
+        if self.density is not None:
+            self._compute_offset_to_fit_density(polydata=self.vtk_sheet)
 
         self._sheet = (
             self.grid.clip_scalar(scalars="upper_surface")
@@ -137,6 +198,9 @@ class Tpms(BasicGeometry):
         if self._upper_skeletal is not None:
             return self._upper_skeletal
 
+        if self.density is not None:
+            self._compute_offset_to_fit_density(polydata=self.vtk_upper_skeletal)
+
         self._upper_skeletal = (
             self.grid.clip_scalar(scalars="upper_surface", invert=False)
             .clean()
@@ -151,6 +215,9 @@ class Tpms(BasicGeometry):
         """
         if self._lower_skeletal is not None:
             return self._lower_skeletal
+
+        if self.density is not None:
+            self._compute_offset_to_fit_density(polydata=self.vtk_lower_skeletal)
 
         self._lower_skeletal = (
             self.grid.clip_scalar(scalars="lower_surface").clean().triangulate()
@@ -196,24 +263,23 @@ class Tpms(BasicGeometry):
         self.grid = self._create_grid(x, y, z)
 
         k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
-        surface_function = self.surface_function(
+        tpms_field = self.surface_function(
             k_x * (x + self.phase_shift[0]),
             k_y * (y + self.phase_shift[1]),
             k_z * (z + self.phase_shift[2]),
         )
 
-        if isinstance(self.offset, float):
-            self.offset = self.offset
-        elif isinstance(self.offset, Callable):
-            self.offset = self.offset(x, y, z)
+        self.grid["surface"] = tpms_field.ravel(order="F")
+        self._update_offset(self.offset)
 
-        self.grid["surface"] = surface_function.ravel(order="F")
-        self.grid["lower_surface"] = (surface_function + 0.5 * self.offset).ravel(
-            order="F"
-        )
-        self.grid["upper_surface"] = (surface_function - 0.5 * self.offset).ravel(
-            order="F"
-        )
+    def _update_offset(self, offset: Union[float, Callable]) -> None:
+        if isinstance(offset, float):
+            self.offset = offset
+        elif isinstance(offset, Callable):
+            self.offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
+
+        self.grid["lower_surface"] = self.grid["surface"] + 0.5 * self.offset
+        self.grid["upper_surface"] = self.grid["surface"] - 0.5 * self.offset
 
     def _create_shell(self, mesh: pv.PolyData, verbose: bool) -> cq.Shell:
         if not mesh.is_all_triangles:
@@ -330,6 +396,10 @@ class Tpms(BasicGeometry):
                     "generating 'sheet' parts with negative or zero offset values is not implemented yet"
                 )
 
+        if self.density is not None:
+            polydata_func = getattr(self, f"vtk_{type_part.replace(' ', '_')}")
+            self._compute_offset_to_fit_density(polydata=polydata_func)
+
         offset_limit = 2.0 * np.max(self.grid["surface"])
         if np.all(self.offset > offset_limit):
             raise ValueError(
@@ -414,6 +484,8 @@ class Tpms(BasicGeometry):
                 grid=self.repeat_cell,
             )
 
+        density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
+        print(f"TPMS density = {density:.2%}")
         return shape
 
     def generateVtk(
@@ -424,17 +496,21 @@ class Tpms(BasicGeometry):
         :return: VTK PolyData object of the required TPMS part
         """
         if type_part == "sheet":
-            return self.sheet
-        if type_part == "lower skeletal":
-            return self.lower_skeletal
-        if type_part == "upper skeletal":
-            return self.upper_skeletal
-        if type_part == "surface":
-            return self.surface
-        raise ValueError(
-            f"type_part ({type_part}) must be 'sheet', \
-                'lower skeletal', 'upper skeletal' or 'surface'"
-        )
+            polydata = self.sheet
+        elif type_part == "lower skeletal":
+            polydata = self.lower_skeletal
+        elif type_part == "upper skeletal":
+            polydata = self.upper_skeletal
+        elif type_part == "surface":
+            polydata = self.surface
+        else:
+            raise ValueError(
+                f"type_part ({type_part}) must be 'sheet', \
+                    'lower skeletal', 'upper skeletal' or 'surface'"
+            )
+        density = polydata.volume / self.grid.volume
+        print(f"TPMS density = {density:.2%}")
+        return polydata
 
 
 class CylindricalTpms(Tpms):
