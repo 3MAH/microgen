@@ -60,3 +60,9 @@ include = [
     'microgen',
     'microgen.*',
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Ignore deprecation warnings from numpy
+    "ignore:.* is a deprecated alias for .*:DeprecationWarning",
+]
