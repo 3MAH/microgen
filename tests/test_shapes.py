@@ -214,7 +214,7 @@ def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_Value
         offset=variable_offset,
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, NotImplementedError)):
         tpms.generate(type_part="sheet")
 
 

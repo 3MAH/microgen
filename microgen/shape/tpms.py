@@ -305,25 +305,6 @@ class Tpms(BasicGeometry):
                     'lower skeletal', 'upper skeletal' or 'surface'",
             )
 
-        if "skeletal" in type_part:
-            if np.any(self.offset < 0.0):  # scalar offset = 0 is working
-                raise NotImplementedError(
-                    "generating 'skeletal' parts with negative offset values is not implemented yet"
-                )
-            if isinstance(self.offset, np.ndarray) and np.any(self.offset == 0.0):
-                raise NotImplementedError(
-                    "generating 'skeletal' parts with zero offset values is not implemented yet"
-                )
-        elif type_part == "sheet":
-            if np.all(self.offset <= 0.0):
-                raise ValueError(
-                    "offset must be greater than 0 to generate 'sheet' part"
-                )
-            if np.any(self.offset <= 0.0):
-                raise NotImplementedError(
-                    "generating 'sheet' parts with negative or zero offset values is not implemented yet"
-                )
-
         if type_part == "surface":
             logging.warning("offset is ignored for 'surface' part")
             return self._create_surface(
@@ -332,6 +313,29 @@ class Tpms(BasicGeometry):
 
         if self.grid.dimensions == (0, 0, 0):
             self._compute_tpms_field()
+
+        if "skeletal" in type_part:
+            if isinstance(self.offset, (int, float)) and self.offset < 0.0:  # scalar offset = 0 is working
+                raise NotImplementedError(
+                    "generating 'skeletal' parts with a negative offset value is not implemented yet"
+                )
+            if isinstance(self.offset, np.ndarray) and np.any(self.offset <= 0.0):
+                raise NotImplementedError(
+                    "generating 'skeletal' parts with negative or zero offset values is not implemented yet"
+                )
+        elif type_part == "sheet":
+            if isinstance(self.offset, (int, float)) and self.offset <= 0.0:
+                raise ValueError(
+                    "offset must be greater than 0 to generate 'sheet' part"
+                )
+            if isinstance(self.offset, np.ndarray) and np.all(self.offset <= 0.0):
+                raise ValueError(
+                    "offset must be greater than 0 to generate 'sheet' part"
+                )
+            if isinstance(self.offset, np.ndarray) and np.any(self.offset <= 0.0):
+                raise NotImplementedError(
+                    "generating 'sheet' parts with negative or zero offset values is not implemented yet"
+                )
 
         offset_limit = 2.0 * np.max(self.grid["surface"])
         if np.all(self.offset > offset_limit):
