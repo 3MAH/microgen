@@ -315,7 +315,7 @@ class Tpms(BasicGeometry):
             self._compute_tpms_field()
 
         if "skeletal" in type_part:
-            if isinstance(self.offset, (int, float)) and self.offset < 0.0:  # scalar offset = 0 is working
+            if (isinstance(self.offset, (int, float)) and self.offset < 0.0):  # scalar offset = 0 is working
                 raise NotImplementedError(
                     "generating 'skeletal' parts with a negative offset value is not implemented yet"
                 )
@@ -324,11 +324,11 @@ class Tpms(BasicGeometry):
                     "generating 'skeletal' parts with negative or zero offset values is not implemented yet"
                 )
         elif type_part == "sheet":
-            if np.all(self.offset <= 0.0):
-                raise ValueError(
-                    "offset must be greater than 0 to generate 'sheet' part"
-                )
-            if isinstance(self.offset, np.ndarray) and np.any(self.offset <= 0.0):
+            if np.any(self.offset <= 0.0):
+                if np.all(self.offset <= 0.0):
+                    raise ValueError(
+                        "offset must be greater than 0 to generate 'sheet' part"
+                    )
                 raise NotImplementedError(
                     "generating 'sheet' parts with negative or zero offset values is not implemented yet"
                 )
