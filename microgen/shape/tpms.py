@@ -94,7 +94,11 @@ class Tpms(BasicGeometry):
         self.resolution = resolution
         self._compute_tpms_field()
 
-    def _init_cell_parameters(self, cell_size, repeat_cell):
+    def _init_cell_parameters(
+        self,
+        cell_size: Union[float, Sequence[float]],
+        repeat_cell: Union[int, Sequence[int]],
+    ):
         if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
         elif len(cell_size) == 3:
@@ -120,7 +124,8 @@ class Tpms(BasicGeometry):
         self._sheet = (
             self.grid.clip_scalar(scalars="upper_surface")
             .clip_scalar(scalars="lower_surface", invert=False)
-            .clean().triangulate()
+            .clean()
+            .triangulate()
         )
         return self._sheet
 
@@ -132,9 +137,11 @@ class Tpms(BasicGeometry):
         if self._upper_skeletal is not None:
             return self._upper_skeletal
 
-        self._upper_skeletal = self.grid.clip_scalar(
-            scalars="upper_surface", invert=False
-        ).clean().triangulate()
+        self._upper_skeletal = (
+            self.grid.clip_scalar(scalars="upper_surface", invert=False)
+            .clean()
+            .triangulate()
+        )
         return self._upper_skeletal
 
     @property
@@ -145,7 +152,9 @@ class Tpms(BasicGeometry):
         if self._lower_skeletal is not None:
             return self._lower_skeletal
 
-        self._lower_skeletal = self.grid.clip_scalar(scalars="lower_surface").clean().triangulate()
+        self._lower_skeletal = (
+            self.grid.clip_scalar(scalars="lower_surface").clean().triangulate()
+        )
         return self._lower_skeletal
 
     @property
@@ -301,7 +310,9 @@ class Tpms(BasicGeometry):
             )
 
         if "skeletal" in type_part:
-            if (isinstance(self.offset, (int, float)) and self.offset < 0.0):  # scalar offset = 0 is working
+            if (
+                isinstance(self.offset, (int, float)) and self.offset < 0.0
+            ):  # scalar offset = 0 is working
                 raise NotImplementedError(
                     "generating 'skeletal' parts with a negative offset value is not implemented yet"
                 )
