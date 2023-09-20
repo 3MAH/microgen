@@ -116,13 +116,13 @@ class Tpms(BasicGeometry):
             repeat_cell=self.repeat_cell,
             resolution=resolution if resolution < self.resolution else self.resolution,
         )
-        grid_volume = np.prod(self.cell_size) * np.prod(self.repeat_cell)
+        grid_volume = temp_tpms.grid.volume
 
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float):
             temp_tpms._update_offset(offset)
-            return abs(polydata_func().volume) / grid_volume
+            return polydata_func().volume / grid_volume
 
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
