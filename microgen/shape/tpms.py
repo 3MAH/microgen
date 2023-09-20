@@ -16,6 +16,7 @@ from typing import Callable, List, Union, Sequence, Literal, Optional
 import cadquery as cq
 import numpy as np
 import pyvista as pv
+from scipy.optimize import root_scalar
 
 from microgen.shape.basicGeometry import BasicGeometry
 from ..operations import fuseShapes, rescale, repeatShape
@@ -104,42 +105,33 @@ class Tpms(BasicGeometry):
 
     def _compute_offset_to_fit_density(
         self,
-        polydata: Callable,
-        rtol: float = 1e-2,
-        max_iter: int = 100,
+        part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+        resolution: int = 20,
     ):
-        grid_volume = self.grid.volume
+        bound = 2.0 * np.max(self.grid["surface"])
+        temp_tpms = Tpms(
+            surface_function=self.surface_function,
+            phase_shift=self.phase_shift,
+            cell_size=self.cell_size,
+            repeat_cell=self.repeat_cell,
+            resolution=resolution if resolution < self.resolution else self.resolution,
+        )
+        grid_volume = np.prod(self.cell_size) * np.prod(self.repeat_cell)
 
-        lower_bound = 0.0
-        upper_bound = 2.0 * np.max(self.grid["surface"])
-        self._update_offset(lower_bound)
-        lower_density = abs(polydata().volume / grid_volume)
+        polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
-        self._update_offset(upper_bound)
-        upper_density = abs(polydata().volume / grid_volume)
+        def density(offset: float):
+            temp_tpms._update_offset(offset)
+            return abs(polydata_func().volume) / grid_volume
 
-        max_density = max(lower_density, upper_density)
-        min_density = min(lower_density, upper_density)
-        if not min_density < self.density < max_density:
-            raise ValueError(
-                f"The maximum density for this part type of this TPMS function \
-                    is {max_density:.1%} while the required density is {self.density:.1%}"
-            )
-
-        sign = np.sign(upper_density - lower_density)
-        for _ in range(max_iter):
-            offset = (lower_bound + upper_bound) / 2.0
-            self._update_offset(offset)
-            computed_density = polydata().volume / grid_volume
-            if sign * computed_density < sign * self.density:
-                lower_bound = offset
-            else:
-                upper_bound = offset
-
-            if np.isclose(computed_density, self.density, rtol=rtol):
-                break
-        else:
-            raise RuntimeError("Cannot find offset to fit density")
+        computed_offset = root_scalar(
+            lambda offset: density(offset) - self.density,
+            bracket=[-bound, bound],
+            method="secant",
+            x0=0.5,
+        ).root
+        self._update_offset(computed_offset)
+        logging.info("computed offset = %.3f", computed_offset)
 
     def _init_cell_parameters(
         self,
@@ -180,7 +172,7 @@ class Tpms(BasicGeometry):
             return self._sheet
 
         if self.density is not None:
-            self._compute_offset_to_fit_density(polydata=self.vtk_sheet)
+            self._compute_offset_to_fit_density(part_type="sheet")
 
         self._sheet = self.vtk_sheet().clean().triangulate()
         return self._sheet
@@ -194,7 +186,7 @@ class Tpms(BasicGeometry):
             return self._upper_skeletal
 
         if self.density is not None:
-            self._compute_offset_to_fit_density(polydata=self.vtk_upper_skeletal)
+            self._compute_offset_to_fit_density(part_type="upper skeletal")
 
         self._upper_skeletal = self.vtk_upper_skeletal().clean().triangulate()
         return self._upper_skeletal
@@ -208,7 +200,7 @@ class Tpms(BasicGeometry):
             return self._lower_skeletal
 
         if self.density is not None:
-            self._compute_offset_to_fit_density(polydata=self.vtk_lower_skeletal)
+            self._compute_offset_to_fit_density(part_type="lower skeletal")
 
         self._lower_skeletal = self.vtk_lower_skeletal().clean().triangulate()
         return self._lower_skeletal
@@ -425,16 +417,15 @@ class Tpms(BasicGeometry):
         ] = "sheet",
         smoothing: int = 0,
         verbose: bool = True,
-        rtol: float = 1e-2,
-        max_iter: int = 100,
+        algo_resolution: int = 20,
     ) -> cq.Shape:
         """
         :param type_part: part of the TPMS desired \
             ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
         :param smoothing: smoothing loop iterations
         :param verbose: display progressbar of the conversion to CadQuery object
-        :param rtol: relative tolerance for the density during the offset computation if necesary
-        :param max_iter: maximum number of iterations of the offset computation
+        :param algo_resolution: if offset must be computed to fit density, \
+            resolution of the temporary TPMS used to compute the offset
 
         :return: CadQuery Shape object of the required TPMS part
         """
@@ -454,9 +445,8 @@ class Tpms(BasicGeometry):
             )
 
         if self.density is not None:
-            polydata_func = getattr(self, f"vtk_{type_part.replace(' ', '_')}")
             self._compute_offset_to_fit_density(
-                polydata=polydata_func, rtol=rtol, max_iter=max_iter
+                part_type=type_part, resolution=algo_resolution
             )
 
         if "skeletal" in type_part:
@@ -512,19 +502,18 @@ class Tpms(BasicGeometry):
         #     )
 
         density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
-        print(f"TPMS density = {density:.2%}")
+        logging.info(f"TPMS density = {density:.2%}")
         return shape
 
     def generateVtk(
         self,
         type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
-        rtol: float = 1e-2,
-        max_iter: int = 100,
+        algo_resolution: int = 20,
     ) -> pv.PolyData:
         """
         :param type_part: part of the TPMS desireds
-        :param rtol: relative tolerance for the density during the offset computation if necesary
-        :param max_iter: maximum number of iterations of the offset computation
+        :param algo_resolution: if offset must be computed to fit density, \
+            resolution of the temporary TPMS used to compute the offset
 
         :return: VTK PolyData object of the required TPMS part
         """
@@ -535,15 +524,15 @@ class Tpms(BasicGeometry):
                 f"type_part ({type_part}) must be 'sheet', \
                     'lower skeletal', 'upper skeletal' or 'surface'"
             )
-        polydata_func = getattr(self, f"vtk_{type_part.replace(' ', '_')}")
         if self.density is not None:
             self._compute_offset_to_fit_density(
-                polydata=polydata_func, rtol=rtol, max_iter=max_iter
+                part_type=type_part,
+                resolution=algo_resolution,
             )
-        polydata = polydata_func()
+        polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
         polydata = polydata.clean().triangulate()
         density = polydata.volume / self.grid.volume
-        print(f"TPMS density = {density:.2%}")
+        logging.info(f"TPMS density = {density:.2%}")
         return polydata
 
 

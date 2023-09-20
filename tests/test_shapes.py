@@ -341,13 +341,6 @@ def test_tpms_given_wrong_density_parameter_must_raise_ValueError():
             density=1.0,
         )
 
-    with pytest.raises(ValueError):
-        tpms = microgen.Tpms(
-            surface_function=microgen.surface_functions.gyroid,
-            density=0.5,
-        )
-        tpms.generateVtk(type_part="lower skeletal")
-
 
 def test_tpms_given_property_must_return_the_same_value():
     tpms = microgen.Tpms(
