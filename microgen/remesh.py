@@ -28,11 +28,11 @@ def remesh_keeping_periodicity_for_fem(
     """
     with NamedTemporaryFile(
         suffix=".mesh", delete=False
-    ) as boundary_triangles_file:
+    ) as boundary_triangles_file, NamedTemporaryFile(suffix='mesh', delete=False) as raw_output_mesh_file:
         _generate_mesh_with_required_triangles(input_mesh, boundary_triangles_file.name)
         Mmg.mmg3d(
             input=boundary_triangles_file.name,
-            output=output_mesh_file,
+            output=raw_output_mesh_file,
             hausd=hausd,
             hgrad=hgrad,
             hmax=hmax,
@@ -42,7 +42,8 @@ def remesh_keeping_periodicity_for_fem(
         os.remove(
             boundary_triangles_file.name
         )  # to solve compatibility issues of NamedTemporaryFiles with Windows
-    os.remove(output_mesh_file.replace(".mesh",".sol")) # Remove unused .sol file created by mmg
+    os.remove(raw_output_mesh_file.replace(".mesh",".sol")) # Remove unused .sol file created by mmg
+    _mesh_cleaner(raw_output_mesh_file.name, output_mesh_file)
 
 
 def _generate_mesh_with_required_triangles(input_mesh : BoxMesh, mesh_including_required_triangles : str = 'merged_reqtri.mesh') -> None:
@@ -81,3 +82,24 @@ def _add_required_triangles_to_mesh_file(input_mesh : BoxMesh, input_mesh_file :
         for i in range(n_required_triangles):
             output_file.write(str(i+1) + "\n")
         output_file.write("End\n")
+
+def _mesh_cleaner(input_mesh_file : str, output_mesh_file : str, mesh_version : int, dimension : int) -> None:
+    with open(input_mesh_file, 'r') as input_file:
+        lines = input_file.readlines()
+
+    write_bool = True
+    with open(output_mesh_file, 'w+') as output_file:
+        output_file.write('MeshVersionFormatted ' + str(mesh_version) + '\n\n')
+        output_file.write('Dimension ' + str(dimension) + '\n\n')
+        for line in lines:
+            if not _only_numbers_in_line(line.strip().split(' ')):
+                if 'Vertices' == line.strip() or 'Tetrahedra' == line.strip():
+                    write_bool = True
+                else:
+                    write_bool = False
+            if write_bool:
+                output_file.write(line)
+        output_file.write('End\n')
+
+def _only_numbers_in_line(str_list: list[str]) -> bool:
+    return all(not flag.isalpha() for flag in str_list)
