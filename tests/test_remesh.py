@@ -1,10 +1,12 @@
 import subprocess
 import pytest
-from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, surface_functions, BasicGeometry
-import cadquery as cq
+from microgen import Rve, remesh, Tpms, BoxMesh
+from microgen.shape.surface_functions import gyroid
 import numpy as np
 import numpy.typing as npt
 import gmsh
+import meshio
+import pyvista as pv
 from pathlib import Path
 
 _MESH_DIM = 3
@@ -133,99 +135,117 @@ def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture(scope="function")
-def tmp_step_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "shape.step").as_posix()
-
-
-@pytest.fixture(scope="function")
 def tmp_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.mesh").as_posix()
+
+@pytest.fixture(scope="function")
+def tmp_vtk_filename(tmp_dir: Path) -> str:
+    return (tmp_dir / "shape.vtk").as_posix()
 
 
 @pytest.fixture(scope="function")
 def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.o.mesh").as_posix()
 
+@pytest.fixture(scope='session')
+def rve() -> Rve:
+    return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
 
-def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_must_return_true() -> None:
-    # Arrange
+@pytest.fixture(scope="function")
+def box(rve: Rve) -> BoxMesh:
+    nodes_array = np.array([[0., 0., 0.],
+                            [0.5, 0.5, 0.5],
+                            [-0.5, -0.5, -0.5],
+                            [-0.5, -0.5, 0.5],
+                            [0.5, 0.5, -0.5],
+                            [0.5, -0.5, 0.5],
+                            [0.5, -0.5, -0.5],
+                            [-0.5, 0.5, 0.5],
+                            [-0.5, 0.5, -0.5],
+                            [0., 0.5, 0.],
+                            [0., -0.5, 0.],
+                            [0.5, 0., 0.],
+                            [-0.5, 0., 0.],
+                            [0., 0., 0.5],
+                            [0., 0., -0.5]])
 
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-    triangle_xmax = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]), np.array([0.5, -0.5, 0.5]),
-                                    1)
-    triangle_xmin = remesh.Triangle(np.array([-0.5, -0.5, -0.5]), np.array([-0.5, 0.5, -0.5]),
-                                    np.array([-0.5, -0.5, 0.5]),
-                                    2)
-    triangle_ymax = remesh.Triangle(np.array([0.5, 0.5, -0.5]), np.array([-0.5, 0.5, -0.5]), np.array([0.5, 0.5, 0.5]),
-                                    3)
-    triangle_ymin = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([-0.5, -0.5, -0.5]),
-                                    np.array([0.5, -0.5, 0.5]),
-                                    4)
-    triangle_zmax = remesh.Triangle(np.array([0.5, -0.5, 0.5]), np.array([0.5, 0.5, 0.5]), np.array([-0.5, -0.5, 0.5]),
-                                    5)
-    triangle_zmin = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]),
-                                    np.array([-0.5, -0.5, -0.5]),
-                                    6)
+    elements_dict = {pv.CellType.TETRA: np.array([[11, 6, 0, 14],
+                                                  [0, 9, 1, 11],
+                                                  [3, 10, 0, 13],
+                                                  [9, 0, 4, 11],
+                                                  [5, 11, 0, 13],
+                                                  [0, 11, 1, 13],
+                                                  [0, 10, 5, 13],
+                                                  [11, 5, 1, 13],
+                                                  [3, 10, 2, 12],
+                                                  [6, 10, 0, 14],
+                                                  [1, 9, 4, 11],
+                                                  [10, 3, 0, 12],
+                                                  [10, 3, 5, 13],
+                                                  [0, 10, 2, 14],
+                                                  [2, 10, 0, 12],
+                                                  [4, 11, 0, 14],
+                                                  [6, 11, 4, 14],
+                                                  [10, 6, 2, 14],
+                                                  [5, 10, 0, 11],
+                                                  [0, 10, 6, 11],
+                                                  [10, 5, 6, 11],
+                                                  [7, 9, 0, 12],
+                                                  [0, 9, 8, 12],
+                                                  [9, 7, 8, 12],
+                                                  [7, 9, 1, 13],
+                                                  [1, 9, 0, 13],
+                                                  [9, 7, 0, 13],
+                                                  [0, 12, 3, 13],
+                                                  [3, 12, 7, 13],
+                                                  [12, 0, 7, 13],
+                                                  [8, 12, 2, 14],
+                                                  [2, 12, 0, 14],
+                                                  [12, 8, 0, 14],
+                                                  [8, 9, 0, 14],
+                                                  [0, 9, 4, 14],
+                                                  [9, 8, 4, 14]])}
 
-    face_triangles = [triangle_xmax, triangle_xmin, triangle_ymax, triangle_ymin, triangle_zmax, triangle_zmin]
+    mesh = BoxMesh(nodes_array, elements_dict)
+    mesh.rve = rve
 
-    # Act & Assert
-    assert all(remesh._is_triangle_on_boundary(triangle, rve) for triangle in face_triangles)
+    return mesh
+
+@pytest.fixture(scope='function')
+def gyroid(rve: Rve) -> BoxMesh:
+    gyroid = Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet")
+    gyroid_boxmesh = BoxMesh.from_pyvista(gyroid)
+    return gyroid_boxmesh
 
 
-def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_false() -> None:
-    # Arrange
-
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-    internal_triangle = remesh.Triangle(np.array([0.2, -0.25, -0.25]), np.array([0.2, 0.25, -0.25]),
-                               np.array([0.2, -0.25, 0.25]), 1)
-
-    # Act & Assert
-    assert not remesh._is_triangle_on_boundary(internal_triangle, rve)
 
 @pytest.mark.parametrize(
-    "shape, mesh_element_size",
+    "shape",
     [
-        (Box(), 1.0),
-        (
-                Tpms(
-                    surface_function=surface_functions.gyroid,
-                    offset=0.3,
-                ),
-                0.05,
-        ),
-    ],
+        "box",
+        "gyroid",
+    ]
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
-        shape: BasicGeometry,
-        mesh_element_size: float,
-        tmp_step_filename: str,
+        shape: BoxMesh,
+        request,
+        rve: Rve,
         tmp_mesh_filename: str,
+        tmp_vtk_filename: str,
         tmp_output_mesh_filename: str,
 ) -> None:
     if USE_MMG == True:
         # Arrange
-        rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-        cad_geometry: cq.Shape = shape.generate()
-        phase = Phase(cad_geometry)
 
-        cq.exporters.export(cad_geometry, tmp_step_filename)
-
-        meshPeriodic(
-            tmp_step_filename,
-            rve,
-            [phase],
-            size=mesh_element_size,
-            order=1,
-            output_file=tmp_mesh_filename,
-            mshFileVersion=4,
-        )
+        request.getfixturevalue(shape).to_pyvista().save(tmp_vtk_filename)
+        initial_mesh = meshio.read(tmp_vtk_filename)
+        initial_mesh.write(tmp_mesh_filename)
 
         # Act
         
         remesh.remesh_keeping_periodicity_for_fem(
-            tmp_mesh_filename, rve, tmp_output_mesh_filename, hgrad=1.1
+            shape, tmp_output_mesh_filename, hgrad=1.05
         )
 
         # Assert
-        assert _is_periodic(_get_mesh_nodes_coords(tmp_output_mesh_filename))
+        assert _is_periodic(_get_mesh_nodes_coords(tmp_mesh_filename)) and _is_periodic(_get_mesh_nodes_coords(tmp_output_mesh_filename))
