@@ -212,8 +212,8 @@ def box(rve: Rve) -> BoxMesh:
     return mesh
 
 @pytest.fixture(scope='function')
-def gyroid(rve: Rve) -> BoxMesh:
-    gyroid = Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet")
+def gyroid() -> BoxMesh:
+    gyroid = pv.UnstructuredGrid(Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet"))
     gyroid_boxmesh = BoxMesh.from_pyvista(gyroid)
     return gyroid_boxmesh
 
@@ -229,7 +229,6 @@ def gyroid(rve: Rve) -> BoxMesh:
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
         shape: BoxMesh,
         request,
-        rve: Rve,
         tmp_mesh_filename: str,
         tmp_vtk_filename: str,
         tmp_output_mesh_filename: str,
