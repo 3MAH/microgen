@@ -42,7 +42,7 @@ def remesh_keeping_periodicity_for_fem(
         os.remove(
             boundary_triangles_file.name
         )  # to solve compatibility issues of NamedTemporaryFiles with Windows
-    os.remove(raw_output_mesh_file.replace(".mesh",".sol")) # Remove unused .sol file created by mmg
+    os.remove(raw_output_mesh_file.name.replace(".mesh",".sol")) # Remove unused .sol file created by mmg
     _mesh_cleaner(raw_output_mesh_file.name, output_mesh_file)
 
 
