@@ -1,13 +1,16 @@
 import os
+import subprocess
 from tempfile import NamedTemporaryFile
 
-from microgen import BoxMesh, Mmg
+from microgen import BoxMesh
 import meshio
 
 
 def remesh_keeping_periodicity_for_fem(
         input_mesh: BoxMesh,
         output_mesh_file: str,
+        mesh_version : int = 2,
+        dimension : int = 3,
         hausd: float = None,
         hgrad: float = None,
         hmax: float = None,
@@ -29,11 +32,11 @@ def remesh_keeping_periodicity_for_fem(
     """
     with NamedTemporaryFile(
             suffix=".mesh", delete=False
-    ) as boundary_triangles_file, NamedTemporaryFile(suffix='mesh', delete=False) as raw_output_mesh_file:
+    ) as boundary_triangles_file, NamedTemporaryFile(suffix='.mesh', delete=False) as raw_output_mesh_file:
         _generate_mesh_with_required_triangles(input_mesh, boundary_triangles_file.name)
-        Mmg.mmg3d(
-            input=boundary_triangles_file.name,
-            output=raw_output_mesh_file.name,
+        _remesh_mmg(
+            input_mesh_file=boundary_triangles_file.name,
+            output_mesh_file=raw_output_mesh_file.name,
             hausd=hausd,
             hgrad=hgrad,
             hmax=hmax,
@@ -44,7 +47,7 @@ def remesh_keeping_periodicity_for_fem(
             boundary_triangles_file.name
         )  # to solve compatibility issues of NamedTemporaryFiles with Windows
     os.remove(raw_output_mesh_file.name.replace(".mesh", ".sol"))  # Remove unused .sol file created by mmg
-    _mesh_cleaner(raw_output_mesh_file.name, output_mesh_file)
+    _remove_unnecessary_fields_from_mesh_file(raw_output_mesh_file.name, output_mesh_file, mesh_version, dimension)
 
 
 def _generate_mesh_with_required_triangles(input_mesh: BoxMesh,
@@ -89,7 +92,7 @@ def _add_required_triangles_to_mesh_file(input_mesh: BoxMesh, input_mesh_file: s
         output_file.write("End\n")
 
 
-def _mesh_cleaner(input_mesh_file: str, output_mesh_file: str, mesh_version: int, dimension: int) -> None:
+def _remove_unnecessary_fields_from_mesh_file(input_mesh_file: str, output_mesh_file: str, mesh_version: int, dimension: int) -> None:
     with open(input_mesh_file, 'r') as input_file:
         lines = input_file.readlines()
 
@@ -110,3 +113,30 @@ def _mesh_cleaner(input_mesh_file: str, output_mesh_file: str, mesh_version: int
 
 def _only_numbers_in_line(str_list: list[str]) -> bool:
     return all(not flag.isalpha() for flag in str_list)
+
+def _remesh_mmg(
+    input_mesh_file: str,
+    output_mesh_file: str,
+    hausd : float = None,
+    hgrad : float = None,
+    hmax : float = None,
+    hmin : float = None,
+    hsiz : float = None,
+) -> None:
+    mmg_system_call = [
+        "mmg3d_O3", "-in",
+        input_mesh_file,
+        "-out",
+        output_mesh_file,
+    ]
+    if hausd:
+        mmg_system_call.extend(["-hausd", str(hausd)])
+    if hgrad:
+        mmg_system_call.extend(["-hgrad", str(hgrad)])
+    if hmax:
+        mmg_system_call.extend(["-hmax", str(hmax)])
+    if hmin:
+        mmg_system_call.extend(["-hmin", str(hmin)])
+    if hsiz:
+        mmg_system_call.extend(["-hsiz", str(hsiz)])
+    subprocess.call(mmg_system_call)
