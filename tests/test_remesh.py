@@ -5,7 +5,6 @@ from microgen.shape.surface_functions import gyroid
 import numpy as np
 import numpy.typing as npt
 import gmsh
-import meshio
 import pyvista as pv
 from pathlib import Path
 
@@ -138,16 +137,12 @@ def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def tmp_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.mesh").as_posix()
 
-@pytest.fixture(scope="function")
-def tmp_vtk_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "shape.vtk").as_posix()
-
 
 @pytest.fixture(scope="function")
 def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.o.mesh").as_posix()
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def rve() -> Rve:
     return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
 
@@ -212,9 +207,9 @@ def box(rve: Rve) -> BoxMesh:
     return mesh
 
 @pytest.fixture(scope='function')
-def gyroid() -> BoxMesh:
-    gyroid = pv.UnstructuredGrid(Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet"))
-    gyroid_boxmesh = BoxMesh.from_pyvista(gyroid)
+def gyroid_boxmesh() -> BoxMesh:
+    gyroid_vtk = pv.UnstructuredGrid(Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet"))
+    gyroid_boxmesh = BoxMesh.from_pyvista(gyroid_vtk)
     return gyroid_boxmesh
 
 
@@ -223,22 +218,20 @@ def gyroid() -> BoxMesh:
     "shape",
     [
         "box",
-        "gyroid",
+        "gyroid_boxmesh",
     ]
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
         shape: BoxMesh,
         request,
         tmp_mesh_filename: str,
-        tmp_vtk_filename: str,
         tmp_output_mesh_filename: str,
 ) -> None:
     if USE_MMG == True:
         # Arrange
 
-        request.getfixturevalue(shape).to_pyvista().save(tmp_vtk_filename)
-        initial_mesh = meshio.read(tmp_vtk_filename)
-        initial_mesh.write(tmp_mesh_filename)
+        vtk_mesh = request.getfixturevalue(shape).to_pyvista()
+        pv.save_meshio(tmp_mesh_filename, vtk_mesh)
 
         # Act
         

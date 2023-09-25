@@ -3,14 +3,14 @@ import subprocess
 from tempfile import NamedTemporaryFile
 
 from microgen import BoxMesh
-import meshio
+import pyvista as pv
 
 
 def remesh_keeping_periodicity_for_fem(
         input_mesh: BoxMesh,
         output_mesh_file: str,
-        mesh_version : int = 2,
-        dimension : int = 3,
+        mesh_version: int = 2,
+        dimension: int = 3,
         hausd: float = None,
         hgrad: float = None,
         hmax: float = None,
@@ -22,6 +22,8 @@ def remesh_keeping_periodicity_for_fem(
 
     :param input_mesh: BoxMesh to be remeshed
     :param output_mesh_file: output file (must be .mesh)
+    :param mesh_version: mesh file version (default: 2)
+    :param dimension: mesh dimension (default: 3)
 
     The following parameters are used to control mmg remeshing, see here for more info : https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
     :param hausd: Maximal Hausdorff distance for the boundaries approximation
@@ -52,23 +54,16 @@ def remesh_keeping_periodicity_for_fem(
 
 def _generate_mesh_with_required_triangles(input_mesh: BoxMesh,
                                            mesh_including_required_triangles: str = 'merged_reqtri.mesh') -> None:
-    with NamedTemporaryFile(suffix='.vtk', delete=False) as vtk_file, NamedTemporaryFile(suffix='.mesh',
-                                                                                         delete=False) as mesh_file:
-        _generate_vtk_with_boundary_triangles(input_mesh, vtk_file.name)
-        _convert_vtk_to_mesh(vtk_file.name, mesh_file.name)
+    with NamedTemporaryFile(suffix='.mesh', delete=True) as mesh_file:
+        _generate_mesh_with_boundary_triangles(input_mesh, mesh_file.name)
         _add_required_triangles_to_mesh_file(input_mesh, mesh_file.name, mesh_including_required_triangles)
 
 
-def _generate_vtk_with_boundary_triangles(input_mesh: BoxMesh, output_mesh: str = 'merged.vtk') -> None:
+def _generate_mesh_with_boundary_triangles(input_mesh: BoxMesh, output_mesh: str = 'merged.mesh') -> None:
     pyvista_mesh = input_mesh.to_pyvista()
     mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
     merged_mesh = pyvista_mesh.merge(mesh_boundary)
-    merged_mesh.save(output_mesh, binary=False)
-
-
-def _convert_vtk_to_mesh(input_vtk_file: str, output_mesh_file: str) -> None:
-    meshio_mesh = meshio.read(input_vtk_file)
-    meshio_mesh.write(output_mesh_file)
+    pv.save_meshio(output_mesh, merged_mesh)
 
 
 def _get_number_of_boundary_triangles_from_boxmesh(input_mesh: BoxMesh) -> int:
@@ -113,6 +108,7 @@ def _remove_unnecessary_fields_from_mesh_file(input_mesh_file: str, output_mesh_
 
 def _only_numbers_in_line(str_list: list[str]) -> bool:
     return all(not flag.isalpha() for flag in str_list)
+
 
 def _remesh_mmg(
     input_mesh_file: str,
