@@ -108,19 +108,19 @@ class Tpms(BasicGeometry):
         cls,
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        density: float,
+        density: float | Literal["max"] = "max",
         resolution: int = 20,
     ) -> float:
-        """
-        Compute the offset to fit the given density for the given TPMS function
-        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
-        :param part_type: part of the TPMS desired ('sheet', 'lower skeletal' or 'upper skeletal')
-        :param density: density percentage of the generated geometry (0 <= density <= 1)
-        :param resolution: resolution of the temporary TPMS used to compute the offset
-        :return: offset value
-        """
-        if not 0.0 <= density <= 1.0:
-            raise ValueError("density must be between 0 and 1")
+        if not isinstance(density, float) or density != "max":
+            raise ValueError("density must be a float between 0 and 1 or 'max'")
+        if density in ["max", 1.0]:
+            tpms = Tpms(
+                surface_function=surface_function,
+                resolution=resolution,
+            )
+            return 2.0 * np.max(tpms.grid["surface"]) if part_type == "sheet" else 0.0
+        if not 0.0 < density < 1.0:
+            raise ValueError("density must be a float between 0 and 1 or 'max'")
 
         tpms = Tpms(surface_function=surface_function, density=density)
         tpms._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
@@ -134,8 +134,22 @@ class Tpms(BasicGeometry):
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
         resolution: int = 20,
     ) -> None:
+        if self.density is None:
+            raise ValueError("density must be given to compute offset")
+        if "skeletal" in part_type:
+            temp_tpms = Tpms(surface_function=self.surface_function, resolution=20)
+            max_density = (
+                getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")().volume
+                / temp_tpms.grid.volume
+            )
+            if self.density > max_density:
+                raise ValueError(
+                    f"density must be lower than {max_density:.2%} for the {part_type} part of the given TPMS function"
+                )
+
         if self.density == 1.0:
-            self._update_offset(2.0 * np.max(self.grid["surface"]))
+            offset = 2.0 * np.max(self.grid["surface"]) if part_type == "sheet" else 0.0
+            self._update_offset(offset)
             return
 
         bound = 2.0 * np.max(self.grid["surface"])
