@@ -99,15 +99,45 @@ class Tpms(BasicGeometry):
         self.resolution = resolution
         self._compute_tpms_field()
 
-        if density is not None and not 0.0 < density < 1.0:
+        if density is not None and not 0.0 < density <= 1.0:
             raise ValueError("density must be between 0 and 1")
         self.density = density
+
+    @classmethod
+    def offset_from_density(
+        cls,
+        surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
+        part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+        density: float,
+        resolution: int = 20,
+    ) -> float:
+        """
+        Compute the offset to fit the given density for the given TPMS function
+        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
+        :param part_type: part of the TPMS desired ('sheet', 'lower skeletal' or 'upper skeletal')
+        :param density: density percentage of the generated geometry (0 <= density <= 1)
+        :param resolution: resolution of the temporary TPMS used to compute the offset
+        :return: offset value
+        """
+        if not 0.0 <= density <= 1.0:
+            raise ValueError("density must be between 0 and 1")
+
+        tpms = Tpms(surface_function=surface_function, density=density)
+        tpms._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
+
+        if isinstance(tpms.offset, float):
+            return tpms.offset
+        raise ValueError("offset must be a float")
 
     def _compute_offset_to_fit_density(
         self,
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
         resolution: int = 20,
-    ):
+    ) -> None:
+        if self.density == 1.0:
+            self._update_offset(2.0 * np.max(self.grid["surface"]))
+            return
+
         bound = 2.0 * np.max(self.grid["surface"])
         temp_tpms = Tpms(
             surface_function=self.surface_function,
@@ -120,7 +150,7 @@ class Tpms(BasicGeometry):
 
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
-        def density(offset: float):
+        def density(offset: float) -> float:
             temp_tpms._update_offset(offset)
             return polydata_func().volume / grid_volume
 
