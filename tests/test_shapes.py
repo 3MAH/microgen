@@ -361,6 +361,47 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: st
     assert np.isclose(part.volume, tpms.grid.volume * 0.2, rtol=1e-2)
 
 
+@pytest.mark.parametrize("part_type", ["lower skeletal", "upper skeletal", "sheet"])
+def test_tpms_given_max_density_must_return_corresponding_offset(
+    part_type: Literal["sheet", "lower skeletal", "upper skeletal"]
+):
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+    )
+
+    max_offset = microgen.Tpms.offset_from_density(
+        surface_function=microgen.surface_functions.gyroid,
+        density="max",
+        part_type=part_type,
+    )
+    expected_max_offset = (
+        2.0 * np.max(tpms.grid["surface"]) if part_type == "sheet" else 0.0
+    )
+    assert max_offset == expected_max_offset
+
+
+def test_tpms_given_100_percent_sheet_density_must_return_a_cube():
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        density=1.0,
+    )
+
+    assert np.isclose(tpms.sheet.volume, tpms.grid.volume, rtol=1.0e-9)
+
+
+def test_tpms_given_density_must_return_corresponding_offset():
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+    )
+
+    offset = microgen.Tpms.offset_from_density(
+        surface_function=microgen.surface_functions.gyroid,
+        density=0.5,
+        part_type="sheet",
+    )
+    assert 0 < offset < 2.0 * np.max(tpms.grid["surface"])
+
+
 def test_tpms_given_property_must_return_the_same_value():
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
