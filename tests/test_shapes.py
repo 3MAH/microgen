@@ -335,6 +335,31 @@ def test_tpms_given_wrong_density_parameter_must_raise_ValueError():
             density=0.0,
         )
 
+    with pytest.raises(ValueError):
+        microgen.Tpms.offset_from_density(
+            surface_function=microgen.surface_functions.gyroid,
+            density="fake",
+            part_type="sheet",
+        )
+
+    with pytest.raises(ValueError):
+        microgen.Tpms.offset_from_density(
+            surface_function=microgen.surface_functions.gyroid,
+            density=1.0,
+            part_type="lower skeletal",
+        )
+
+
+@pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
+def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: str):
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        density=0.2,
+    )
+
+    part = tpms.generateVtk(type_part=type_part)
+    assert np.isclose(part.volume, tpms.grid.volume * 0.2, rtol=1e-2)
+
 
 def test_tpms_given_property_must_return_the_same_value():
     tpms = microgen.Tpms(

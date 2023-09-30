@@ -103,6 +103,20 @@ class Tpms(BasicGeometry):
             raise ValueError("density must be between 0 and 1")
         self.density = density
 
+    def max_density(
+        self,
+        part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+        resolution: Optional[int] = None,
+    ) -> float:
+        if part_type == "sheet":
+            return 1.0
+        tpms = Tpms(
+            surface_function=self.surface_function,
+            offset=0.0,
+            resolution=resolution if resolution is not None else self.resolution,
+        )
+        return tpms.generateVtk(type_part=part_type).volume / tpms.grid.volume
+
     @classmethod
     def offset_from_density(
         cls,
@@ -119,21 +133,6 @@ class Tpms(BasicGeometry):
                 return 2.0 * np.max(tpms.grid["surface"])
             return 0.0  # skeletal
 
-        if "skeletal" in part_type:
-            tpms = Tpms(surface_function=surface_function, resolution=resolution)
-            max_density = (
-                getattr(tpms, f"vtk_{part_type.replace(' ', '_')}")().volume
-                / tpms.grid.volume
-            )
-        else:
-            max_density = 1.0
-
-        if not 0.0 < density <= max_density:
-            raise ValueError(
-                f"density must be between 0 and {max_density:.2%} for \
-                    the {part_type} part of the given TPMS function"
-            )
-
         tpms = Tpms(surface_function=surface_function, density=density)
         tpms._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
 
@@ -144,35 +143,27 @@ class Tpms(BasicGeometry):
     def _compute_offset_to_fit_density(
         self,
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        resolution: int = 20,
+        resolution: Optional[int] = None,
     ) -> None:
         if self.density is None:
             raise ValueError("density must be given to compute offset")
-        if "skeletal" in part_type:
-            temp_tpms = Tpms(surface_function=self.surface_function, resolution=20)
-            max_density = (
-                getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")().volume
-                / temp_tpms.grid.volume
+        temp_tpms = Tpms(
+            surface_function=self.surface_function,
+            resolution=resolution if resolution is not None else self.resolution,
+        )
+        max_density = temp_tpms.max_density(part_type=part_type, resolution=resolution)
+        if self.density > max_density:
+            raise ValueError(
+                f"density ({self.density}) must be lower than {max_density} for \
+                    the {part_type} part of the given TPMS function"
             )
-            if self.density > max_density:
-                raise ValueError(
-                    f"density must be lower than {max_density:.2%} for \
-                        the {part_type} part of the given TPMS function"
-                )
 
-        if self.density == 1.0:
+        if self.density == max_density:
             offset = 2.0 * np.max(self.grid["surface"]) if part_type == "sheet" else 0.0
             self._update_offset(offset)
             return
 
         bound = 2.0 * np.max(self.grid["surface"])
-        temp_tpms = Tpms(
-            surface_function=self.surface_function,
-            phase_shift=self.phase_shift,
-            cell_size=self.cell_size,
-            repeat_cell=self.repeat_cell,
-            resolution=resolution if resolution < self.resolution else self.resolution,
-        )
         grid_volume = temp_tpms.grid.volume
 
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
@@ -474,7 +465,7 @@ class Tpms(BasicGeometry):
         ] = "sheet",
         smoothing: int = 0,
         verbose: bool = True,
-        algo_resolution: int = 20,
+        algo_resolution: Optional[int] = None,
     ) -> cq.Shape:
         """
         :param type_part: part of the TPMS desired \
@@ -565,7 +556,7 @@ class Tpms(BasicGeometry):
     def generateVtk(
         self,
         type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
-        algo_resolution: int = 20,
+        algo_resolution: Optional[int] = None,
     ) -> pv.PolyData:
         """
         :param type_part: part of the TPMS desireds
