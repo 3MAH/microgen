@@ -111,16 +111,28 @@ class Tpms(BasicGeometry):
         density: float | Literal["max"] = "max",
         resolution: int = 20,
     ) -> float:
-        if not isinstance(density, float) or density != "max":
+        if not isinstance(density, (int, float)) and density != "max":
             raise ValueError("density must be a float between 0 and 1 or 'max'")
-        if density in ["max", 1.0]:
-            tpms = Tpms(
-                surface_function=surface_function,
-                resolution=resolution,
+        if density == "max":
+            if part_type == "sheet":
+                tpms = Tpms(surface_function=surface_function, resolution=resolution)
+                return 2.0 * np.max(tpms.grid["surface"])
+            return 0.0  # skeletal
+
+        if "skeletal" in part_type:
+            tpms = Tpms(surface_function=surface_function, resolution=resolution)
+            max_density = (
+                getattr(tpms, f"vtk_{part_type.replace(' ', '_')}")().volume
+                / tpms.grid.volume
             )
-            return 2.0 * np.max(tpms.grid["surface"]) if part_type == "sheet" else 0.0
-        if not 0.0 < density < 1.0:
-            raise ValueError("density must be a float between 0 and 1 or 'max'")
+        else:
+            max_density = 1.0
+
+        if not 0.0 < density <= max_density:
+            raise ValueError(
+                f"density must be between 0 and {max_density:.2%} for \
+                    the {part_type} part of the given TPMS function"
+            )
 
         tpms = Tpms(surface_function=surface_function, density=density)
         tpms._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
@@ -144,7 +156,8 @@ class Tpms(BasicGeometry):
             )
             if self.density > max_density:
                 raise ValueError(
-                    f"density must be lower than {max_density:.2%} for the {part_type} part of the given TPMS function"
+                    f"density must be lower than {max_density:.2%} for \
+                        the {part_type} part of the given TPMS function"
                 )
 
         if self.density == 1.0:
