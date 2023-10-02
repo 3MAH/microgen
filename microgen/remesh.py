@@ -1,14 +1,18 @@
-import os
 import subprocess
-from tempfile import NamedTemporaryFile
 
-from microgen import BoxMesh
+from microgen import BoxMesh, Rve
+from typing import Optional
 import meshio
+
+import pyvista as pv
 
 
 def remesh_keeping_periodicity_for_fem(
-        input_mesh: BoxMesh,
+        input_mesh: pv.UnstructuredGrid,
+        rve: Optional[Rve],
         output_mesh_file: str,
+        boundary_triangles_file = 'merged_reqtri.mesh',
+        raw_output_mesh_file = 'raw_output_mesh.mesh',
         mesh_version : int = 2,
         dimension : int = 3,
         hausd: float = None,
@@ -21,7 +25,13 @@ def remesh_keeping_periodicity_for_fem(
     Remeshes a mesh (.mesh file format) derived from a BoxMesh using mmg while keeping periodicity
 
     :param input_mesh: BoxMesh to be remeshed
+    :param rve: associated Representative Volume Element (bounding box of mesh)
     :param output_mesh_file: output file (must be .mesh)
+
+    :param boundary_triangles_file: .mesh file containing the required triangles field
+    :param raw_output_mesh_file: optimized .mesh file with unused fields blocking meshio conversion
+    :param mesh_version: .mesh file version (only version 2 supported for now)
+    :param dimension: mesh dimension (only 3D tet meshes supported for now)
 
     The following parameters are used to control mmg remeshing, see here for more info : https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
     :param hausd: Maximal Hausdorff distance for the boundaries approximation
@@ -30,66 +40,43 @@ def remesh_keeping_periodicity_for_fem(
     :param hmin: Minimal edge size
     :param hsiz: Build a constant size map of size hsiz
     """
-    with NamedTemporaryFile(
-            suffix=".mesh", delete=False
-    ) as boundary_triangles_file, NamedTemporaryFile(suffix='.mesh', delete=False) as raw_output_mesh_file:
-        _generate_mesh_with_required_triangles(input_mesh, boundary_triangles_file.name)
-        _remesh_mmg(
-            input_mesh_file=boundary_triangles_file.name,
-            output_mesh_file=raw_output_mesh_file.name,
-            hausd=hausd,
-            hgrad=hgrad,
-            hmax=hmax,
-            hmin=hmin,
-            hsiz=hsiz,
-        )
-        os.remove(
-            boundary_triangles_file.name
-        )  # to solve compatibility issues of NamedTemporaryFiles with Windows
-    os.remove(raw_output_mesh_file.name.replace(".mesh", ".sol"))  # Remove unused .sol file created by mmg
-    _remove_unnecessary_fields_from_mesh_file(raw_output_mesh_file.name, output_mesh_file, mesh_version, dimension)
+    _generate_mesh_with_required_triangles(input_mesh, rve, boundary_triangles_file)
+    _remesh_mmg(
+        input_mesh_file=boundary_triangles_file,
+        output_mesh_file=raw_output_mesh_file,
+        hausd=hausd,
+        hgrad=hgrad,
+        hmax=hmax,
+        hmin=hmin,
+        hsiz=hsiz,
+    )
+    _remove_unnecessary_fields_from_mesh_file(raw_output_mesh_file, output_mesh_file, mesh_version, dimension)
 
 
-def _generate_mesh_with_required_triangles(input_mesh: BoxMesh,
-                                           mesh_including_required_triangles: str = 'merged_reqtri.mesh') -> None:
-    with NamedTemporaryFile(suffix='.vtk', delete=False) as vtk_file, NamedTemporaryFile(suffix='.mesh',
-                                                                                         delete=False) as mesh_file:
-        _generate_vtk_with_boundary_triangles(input_mesh, vtk_file.name)
-        _convert_vtk_to_mesh(vtk_file.name, mesh_file.name)
-        _add_required_triangles_to_mesh_file(input_mesh, mesh_file.name, mesh_including_required_triangles)
+def _generate_mesh_with_required_triangles(input_mesh: pv.UnstructuredGrid, rve: Optional[Rve] = None, mesh_including_required_triangles : str = 'mesh_reqtri.mesh') -> None:
+    input_boxmesh = BoxMesh.from_pyvista(input_mesh)
+    if rve is not None:
+        input_boxmesh.rve = rve
+    mesh_boundary, _ = input_boxmesh.boundary_elements(input_boxmesh.rve)
+    mesh_boundary.save('boundary.vtk')
+    pv.save_meshio('boundary.mesh', mesh_boundary)
+    merged_mesh = input_mesh.merge(mesh_boundary)
+    merged_mesh.save('input_with_triangles.vtk')
+    pv.save_meshio('input_with_triangles.mesh', merged_mesh)
 
-
-def _generate_vtk_with_boundary_triangles(input_mesh: BoxMesh, output_mesh: str = 'merged.vtk') -> None:
-    pyvista_mesh = input_mesh.to_pyvista()
-    mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
-    merged_mesh = pyvista_mesh.merge(mesh_boundary)
-    merged_mesh.save(output_mesh, binary=False)
-
-
-def _convert_vtk_to_mesh(input_vtk_file: str, output_mesh_file: str) -> None:
-    meshio_mesh = meshio.read(input_vtk_file)
-    meshio_mesh.write(output_mesh_file)
-
-
-def _get_number_of_boundary_triangles_from_boxmesh(input_mesh: BoxMesh) -> int:
-    mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
     n_boundary_triangles = mesh_boundary.n_faces
 
-    return n_boundary_triangles
+    with open('input_with_triangles.mesh', 'r') as merged_mesh_with_boundary_file:
+        lines = merged_mesh_with_boundary_file.readlines()[:-1] # remove last line End
 
+    with open(mesh_including_required_triangles, 'w') as mesh_with_required_triangles_file:
+        mesh_with_required_triangles_file.writelines(lines)
+        mesh_with_required_triangles_file.write("RequiredTriangles\n")
+        mesh_with_required_triangles_file.write(str(n_boundary_triangles) + "\n")
+        for i in range(n_boundary_triangles):
+            mesh_with_required_triangles_file.write(str(i + 1) + "\n")
+        mesh_with_required_triangles_file.write("End\n")
 
-def _add_required_triangles_to_mesh_file(input_mesh: BoxMesh, input_mesh_file: str, output_mesh_file: str) -> None:
-    n_required_triangles = _get_number_of_boundary_triangles_from_boxmesh(input_mesh)
-    with open(input_mesh_file, 'r') as input_file:
-        lines = input_file.readlines()[:-1]  # remove last line End
-
-    with open(output_mesh_file, 'w+') as output_file:
-        output_file.writelines(lines)
-        output_file.write("RequiredTriangles\n")
-        output_file.write(str(n_required_triangles) + "\n")
-        for i in range(n_required_triangles):
-            output_file.write(str(i + 1) + "\n")
-        output_file.write("End\n")
 
 
 def _remove_unnecessary_fields_from_mesh_file(input_mesh_file: str, output_mesh_file: str, mesh_version: int, dimension: int) -> None:
