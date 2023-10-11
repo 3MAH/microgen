@@ -29,7 +29,8 @@ dependencies = [
     "pyvista",
     "gmsh",
     "meshio",
-    "cadquery"
+    "cadquery",
+    "scipy",
 ]
 
 [project.optional-dependencies]
