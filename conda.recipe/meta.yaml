@@ -1,34 +1,50 @@
+{% set name = "microgen" %}
 {% set version = "1.0.1" %}
 
 package:
-  name: microgen
-  version: {{ version }}
+  name: {{ name|lower }}
+  version: {{ environ.get('PACKAGE_VERSION') }}
 
 source:
-  git_url: https://github.com/3MAH/microgen.git
+  path: ..
 
 build:
   noarch: python
-  script: pip install .
+  script: {{ PYTHON }} -m pip install . -vv
+  string: {{ GIT_DESCRIBE_TAG }}
 
 requirements:
   host:
-    - python
+    - python >=3.8
     - pip    
   run:
-    - pyvista>=0.39
+    - python >=3.8
+    - numpy
+    - pyvista
     - python-gmsh
     - meshio
     - cadquery
-    - pytest-cov
-#    - mmg
-#    - neper
+    - scipy
 
 test:
   imports:
     - microgen
-  source_files:
-    - tests
-    - examples
   commands:
-    - pytest tests
+    # - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/3MAH/microgen
+  summary: 'Microstructure generation'
+  description: |
+    Microstructure generation.
+  license: GPL-3.0-or-later
+  license_family: GPL
+  license_file: LICENSE
+  doc_url: https://microgen.readthedocs.io
+  dev_url: https://github.com/3MAH/microgen
+
+extra:
+  recipe-maintainers:
+    - kmarchais
