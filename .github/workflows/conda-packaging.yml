@@ -20,16 +20,22 @@ jobs:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
-
-      - name: Use the branch name
+        if: ${{ github.event.issue.pull_request }}
         shell: pwsh
-        run: |
-          $env:BRANCH_NAME2="${{ steps.extract_branch.outputs.branch }}"
-          echo "branch name 2 is $env:BRANCH_NAME2"
-          echo "branch name is $env:BRANCH_NAME"
+        run: echo $env:PR_NUMBER
+        env:
+          PR_NUMBER: "PR_${{ github.event.issue.number }}"
+        # shell: bash
+        # run: |
+        #   echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        # id: extract_branch
+
+      # - name: Use the branch name
+      #   shell: pwsh
+      #   run: |
+      #     $env:BRANCH_NAME2="${{ steps.extract_branch.outputs.branch }}"
+      #     echo "branch name 2 is $env:BRANCH_NAME2"
+      #     echo "branch name is $env:BRANCH_NAME"
       - name: Conda build
         shell: pwsh
         run: |
