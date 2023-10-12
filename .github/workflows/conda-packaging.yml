@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "branch name $env:CONDA_BUILD_STRING"
         env:
-          CONDA_BUILD_STRING: "${{ github.head_ref || github.ref_name }}".replace("-","_")
+          CONDA_BUILD_STRING: ${{ github.head_ref || github.ref_name }}.replace("-","_")
       - name: Conda build
         shell: pwsh
         run: |
