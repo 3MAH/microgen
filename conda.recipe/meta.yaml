@@ -6,7 +6,7 @@ package:
   version: {{ environ.get('PACKAGE_VERSION') }}
 
 source:
-  path: ..
+  git_url: ../
 
 build:
   noarch: python
