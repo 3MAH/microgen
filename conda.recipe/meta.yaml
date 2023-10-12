@@ -2,7 +2,7 @@
 
 package:
   name: microgen
-  version: {{ environ.get('BRANCH_NAME') }}
+  version: {{ version }}
 
 source:
   git_url: ../
@@ -10,6 +10,7 @@ source:
 build:
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv
+  string: {{ environ.get('BRANCH_NAME') }}
 
 requirements:
   host:
