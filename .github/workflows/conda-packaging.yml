@@ -12,12 +12,11 @@ jobs:
     name: Conda packaging
     runs-on: "windows-latest"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
           activate-environment: packaging
-      - run: echo $GIT_DESCRIBE_TAG
       - name: Conda build
         shell: pwsh
         run: |
