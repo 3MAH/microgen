@@ -11,8 +11,6 @@ jobs:
   conda-packaging:
     name: Conda packaging
     runs-on: "windows-latest"
-    env:
-      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
@@ -20,9 +18,7 @@ jobs:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
+        run: echo "BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
       - name: Conda build
         shell: pwsh
         run: |
