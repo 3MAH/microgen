@@ -18,15 +18,17 @@ jobs:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Extract branch name
-        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
 
       - name: Use the branch name
-        run: echo "The branch name is $BRANCH_NAME"
-      - name: Conda build
-        shell: pwsh
-        run: |
-          conda install python conda-build conda-verify anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build conda.recipe -c conda-forge --output-folder  .
-          anaconda upload noarch/*.tar.bz2 --force
+        run: echo "The branch name is ${{ steps.extract_branch.outputs.branch }}
+      # - name: Conda build
+      #   shell: pwsh
+      #   run: |
+      #     conda install python conda-build conda-verify anaconda-client
+      #     anaconda logout
+      #     anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+      #     conda-build conda.recipe -c conda-forge --output-folder  .
+      #     anaconda upload noarch/*.tar.bz2 --force
