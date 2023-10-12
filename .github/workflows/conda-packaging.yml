@@ -23,12 +23,15 @@ jobs:
         id: extract_branch
 
       - name: Use the branch name
-        run: echo "The branch name is ${{ steps.extract_branch.outputs.branch }}"
-      # - name: Conda build
-      #   shell: pwsh
-      #   run: |
-      #     conda install python conda-build conda-verify anaconda-client
-      #     anaconda logout
-      #     anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-      #     conda-build conda.recipe -c conda-forge --output-folder  .
-      #     anaconda upload noarch/*.tar.bz2 --force
+        shell: pwsh
+        run: |
+          BRANCH_NAME=${{ steps.extract_branch.outputs.branch }}
+          echo "branch name is $BRANCH_NAME"
+      - name: Conda build
+        shell: pwsh
+        run: |
+          conda install python conda-build conda-verify anaconda-client
+          anaconda logout
+          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+          conda-build conda.recipe -c conda-forge --output-folder  .
+          anaconda upload noarch/*.tar.bz2 --force
