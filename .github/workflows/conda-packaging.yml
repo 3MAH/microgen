@@ -17,6 +17,7 @@ jobs:
         with:
           miniconda-version: "latest"
           activate-environment: packaging
+      - run: echo $GIT_DESCRIBE_TAG
       - name: Conda build
         shell: pwsh
         run: |
