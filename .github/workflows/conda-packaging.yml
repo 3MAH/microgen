@@ -18,7 +18,10 @@ jobs:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Extract branch name
-        run: echo "BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Use the branch name
+        run: echo "The branch name is $BRANCH_NAME"
       - name: Conda build
         shell: pwsh
         run: |
