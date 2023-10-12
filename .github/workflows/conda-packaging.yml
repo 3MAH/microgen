@@ -11,6 +11,8 @@ jobs:
   conda-packaging:
     name: Conda packaging
     runs-on: "windows-latest"
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
@@ -25,7 +27,8 @@ jobs:
       - name: Use the branch name
         shell: pwsh
         run: |
-          BRANCH_NAME=${{ steps.extract_branch.outputs.branch }}
+          $env:BRANCH_NAME2=${{ steps.extract_branch.outputs.branch }}
+          echo "branch name 2 is $BRANCH_NAME2"
           echo "branch name is $BRANCH_NAME"
       - name: Conda build
         shell: pwsh
