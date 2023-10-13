@@ -15,10 +15,11 @@ jobs:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
+      # - uses: conda-incubator/setup-miniconda@v2
+      #   with:
+      #     miniconda-version: "latest"
+      #     activate-environment: packaging
+
       # - name: Extract PR number
       #   if: ${{ github.event.issue.pull_request }}
       #   shell: pwsh
@@ -29,14 +30,13 @@ jobs:
       - name: Extract branch name
         shell: pwsh
         run: |
+          $env:CONDA_BUILD_STRING = ${{ github.head_ref || github.ref_name }} -replace "-","_"
           echo "branch name $env:CONDA_BUILD_STRING"
-        env:
-          CONDA_BUILD_STRING: ${{ github.head_ref || github.ref_name }} -replace "-","_"
-      - name: Conda build
-        shell: pwsh
-        run: |
-          conda install python conda-build conda-verify anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build conda.recipe -c conda-forge --output-folder  .
-          anaconda upload noarch/*.tar.bz2 --force
+      # - name: Conda build
+      #   shell: pwsh
+      #   run: |
+      #     conda install python conda-build conda-verify anaconda-client
+      #     anaconda logout
+      #     anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
+      #     conda-build conda.recipe -c conda-forge --output-folder  .
+      #     anaconda upload noarch/*.tar.bz2 --force
