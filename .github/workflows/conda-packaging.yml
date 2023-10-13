@@ -1,16 +1,12 @@
 name: Create conda package
 
 on:
-  pull_request:
   workflow_dispatch:
-  push:
-    branches:
-      - "*"
 
 jobs:
   conda-packaging:
     name: Conda packaging
-    runs-on: "windows-latest"
+    runs-on: "ubuntu-latest"
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
@@ -26,16 +22,15 @@ jobs:
       #   run: echo $env:CONDA_BUILD_STRING
       #   env:
       #     CONDA_BUILD_STRING: "PR_${{ github.event.issue.number }}"
-
       - name: Conda build
         shell: pwsh
         run: |
-          $env:CONDA_BUILD_STRING = "${{ github.head_ref || github.ref_name }}" -replace "-","_"
-          echo "branch name $env:CONDA_BUILD_STRING"
+          CONDA_BUILD_STRING = "${{ github.head_ref || github.ref_name }}//-/_"
+          echo "branch name $CONDA_BUILD_STRING"
           conda install python conda-build conda-verify anaconda-client
           anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge --output-folder  .
           anaconda upload noarch/*.tar.bz2 --force
-        env:
-          CONDA_BUILD_STRING: ${{ env.CONDA_BUILD_STRING }}
+        # env:
+        #   CONDA_BUILD_STRING: ${{ env.CONDA_BUILD_STRING }}
