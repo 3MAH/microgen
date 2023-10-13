@@ -26,7 +26,7 @@ jobs:
       #   env:
       #     CONDA_BUILD_STRING: "PR_${{ github.event.issue.number }}"
       - name: Conda build
-        shell: pwsh
+        shell: bash
         run: |
           CONDA_BUILD_STRING = "${{ github.head_ref || github.ref_name }}//-/_"
           echo "branch name $CONDA_BUILD_STRING"
