@@ -28,7 +28,7 @@ jobs:
       - name: Conda build
         shell: bash
         run: |
-          CONDA_BUILD_STRING = "${{ github.head_ref || github.ref_name }}//-/_"
+          CONDA_BUILD_STRING="${{ github.head_ref || github.ref_name }}//-/_"
           echo "branch name $CONDA_BUILD_STRING"
           conda install python conda-build conda-verify anaconda-client
           anaconda logout
