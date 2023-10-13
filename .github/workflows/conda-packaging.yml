@@ -27,14 +27,11 @@ jobs:
       #   env:
       #     CONDA_BUILD_STRING: "PR_${{ github.event.issue.number }}"
 
-      - name: Extract branch name
+      - name: Conda build
         shell: pwsh
         run: |
           $env:CONDA_BUILD_STRING = "${{ github.head_ref || github.ref_name }}" -replace "-","_"
           echo "branch name $env:CONDA_BUILD_STRING"
-      - name: Conda build
-        shell: pwsh
-        run: |
           conda install python conda-build conda-verify anaconda-client
           anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
