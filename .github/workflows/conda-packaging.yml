@@ -30,7 +30,7 @@ jobs:
       - name: Extract branch name
         shell: pwsh
         run: |
-          $env:CONDA_BUILD_STRING = ${{ github.head_ref || github.ref_name }} -replace "-","_"
+          $env:CONDA_BUILD_STRING = "${{ github.head_ref || github.ref_name }}" -replace "-","_"
           echo "branch name $env:CONDA_BUILD_STRING"
       # - name: Conda build
       #   shell: pwsh
