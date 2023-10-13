@@ -10,8 +10,6 @@ jobs:
   conda-packaging:
     name: Conda packaging
     runs-on: "ubuntu-latest"
-    env:
-      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
@@ -35,5 +33,5 @@ jobs:
           conda-build conda.recipe -c conda-forge --output-folder  .
           anaconda upload noarch/*.tar.bz2 --force
           anaconda logout
-        # env:
-        #   CONDA_BUILD_STRING: ${{ env.CONDA_BUILD_STRING }}
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
