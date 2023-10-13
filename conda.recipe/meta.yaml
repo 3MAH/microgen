@@ -1,8 +1,6 @@
-{% set version = "1.0.1" %}
-
 package:
   name: microgen
-  version: {{ version }}
+  version: {{ environ.get('PACKAGE_VERSION') }}
 
 source:
   git_url: ../
@@ -10,7 +8,6 @@ source:
 build:
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv
-  string: {{ environ.get('CONDA_BUILD_STRING') }}
 
 requirements:
   host:
