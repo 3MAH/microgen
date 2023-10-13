@@ -26,6 +26,7 @@ jobs:
       - name: Conda build
         shell: bash -l {0}
         run: |
+          export CONDA_BUILD_STRING="${BRANCH_NAME//-/_}"
           echo "branch name $CONDA_BUILD_STRING"
           conda install python conda-build conda-verify anaconda-client
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
@@ -34,4 +35,3 @@ jobs:
           anaconda logout
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          CONDA_BUILD_STRING: "${BRANCH_NAME//-/_}"
