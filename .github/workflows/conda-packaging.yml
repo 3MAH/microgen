@@ -2,6 +2,9 @@ name: Create conda package
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - "*"
 
 jobs:
   conda-packaging:
