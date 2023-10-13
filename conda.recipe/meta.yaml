@@ -4,7 +4,7 @@ package:
 
 source:
   git_url: https://github.com/3MAH/microgen.git
-  git_tag: {{ environ.get('PACKAGE_VERSION') }}
+  git_tag: {{ GIT_DESCRIBE_TAG }}
 
 build:
   noarch: python
@@ -35,7 +35,7 @@ about:
   home: https://github.com/3MAH/microgen
   summary: 'Microstructure generation'
   description: |
-    Microstructure generation.
+    Microgen is a Python library designed to facilitate microstructure generation and meshing.
   license: GPL-3.0-or-later
   license_family: GPL
   license_file: LICENSE
