@@ -23,7 +23,6 @@ jobs:
         shell: bash -l {0}
         run: |
           export PACKAGE_VERSION="${BRANCH_NAME//-/_}"
-          echo "branch name $PACKAGE_VERSION"
           conda install python conda-build conda-verify anaconda-client
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge --output-folder  .

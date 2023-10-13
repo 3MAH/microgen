@@ -3,7 +3,8 @@ package:
   version: {{ environ.get('PACKAGE_VERSION') }}
 
 source:
-  git_url: ../
+  git_url: https://github.com/3MAH/microgen.git
+  git_tag: {{ environ.get('PACKAGE_VERSION') }}
 
 build:
   noarch: python
