@@ -11,7 +11,7 @@ on:
 jobs:
   conda-packaging:
     name: Conda packaging
-    runs-on: "ubuntu-latest"
+    runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
@@ -20,9 +20,10 @@ jobs:
           activate-environment: packaging
 
       - name: Conda build
-        shell: bash -l {0}
+        shell: pwsh
         run: |
-          export PACKAGE_VERSION="${BRANCH_NAME//-/_}"
+          # export PACKAGE_VERSION="${BRANCH_NAME//-/_}"
+          $env:PACKAGE_VERSION = $env:BRANCH_NAME -replace "-", "_"
           conda install python conda-build conda-verify anaconda-client
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge --output-folder  .
