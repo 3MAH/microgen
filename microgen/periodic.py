@@ -3,7 +3,7 @@ Periodic function to cut a shape periodically according to a RVE
 """
 
 import warnings
-from typing import List
+from typing import List, Dict
 
 import cadquery as cq
 
@@ -65,8 +65,8 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
 
     intersected_faces: List[str] = []
 
-    planes = {}  # type: dict[str, cq.Face]
-    partitions = {}  # type: dict[str, cq.Workplane]
+    planes: Dict[str, cq.Face] = {}
+    partitions: Dict[str, cq.Workplane] = {}
     for face in faces:
         planes[face] = cq.Face.makePlane(
             basePnt=basePnt[face], dir=direction[face]

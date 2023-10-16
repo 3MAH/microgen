@@ -9,7 +9,7 @@ Functions related to external softwares
 
 import subprocess
 import os
-from typing import Union, Tuple
+from typing import Union, Tuple, List, Dict
 
 import numpy as np
 
@@ -55,7 +55,7 @@ class Neper:
         os.system(command)
 
     @staticmethod
-    def generateVoronoiFromTessFile(filename: str) -> list[Polyhedron]:
+    def generateVoronoiFromTessFile(filename: str) -> List[Polyhedron]:
         """
         Generates list of Voronoi polyhedron shapes from a tesselation file generated with neper
         """
@@ -93,7 +93,7 @@ class Neper:
         return polyhedra
 
     @staticmethod
-    def tessParse(filename: str) -> dict[str, dict]:
+    def tessParse(filename: str) -> Dict[str, dict]:
         """
         Parses tesselation file (.tess) generated with neper.
         Following .tess structure from `neper's`_ documentation:
@@ -401,14 +401,14 @@ def parseNeper(filename: str) -> tuple:
     listeSommets = []
     listeSommetsOut = []
     for i in range(nbPolys):
-        voro = {}  # type: dict[str, Union[dict, list]]
+        voro: Dict[str, Union[Dict, List]] = {}
         voro["original"] = seed[i]
         voro["faces"] = []
         listeSommetsPoly = []
         sommets = []
         for facePoly in polys[i][1:]:
             listeSommetsFace = []
-            dicVertices = {}  # type: dict[str, list]
+            dicVertices: Dict[str, List] = {}
             dicVertices["vertices"] = []
             for segment in faces[facePoly - 1][1:]:
                 # Listes des sommets avec numérotation globale et faces associées

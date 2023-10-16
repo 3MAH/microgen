@@ -17,7 +17,7 @@ Shape (:mod:`microgen.shape`)
 
 """
 
-from typing import Any, Tuple
+from typing import Any, Tuple, Dict
 
 from .basicGeometry import BasicGeometry
 from .box import Box
@@ -33,7 +33,7 @@ from .sphere import Sphere
 
 def newGeometry(
     shape: str,
-    param_geom: dict[str, Any],
+    param_geom: Dict[str, Any],
     center: Tuple[float, float, float] = (0, 0, 0),
     orientation: Tuple[float, float, float] = (0, 0, 0),
 ) -> BasicGeometry:

@@ -3,7 +3,7 @@
 Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
-from typing import Tuple
+from typing import Tuple, Dict
 
 import cadquery as cq
 import pyvista as pv
@@ -30,7 +30,7 @@ class Polyhedron(BasicGeometry):
         self,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
-        dic: dict[str, list] = {
+        dic: Dict[str, list] = {
             "vertices": [
                 (1.0, 1.0, 1.0),
                 (1.0, -1.0, -1.0),
