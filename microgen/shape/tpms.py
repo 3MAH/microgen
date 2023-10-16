@@ -10,8 +10,9 @@ TPMS (:mod:`microgen.shape.tpms`)
    pyvista.global_theme.split_sharp_edges = True
 
 """
+from __future__ import annotations
 import logging
-from typing import Callable, List, Union, Sequence, Literal, Optional, Tuple
+from typing import Callable, List, Sequence, Literal, Optional, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -53,10 +54,10 @@ class Tpms(BasicGeometry):
     def __init__(
         self,
         surface_function: Field,
-        offset: Union[float, Field] = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
-        cell_size: Union[float, Sequence[float]] = 1.0,
-        repeat_cell: Union[int, Sequence[int]] = 1,
+        cell_size: float | Sequence[float] = 1.0,
+        repeat_cell: int | Sequence[int] = 1,
         resolution: int = 20,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
@@ -122,7 +123,7 @@ class Tpms(BasicGeometry):
         cls,
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        density: Union[float, Literal["max"]] = "max",
+        density: float | Literal["max"] = "max",
         resolution: int = 20,
     ) -> float:
         if not isinstance(density, (int, float)) and density != "max":
@@ -181,8 +182,8 @@ class Tpms(BasicGeometry):
 
     def _init_cell_parameters(
         self,
-        cell_size: Union[float, Sequence[float]],
-        repeat_cell: Union[int, Sequence[int]],
+        cell_size: float | Sequence[float],
+        repeat_cell: int | Sequence[int],
     ):
         if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
@@ -302,7 +303,7 @@ class Tpms(BasicGeometry):
         self.grid["surface"] = tpms_field.ravel(order="F")
         self._update_offset(self.offset)
 
-    def _update_offset(self, offset: Union[float, Callable]) -> None:
+    def _update_offset(self, offset: float | Callable) -> None:
         if isinstance(offset, float):
             self.offset = offset
         elif isinstance(offset, Callable):
@@ -335,7 +336,7 @@ class Tpms(BasicGeometry):
 
     def _create_surface(
         self,
-        isovalue: Union[float, np.ndarray] = 0.0,
+        isovalue: float | np.ndarray = 0.0,
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
@@ -591,10 +592,10 @@ class CylindricalTpms(Tpms):
         self,
         radius: float,
         surface_function: Field,
-        offset: Union[float, Field] = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
-        cell_size: Union[float, Sequence[float]] = 1.0,
-        repeat_cell: Union[int, Sequence[int]] = 1,
+        cell_size: float | Sequence[float] = 1.0,
+        repeat_cell: int | Sequence[int] = 1,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
@@ -665,10 +666,10 @@ class SphericalTpms(Tpms):
         self,
         radius: float,
         surface_function: Field,
-        offset: Union[float, Field] = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
-        cell_size: Union[float, Sequence[float]] = 1.0,
-        repeat_cell: Union[int, Sequence[int]] = 1,
+        cell_size: float | Sequence[float] = 1.0,
+        repeat_cell: int | Sequence[int] = 1,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,

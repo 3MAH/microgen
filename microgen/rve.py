@@ -1,11 +1,9 @@
 """
 Representative Volume Element (RVE) or Representative Elementary Volume (REV)
 """
-
+from __future__ import annotations
 import cadquery as cq
 import numpy as np
-
-from typing import Union
 
 
 class Rve:
@@ -21,7 +19,7 @@ class Rve:
         dim_x: float = 1,
         dim_y: float = 1,
         dim_z: float = 1,
-        center: Union[np.ndarray, tuple] = (0, 0, 0),
+        center: np.ndarray | tuple = (0, 0, 0),
     ) -> None:
         self.center = center
         self.dim_x = dim_x

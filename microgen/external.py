@@ -6,10 +6,10 @@ Functions related to external softwares
 .. _Neper - Polycrystal Generation and Meshing: https://neper.info/
 .. _mmg - Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
 """
-
+from __future__ import annotations
 import subprocess
 import os
-from typing import Union, Tuple, List, Dict
+from typing import Tuple, List, Dict
 
 import numpy as np
 
@@ -401,7 +401,7 @@ def parseNeper(filename: str) -> tuple:
     listeSommets = []
     listeSommetsOut = []
     for i in range(nbPolys):
-        voro: Dict[str, Union[Dict, List]] = {}
+        voro: Dict[str, Dict | List] = {}
         voro["original"] = seed[i]
         voro["faces"] = []
         listeSommetsPoly = []

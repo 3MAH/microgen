@@ -1,5 +1,5 @@
+from __future__ import annotations
 from functools import partial
-from typing import Union
 
 import numpy as np
 import pyvista as pv
@@ -16,8 +16,8 @@ def grading(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-    min_offset: Union[float, np.ndarray] = 0.0,
-    max_offset: Union[float, np.ndarray] = 3.0,
+    min_offset: float | np.ndarray = 0.0,
+    max_offset: float | np.ndarray = 3.0,
 ) -> np.ndarray:
     rad = np.sqrt(x**2 + y**2)
     max_rad = np.max(rad)

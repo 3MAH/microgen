@@ -1,7 +1,8 @@
+from __future__ import annotations
 import os
 import pytest
 from inspect import getmembers, isfunction
-from typing import Type, Union, Literal, Tuple
+from typing import Type, Literal, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -150,8 +151,8 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
 @pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
 def test_tpms_given_sum_volume_must_be_cube_volume(
     surface: str,
-    repeat_cell: Union[int, Tuple[int, int, int]],
-    cell_size: Union[float, Tuple[float, float, float]],
+    repeat_cell: int | Tuple[int, int, int],
+    cell_size: float | Tuple[float, float, float],
 ):
     # Arrange
     tpms = microgen.Tpms(

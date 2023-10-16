@@ -1,8 +1,8 @@
 """
 Phase class to manage list of solids belonging to the same phase
 """
-
-from typing import Sequence, Optional, Union, List, Tuple
+from __future__ import annotations
+from typing import Sequence, Optional, List, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -129,7 +129,7 @@ class Phase:
 
     @staticmethod
     def rescaleShape(
-        shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]
+        shape: cq.Shape, scale: float | Tuple[float, float, float]
     ) -> cq.Shape:
         """
         Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
@@ -159,7 +159,7 @@ class Phase:
 
         return shape
 
-    def rescale(self, scale: Union[float, Tuple[float, float, float]]) -> None:
+    def rescale(self, scale: float | Tuple[float, float, float]) -> None:
         """
         Rescale phase according to scale parameters [dim_x, dim_y, dim_z]
 

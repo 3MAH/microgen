@@ -1,8 +1,8 @@
 """
 Boolean operations
 """
-
-from typing import Union, Tuple, List, Sequence
+from __future__ import annotations
+from typing import Tuple, List, Sequence
 
 import OCP
 import cadquery as cq
@@ -40,12 +40,12 @@ def _getRotationAxes(
 
 
 def rotateEuler(
-    obj: Union[cq.Shape, cq.Workplane],
-    center: Union[np.ndarray, Tuple[float, float, float]],
+    obj: cq.Shape | cq.Workplane,
+    center: np.ndarray | Tuple[float, float, float],
     psi: float,
     theta: float,
     phi: float,
-) -> Union[cq.Shape, cq.Workplane]:
+) -> cq.Shape | cq.Workplane:
     """
     Rotates object according to XZX Euler angle convention
 
@@ -93,7 +93,7 @@ def rotatePvEuler(
 
 
 def rescale(
-    shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]
+    shape: cq.Shape, scale: float | Tuple[float, float, float]
 ) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
@@ -268,7 +268,7 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
 
 def rasterPhase(
     phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
-) -> Union[Phase, List[Phase]]:
+) -> Phase | List[Phase]:
     """
     Rasters solids from phase according to the rve divided by the given grid
 
