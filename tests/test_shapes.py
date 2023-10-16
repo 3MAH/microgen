@@ -1,7 +1,7 @@
 import os
 import pytest
 from inspect import getmembers, isfunction
-from typing import Type, Union, Literal
+from typing import Type, Union, Literal, Tuple
 
 import cadquery as cq
 import numpy as np
