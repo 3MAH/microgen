@@ -175,8 +175,6 @@ class Tpms(BasicGeometry):
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
             bracket=[-bound, bound],
-            method="secant",
-            x0=0.5,
         ).root
         self._update_offset(computed_offset)
         logging.info("computed offset = %.3f", computed_offset)
