@@ -122,7 +122,7 @@ class Tpms(BasicGeometry):
         cls,
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        density: float | Literal["max"] = "max",
+        density: Union[float, Literal["max"]] = "max",
         resolution: int = 20,
     ) -> float:
         if not isinstance(density, (int, float)) and density != "max":
