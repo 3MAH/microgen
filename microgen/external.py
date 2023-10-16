@@ -9,7 +9,7 @@ Functions related to external softwares
 
 import subprocess
 import os
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 
@@ -18,7 +18,7 @@ from microgen.shape import Polyhedron
 
 class Neper:
     @staticmethod
-    def run(filename: str, nbCell: int, dimCube: tuple[float, float, float]) -> None:
+    def run(filename: str, nbCell: int, dimCube: Tuple[float, float, float]) -> None:
         """
         Runs neper command from the command line
 
@@ -30,12 +30,14 @@ class Neper:
 
         .. _neper's documentation: https://neper.info/doc/neper_t.html#cmdoption-domain
         """
-        
+
         try:
             # Check if neper is installed and available in the PATH
             subprocess.run(["neper", "--version"], check=True)
-        except(subprocess.CalledProcessError, FileNotFoundError):
-            print("Neper is not installed. Please install Neper before running this command.")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print(
+                "Neper is not installed. Please install Neper before running this command."
+            )
             return
 
         command = "neper -T -n " + str(nbCell) + " -id 1 -dim 3"
@@ -289,7 +291,6 @@ def parseNeper(filename: str) -> tuple:
     i = 0
 
     for line in fid:
-
         if flagExtraction:
             if "*" in line:
                 flagExtraction = False
@@ -612,7 +613,7 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except(subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
@@ -731,7 +732,7 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except(subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
@@ -873,7 +874,7 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except(subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )

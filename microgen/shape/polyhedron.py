@@ -3,6 +3,8 @@
 Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
+from typing import Tuple
+
 import cadquery as cq
 import pyvista as pv
 import numpy as np
@@ -14,20 +16,20 @@ from .basicGeometry import BasicGeometry
 class Polyhedron(BasicGeometry):
     """
     Class to generate a Polyhedron with a given set of faces and vertices
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Polyhedron().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         dic: dict[str, list] = {
             "vertices": [
                 (1.0, 1.0, 1.0),

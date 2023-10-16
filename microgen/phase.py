@@ -2,7 +2,7 @@
 Phase class to manage list of solids belonging to the same phase
 """
 
-from typing import Sequence, Optional, Union
+from typing import Sequence, Optional, Union, List, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -28,13 +28,12 @@ class Phase:
     def __init__(
         self,
         shape: Optional[cq.Shape] = None,
-        solids: Optional[list[cq.Solid]] = None,
-        center: Optional[tuple[float, float, float]] = None,
-        orientation: Optional[tuple[float, float, float]] = None,
+        solids: Optional[List[cq.Solid]] = None,
+        center: Optional[Tuple[float, float, float]] = None,
+        orientation: Optional[Tuple[float, float, float]] = None,
     ) -> None:
-
         self._shape = shape
-        self._solids: list[cq.Solid] = solids if solids is not None else []
+        self._solids: List[cq.Solid] = solids if solids is not None else []
         self.center = center
         self.orientation = orientation
 
@@ -114,7 +113,7 @@ class Phase:
             return None
 
     @property
-    def solids(self) -> list[cq.Solid]:
+    def solids(self) -> List[cq.Solid]:
         if len(self._solids) > 0:
             return self._solids
         elif self._shape is not None:
@@ -130,7 +129,7 @@ class Phase:
 
     @staticmethod
     def rescaleShape(
-        shape: cq.Shape, scale: Union[float, tuple[float, float, float]]
+        shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]
     ) -> cq.Shape:
         """
         Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
@@ -160,7 +159,7 @@ class Phase:
 
         return shape
 
-    def rescale(self, scale: Union[float, tuple[float, float, float]]) -> None:
+    def rescale(self, scale: Union[float, Tuple[float, float, float]]) -> None:
         """
         Rescale phase according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -170,7 +169,7 @@ class Phase:
 
     @staticmethod
     def repeatShape(
-        unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]
+        unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]
     ) -> cq.Shape:
         """
         Repeats unit geometry in each direction according to the given grid
@@ -202,7 +201,7 @@ class Phase:
         shape = cq.Shape(compound.wrapped)
         return shape
 
-    def repeat(self, rve: Rve, grid: tuple[int, int, int]) -> None:
+    def repeat(self, rve: Rve, grid: Tuple[int, int, int]) -> None:
         """
         Repeats phase in each direction according to the given grid
 
@@ -211,7 +210,7 @@ class Phase:
         """
         self._shape = self.repeatShape(self.shape, rve, grid)
 
-    def buildSolids(self, rve: Rve, grid: list[int]) -> list[cq.Solid]:
+    def buildSolids(self, rve: Rve, grid: List[int]) -> List[cq.Solid]:
         """
         Build solids from phase according to the rve divided by the given grid
 
@@ -220,7 +219,7 @@ class Phase:
 
         :return: list of solids
         """
-        solidList = []  # type: list[cq.Solid]
+        solidList: List[cq.Solid] = []
 
         for solid in self.solids:
             wk_plane = cq.Workplane().add(solid)
@@ -245,8 +244,8 @@ class Phase:
         return solidList
 
     def rasterize(
-        self, rve: Rve, grid: list[int], phasePerRaster: bool = True
-    ) -> Optional[list["Phase"]]:
+        self, rve: Rve, grid: List[int], phasePerRaster: bool = True
+    ) -> Optional[List["Phase"]]:
         """
         Rasters solids from phase according to the rve divided by the given grid
 
@@ -256,7 +255,7 @@ class Phase:
 
         :return: list of Phases if required
         """
-        solidList: list[cq.Solid] = self.buildSolids(rve, grid)
+        solidList: List[cq.Solid] = self.buildSolids(rve, grid)
 
         if phasePerRaster:
             return self.generatePhasePerRaster(solidList, rve, grid)
@@ -267,8 +266,8 @@ class Phase:
 
     @classmethod
     def generatePhasePerRaster(
-        cls, solidList: list[cq.Solid], rve: Rve, grid: list[int]
-    ) -> list["Phase"]:
+        cls, solidList: List[cq.Solid], rve: Rve, grid: List[int]
+    ) -> List["Phase"]:
         """
         Rasters solids from phase according to the rve divided by the given grid
 
@@ -278,9 +277,9 @@ class Phase:
 
         :return: list of Phases
         """
-        solids_phases = [
+        solids_phases: List[List[cq.Solid]] = [
             [] for _ in range(grid[0] * grid[1] * grid[2])
-        ]  # type: list[list[cq.Solid]]
+        ]
         for solid in solidList:
             center = solid.Center()
             i = int(round((center.x - rve.x_min) / (rve.dx / grid[0])))

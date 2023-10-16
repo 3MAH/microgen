@@ -17,7 +17,7 @@ from .rve import Rve
 
 def _getRotationAxes(
     psi: float, theta: float, phi: float
-) -> list[tuple[float, float, float]]:
+) -> List[Tuple[float, float, float]]:
     """
     Retrieve the 3 Euler rotation axes
 
@@ -147,7 +147,7 @@ def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
 
     :return phase_cut: final result
     """
-    phase_cut = []  # type: list[Phase]
+    phase_cut: List[Phase] = []
 
     for phase in phaseList:
         cut = BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped)
@@ -182,7 +182,7 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
 
     :return cutted_shapes: list of CQ Shape
     """
-    cutted_shapes = []  # type: list[cq.Shape]
+    cutted_shapes: List[cq.Shape] = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
@@ -279,7 +279,7 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solidList: list[cq.Solid] = phase.buildSolids(rve, grid)
+    solidList: List[cq.Solid] = phase.buildSolids(rve, grid)
 
     if phasePerRaster:
         return Phase.generatePhasePerRaster(solidList, rve, grid)

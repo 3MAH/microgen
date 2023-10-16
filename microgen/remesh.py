@@ -1,13 +1,14 @@
 import math as m
 import os
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple
+from typing import NamedTuple, List, Tuple
 
 import gmsh
 import numpy as np
 import numpy.typing as npt
 
 from microgen import Mmg, Rve
+
 
 class Triangle(NamedTuple):
     node1: npt.NDArray[np.float_]
@@ -44,9 +45,7 @@ def remesh_keeping_periodicity_for_fem(
     :param hmin: Minimal edge size
     :param hsiz: Build a constant size map of size hsiz
     """
-    with NamedTemporaryFile(
-        suffix=".mesh", delete=False
-    ) as boundary_triangles_file:
+    with NamedTemporaryFile(suffix=".mesh", delete=False) as boundary_triangles_file:
         _identify_boundary_triangles_from_mesh_file(
             input_mesh_file, rve, boundary_triangles_file.name
         )
@@ -62,7 +61,10 @@ def remesh_keeping_periodicity_for_fem(
         os.remove(
             boundary_triangles_file.name
         )  # to solve compatibility issues of NamedTemporaryFiles with Windows
-    os.remove(output_mesh_file.replace(".mesh",".sol")) # Remove unused .sol file created by mmg
+    os.remove(
+        output_mesh_file.replace(".mesh", ".sol")
+    )  # Remove unused .sol file created by mmg
+
 
 def _identify_boundary_triangles_from_mesh_file(
     input_mesh_file: str, rve: Rve, output_mesh_file: str
@@ -81,30 +83,28 @@ def _identify_boundary_triangles_from_mesh_file(
     gmsh.initialize()
     gmsh.open(input_mesh_file)
 
-    surface_triangles: list[Triangle] = _build_surface_triangles()
-    boundary_triangles_tags: list[int] = _extract_boundary_triangles_tags(
+    surface_triangles: List[Triangle] = _build_surface_triangles()
+    boundary_triangles_tags: List[int] = _extract_boundary_triangles_tags(
         surface_triangles, rve
     )
 
     _write_output(boundary_triangles_tags, output_mesh_file)
 
 
-def _get_surface_triangles() -> tuple[list[int], list[int]]:
+def _get_surface_triangles() -> Tuple[List[int], List[int]]:
     gmsh.model.mesh.createTopology()  # Creates boundary entities
     (
         _,
         surface_triangles_tags,
         surface_triangles_nodes_tags,
     ) = gmsh.model.mesh.getElements(_BOUNDARY_DIM)
-    surface_triangles_nodes_tags: list[int] = list(
-        surface_triangles_nodes_tags[0]
-    )
-    surface_triangles_tags: list[int] = list(surface_triangles_tags[0])
+    surface_triangles_nodes_tags: List[int] = List(surface_triangles_nodes_tags[0])
+    surface_triangles_tags: List[int] = List(surface_triangles_tags[0])
 
     return surface_triangles_tags, surface_triangles_nodes_tags
 
 
-def _build_surface_triangles() -> list[Triangle]:
+def _build_surface_triangles() -> List[Triangle]:
     (
         surface_triangles_tags,
         surface_triangles_nodes_tags,
@@ -127,7 +127,7 @@ def _build_surface_triangles() -> list[Triangle]:
 
 
 def _get_surface_nodes_coords(
-    surface_nodes: list[int],
+    surface_nodes: List[int],
 ) -> npt.NDArray[np.float_]:
     n_nodes = len(surface_nodes)
     surface_nodes_coords = np.zeros((n_nodes, _MESH_DIM))
@@ -156,8 +156,8 @@ def _is_triangle_on_boundary(triangle: Triangle, rve: Rve) -> bool:
 
 
 def _extract_boundary_triangles_tags(
-    surface_triangles: list[Triangle], rve: Rve
-) -> list[int]:
+    surface_triangles: List[Triangle], rve: Rve
+) -> List[int]:
     n_tetrahedra = len(gmsh.model.mesh.getElements(_MESH_DIM)[1][0])
     boundary_triangles_tags = [
         int(triangle.tag - n_tetrahedra)
@@ -170,7 +170,7 @@ def _extract_boundary_triangles_tags(
 
 
 def _write_output(
-    boundary_triangles_tags: list[int], output_file: str = "mesh_reqtri.mesh"
+    boundary_triangles_tags: List[int], output_file: str = "mesh_reqtri.mesh"
 ) -> None:
     n_boundary_triangles = len(boundary_triangles_tags)
     gmsh.write(output_file)

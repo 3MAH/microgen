@@ -11,7 +11,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 """
 import logging
-from typing import Callable, List, Union, Sequence, Literal, Optional
+from typing import Callable, List, Union, Sequence, Literal, Optional, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -58,8 +58,8 @@ class Tpms(BasicGeometry):
         cell_size: Union[float, Sequence[float]] = 1.0,
         repeat_cell: Union[int, Sequence[int]] = 1,
         resolution: int = 20,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         density: Optional[float] = None,
     ) -> None:
         """
@@ -254,7 +254,7 @@ class Tpms(BasicGeometry):
         return self._lower_skeletal
 
     @property
-    def skeletals(self) -> tuple[pv.PolyData, pv.PolyData]:
+    def skeletals(self) -> Tuple[pv.PolyData, pv.PolyData]:
         """
         Returns both skeletal parts
         """
@@ -359,8 +359,8 @@ class Tpms(BasicGeometry):
         return shell
 
     def _create_surfaces(
-        self, isovalues: list[float], smoothing: int = 0, verbose: bool = False
-    ) -> list[cq.Shell]:
+        self, isovalues: List[float], smoothing: int = 0, verbose: bool = False
+    ) -> List[cq.Shell]:
         """
         Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
 
@@ -381,7 +381,7 @@ class Tpms(BasicGeometry):
 
     def _generate_sheet_surfaces(
         self, eps: float, smoothing: int, verbose: bool
-    ) -> tuple[cq.Shape, cq.Shape]:
+    ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 + eps,
@@ -402,7 +402,7 @@ class Tpms(BasicGeometry):
 
     def _generate_lower_skeletal_surfaces(
         self, eps: float, smoothing: int, verbose: bool
-    ) -> tuple[cq.Shape, cq.Shape]:
+    ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 - eps,
@@ -416,7 +416,7 @@ class Tpms(BasicGeometry):
 
     def _generate_upper_skeletal_surfaces(
         self, eps: float, smoothing: int, verbose: bool
-    ) -> tuple[cq.Shape, cq.Shape]:
+    ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
             self.offset / 2.0,
             self.offset / 2.0 + eps,
@@ -597,8 +597,8 @@ class CylindricalTpms(Tpms):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: Union[float, Sequence[float]] = 1.0,
         repeat_cell: Union[int, Sequence[int]] = 1,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
         density: Optional[float] = None,
     ):
@@ -671,8 +671,8 @@ class SphericalTpms(Tpms):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: Union[float, Sequence[float]] = 1.0,
         repeat_cell: Union[int, Sequence[int]] = 1,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
         density: Optional[float] = None,
     ):

@@ -17,20 +17,20 @@ from .basicGeometry import BasicGeometry
 class ExtrudedPolygon(BasicGeometry):
     """
     Class to generate an extruded polygon with a given list of points and a thickness
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.ExtrudedPolygon().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         listCorners: Sequence[Tuple[float, float]] = [
             (1, 0),
             (0.5, 0.5 * np.sqrt(3)),

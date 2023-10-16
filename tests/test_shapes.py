@@ -150,8 +150,8 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
 @pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
 def test_tpms_given_sum_volume_must_be_cube_volume(
     surface: str,
-    repeat_cell: Union[int, tuple[int, int, int]],
-    cell_size: Union[float, tuple[float, float, float]],
+    repeat_cell: Union[int, Tuple[int, int, int]],
+    cell_size: Union[float, Tuple[float, float, float]],
 ):
     # Arrange
     tpms = microgen.Tpms(
@@ -217,8 +217,8 @@ def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lowe
 )
 def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond_and_be_between_zero_and_grid_volume(
     coord_sys_tpms: Type[microgen.Tpms],
-    repeat_cell_zero: tuple[int, int, int],
-    repeat_cell_max: tuple[int, int, int],
+    repeat_cell_zero: Tuple[int, int, int],
+    repeat_cell_max: Tuple[int, int, int],
 ):
     tpms_repeat_zero = coord_sys_tpms(
         radius=1.0,

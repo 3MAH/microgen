@@ -6,7 +6,7 @@ Basic Geometry (:mod:`microgen.shape.basicGeometry`)
 
 import cadquery as cq
 
-from typing import Union
+from typing import Union, Tuple
 
 
 class BasicGeometry:
@@ -23,10 +23,9 @@ class BasicGeometry:
     def __init__(
         self,
         shape: str,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
     ) -> None:
-
         self.number = self.numInstances
         self.shape = shape
         self.center = center

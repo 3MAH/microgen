@@ -1,3 +1,5 @@
+from typing import List
+
 import microgen
 import cadquery as cq
 import numpy as np
@@ -8,7 +10,6 @@ import pytest
 
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def test_octettruss():
-
     # fichier
     NPhases_file = "examples/Lattices/octetTruss/test_octet.dat"
 
@@ -27,7 +28,18 @@ def test_octettruss():
         ]
     )
     # précision du type des données
-    number, shape, xc, yc, zc, psi, theta, phi, height, radius, = np.loadtxt(
+    (
+        number,
+        shape,
+        xc,
+        yc,
+        zc,
+        psi,
+        theta,
+        phi,
+        height,
+        radius,
+    ) = np.loadtxt(
         NPhases_file,
         dtype=dt,
         usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
@@ -37,8 +49,8 @@ def test_octettruss():
     )
 
     revel = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
-    listPhases = []  # type: list[microgen.Phase]
-    listPeriodicPhases = []  # type: list[microgen.Phase]
+    listPhases: List[microgen.Phase] = []
+    listPeriodicPhases: List[microgen.Phase] = []
     n = len(xc)
 
     for i in range(0, n):

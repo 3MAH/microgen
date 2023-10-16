@@ -3,6 +3,8 @@
 Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
+from typing import Tuple
+
 import cadquery as cq
 import pyvista as pv
 
@@ -12,19 +14,19 @@ from .basicGeometry import BasicGeometry
 class Sphere(BasicGeometry):
     """
     Class to generate a sphere
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Sphere().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
         radius: float = 1,
     ) -> None:
         super().__init__(shape="Box", center=center)

@@ -3,6 +3,7 @@
 Box (:mod:`microgen.shape.box`)
 ===============================
 """
+from typing import Tuple
 import cadquery as cq
 import pyvista as pv
 
@@ -13,20 +14,20 @@ from .basicGeometry import BasicGeometry
 class Box(BasicGeometry):
     """
     Class to generate a box
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Box().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         dim_x: float = 1,
         dim_y: float = 1,
         dim_z: float = 1,
