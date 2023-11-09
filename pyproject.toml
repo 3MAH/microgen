@@ -4,14 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microgen"
-authors = [
-    {name = "3MAH", email = 'set3mah@gmail.com'},
-]
+authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation"
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["microstructure", "lattice"]
-license = {text = "GPLv3"}
+license = { text = "GPLv3" }
 classifiers = [
     'Intended Audience :: Science/Research',
     'Topic :: Scientific/Engineering :: Information Analysis',
@@ -23,20 +21,11 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
-dependencies = [
-    "numpy",
-    "pyvista",
-    "gmsh",
-    "meshio",
-    "cadquery"
-]
+dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = [
-    'pytest',
-    'pytest-cov',
-]
+test = ['pytest', 'pytest-cov']
 docs = [
     'ipykernel',
     'sphinx',
@@ -48,12 +37,12 @@ docs = [
     'myst-parser',
 ]
 jupyter = [
-    "jupyterlab==3.4.8",
-    "jupyter-cadquery==3.5.2",
-    "ipyvtklink==0.2.3",
-    "ipygany==0.5.0",
-    "sidecar==0.5.2",
-    "jupyterview==0.5.2",
+    "jupyterlab==3.4.8", # 3.4.8
+    "jupyter-cadquery",  # 3.5.2
+    "ipyvtklink",        # 0.2.3
+    "ipygany",           # 0.5.0
+    "sidecar",           # 0.5.2
+    "jupyterview",       # 0.5.2
 ]
 all = ["microgen[test, docs, jupyter]"]
 
@@ -63,10 +52,7 @@ Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
 [tool.setuptools.dynamic]
-version = {attr = 'microgen._version.__version__'}
+version = { attr = 'microgen._version.__version__' }
 
 [tool.setuptools.packages.find]
-include = [
-    'microgen',
-    'microgen.*',
-]
+include = ['microgen', 'microgen.*']
