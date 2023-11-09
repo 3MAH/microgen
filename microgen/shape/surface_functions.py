@@ -1,6 +1,7 @@
 from numpy import cos, sin
+import numpy as np
 
-def gyroid(x: float, y: float, z: float) -> float:
+def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        sin(x) cos(y) + sin(y) cos(z) + sin(z) cos(x) = 0
@@ -22,7 +23,7 @@ def gyroid(x: float, y: float, z: float) -> float:
     return sin(x) * cos(y) + sin(y) * cos(z) + sin(z) * cos(x)
 
 
-def schwarzP(x: float, y: float, z: float) -> float:
+def schwarzP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        cos(x) + cos(y) + cos(z) = 0
@@ -44,7 +45,7 @@ def schwarzP(x: float, y: float, z: float) -> float:
     return cos(x) + cos(y) + cos(z)
 
 
-def schwarzD(x: float, y: float, z: float) -> float:
+def schwarzD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        sin(x) sin(y) sin(z) + sin(x) cos(y) cos(z) + cos(x) sin(y) cos(z) + cos(x) cos(y) sin(z) = 0
@@ -71,7 +72,7 @@ def schwarzD(x: float, y: float, z: float) -> float:
     )
 
 
-def neovius(x: float, y: float, z: float) -> float:
+def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
         3 cos(x) + cos(y) + cos(z) + 4 cos(x) cos(y) cos(z) = 0
@@ -96,7 +97,7 @@ def neovius(x: float, y: float, z: float) -> float:
     )
 
 
-def schoenIWP(x: float, y: float, z: float) -> float:
+def schoenIWP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        2 (cos(x) cos(y) + cos(y) cos(z) + cos(z) cos(x)) - (cos(2 x) + cos(2 y) + cos(2 z)) = 0
@@ -121,7 +122,7 @@ def schoenIWP(x: float, y: float, z: float) -> float:
     )
 
 
-def schoenFRD(x: float, y: float, z: float) -> float:
+def schoenFRD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        4 cos(x) cos(y) cos(z) - (cos(2 x) cos(2 y) + cos(2 y) cos(2 z) + cos(2 z) cos(2 x)) = 0
@@ -146,7 +147,7 @@ def schoenFRD(x: float, y: float, z: float) -> float:
     )
 
 
-def fischerKochS(x: float, y: float, z: float) -> float:
+def fischerKochS(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        cos(2 x) sin(y) cos(z) + cos(x) cos(2 y) sin(z) + sin(x) cos(y) cos(2 z) = 0
@@ -172,7 +173,7 @@ def fischerKochS(x: float, y: float, z: float) -> float:
     )
 
 
-def pmy(x: float, y: float, z: float) -> float:
+def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        2 cos(x) cos(y) cos(z) + sin(2 x) sin(y) + sin(x) sin(2 z) + sin(2 y) sin(z) = 0
@@ -199,7 +200,7 @@ def pmy(x: float, y: float, z: float) -> float:
     )
 
 
-def honeycomb(x: float, y: float, z: float) -> float:
+def honeycomb(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        sin(x) cos(y) + sin(y) + cos(z) = 0
@@ -221,7 +222,7 @@ def honeycomb(x: float, y: float, z: float) -> float:
     return sin(x) * cos(y) + sin(y) + cos(z)
 
 
-def lidinoid(x: float, y: float, z: float) -> float:
+def lidinoid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        0.5 (sin(2 x) cos(y) sin(z) +
@@ -258,7 +259,7 @@ def lidinoid(x: float, y: float, z: float) -> float:
     )
 
 
-def split_p(x: float, y: float, z: float) -> float:
+def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
     .. math::
        1.1 (sin(2 x) cos(y) sin(z) +
