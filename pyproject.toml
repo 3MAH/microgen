@@ -37,12 +37,12 @@ docs = [
     'myst-parser',
 ]
 jupyter = [
-    "jupyterlab==3",    # 3.4.8
-    "jupyter-cadquery", # 3.5.2
-    "ipyvtklink",       # 0.2.3
-    "ipygany",          # 0.5.0
-    "sidecar",          # 0.5.2
-    "jupyterview",      # 0.5.2
+    "jupyterlab<4",
+    "jupyter-cadquery",
+    "ipyvtklink",
+    "ipygany",
+    "sidecar",
+    "jupyterview",
 ]
 all = ["microgen[test, docs, jupyter]"]
 
