@@ -37,7 +37,7 @@ docs = [
     'myst-parser',
 ]
 jupyter = [
-    "jupyterlab<3.6",
+    "jupyterlab<4.1",
     "jupyter-cadquery",
     "ipyvtklink",
     "ipygany",
