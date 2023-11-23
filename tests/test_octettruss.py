@@ -10,6 +10,19 @@ import pytest
 def rve() -> Rve:
     return Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
 
+@pytest.fixture(scope="function")
+def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    tmp_dir_name = "test_tmp_dir"
+    return tmp_path_factory.mktemp(tmp_dir_name)
+
+@pytest.fixture(scope="function")
+def tmp_output_compound_filename(tmp_dir: Path) -> str:
+    return (tmp_dir / "compound.step").as_posix()
+
+@pytest.fixture(scope="function")
+def tmp_output_vtk_filename(tmp_dir: Path) -> str:
+    return (tmp_dir / "octettruss.vtk").as_posix()
+
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def _generate_cqcompound_octettruss(
     rve: Rve
@@ -67,23 +80,28 @@ def octet_truss_heterogeneous(rve : Rve) -> (cq.Compound, list[Phase]):
         "octet_truss_heterogeneous",
     ]
 )
-def test_octettruss_mesh_must_be_periodic(shape: Union[cq.Compound, cq.Shape], request, rve: Rve):
+def test_octettruss_mesh_must_be_periodic(
+    shape: Union[cq.Compound, cq.Shape],
+    request, 
+    rve: Rve,
+    tmp_output_compound_filename: str,
+    tmp_output_vtk_filename: str
+):
 
     cqoctet, listcqphases = request.getfixturevalue(shape)
 
-    os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet
-    cq.exporters.export(cqoctet, "tests/data/compound.step")
+    cq.exporters.export(cqoctet, tmp_output_compound_filename)
     meshPeriodic(
-        mesh_file="tests/data/compound.step",
+        mesh_file=tmp_output_compound_filename,
         rve=rve,
         listPhases=listcqphases,
         size=0.03,
         order=1,
-        output_file="tests/data/octettruss.vtk",
+        output_file=tmp_output_vtk_filename,
     )
 
     #Act
-    pvmesh = pv.read('tests/data/octettruss.vtk')  
+    pvmesh = pv.read(tmp_output_vtk_filename)  
     crd = pvmesh.points
 
     assert is_periodic(crd)    
