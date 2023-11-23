@@ -13,7 +13,6 @@ _DIM_COUNT = 3
 _BOUNDS_COUNT = 2
 _Point3D = np.ndarray
 
-
 def mesh(
         mesh_file: str,
         listPhases: list[Phase],
@@ -89,6 +88,7 @@ def _initialize_mesh(
         mshFileVersion: int = 4,
 ) -> None:
     gmsh.initialize()
+#    gmsh.option.setNumber("Mesh.Algorithm", 2)    
     gmsh.option.setNumber(
         name="General.Verbosity", value=1
     )  # this would still print errors, but not warnings
@@ -145,15 +145,20 @@ def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
 
 
 def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
+
     deltas = _get_deltas(rve)
     eps: float = 1.0e-3 * min(deltas)
     minimum = np.zeros(_DIM_COUNT)
     maximum = deltas
     maximum[axis] = 0.
+
+    # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
+        # Translate the minmal bounds into the maximum value on axis surface       
         bounds_min[:, axis] += 1
+        # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)        
         for bounds_max, tag_max in _iter_bounding_boxes(bounds_min[0], bounds_min[1], eps):
-            bounds_max[:, axis] -= 1
+
             if (
                     np.all(np.abs(np.subtract(bounds_max, bounds_min)) < eps)
             ):
@@ -165,7 +170,9 @@ def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
     translation_matrix = np.eye(_DIM_COUNT + 1)
     translation_matrix[axis, _DIM_COUNT] = deltas[axis]
     translation: list[float] = list(translation_matrix.flatten())
+
     for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
+
         gmsh.model.mesh.setPeriodic(
             dim=2,
             tags=[tag_max],
