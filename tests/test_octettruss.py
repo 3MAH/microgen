@@ -2,9 +2,9 @@ from microgen import Rve, Phase, Cylinder, periodic, fuseShapes, cutPhases, mesh
 import cadquery as cq
 import pyvista as pv
 import numpy as np
-import os
 from typing import Union
 import pytest
+from pathlib import Path
 
 @pytest.fixture(scope='function')
 def rve() -> Rve:
