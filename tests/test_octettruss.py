@@ -38,8 +38,8 @@ def _generate_cqcompound_octettruss(
     height = np.full_like(xc, 2.0)
     radius = np.full_like(xc, 0.05)
 
-    listPhases = []  # type: list[microgen.Phase]
-    listPeriodicPhases = []  # type: list[microgen.Phase]
+    listPhases : list[Phase] = []
+    listPeriodicPhases : list[Phase] = []
     n = len(xc)
 
     for i in range(0, n):
