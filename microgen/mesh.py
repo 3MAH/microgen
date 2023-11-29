@@ -154,7 +154,7 @@ def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, in
 
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
-        # Translate the minmal bounds into the maximum value on axis surface       
+        # Translate the minimal bounds into the maximum value on axis surface       
         bounds_min[:, axis] += 1
         # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)        
         for bounds_max, tag_max in _iter_bounding_boxes(bounds_min[0], bounds_min[1], eps):
