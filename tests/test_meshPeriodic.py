@@ -2,33 +2,22 @@ from microgen import Rve, Phase, Cylinder, periodic, fuseShapes, cutPhases, mesh
 import cadquery as cq
 import pyvista as pv
 import numpy as np
+import os
 from typing import Union
 import pytest
-from pathlib import Path
 
 @pytest.fixture(scope='function')
 def rve() -> Rve:
     return Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
-
-@pytest.fixture(scope="function")
-def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    tmp_dir_name = "test_tmp_dir"
-    return tmp_path_factory.mktemp(tmp_dir_name)
-
-@pytest.fixture(scope="function")
-def tmp_output_compound_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "compound.step").as_posix()
-
-@pytest.fixture(scope="function")
-def tmp_output_vtk_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "octettruss.vtk").as_posix()
 
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def _generate_cqcompound_octettruss(
     rve: Rve
 ):
 
-    #data to generate octet truss cylinders
+        # précision du type des données
+    number = [1,2,3,4,5,6,7,8,9]
+    shape = 'cylinder'
     xc = np.array([0.5,0.5,0.5,0.5,0.0,0.0,0.5,0.5,0.5,0.5,0.0,0.0])
     yc = np.array([0.5,0.5,0.0,0.0,0.5,0.5,0.5,0.5,0.0,0.0,0.5,0.5])
     zc = np.array([0.0,0.0,0.5,0.5,0.5,0.5,0.0,0.0,0.5,0.5,0.5,0.5])
@@ -38,8 +27,8 @@ def _generate_cqcompound_octettruss(
     height = np.full_like(xc, 2.0)
     radius = np.full_like(xc, 0.05)
 
-    listPhases : list[Phase] = []
-    listPeriodicPhases : list[Phase] = []
+    listPhases = []  # type: list[microgen.Phase]
+    listPeriodicPhases = []  # type: list[microgen.Phase]
     n = len(xc)
 
     for i in range(0, n):
@@ -80,28 +69,23 @@ def octet_truss_heterogeneous(rve : Rve) -> (cq.Compound, list[Phase]):
         "octet_truss_heterogeneous",
     ]
 )
-def test_octettruss_mesh_must_be_periodic(
-    shape: Union[cq.Compound, cq.Shape],
-    request, 
-    rve: Rve,
-    tmp_output_compound_filename: str,
-    tmp_output_vtk_filename: str
-):
+def test_octettruss_mesh_must_be_periodic(shape: Union[cq.Compound, cq.Shape], request, rve: Rve):
 
     cqoctet, listcqphases = request.getfixturevalue(shape)
 
-    cq.exporters.export(cqoctet, tmp_output_compound_filename)
+    os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet
+    cq.exporters.export(cqoctet, "tests/data/compound.step")
     meshPeriodic(
-        mesh_file=tmp_output_compound_filename,
+        mesh_file="tests/data/compound.step",
         rve=rve,
         listPhases=listcqphases,
         size=0.03,
         order=1,
-        output_file=tmp_output_vtk_filename,
+        output_file="tests/data/octettruss.vtk",
     )
 
     #Act
-    pvmesh = pv.read(tmp_output_vtk_filename)  
+    pvmesh = pv.read('tests/data/octettruss.vtk')  
     crd = pvmesh.points
 
     assert is_periodic(crd)    
