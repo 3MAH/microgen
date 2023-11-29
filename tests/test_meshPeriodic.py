@@ -83,7 +83,7 @@ def octet_truss_heterogeneous(rve : Rve) -> (cq.Compound, list[Phase]):
 @pytest.mark.parametrize(
     "shape",
     [
-        "box_homogeneous"
+        "box_homogeneous",
         "octet_truss_homogeneous",
         "octet_truss_heterogeneous",
     ]
