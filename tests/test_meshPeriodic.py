@@ -1,4 +1,4 @@
-from microgen import Rve, Phase, Cylinder, periodic, fuseShapes, cutPhases, meshPeriodic, is_periodic
+from microgen import Box, Rve, Phase, Cylinder, periodic, fuseShapes, cutPhases, meshPeriodic, is_periodic
 import cadquery as cq
 import pyvista as pv
 import numpy as np
@@ -59,6 +59,13 @@ def _generate_cqcompound_octettruss(
     return listPeriodicPhases
 
 @pytest.fixture(scope="function")
+def box_homogeneous(rve : Rve) -> (cq.Shape, list[Phase]):
+
+    shape = Box(center=rve.center, orientation=(0.0, 0.0, 0.0), dim_x=rve.dim_x, dim_y=rve.dim_y, dim_z=rve.dim_z).generate()
+    listcqphases = [Phase(shape=shape)]    
+    return (shape, listcqphases)
+
+@pytest.fixture(scope="function")
 def octet_truss_homogeneous(rve : Rve) -> (cq.Shape, list[Phase]):
 
     listPeriodicPhases = _generate_cqcompound_octettruss(rve)
@@ -76,6 +83,7 @@ def octet_truss_heterogeneous(rve : Rve) -> (cq.Compound, list[Phase]):
 @pytest.mark.parametrize(
     "shape",
     [
+        "box_homogeneous"
         "octet_truss_homogeneous",
         "octet_truss_heterogeneous",
     ]
