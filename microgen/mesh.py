@@ -133,6 +133,7 @@ def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> It
         *np.add(maximum, eps),
         dim=2
     )
+
     for dim, tag in entities:
         bounds = np.asarray(gmsh.model.getBoundingBox(
             dim, tag
@@ -143,19 +144,25 @@ def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> It
 def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
     return np.array([rve.dx, rve.dy, rve.dz])
 
+def _get_min(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
+    return np.array([rve.x_min, rve.y_min, rve.z_min])
+
+def _get_max(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
+    return np.array([rve.x_max, rve.y_max, rve.z_max])
 
 def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
 
     deltas = _get_deltas(rve)
     eps: float = 1.0e-3 * min(deltas)
-    minimum = np.zeros(_DIM_COUNT)
-    maximum = deltas
-    maximum[axis] = 0.
+    minimum = _get_min(rve)
+    maximum = _get_max(rve)
+    maximum[axis] = _get_min(rve)[axis]
 
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
         # Translate the minimal bounds into the maximum value on axis surface       
-        bounds_min[:, axis] += 1
+        bounds_min[:, axis] += _get_deltas(rve)[axis]
+
         # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)        
         for bounds_max, tag_max in _iter_bounding_boxes(bounds_min[0], bounds_min[1], eps):
 
