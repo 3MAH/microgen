@@ -7,8 +7,16 @@ import pytest
 from pathlib import Path
 
 @pytest.fixture(scope='function')
-def rve() -> Rve:
+def rve_unit() -> Rve:
     return Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
+
+@pytest.fixture(scope='function')
+def rve_double() -> Rve:
+    return Rve(dim_x=2, dim_y=2, dim_z=2, center=(1.0, 1.0, 1.0))
+
+@pytest.fixture(scope='function')
+def rve_double_centered() -> Rve:
+    return Rve(dim_x=2, dim_y=2, dim_z=2, center=(0.0, 0.0, 0.0))
 
 @pytest.fixture(scope="function")
 def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
@@ -59,44 +67,68 @@ def _generate_cqcompound_octettruss(
     return listPeriodicPhases
 
 @pytest.fixture(scope="function")
-def box_homogeneous(rve : Rve) -> (cq.Shape, list[Phase]):
+def box_homogeneous_unit(rve_unit : Rve) -> (cq.Shape, list[Phase]):
 
-    shape = Box(center=rve.center, orientation=(0.0, 0.0, 0.0), dim_x=rve.dim_x, dim_y=rve.dim_y, dim_z=rve.dim_z).generate()
+    shape = Box(center=rve_unit.center, orientation=(0.0, 0.0, 0.0), dim_x=rve_unit.dim_x, dim_y=rve_unit.dim_y, dim_z=rve_unit.dim_z).generate()
     listcqphases = [Phase(shape=shape)]    
-    return (shape, listcqphases)
+    return (shape, listcqphases, rve_unit)
 
 @pytest.fixture(scope="function")
-def octet_truss_homogeneous(rve : Rve) -> (cq.Shape, list[Phase]):
+def box_homogeneous_double(rve_double : Rve) -> (cq.Shape, list[Phase]):
 
-    listPeriodicPhases = _generate_cqcompound_octettruss(rve)
+    shape = Box(center=rve_double.center, orientation=(0.0, 0.0, 0.0), dim_x=rve_double.dim_x, dim_y=rve_double.dim_y, dim_z=rve_double.dim_z).generate()
+    listcqphases = [Phase(shape=shape)]    
+    return (shape, listcqphases, rve_double)
+
+@pytest.fixture(scope="function")
+def box_homogeneous_double_centered(rve_double_centered : Rve) -> (cq.Shape, list[Phase]):
+
+    shape = Box(center=rve_double_centered.center, orientation=(0.0, 0.0, 0.0), dim_x=rve_double_centered.dim_x, dim_y=rve_double_centered.dim_y, dim_z=rve_double_centered.dim_z).generate()
+    listcqphases = [Phase(shape=shape)]    
+    return (shape, listcqphases, rve_double_centered)
+
+@pytest.fixture(scope="function")
+def octet_truss_homogeneous_unit(rve_unit : Rve) -> (cq.Shape, list[Phase]):
+
+    listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
     merged = fuseShapes([phase.shape for phase in listPeriodicPhases], retain_edges=False)
     listcqphases = [Phase(shape=merged)]    
-    return (merged, listcqphases)
+    return (merged, listcqphases, rve_unit)
 
 @pytest.fixture(scope="function")
-def octet_truss_heterogeneous(rve : Rve) -> (cq.Compound, list[Phase]):
+def octet_truss_homogeneous_double_centered(rve_double_centered : Rve) -> (cq.Shape, list[Phase]):
 
-    listPeriodicPhases = _generate_cqcompound_octettruss(rve)    
+    listPeriodicPhases = _generate_cqcompound_octettruss(rve_double_centered)
+    merged = fuseShapes([phase.shape for phase in listPeriodicPhases], retain_edges=False)
+    listcqphases = [Phase(shape=merged)]    
+    return (merged, listcqphases, rve_double_centered)
+
+@pytest.fixture(scope="function")
+def octet_truss_heterogeneous(rve_unit : Rve) -> (cq.Compound, list[Phase]):
+
+    listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)    
     listcqphases = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
-    return (cq.Compound.makeCompound([phase.shape for phase in listcqphases]), listcqphases)
+    return (cq.Compound.makeCompound([phase.shape for phase in listcqphases]), listcqphases, rve_unit)
 
 @pytest.mark.parametrize(
     "shape",
     [
-        "box_homogeneous",
-        "octet_truss_homogeneous",
+        "box_homogeneous_unit",
+        "box_homogeneous_double",
+        "box_homogeneous_double_centered",
+        "octet_truss_homogeneous_unit",
+        "octet_truss_homogeneous_double_centered",
         "octet_truss_heterogeneous",
-    ]
+    ],
 )
 def test_octettruss_mesh_must_be_periodic(
     shape: Union[cq.Compound, cq.Shape],
     request, 
-    rve: Rve,
     tmp_output_compound_filename: str,
     tmp_output_vtk_filename: str
 ):
-
-    cqoctet, listcqphases = request.getfixturevalue(shape)
+    
+    cqoctet, listcqphases, rve = request.getfixturevalue(shape)
 
     cq.exporters.export(cqoctet, tmp_output_compound_filename)
     meshPeriodic(
