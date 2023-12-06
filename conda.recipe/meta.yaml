@@ -30,5 +30,6 @@ test:
   source_files:
     - tests
     - examples
+    - conda.recipe/meta.yaml
   commands:
     - pytest tests
