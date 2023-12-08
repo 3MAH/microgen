@@ -1,6 +1,7 @@
 import numpy as np
 
-def is_periodic(nodes_coords, tol=1e-8, dim=3) -> bool:
+def is_periodic(nodes_coords: np.ndarray, tol: float = 1e-8, dim: int = 3) -> bool:
+
     # bounding box
     xmax = np.max(nodes_coords[:, 0])
     xmin = np.min(nodes_coords[:, 0])
@@ -11,84 +12,67 @@ def is_periodic(nodes_coords, tol=1e-8, dim=3) -> bool:
         zmin = np.min(nodes_coords[:, 2])
 
     # extract face nodes
-    left = np.where(np.abs(nodes_coords[:, 0] - xmin) < tol)[0]
-    right = np.where(np.abs(nodes_coords[:, 0] - xmax) < tol)[0]
+    face_Xm = np.where(np.abs(nodes_coords[:, 0] - xmin) < tol)[0]
+    face_Xp = np.where(np.abs(nodes_coords[:, 0] - xmax) < tol)[0]
 
     if dim > 1:
-        bottom = np.where(np.abs(nodes_coords[:, 1] - ymin) < tol)[0]
-        top = np.where(np.abs(nodes_coords[:, 1] - ymax) < tol)[0]
+        face_Ym = np.where(np.abs(nodes_coords[:, 1] - ymin) < tol)[0]
+        face_Yp = np.where(np.abs(nodes_coords[:, 1] - ymax) < tol)[0]
 
     if dim > 2:  # or dim == 3
-        back = np.where(np.abs(nodes_coords[:, 2] - zmin) < tol)[0]
-        front = np.where(np.abs(nodes_coords[:, 2] - zmax) < tol)[0]
+        face_Zm = np.where(np.abs(nodes_coords[:, 2] - zmin) < tol)[0]
+        face_Zp = np.where(np.abs(nodes_coords[:, 2] - zmax) < tol)[0]
 
-        # sort adjacent faces to ensure node correspondance
+        # sort adjacent faces to ensure node correspondence
     if nodes_coords.shape[1] == 2:  # 2D mesh
-        left = left[np.argsort(nodes_coords[left, 1])]
-        right = right[np.argsort(nodes_coords[right, 1])]
+        face_Xm = face_Xm[np.argsort(nodes_coords[face_Xm, 1])]
+        face_Xp = face_Xp[np.argsort(nodes_coords[face_Xp, 1])]
         if dim > 1:
-            bottom = bottom[np.argsort(nodes_coords[bottom, 0])]
-            top = top[np.argsort(nodes_coords[top, 0])]
+            face_Ym = face_Ym[np.argsort(nodes_coords[face_Ym, 0])]
+            face_Yp = face_Yp[np.argsort(nodes_coords[face_Yp, 0])]
 
     elif nodes_coords.shape[1] > 2:
-        decimal_round = int(-np.log10(tol) - 1)
-        left = left[
-            np.lexsort(
-                (nodes_coords[left, 1], nodes_coords[left, 2].round(decimal_round))
-            )
-        ]
-        right = right[
-            np.lexsort(
-                (nodes_coords[right, 1], nodes_coords[right, 2].round(decimal_round))
-            )
-        ]
+        decimal_round = int(-np.log10(tol) - 1)        
+        def _sort_dim(indices: np.ndarray, dim_a: int, dim_b: int) -> np.ndarray:
+            return indices[
+                np.lexsort(
+                    (
+                        nodes_coords[indices, dim_a],
+                        nodes_coords[indices, dim_b].round(decimal_round),
+                    )
+                )
+            ]
+
+        face_Xm = _sort_dim(face_Xm, dim_a=1, dim_b=2)
+        face_Xp = _sort_dim(face_Xp, dim_a=1, dim_b=2)
         if dim > 1:
-            bottom = bottom[
-                np.lexsort(
-                    (
-                        nodes_coords[bottom, 0],
-                        nodes_coords[bottom, 2].round(decimal_round),
-                    )
-                )
-            ]
-            top = top[
-                np.lexsort(
-                    (nodes_coords[top, 0], nodes_coords[top, 2].round(decimal_round))
-                )
-            ]
+            face_Ym = _sort_dim(face_Ym, dim_a=0, dim_b=2)
+            face_Yp = _sort_dim(face_Yp, dim_a=0, dim_b=2)
         if dim > 2:
-            back = back[
-                np.lexsort(
-                    (nodes_coords[back, 0], nodes_coords[back, 1].round(decimal_round))
-                )
-            ]
-            front = front[
-                np.lexsort(
-                    (
-                        nodes_coords[front, 0],
-                        nodes_coords[front, 1].round(decimal_round),
-                    )
-                )
-            ]
+            face_Zm = _sort_dim(face_Zm, dim_a=0, dim_b=1)
+            face_Zp = _sort_dim(face_Zp, dim_a=0, dim_b=1)
 
     # ==========================
     # test if mesh is periodic:
     # ==========================
 
     # test if same number of nodes in adjacent faces
-    if len(left) != len(right):
+    if len(face_Xm) != len(face_Xp):
         return False
-    if dim > 1 and len(bottom) != len(top):
+    if dim > 1 and len(face_Ym) != len(face_Yp):
         return False
-    if dim > 2 and (len(back) != len(front)):
+    if dim > 2 and (len(face_Zm) != len(face_Zp)):
         return False
 
     # check nodes position
-    if (nodes_coords[right, 1:] - nodes_coords[left, 1:] > tol).any():
+    if (nodes_coords[face_Xp, 1:] - nodes_coords[face_Xm, 1:] > tol).any():
         return False
-    if dim > 1 and (nodes_coords[top, ::2] - nodes_coords[bottom, ::2] > tol).any():
+    if (
+        dim > 1
+        and (nodes_coords[face_Yp, ::2] - nodes_coords[face_Ym, ::2] > tol).any()
+    ):
         return False
-    if dim > 2 and (nodes_coords[front, :2] - nodes_coords[back, :2] > tol).any():
+    if dim > 2 and (nodes_coords[face_Zp, :2] - nodes_coords[face_Zm, :2] > tol).any():
         return False
 
     return True
