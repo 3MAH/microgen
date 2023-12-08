@@ -5,14 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "microgen"
 version = "1.0.1"
-authors = [
-    {name = "3MAH", email = 'set3mah@gmail.com'},
-]
+authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation and meshing"
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["microstructure", "lattice", "periodic", "TPMS", "mesh"]
-license = {text = "GPLv3"}
+license = { text = "GPLv3" }
 classifiers = [
     'Intended Audience :: Science/Research',
     'Topic :: Scientific/Engineering :: Information Analysis',
@@ -24,21 +22,10 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
-dependencies = [
-    "numpy",
-    "pyvista",
-    "gmsh",
-    "meshio",
-    "cadquery",
-    "scipy",
-]
+dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
 [project.optional-dependencies]
-test = [
-    'pytest',
-    'pytest-cov',
-    'pytest-xdist',
-]
+test = ['pytest', 'pytest-cov', 'pytest-xdist']
 docs = [
     'ipykernel',
     'sphinx',
@@ -49,18 +36,23 @@ docs = [
     'mock',
     'myst-parser',
 ]
-all = ["microgen[test, docs]"]
+jupyter = [
+    "jupyterlab<3.6",
+    "jupyter-cadquery",
+    "ipyvtklink",
+    "ipygany",
+    "sidecar",
+    "jupyterview",
+]
+all = ["microgen[test, docs, jupyter]"]
 
 [project.urls]
-Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
+Documentation = 'https://microgen.readthedocs.io/en/latest'
 "Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
 [tool.setuptools.packages.find]
-include = [
-    'microgen',
-    'microgen.*',
-]
+include = ['microgen', 'microgen.*']
 
 [tool.pytest.ini_options]
 filterwarnings = [

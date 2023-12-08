@@ -103,7 +103,7 @@ class Tpms(BasicGeometry):
             raise ValueError("density must be between 0 and 1")
         self.density = density
 
-    def max_density(
+    def _max_density(
         self,
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
         resolution: Optional[int] = None,
@@ -125,6 +125,16 @@ class Tpms(BasicGeometry):
         density: float | Literal["max"] = "max",
         resolution: int = 20,
     ) -> float:
+        """
+        Returns the offset corresponding to the required density for the specified part of the given surface_function.
+
+        :param surface_function: tpms function
+        :param part_type: type of the part (sheet, lower skeletal or upper skeletal)
+        :param density: Required density, 0.5 for 50%
+        :param resolution: resolution of the tpms used to compute the offset
+
+        :return: corresponding offset value
+        """
         if not isinstance(density, (int, float)) and density != "max":
             raise ValueError("density must be a float between 0 and 1 or 'max'")
         if density == "max":
@@ -151,7 +161,7 @@ class Tpms(BasicGeometry):
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        max_density = temp_tpms.max_density(part_type=part_type, resolution=resolution)
+        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)
         if self.density > max_density:
             raise ValueError(
                 f"density ({self.density}) must be lower than {max_density} for \
