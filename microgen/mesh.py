@@ -13,13 +13,14 @@ _DIM_COUNT = 3
 _BOUNDS_COUNT = 2
 _Point3D = np.ndarray
 
+
 def mesh(
-        mesh_file: str,
-        listPhases: list[Phase],
-        size: float,
-        order: int,
-        output_file: str = "Mesh.msh",
-        mshFileVersion: int = 4,
+    mesh_file: str,
+    listPhases: list[Phase],
+    size: float,
+    order: int,
+    output_file: str = "Mesh.msh",
+    mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes step file with gmsh with list of phases management
@@ -39,13 +40,13 @@ def mesh(
 
 
 def meshPeriodic(
-        mesh_file: str,
-        rve: Rve,
-        listPhases: list[Phase],
-        size: float,
-        order: int,
-        output_file: str = "MeshPeriodic.msh",
-        mshFileVersion: int = 4,
+    mesh_file: str,
+    rve: Rve,
+    listPhases: list[Phase],
+    size: float,
+    order: int,
+    output_file: str = "MeshPeriodic.msh",
+    mshFileVersion: int = 4,
 ) -> None:
     """
     Meshes periodic geometries with gmsh
@@ -82,13 +83,12 @@ def _generate_list_dim_tags(listPhases: list[Phase]) -> list[tuple[int, int]]:
 
 
 def _initialize_mesh(
-        mesh_file: str,
-        listPhases: list[Phase],
-        order: int,
-        mshFileVersion: int = 4,
+    mesh_file: str,
+    listPhases: list[Phase],
+    order: int,
+    mshFileVersion: int = 4,
 ) -> None:
     gmsh.initialize()
-#    gmsh.option.setNumber("Mesh.Algorithm", 2)    
     gmsh.option.setNumber(
         name="General.Verbosity", value=1
     )  # this would still print errors, but not warnings
@@ -112,8 +112,8 @@ def _initialize_mesh(
 
 
 def _finalize_mesh(
-        size: float,
-        output_file: str = "Mesh.msh",
+    size: float,
+    output_file: str = "Mesh.msh",
 ) -> None:
     list_dim_tags: list[tuple[int, int]] = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(dimTags=list_dim_tags, size=size)
@@ -127,48 +127,49 @@ def _set_periodic(rve: Rve) -> None:
         _set_periodic_on_axis(rve, axis)
 
 
-def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> Iterator[tuple[np.ndarray, int]]:
+def _iter_bounding_boxes(
+    minimum: _Point3D, maximum: _Point3D, eps: float
+) -> Iterator[tuple[np.ndarray, int]]:
     entities: list[tuple[int, int]] = gmsh.model.getEntitiesInBoundingBox(
-        *np.subtract(minimum, eps),
-        *np.add(maximum, eps),
-        dim=2
+        *np.subtract(minimum, eps), *np.add(maximum, eps), dim=2
     )
 
     for dim, tag in entities:
-        bounds = np.asarray(gmsh.model.getBoundingBox(
-            dim, tag
-        )).reshape((_BOUNDS_COUNT, _DIM_COUNT))
+        bounds = np.asarray(gmsh.model.getBoundingBox(dim, tag)).reshape(
+            (_BOUNDS_COUNT, _DIM_COUNT)
+        )
         yield bounds, tag
 
 
 def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
     return np.array([rve.dx, rve.dy, rve.dz])
 
+
 def _get_min(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
     return np.array([rve.x_min, rve.y_min, rve.z_min])
+
 
 def _get_max(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
     return np.array([rve.x_max, rve.y_max, rve.z_max])
 
-def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
 
+def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
     deltas = _get_deltas(rve)
     eps: float = 1.0e-3 * min(deltas)
     minimum = _get_min(rve)
     maximum = _get_max(rve)
-    maximum[axis] = _get_min(rve)[axis]
+    maximum[axis] = minimum[axis]
 
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
-        # Translate the minimal bounds into the maximum value on axis surface       
+        # Translate the minimal bounds into the maximum value on axis surface
         bounds_min[:, axis] += _get_deltas(rve)[axis]
 
-        # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)        
-        for bounds_max, tag_max in _iter_bounding_boxes(bounds_min[0], bounds_min[1], eps):
-
-            if (
-                    np.all(np.abs(np.subtract(bounds_max, bounds_min)) < eps)
-            ):
+        # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)
+        for bounds_max, tag_max in _iter_bounding_boxes(
+            bounds_min[0], bounds_min[1], eps
+        ):
+            if np.all(np.abs(np.subtract(bounds_max, bounds_min)) < eps):
                 yield tag_min, tag_max
 
 
@@ -179,10 +180,6 @@ def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
     translation: list[float] = list(translation_matrix.flatten())
 
     for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
-
         gmsh.model.mesh.setPeriodic(
-            dim=2,
-            tags=[tag_max],
-            tagsMaster=[tag_min],
-            affineTransform=translation
+            dim=2, tags=[tag_max], tagsMaster=[tag_min], affineTransform=translation
         )
