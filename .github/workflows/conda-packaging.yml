@@ -22,6 +22,7 @@ jobs:
           # export PACKAGE_VERSION="${BRANCH_NAME//-/_}"
           $env:PACKAGE_VERSION = $env:BRANCH_NAME -replace "-", "_"
           conda install python conda-build conda-verify anaconda-client
+          anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build conda.recipe -c conda-forge --output-folder  .
           anaconda upload noarch/*.tar.bz2 --force

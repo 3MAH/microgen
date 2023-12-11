@@ -36,10 +36,18 @@ docs = [
     'mock',
     'myst-parser',
 ]
-all = ["microgen[test, docs]"]
+jupyter = [
+    "jupyterlab<3.6",
+    "jupyter-cadquery",
+    "ipyvtklink",
+    "ipygany",
+    "sidecar",
+    "jupyterview",
+]
+all = ["microgen[test, docs, jupyter]"]
 
 [project.urls]
-Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
+Documentation = 'https://microgen.readthedocs.io/en/latest'
 "Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
 "Source Code" = 'https://github.com/3MAH/microgen'
 

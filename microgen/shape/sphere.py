@@ -29,7 +29,7 @@ class Sphere(BasicGeometry):
         center: Tuple[float, float, float] = (0, 0, 0),
         radius: float = 1,
     ) -> None:
-        super().__init__(shape="Box", center=center)
+        super().__init__(shape="Sphere", center=center)
         self.radius = radius
 
     def generate(self) -> cq.Shape:
