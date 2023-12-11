@@ -153,7 +153,7 @@ def _get_max(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
     return np.array([rve.x_max, rve.y_max, rve.z_max])
 
 
-def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
+def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, int]]:
     deltas = _get_deltas(rve)
     eps: float = 1.0e-3 * min(deltas)
     minimum = _get_min(rve)
