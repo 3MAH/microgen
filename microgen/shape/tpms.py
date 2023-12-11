@@ -11,8 +11,9 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 """
 from __future__ import annotations
+
 import logging
-from typing import Callable, List, Sequence, Literal, Optional, Tuple
+from typing import Callable, List, Literal, Optional, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -20,7 +21,8 @@ import pyvista as pv
 from scipy.optimize import root_scalar
 
 from microgen.shape.basicGeometry import BasicGeometry
-from ..operations import fuseShapes, rescale, repeatShape
+
+from ..operations import fuseShapes, repeatShape, rescale
 from ..rve import Rve
 
 logging.basicConfig(level=logging.INFO)
@@ -210,8 +212,8 @@ class Tpms(BasicGeometry):
             raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
     def vtk_sheet(self) -> pv.PolyData:
-        return self.grid.clip_scalar(scalars="upper_surface").clip_scalar(
-            scalars="lower_surface", invert=False
+        return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
+            scalars="upper_surface"
         )
 
     def vtk_upper_skeletal(self) -> pv.PolyData:
