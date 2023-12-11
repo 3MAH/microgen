@@ -28,7 +28,7 @@ dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 dev = [
     'black',
     'isort',
-    "git+https://github.com/CadQuery/OCP-stubs.git",
+    "OCP-stubs@git+https://github.com/CadQuery/OCP-stubs.git",
     'pytest',
     'pytest-cov',
     'pytest-xdist',
