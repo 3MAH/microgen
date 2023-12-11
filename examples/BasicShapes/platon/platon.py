@@ -1,6 +1,6 @@
-import microgen
 import cadquery as cq
 
+import microgen
 
 filenames = [
     "tetrahedron.obj",

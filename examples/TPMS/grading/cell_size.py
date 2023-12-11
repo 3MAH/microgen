@@ -26,7 +26,9 @@ def graded(x: float, y: float, z: float) -> float:
     # dim_x = dim_y = dim_z = lerp(x, min_cell_size, max_cell_size)
     dim_x = dim_y = dim_z = sigmoid(x, min_cell_size, max_cell_size)
     # dim_x = dim_y = dim_z = gaussian(x, max_cell_size, min_cell_size)
-    return gyroid(x * max_cell_size / dim_x, y * max_cell_size / dim_y, z * max_cell_size / dim_z)
+    return gyroid(
+        x * max_cell_size / dim_x, y * max_cell_size / dim_y, z * max_cell_size / dim_z
+    )
 
 
 geometry = Tpms(

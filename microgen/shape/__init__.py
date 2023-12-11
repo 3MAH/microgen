@@ -16,7 +16,7 @@ Shape (:mod:`microgen.shape`)
 
 """
 
-from typing import Any, Tuple, Dict
+from typing import Any, Dict, Tuple
 
 from . import surface_functions
 from .basicGeometry import BasicGeometry
@@ -40,7 +40,7 @@ def newGeometry(
     Creates a new basic geometry with given shape and geometrical parameters
 
     :param shape: name of the geometry
-    :param param_geom: dictionnary with required geometrical parameters
+    :param param_geom: dictionary with required geometrical parameters
     :param center: center
     :param orientation: orientation
 

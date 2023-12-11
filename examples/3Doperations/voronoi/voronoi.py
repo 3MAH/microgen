@@ -1,7 +1,8 @@
 import cadquery as cq
-from microgen import parseNeper, Rve, Polyhedron, mesh, Phase, Neper
 
-# # We import the Polyhedra from Nepoer tesselation file
+from microgen import Neper, Phase, Polyhedron, Rve, mesh, parseNeper
+
+# # We import the Polyhedra from Neper tessellation file
 # listPolyhedra, seed, vertices, edges, faces, polys = parseNeper("test1")
 
 # Revel = Rve(dim_x=1, dim_y=1, dim_z=1)
@@ -29,7 +30,7 @@ from microgen import parseNeper, Rve, Polyhedron, mesh, Phase, Neper
 #     output_file="Voronoi.vtk",
 # )
 
-polyhedra = Neper.generateVoronoiFromTessFile('test1.tess')
+polyhedra = Neper.generateVoronoiFromTessFile("test1.tess")
 
 shapes = [poly.generate() for poly in polyhedra]
 

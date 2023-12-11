@@ -1,8 +1,9 @@
 import cadquery as cq
-from microgen import parseNeper, Tpms, Polyhedron, Phase, mesh, Neper
+
+from microgen import Neper, Phase, Polyhedron, Tpms, mesh, parseNeper
 from microgen.shape import surface_functions
 
-# We import the Polyhedra from Nepoer tesselation file
+# We import the Polyhedra from Neper tessellation file
 polyhedra = Neper.generateVoronoiFromTessFile("test1")
 
 gyroid = Tpms(
@@ -10,9 +11,7 @@ gyroid = Tpms(
     surface_function=surface_functions.gyroid,
     offset=0.2,
 )
-gyroid = gyroid.generate(type_part="sheet").translate(
-    (0.5, 0.5, 0.5)
-)
+gyroid = gyroid.generate(type_part="sheet").translate((0.5, 0.5, 0.5))
 
 phases = []
 for polyhedron in polyhedra:

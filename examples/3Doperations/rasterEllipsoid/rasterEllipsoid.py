@@ -1,5 +1,6 @@
 import cadquery as cq
-from microgen import Rve, Ellipsoid, mesh, Phase, rasterPhase
+
+from microgen import Ellipsoid, Phase, Rve, mesh, rasterPhase
 
 rve = Rve(dim_x=1, dim_y=1, dim_z=1)
 
@@ -8,7 +9,9 @@ elli = elem.generate()
 
 raster = rasterPhase(phase=Phase(shape=elli), rve=rve, grid=[5, 5, 5])
 
-compound = cq.Compound.makeCompound([solid for phase in raster for solid in phase.solids])
+compound = cq.Compound.makeCompound(
+    [solid for phase in raster for solid in phase.solids]
+)
 cq.exporters.export(compound, "compound.step")
 
 mesh(

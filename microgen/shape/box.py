@@ -4,6 +4,7 @@ Box (:mod:`microgen.shape.box`)
 ===============================
 """
 from typing import Tuple
+
 import cadquery as cq
 import pyvista as pv
 

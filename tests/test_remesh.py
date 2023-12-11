@@ -1,11 +1,22 @@
 import subprocess
-import pytest
-from microgen import Box, meshPeriodic, Phase, Rve, remesh, Tpms, surface_functions, BasicGeometry
+from pathlib import Path
+
 import cadquery as cq
+import gmsh
 import numpy as np
 import numpy.typing as npt
-import gmsh
-from pathlib import Path
+import pytest
+
+from microgen import (
+    BasicGeometry,
+    Box,
+    Phase,
+    Rve,
+    Tpms,
+    meshPeriodic,
+    remesh,
+    surface_functions,
+)
 
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
@@ -13,12 +24,11 @@ _BOUNDARY_DIM = 2
 USE_MMG = False
 try:
     subprocess.check_output("mmg3d_O3", stderr=subprocess.STDOUT)
-    USE_MMG= True    
-except(subprocess.CalledProcessError, FileNotFoundError):
-    print(
-        "mmg command did not work, check if it is installed or contact a developer"
-    )
-    USE_MMG= False 
+    USE_MMG = True
+except (subprocess.CalledProcessError, FileNotFoundError):
+    print("mmg command did not work, check if it is installed or contact a developer")
+    USE_MMG = False
+
 
 def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
     gmsh.initialize()
@@ -54,7 +64,7 @@ def _is_periodic(nodes_coords, tol=1e-8, dim=_MESH_DIM) -> bool:
         back = np.where(np.abs(nodes_coords[:, 2] - zmin) < tol)[0]
         front = np.where(np.abs(nodes_coords[:, 2] - zmax) < tol)[0]
 
-        # sort adjacent faces to ensure node correspondance
+        # sort adjacent faces to ensure node correspondence
     if nodes_coords.shape[1] == 2:  # 2D mesh
         left = left[np.argsort(nodes_coords[left, 1])]
         right = right[np.argsort(nodes_coords[right, 1])]
@@ -147,61 +157,100 @@ def tmp_output_mesh_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "shape.o.mesh").as_posix()
 
 
-def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_must_return_true() -> None:
+def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_must_return_true() -> (
+    None
+):
     # Arrange
 
     rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-    triangle_xmax = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]), np.array([0.5, -0.5, 0.5]),
-                                    1)
-    triangle_xmin = remesh.Triangle(np.array([-0.5, -0.5, -0.5]), np.array([-0.5, 0.5, -0.5]),
-                                    np.array([-0.5, -0.5, 0.5]),
-                                    2)
-    triangle_ymax = remesh.Triangle(np.array([0.5, 0.5, -0.5]), np.array([-0.5, 0.5, -0.5]), np.array([0.5, 0.5, 0.5]),
-                                    3)
-    triangle_ymin = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([-0.5, -0.5, -0.5]),
-                                    np.array([0.5, -0.5, 0.5]),
-                                    4)
-    triangle_zmax = remesh.Triangle(np.array([0.5, -0.5, 0.5]), np.array([0.5, 0.5, 0.5]), np.array([-0.5, -0.5, 0.5]),
-                                    5)
-    triangle_zmin = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]),
-                                    np.array([-0.5, -0.5, -0.5]),
-                                    6)
+    triangle_xmax = remesh.Triangle(
+        np.array([0.5, -0.5, -0.5]),
+        np.array([0.5, 0.5, -0.5]),
+        np.array([0.5, -0.5, 0.5]),
+        1,
+    )
+    triangle_xmin = remesh.Triangle(
+        np.array([-0.5, -0.5, -0.5]),
+        np.array([-0.5, 0.5, -0.5]),
+        np.array([-0.5, -0.5, 0.5]),
+        2,
+    )
+    triangle_ymax = remesh.Triangle(
+        np.array([0.5, 0.5, -0.5]),
+        np.array([-0.5, 0.5, -0.5]),
+        np.array([0.5, 0.5, 0.5]),
+        3,
+    )
+    triangle_ymin = remesh.Triangle(
+        np.array([0.5, -0.5, -0.5]),
+        np.array([-0.5, -0.5, -0.5]),
+        np.array([0.5, -0.5, 0.5]),
+        4,
+    )
+    triangle_zmax = remesh.Triangle(
+        np.array([0.5, -0.5, 0.5]),
+        np.array([0.5, 0.5, 0.5]),
+        np.array([-0.5, -0.5, 0.5]),
+        5,
+    )
+    triangle_zmin = remesh.Triangle(
+        np.array([0.5, -0.5, -0.5]),
+        np.array([0.5, 0.5, -0.5]),
+        np.array([-0.5, -0.5, -0.5]),
+        6,
+    )
 
-    face_triangles = [triangle_xmax, triangle_xmin, triangle_ymax, triangle_ymin, triangle_zmax, triangle_zmin]
+    face_triangles = [
+        triangle_xmax,
+        triangle_xmin,
+        triangle_ymax,
+        triangle_ymin,
+        triangle_zmax,
+        triangle_zmin,
+    ]
 
     # Act & Assert
-    assert all(remesh._is_triangle_on_boundary(triangle, rve) for triangle in face_triangles)
+    assert all(
+        remesh._is_triangle_on_boundary(triangle, rve) for triangle in face_triangles
+    )
 
 
-def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_false() -> None:
+def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_false() -> (
+    None
+):
     # Arrange
 
     rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
-    internal_triangle = remesh.Triangle(np.array([0.2, -0.25, -0.25]), np.array([0.2, 0.25, -0.25]),
-                               np.array([0.2, -0.25, 0.25]), 1)
+    internal_triangle = remesh.Triangle(
+        np.array([0.2, -0.25, -0.25]),
+        np.array([0.2, 0.25, -0.25]),
+        np.array([0.2, -0.25, 0.25]),
+        1,
+    )
 
     # Act & Assert
     assert not remesh._is_triangle_on_boundary(internal_triangle, rve)
+
 
 @pytest.mark.parametrize(
     "shape, mesh_element_size",
     [
         (Box(), 1.0),
         (
-                Tpms(
-                    surface_function=surface_functions.gyroid,
-                    offset=0.3,
-                ),
-                0.05,
+            Tpms(
+                surface_function=surface_functions.gyroid,
+                offset=0.3,
+            ),
+            0.05,
         ),
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
-        shape: BasicGeometry,
-        mesh_element_size: float,
-        tmp_step_filename: str,
-        tmp_mesh_filename: str,
-        tmp_output_mesh_filename: str,
+    shape: BasicGeometry,
+    mesh_element_size: float,
+    tmp_step_filename: str,
+    tmp_mesh_filename: str,
+    tmp_output_mesh_filename: str,
 ) -> None:
     if USE_MMG == True:
         # Arrange
@@ -222,7 +271,7 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
         )
 
         # Act
-        
+
         remesh.remesh_keeping_periodicity_for_fem(
             tmp_mesh_filename, rve, tmp_output_mesh_filename, hgrad=1.1
         )

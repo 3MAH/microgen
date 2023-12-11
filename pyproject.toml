@@ -61,6 +61,9 @@ Documentation = 'https://microgen.readthedocs.io/en/latest'
 [tool.setuptools.packages.find]
 include = ['microgen', 'microgen.*']
 
+[tool.isort]
+profile = "black"
+
 [tool.pytest.ini_options]
 filterwarnings = [
     # Ignore deprecation warnings from numpy

@@ -7,6 +7,7 @@ from microgen.shape.surface_functions import gyroid
 def swapped_gyroid(x, y, z):
     return gyroid(x=z, y=y, z=x)
 
+
 geometry = CylindricalTpms(
     surface_function=swapped_gyroid,
     offset=0.5,

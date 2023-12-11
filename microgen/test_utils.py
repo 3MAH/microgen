@@ -1,7 +1,7 @@
 import numpy as np
 
-def is_periodic(nodes_coords: np.ndarray, tol: float = 1e-8, dim: int = 3) -> bool:
 
+def is_periodic(nodes_coords: np.ndarray, tol: float = 1e-8, dim: int = 3) -> bool:
     # bounding box
     xmax = np.max(nodes_coords[:, 0])
     xmin = np.min(nodes_coords[:, 0])
@@ -32,7 +32,8 @@ def is_periodic(nodes_coords: np.ndarray, tol: float = 1e-8, dim: int = 3) -> bo
             face_Yp = face_Yp[np.argsort(nodes_coords[face_Yp, 0])]
 
     elif nodes_coords.shape[1] > 2:
-        decimal_round = int(-np.log10(tol) - 1)        
+        decimal_round = int(-np.log10(tol) - 1)
+
         def _sort_dim(indices: np.ndarray, dim_a: int, dim_b: int) -> np.ndarray:
             return indices[
                 np.lexsort(

@@ -23,7 +23,7 @@ requirements:
     - scotch 6.0.*
   run:
     - scotch 6.0.*
-    
+
 about:
   home: https://github.com/MmgTools/mmg
   license: LGPL-3.0-or-later

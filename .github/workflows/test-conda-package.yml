@@ -1,6 +1,6 @@
 name: Test conda package
 
-on: 
+on:
   workflow_dispatch:
 
 jobs:
@@ -23,11 +23,11 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install -c conda-forge -c cadquery -c set3mah microgen
-        
+
       - name: Test
         shell: bash -l {0}
-        run: | 
+        run: |
           SRC_DIR=$(pwd)
-          
+
           cd $SRC_DIR/examples
           sh run_examples.sh

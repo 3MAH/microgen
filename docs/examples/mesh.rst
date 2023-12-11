@@ -37,4 +37,3 @@ mmg Voronoi
    :literal:
 
 .. image:: ../_static/examples/mmg-voro.png
-

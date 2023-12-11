@@ -1,21 +1,19 @@
-import sys
-import subprocess
 import os
+import subprocess
+import sys
+
+import meshio
 
 import microgen
-import meshio
 
 USE_MMG = False
 try:
-    subprocess.run(["mmg3d_O3", "-h"])    
-    USE_MMG = True    
+    subprocess.run(["mmg3d_O3", "-h"])
+    USE_MMG = True
 except:
-    print(
-        "mmg command did not work, check if it is installed or contact a developer"
-    )
+    print("mmg command did not work, check if it is installed or contact a developer")
 
 if USE_MMG:
-
     meshIni = "Mesh.msh"
 
     if "data" not in os.listdir("."):

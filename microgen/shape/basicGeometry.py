@@ -4,9 +4,10 @@ Basic Geometry (:mod:`microgen.shape.basicGeometry`)
 ====================================================
 """
 from __future__ import annotations
-import cadquery as cq
 
 from typing import Tuple
+
+import cadquery as cq
 
 
 class BasicGeometry:

@@ -1,7 +1,7 @@
 import math as m
 import os
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple, List, Tuple
+from typing import List, NamedTuple, Tuple
 
 import gmsh
 import numpy as np
@@ -176,7 +176,7 @@ def _write_output(
     gmsh.write(output_file)
     gmsh.finalize()
 
-    with open(output_file, "r") as file:
+    with open(output_file) as file:
         lines = file.readlines()[:-1]  # Delete last line End
 
     with open(output_file, "w") as outfile:
