@@ -3,6 +3,8 @@
 Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
+from random import random
+
 import cadquery as cq
 import pyvista as pv
 
@@ -33,8 +35,8 @@ class Sphere(BasicGeometry):
     def generate(self) -> cq.Shape:
         sphere = (
             cq.Workplane()
-            .sphere(self.radius)
-            .translate((self.center[0], self.center[1], self.center[2]))
+            .sphere(radius=self.radius, direct=[random() for _ in range(3)])
+            .translate(self.center)
         )
         return cq.Shape(sphere.val().wrapped)
 
