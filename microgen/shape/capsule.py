@@ -4,7 +4,6 @@ Capsule (:mod:`microgen.shape.capsule`)
 =======================================
 """
 import cadquery as cq
-
 import pyvista as pv
 
 from ..operations import rotateEuler, rotatePvEuler
@@ -14,14 +13,14 @@ from .basicGeometry import BasicGeometry
 class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Capsule().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
@@ -79,20 +78,20 @@ class Capsule(BasicGeometry):
             height=self.height,
             resolution=resolution,
             capping=capping,
-        )
+        ).triangulate()
         sphereL = pv.Sphere(
             radius=self.radius,
             center=(self.center[0] - self.height / 2, self.center[1], self.center[2]),
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
-        )
+        ).triangulate()
         sphereR = pv.Sphere(
             radius=self.radius,
             center=(self.center[0] + self.height / 2, self.center[1], self.center[2]),
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
-        )
-        capsule = cylinder.merge([sphereL, sphereR])
+        ).triangulate()
+        capsule = cylinder.boolean_union(sphereL).boolean_union(sphereR)
         capsule = rotatePvEuler(
             capsule,
             self.center,

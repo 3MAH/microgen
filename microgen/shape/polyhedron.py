@@ -3,10 +3,11 @@
 Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
-import cadquery as cq
-import pyvista as pv
-import numpy as np
 import copy
+
+import cadquery as cq
+import numpy as np
+import pyvista as pv
 
 from .basicGeometry import BasicGeometry
 
@@ -14,14 +15,14 @@ from .basicGeometry import BasicGeometry
 class Polyhedron(BasicGeometry):
     """
     Class to generate a Polyhedron with a given set of faces and vertices
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Polyhedron().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
@@ -85,7 +86,7 @@ class Polyhedron(BasicGeometry):
         vertices = np.array(self.dic["vertices"])
         faces = np.hstack(facesPv)
 
-        return pv.PolyData(vertices, faces)
+        return pv.PolyData(vertices, faces).compute_normals()
 
 
 def read_obj(filename: str):

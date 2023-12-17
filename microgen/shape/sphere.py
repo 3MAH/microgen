@@ -14,14 +14,14 @@ from .basicGeometry import BasicGeometry
 class Sphere(BasicGeometry):
     """
     Class to generate a sphere
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Sphere().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
@@ -40,7 +40,7 @@ class Sphere(BasicGeometry):
         )
         return cq.Shape(sphere.val().wrapped)
 
-    def generateVtk(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
+    def generateVtk(self, theta_resolution=50, phi_resolution=50) -> pv.PolyData:
         return pv.Sphere(
             radius=self.radius,
             center=tuple(self.center),

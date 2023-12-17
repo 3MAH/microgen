@@ -6,25 +6,24 @@ Extruded Polygon (:mod:`microgen.shape.extrudedPolygon`)
 from typing import Sequence, Tuple
 
 import cadquery as cq
-import pyvista as pv
 import numpy as np
+import pyvista as pv
 
 from ..operations import rotateEuler, rotatePvEuler
-
 from .basicGeometry import BasicGeometry
 
 
 class ExtrudedPolygon(BasicGeometry):
     """
     Class to generate an extruded polygon with a given list of points and a thickness
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.ExtrudedPolygon().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
@@ -80,8 +79,11 @@ class ExtrudedPolygon(BasicGeometry):
         faces = np.arange(len(vertices))
         faces = np.insert(faces, 0, len(vertices))
 
-        poly = pv.PolyData(vertices, faces)
-        poly = poly.extrude([self.height, 0, 0], capping=capping)
+        poly = (
+            pv.PolyData(vertices, faces)
+            .extrude([self.height, 0, 0], capping=capping)
+            .compute_normals()
+        )
 
         poly = rotatePvEuler(
             poly,

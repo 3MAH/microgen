@@ -68,19 +68,19 @@ def test_shapes():
         microgen.newGeometry(shape="fake", param_geom={"fake": 0})
 
 
-# @pytest.mark.parametrize(
-#     "shape",
-#     [Box, Capsule, Cylinder, Ellipsoid, ExtrudedPolygon, Polyhedron, Sphere],
-# )
-# def test_shape_cad_and_vtk_volume_must_correspond(shape: Type[microgen.BasicGeometry]):
-#     geom = shape()
-#     shape_cad = geom.generate()
-#     shape_vtk = geom.generateVtk()
+@pytest.mark.parametrize(
+    "shape",
+    [Box, Capsule, Cylinder, Ellipsoid, ExtrudedPolygon, Polyhedron, Sphere],
+)
+def test_shape_cad_and_vtk_volume_must_correspond(shape: Type[microgen.BasicGeometry]):
+    geom = shape()
+    shape_cad = geom.generate()
+    shape_vtk = geom.generateVtk()
 
-#     volume_cad = shape_cad.Volume()
+    volume_cad = shape_cad.Volume()
 
-#     assert volume_cad > 0
-#     assert np.isclose(volume_cad, shape_vtk.volume, rtol=1e-2)
+    assert volume_cad > 0
+    assert np.isclose(volume_cad, shape_vtk.volume, rtol=1e-2)
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])

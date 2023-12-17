@@ -4,10 +4,10 @@ Basic Geometry (:mod:`microgen.shape.basicGeometry`)
 ====================================================
 """
 
+from typing import Union
+
 import cadquery as cq
 import pyvista as pv
-
-from typing import Union
 
 
 class BasicGeometry:
@@ -27,7 +27,6 @@ class BasicGeometry:
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
     ) -> None:
-
         self.number = self.numInstances
         self.shape = shape
         self.center = center
@@ -39,14 +38,16 @@ class BasicGeometry:
 
     def generate(self) -> cq.Shape:
         """
-        Generates the shape
+        Generates the CAD shape
 
         :return: cq.Shape
         """
+        raise NotImplementedError
 
     def generateVtk(self) -> pv.PolyData:
         """
-        Generates the shape in vtk format
+        Generates the vtk mesh of the shape
 
         :return: pv.PolyData
         """
+        raise NotImplementedError
