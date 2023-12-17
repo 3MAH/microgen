@@ -142,9 +142,9 @@ def _iter_bounding_boxes(
 
 
 def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
-    eps: float = 1.0e-3 * np.min(rve.dim)
+    eps: float = 1.0e-3 * min(rve.dim)
     minimum = rve.min_point
-    maximum = rve.max_point
+    maximum = rve.max_point.copy()
     maximum[axis] = minimum[axis]
 
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
