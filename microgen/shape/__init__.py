@@ -13,12 +13,12 @@ Shape (:mod:`microgen.shape`)
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.smooth_shading = True
    pyvista.global_theme.split_sharp_edges = True
-   pyvista.global_theme.antialiasing = True
 
 """
 
 from typing import Any
 
+from . import surface_functions
 from .basicGeometry import BasicGeometry
 from .box import Box
 from .capsule import Capsule
@@ -26,9 +26,8 @@ from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extrudedPolygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
-from .tpms import Tpms, CylindricalTpms, SphericalTpms
-from . import surface_functions
 from .sphere import Sphere
+from .tpms import CylindricalTpms, SphericalTpms, Tpms
 
 
 def newGeometry(

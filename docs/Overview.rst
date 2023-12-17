@@ -58,7 +58,6 @@ Brief examples
    pyvista.global_theme.axes.show = False
    pyvista.global_theme.smooth_shading = True
    pyvista.global_theme.split_sharp_edges = True
-   pyvista.global_theme.antialiasing = True
 
 
 .. jupyter-execute::
