@@ -5,6 +5,7 @@ Basic Geometry (:mod:`microgen.shape.basicGeometry`)
 """
 
 import cadquery as cq
+import pyvista as pv
 
 from typing import Union
 
@@ -35,3 +36,17 @@ class BasicGeometry:
 
         self.geometry = None  # type: Union[cq.Shape, None]
         BasicGeometry.numInstances += 1
+
+    def generate(self) -> cq.Shape:
+        """
+        Generates the shape
+
+        :return: cq.Shape
+        """
+
+    def generateVtk(self) -> pv.PolyData:
+        """
+        Generates the shape in vtk format
+
+        :return: pv.PolyData
+        """

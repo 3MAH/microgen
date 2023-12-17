@@ -36,7 +36,7 @@ def test_octettruss():
         ndmin=1,
     )
 
-    revel = microgen.Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
+    revel = microgen.Rve(dim=1, center=(0.5, 0.5, 0.5))
     listPhases = []  # type: list[microgen.Phase]
     listPeriodicPhases = []  # type: list[microgen.Phase]
     n = len(xc)

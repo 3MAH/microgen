@@ -4,7 +4,7 @@ from microgen import parseNeper, Rve, Polyhedron, mesh, Phase, Neper
 # # We import the Polyhedra from Nepoer tesselation file
 # listPolyhedra, seed, vertices, edges, faces, polys = parseNeper("test1")
 
-# Revel = Rve(dim_x=1, dim_y=1, dim_z=1)
+# Revel = Rve(dim=1)
 # phases = []
 
 # for polyhedron in listPolyhedra:

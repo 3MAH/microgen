@@ -55,7 +55,7 @@ radius = DATA[9]
 
 # sections = read_sections(path_data,section_file)
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1)
+rve = Rve(dim=1)
 listPhases = []
 listPeriodicPhases = []
 n = len(xc)

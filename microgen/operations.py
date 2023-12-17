@@ -2,11 +2,11 @@
 Boolean operations
 """
 
-from typing import Union, Tuple, List, Sequence
+from typing import List, Sequence, Tuple, Union
 
-import OCP
 import cadquery as cq
 import numpy as np
+import OCP
 import pyvista as pv
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
@@ -127,15 +127,10 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
         try:
             upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
             upgrader.Build()
-            shape = upgrader.Shape()  # type: OCP.TopoDS_Shape            
-            return cq.Shape(shape)            
+            shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
+            return cq.Shape(shape)
         except Exception:
             return cq.Shape(occ_Solids)
-
-
-
-
-
 
 
 def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
@@ -222,50 +217,6 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
     return [Phase(shape=shape) for shape in cutted_shapes]
 
 
-# def rasterShapeList(
-#     cqShapeList: List[cq.Shape], rve: Rve, grid: List[int]
-# ) -> Tuple[List[cq.Solid], List[List[cq.Solid]], List[float], List[cq.Vector]]:
-#     """
-#     Rasters shapes from shape list according to the rve divided by the given grid
-
-#     :param cqShapeList: list of shapes to raster
-#     :param rve: RVE divided by the given grid
-#     :param grid: number of divisions in each direction [x, y, z]
-
-#     :return flat_list: flatten list from occ_solids_list
-#     :return occ_solids_list: list of list of solids
-#     :return volume_list: list of shape volume (scalar)
-#     :return center_list: list of shape center (vector)
-#     """
-
-#     occ_solids_list = []
-
-#     for cqshape in cqShapeList:
-#         wk_plane = cq.Workplane().add(cqshape.Solids())
-#         xgrid = np.linspace(rve.x_min, rve.x_max, num=grid[0])
-#         ygrid = np.linspace(rve.y_min, rve.y_max, num=grid[1])
-#         zgrid = np.linspace(rve.z_min, rve.z_max, num=grid[2])
-#         np.delete(xgrid, 0)
-#         np.delete(ygrid, 0)
-#         np.delete(zgrid, 0)
-#         for i in xgrid:
-#             Plane_x = cq.Face.makePlane(basePnt=(i, 0, 0), dir=(1, 0, 0))
-#             wk_plane = wk_plane.split(cq.Workplane().add(Plane_x))
-#         for j in ygrid:
-#             Plane_y = cq.Face.makePlane(basePnt=(0, j, 0), dir=(0, 1, 0))
-#             wk_plane = wk_plane.split(cq.Workplane().add(Plane_y))
-#         for k in zgrid:
-#             Plane_z = cq.Face.makePlane(basePnt=(0, 0, k), dir=(0, 0, 1))
-#             wk_plane = wk_plane.split(cq.Workplane().add(Plane_z))
-
-#         occ_solids_list.append(wk_plane.val().Solids())
-
-#     flat_list = [item for sublist in occ_solids_list for item in sublist]
-#     volume_list = [item.Volume() for sublist in occ_solids_list for item in sublist]
-#     center_list = [item.Center() for sublist in occ_solids_list for item in sublist]
-#     return (flat_list, occ_solids_list, volume_list, center_list)
-
-
 def rasterPhase(
     phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
 ) -> Union[Phase, List[Phase]]:
@@ -279,11 +230,24 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solidList: list[cq.Solid] = phase.buildSolids(rve, grid)
+    solids: list[cq.Solid] = phase.split_solids(rve, grid)
 
     if phasePerRaster:
-        return Phase.generatePhasePerRaster(solidList, rve, grid)
-    return Phase(solids=solidList)
+        return Phase.generate_phase_per_raster(solids, rve, grid)
+    return Phase(solids=solids)
+
+
+def repeat_shape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
+    """
+    Repeats unit geometry in each direction according to the given grid
+
+    :param unit_geom: Shape to repeat
+    :param rve: RVE of the geometry to repeat
+    :param grid: list of number of geometry repetitions in each direction
+
+    :return: cq shape of the repeated geometry
+    """
+    return Phase.repeat_shape(unit_geom, rve, grid)
 
 
 def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:

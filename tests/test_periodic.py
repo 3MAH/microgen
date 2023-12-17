@@ -11,7 +11,7 @@ def generate_sphere(x, y, z, rve):
 
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def test_periodic():
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
+    rve = Rve(dim=1, center=(0.5, 0.5, 0.5))
 
     # test x- and x+ faces intersected
     elem = shape.capsule.Capsule(center=(0.5, 0, 0.5), height=1, radius=0.1)

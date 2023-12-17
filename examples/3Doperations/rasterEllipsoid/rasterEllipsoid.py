@@ -1,7 +1,7 @@
 import cadquery as cq
 from microgen import Rve, Ellipsoid, mesh, Phase, rasterPhase
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1)
+rve = Rve(dim=1)
 
 elem = Ellipsoid(a_x=0.15, a_y=0.31, a_z=0.4)
 elli = elem.generate()

@@ -139,11 +139,12 @@ def _get_surface_nodes_coords(
 def _is_triangle_on_boundary(triangle: Triangle, rve: Rve) -> bool:
     """Determines whether a triangle (defined by its 3 nodes) is on the boundary of a parallelepipedic rve"""
 
-    rve_boundaries = [
-        (rve.x_min, rve.x_max),
-        (rve.y_min, rve.y_max),
-        (rve.z_min, rve.z_max),
-    ]
+    # rve_boundaries = [
+    #     (rve.min_point[0], rve.max_point[0]),
+    #     (rve.min_point[1], rve.max_point[1]),
+    #     (rve.min_point[2], rve.max_point[2]),
+    # ]
+    rve_boundaries = np.array([rve.min_point, rve.max_point]).T
     triangle_nodes = triangle.node1, triangle.node2, triangle.node3
     for i, rve_axis_min_max in enumerate(rve_boundaries):
         for rve_axis_boundary in rve_axis_min_max:

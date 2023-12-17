@@ -150,7 +150,7 @@ def tmp_output_mesh_filename(tmp_dir: Path) -> str:
 def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_must_return_true() -> None:
     # Arrange
 
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
+    rve = Rve(dim=1, center=(0, 0, 0))
     triangle_xmax = remesh.Triangle(np.array([0.5, -0.5, -0.5]), np.array([0.5, 0.5, -0.5]), np.array([0.5, -0.5, 0.5]),
                                     1)
     triangle_xmin = remesh.Triangle(np.array([-0.5, -0.5, -0.5]), np.array([-0.5, 0.5, -0.5]),
@@ -176,7 +176,7 @@ def test_given_rve_and_triangles_on_each_boundary_face_is_triangle_on_boundary_m
 def test_given_rve_and_internal_triangle_is_triangle_on_boundary_must_return_false() -> None:
     # Arrange
 
-    rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
+    rve = Rve(dim=1, center=(0, 0, 0))
     internal_triangle = remesh.Triangle(np.array([0.2, -0.25, -0.25]), np.array([0.2, 0.25, -0.25]),
                                np.array([0.2, -0.25, 0.25]), 1)
 
@@ -205,7 +205,7 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
 ) -> None:
     if USE_MMG == True:
         # Arrange
-        rve = Rve(dim_x=1, dim_y=1, dim_z=1, center=(0, 0, 0))
+        rve = Rve(dim=1, center=(0, 0, 0))
         cad_geometry: cq.Shape = shape.generate()
         phase = Phase(cad_geometry)
 

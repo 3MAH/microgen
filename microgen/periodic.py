@@ -35,12 +35,12 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         "z+": (0, 0, 1),
     }
     basePnt = {
-        "x-": (rve.x_min, 0, 0),
-        "x+": (rve.x_max, 0, 0),
-        "y-": (0, rve.y_min, 0),
-        "y+": (0, rve.y_max, 0),
-        "z-": (0, 0, rve.z_min),
-        "z+": (0, 0, rve.z_max),
+        "x-": (rve.min_point[0], 0, 0),
+        "x+": (rve.max_point[0], 0, 0),
+        "y-": (0, rve.min_point[1], 0),
+        "y+": (0, rve.max_point[1], 0),
+        "z-": (0, 0, rve.min_point[2]),
+        "z+": (0, 0, rve.max_point[2]),
     }
 
     face_dir = {"x-": ">X", "x+": "<X", "y-": ">Y", "y+": "<Y", "z-": ">Z", "z+": "<Z"}
@@ -54,12 +54,12 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
     }
 
     translate = {
-        "x-": (rve.dx, 0, 0),
-        "x+": (-rve.dx, 0, 0),
-        "y-": (0, rve.dy, 0),
-        "y+": (0, -rve.dy, 0),
-        "z-": (0, 0, rve.dz),
-        "z+": (0, 0, -rve.dz),
+        "x-": (rve.dim[0], 0, 0),
+        "x+": (-rve.dim[0], 0, 0),
+        "y-": (0, rve.dim[1], 0),
+        "y+": (0, -rve.dim[1], 0),
+        "z-": (0, 0, rve.dim[2]),
+        "z+": (0, 0, -rve.dim[2]),
     }
 
     intersected_faces = []  # type: list[str]

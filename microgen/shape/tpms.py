@@ -11,7 +11,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 """
 import logging
-from typing import Callable, List, Union, Sequence, Literal, Optional
+from typing import Callable, List, Literal, Optional, Sequence, Union
 
 import cadquery as cq
 import numpy as np
@@ -19,7 +19,8 @@ import pyvista as pv
 from scipy.optimize import root_scalar
 
 from microgen.shape.basicGeometry import BasicGeometry
-from ..operations import fuseShapes, rescale, repeatShape
+
+from ..operations import fuseShapes, repeat_shape, rescale
 from ..rve import Rve
 
 logging.basicConfig(level=logging.INFO)
@@ -548,7 +549,7 @@ class Tpms(BasicGeometry):
         #     shape = rescale(shape=shape, scale=self.cell_size)
 
         # if not np.array_equal(self.repeat_cell, np.array([1, 1, 1])):
-        #     shape = repeatShape(
+        #     shape = repeat_shape(
         #         unit_geom=shape,
         #         rve=Rve(
         #             dim_x=self.cell_size[0],

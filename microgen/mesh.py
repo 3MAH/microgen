@@ -140,15 +140,10 @@ def _iter_bounding_boxes(minimum: _Point3D, maximum: _Point3D, eps: float) -> It
         yield bounds, tag
 
 
-def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.dx, rve.dy, rve.dz])
-
-
 def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
-    deltas = _get_deltas(rve)
-    eps: float = 1.0e-3 * min(deltas)
+    eps: float = 1.0e-3 * np.min(rve.dim)
     minimum = np.zeros(_DIM_COUNT)
-    maximum = deltas
+    maximum = rve.dim
     maximum[axis] = 0.
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
         bounds_min[:, axis] += 1
@@ -161,9 +156,8 @@ def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, in
 
 
 def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
-    deltas = _get_deltas(rve)
     translation_matrix = np.eye(_DIM_COUNT + 1)
-    translation_matrix[axis, _DIM_COUNT] = deltas[axis]
+    translation_matrix[axis, _DIM_COUNT] = rve.dim[axis]
     translation: list[float] = list(translation_matrix.flatten())
     for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
         gmsh.model.mesh.setPeriodic(
