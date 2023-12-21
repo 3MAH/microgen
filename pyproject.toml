@@ -4,14 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microgen"
-authors = [
-    {name = "3MAH", email = 'set3mah@gmail.com'},
-]
-description = "Microstructure generation"
+version = "1.0.1"
+authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
+description = "Microstructure generation and meshing"
 readme = "README.md"
 requires-python = ">=3.8"
-keywords = ["microstructure", "lattice"]
-license = {text = "GPLv3"}
+keywords = ["microstructure", "lattice", "periodic", "TPMS", "mesh"]
+license = { text = "GPLv3" }
 classifiers = [
     'Intended Audience :: Science/Research',
     'Topic :: Scientific/Engineering :: Information Analysis',
@@ -21,36 +20,42 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-dependencies = [
-    "numpy",
-    "pyvista",
-    "gmsh",
-    "meshio",
-    "cadquery"
-]
-dynamic = ["version"]
+dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
 [project.optional-dependencies]
-all = [
-    'pytest',
-    'pytest-cov',
+test = ['pytest', 'pytest-cov', 'pytest-xdist']
+docs = [
+    'ipykernel',
+    'sphinx',
+    'sphinx-rtd-theme',
+    'sphinxcontrib-napoleon',
+    'jupyter-sphinx',
+    'pythreejs',
+    'mock',
+    'myst-parser',
 ]
-test = [
-    'pytest',
-    'pytest-cov',
+jupyter = [
+    "jupyterlab<3.6",
+    "jupyter-cadquery",
+    "ipyvtklink",
+    "ipygany",
+    "sidecar",
+    "jupyterview",
 ]
+all = ["microgen[test, docs, jupyter]"]
 
 [project.urls]
-Documentation = 'https://microgen.readthedocs.io/en/latest/?badge=latest'
+Documentation = 'https://microgen.readthedocs.io/en/latest'
 "Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
-[tool.setuptools.dynamic]
-version = {attr = 'microgen._version.__version__'}
-
 [tool.setuptools.packages.find]
-include = [
-    'microgen',
-    'microgen.*',
+include = ['microgen', 'microgen.*']
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Ignore deprecation warnings from numpy
+    "ignore:.* is a deprecated alias for .*:DeprecationWarning",
 ]

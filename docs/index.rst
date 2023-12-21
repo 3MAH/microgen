@@ -6,7 +6,12 @@
 Microgen documentation
 ======================
 
-Microstructure generation tool based on `CadQuery <https://cadquery.readthedocs.io/en/latest/>`_ and `PyVista <https://docs.pyvista.org/index.html>`_ libraries.
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 
 
 Table of contents

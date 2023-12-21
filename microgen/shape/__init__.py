@@ -7,16 +7,18 @@ Shape (:mod:`microgen.shape`)
    :hide-code:
 
    import pyvista
-   pyvista.set_jupyter_backend('pythreejs')
+   pyvista.set_jupyter_backend('static')
    pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [690, 400]
-   pyvista.global_theme.antialiasing = True
+   pyvista.global_theme.window_size = [600, 400]
    pyvista.global_theme.axes.show = False
+   pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.split_sharp_edges = True
 
 """
 
 from typing import Any
 
+from . import surface_functions
 from .basicGeometry import BasicGeometry
 from .box import Box
 from .capsule import Capsule
@@ -24,9 +26,8 @@ from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extrudedPolygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
-from .tpms import Tpms, CylindricalTpms, SphericalTpms
-from . import surface_functions
 from .sphere import Sphere
+from .tpms import CylindricalTpms, SphericalTpms, Tpms
 
 
 def newGeometry(
@@ -97,4 +98,4 @@ def newGeometry(
     elif shape.lower() == "polyhedron":
         return Polyhedron(dic=param_geom["dic"])
     else:
-        raise ValueError(shape + " name not recognised")
+        raise ValueError(f"{shape} name not recognised")
