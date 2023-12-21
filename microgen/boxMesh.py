@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 from scipy.spatial import KDTree
 from .rve import Rve
-from .phaseMesh import PhaseMesh, _check_if_only_linear_tetrahedral
+from .singleMesh import SingleMesh, _check_if_only_linear_tetrahedral
 
 # try: 
 #     import trimesh    
@@ -20,7 +20,7 @@ from .phaseMesh import PhaseMesh, _check_if_only_linear_tetrahedral
 USE_MULTI_RAY = False
 
 
-class BoxMesh(PhaseMesh):
+class BoxMesh(SingleMesh):
     """
     boxMesh class to manage list of Nodes and Elements inside an Rve
     :param nodes: list of nodes (np.ndarray)
@@ -87,7 +87,7 @@ class BoxMesh(PhaseMesh):
         the PolyData object is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
         Mesh with multiple element type are not handled.
-        Note that for now phaseMesh works only considering tetrahedral elements        
+        Note that for now singleMesh works only considering tetrahedral elements        
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
 

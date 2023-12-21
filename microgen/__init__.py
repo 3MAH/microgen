@@ -7,7 +7,7 @@ from .periodic import *
 from .phase import *
 from .rve import *
 from .shape import *
-from .phaseMesh import *
+from .singleMesh import *
 from .boxMesh import *
 from .report import *
 from .test_utils import *

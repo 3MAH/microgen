@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import numpy.typing as npt
-from microgen import PhaseMesh, phaseMesh
+from microgen import SingleMesh, singleMesh
 import pyvista as pv
 
 
@@ -44,7 +44,7 @@ def box_mesh(box_mesh_points) -> pv.UnstructuredGrid:
 
 
 @pytest.fixture(scope='session')
-def box_phaseMesh_nodes() -> npt.NDArray[np.float_]:
+def box_singleMesh_nodes() -> npt.NDArray[np.float_]:
     nodes_array = np.array([[0., 0., 0.],
                             [0.5, 0.5, 0.5],
                             [-0.5, -0.5, -0.5],
@@ -65,7 +65,7 @@ def box_phaseMesh_nodes() -> npt.NDArray[np.float_]:
 
 
 @pytest.fixture(scope='session')
-def box_phaseMesh_elements() -> dict[int, npt.NDArray[np.float_]]:
+def box_singleMesh_elements() -> dict[int, npt.NDArray[np.float_]]:
     elements_dict = {pv.CellType.TETRA: np.array([[11, 6, 0, 14],
                                    [0, 9, 1, 11],
                                    [3, 10, 0, 13],
@@ -107,8 +107,8 @@ def box_phaseMesh_elements() -> dict[int, npt.NDArray[np.float_]]:
 
 
 @pytest.fixture(scope='session')
-def box_phaseMesh(box_phaseMesh_nodes, box_phaseMesh_elements) -> PhaseMesh:
-    box_phasemesh = PhaseMesh(box_phaseMesh_nodes, box_phaseMesh_elements)
+def box_singleMesh(box_singleMesh_nodes, box_singleMesh_elements) -> SingleMesh:
+    box_phasemesh = SingleMesh(box_singleMesh_nodes, box_singleMesh_elements)
 
     return box_phasemesh
 
@@ -293,23 +293,23 @@ def sample_3d_non_linear_tet_mesh_list(quadratic_3d_tet_mesh: pv.UnstructuredGri
     return [quadratic_3d_tet_mesh, linear_3d_hex_mesh, quadratic_3d_hex_mesh, linear_3d_wedge_mesh, linear_3d_pyramid_mesh]
 
 
-def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_phaseMesh_from_pyvista_must_return_the_same_mesh(
+def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_singleMesh_from_pyvista_must_return_the_same_mesh(
         box_mesh_points, box_mesh) -> None:
-    mesh = PhaseMesh.from_pyvista(box_mesh)
+    mesh = SingleMesh.from_pyvista(box_mesh)
 
     assert mesh.nodes.all() == box_mesh_points.all() and compare_dict_with_arrays_as_values(mesh.elements,
                                                                                             box_mesh.cells_dict)
 
 
-def test_given_simple_periodic_box_phaseMesh_to_pyvista_must_return_the_same_mesh(box_phaseMesh) -> None:
-    grid = box_phaseMesh.to_pyvista()
+def test_given_simple_periodic_box_singleMesh_to_pyvista_must_return_the_same_mesh(box_singleMesh) -> None:
+    grid = box_singleMesh.to_pyvista()
 
-    assert compare_dict_with_arrays_as_values(grid.cells_dict, box_phaseMesh.elements)
+    assert compare_dict_with_arrays_as_values(grid.cells_dict, box_singleMesh.elements)
 
 
-def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_phaseMesh_surface_must_find_surface_triangles_connectivity_array_and_number(
+def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_singleMesh_surface_must_find_surface_triangles_connectivity_array_and_number(
         box_mesh) -> None:
-    mesh = PhaseMesh.from_pyvista(box_mesh)
+    mesh = SingleMesh.from_pyvista(box_mesh)
 
     target_n_cells = 24
     target_face_connectivity_array = np.array([3, 0, 1, 2, 3, 0, 3, 1, 3, 0, 4, 5, 3, 0, 2, 4, 3,
@@ -327,22 +327,22 @@ def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_wa
     warning_message = "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_1d_mesh_list:
-            phaseMesh._check_if_only_linear_tetrahedral(mesh)
+            singleMesh._check_if_only_linear_tetrahedral(mesh)
 
 def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(sample_2d_mesh_list) -> None:
     warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_2d_mesh_list:
-            phaseMesh._check_if_only_linear_tetrahedral(mesh)
+            singleMesh._check_if_only_linear_tetrahedral(mesh)
 
 def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(sample_3d_non_linear_tet_mesh_list) -> None:
     error_message_snippet = "Mesh contains elements other than linear tetrahedra."
     with pytest.raises(ValueError, match=error_message_snippet):
         for mesh in sample_3d_non_linear_tet_mesh_list:
-            phaseMesh._check_if_only_linear_tetrahedral(mesh)
+            singleMesh._check_if_only_linear_tetrahedral(mesh)
 
 def test_given_linear_tets_only_mesh__check_if_only_linear_tetrahedral_must_not_raise_any_error(box_mesh):
     try:
-        phaseMesh._check_if_only_linear_tetrahedral(box_mesh)
+        singleMesh._check_if_only_linear_tetrahedral(box_mesh)
     except ValueError:
         assert False

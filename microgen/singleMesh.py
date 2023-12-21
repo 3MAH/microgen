@@ -10,9 +10,9 @@ import warnings
 from .rve import Rve
 
 
-class PhaseMesh:
+class SingleMesh:
     """
-    PhaseMesh class to manage list of Nodes and Elements inside a Phase
+    SingleMesh class to manage list of Nodes and Elements inside a Phase
     :param nodes: list of nodes (np.ndarray)
     :param elements : dictionary of elements (key: int, values : np.ndarray). The key is the element type
     :param mesh : The pyvista mesh, if it exists already (this could be further generated)
@@ -23,14 +23,14 @@ class PhaseMesh:
             self,
             nodes: np.ndarray,
             elements: dict,
-            mesh: Optional[pv.UnstructuredGrid] = None,
+            pvmesh: Optional[pv.UnstructuredGrid] = None,
             name: Optional[str] = None,
             nodes_index: Optional[np.ndarray] = None,
     ) -> None:
 
         self.nodes = nodes  # node coordinates
         self.elements = elements  # element dictionary
-        self._mesh = mesh
+        self._pvmesh = pvmesh
         self.name = name
         self.nodes_index = nodes_index  # indices of nodes (i.e, if they come from a bigger mesh)
         self._surface = None
@@ -45,7 +45,7 @@ class PhaseMesh:
 
         :return cells and cells_type : A tuple of flattened arrays that contains all cells and cells_type
 
-        Note that if only tetrahedral elements are handled py PhaseMesh, this function
+        Note that if only tetrahedral elements are handled py SingleMesh, this function
         is able to handle multiple cells for future updates     
         """
 
@@ -69,10 +69,10 @@ class PhaseMesh:
         """
         Builds a pyvista UnstructuredGrid. 
         Node and element data are not copied (by default a shallow copy is operated)
-        Note that for now phaseMesh works only considering tetrahedral elements
+        Note that for now singleMesh works only considering tetrahedral elements
 
         :return pvmesh : A pyvista.UnstructuredGrid object that contains the (points) nodes,
-        cells and celltypes from the PhaseMesh object
+        cells and celltypes from the SingleMesh object
         """
 
         cells, celltypes = self._to_cells_and_celltype()
@@ -83,15 +83,15 @@ class PhaseMesh:
     def from_pyvista(
             pvmesh: pv.UnstructuredGrid,
             name: str = None):
-        """Build a PhaseMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case, 
+        """Build a SingleMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case, 
         the PolyData object is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
         Mesh with multiple element type are not handled.
-        Note that for now phaseMesh works only considering tetrahedral elements        
+        Note that for now singleMesh works only considering tetrahedral elements        
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
 
-        :return : A PhaseMesh Object from the tetrahedral elements of the pyvista Unstructured Grid
+        :return : A SingleMesh Object from the tetrahedral elements of the pyvista Unstructured Grid
         """
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
@@ -99,7 +99,7 @@ class PhaseMesh:
         try:
             _check_if_only_linear_tetrahedral(pvmesh)
             elements = {10: pvmesh.cells_dict[10]}
-            return PhaseMesh(pvmesh.points, elements, pvmesh, name)
+            return SingleMesh(pvmesh.points, elements, pvmesh, name)
         except ValueError as e:
             print(e)
 
@@ -108,29 +108,29 @@ class PhaseMesh:
             filename: str,
             name: Optional[str] = None
     ):
-        """Build a PhaseMesh from a pyvista mesh file. This function uses the pyvista load method.
+        """Build a SingleMesh from a pyvista mesh file. This function uses the pyvista load method.
         The file type is inferred from the file name.
         
         :param filename : the name of the file that contains the pyvista mesh
 
-        :return : a PhaseMesh object
+        :return : a SingleMesh object
         """
 
-        mesh = PhaseMesh.from_pyvista(pv.read(filename), name=name)
+        mesh = SingleMesh.from_pyvista(pv.read(filename), name=name)
         return mesh
 
     @property
-    def mesh(
+    def pvmesh(
             self,
     ) -> None:
         """
-        Return the pyvista mesh (UnstructuredGrid) of the considered PhaseMesh
+        Return the pyvista mesh (UnstructuredGrid) of the considered SingleMesh
         """
 
-        if not (isinstance(self._mesh, pv.UnstructuredGrid)):
-            self._mesh = self.to_pyvista()
+        if not (isinstance(self._pvmesh, pv.UnstructuredGrid)):
+            self._pvmesh = self.to_pyvista()
 
-        return self._mesh
+        return self._pvmesh
 
     @property
     def surface(
@@ -155,10 +155,10 @@ class PhaseMesh:
         
         :return pv.PolyData: surface mesh
         """
-        if not (isinstance(self._mesh, pv.UnstructuredGrid)):
-            self._mesh = self.to_pyvista()
+        if not (isinstance(self._pvmesh, pv.UnstructuredGrid)):
+            self._pvmesh = self.to_pyvista()
 
-        return self._mesh.extract_surface()
+        return self._pvmesh.extract_surface()
 
 
 def _check_if_only_linear_tetrahedral(
