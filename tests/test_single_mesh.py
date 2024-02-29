@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import numpy.typing as npt
-from microgen import SingleMesh, singleMesh
+from microgen import SingleMesh, single_mesh
 import pyvista as pv
 
 
@@ -297,8 +297,8 @@ def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_singleMesh_fro
         box_mesh_points, box_mesh) -> None:
     mesh = SingleMesh.from_pyvista(box_mesh)
 
-    assert mesh.nodes.all() == box_mesh_points.all() and compare_dict_with_arrays_as_values(mesh.elements,
-                                                                                            box_mesh.cells_dict)
+    assert mesh.nodes_coords.all() == box_mesh_points.all() and compare_dict_with_arrays_as_values(mesh.elements,
+                                                                                                   box_mesh.cells_dict)
 
 
 def test_given_simple_periodic_box_singleMesh_to_pyvista_must_return_the_same_mesh(box_singleMesh) -> None:
@@ -327,22 +327,22 @@ def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_wa
     warning_message = "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_1d_mesh_list:
-            singleMesh._check_if_only_linear_tetrahedral(mesh)
+            single_mesh.check_if_only_linear_tetrahedral(mesh)
 
 def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(sample_2d_mesh_list) -> None:
     warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_2d_mesh_list:
-            singleMesh._check_if_only_linear_tetrahedral(mesh)
+            single_mesh.check_if_only_linear_tetrahedral(mesh)
 
 def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(sample_3d_non_linear_tet_mesh_list) -> None:
     error_message_snippet = "Mesh contains elements other than linear tetrahedra."
     with pytest.raises(ValueError, match=error_message_snippet):
         for mesh in sample_3d_non_linear_tet_mesh_list:
-            singleMesh._check_if_only_linear_tetrahedral(mesh)
+            single_mesh.check_if_only_linear_tetrahedral(mesh)
 
 def test_given_linear_tets_only_mesh__check_if_only_linear_tetrahedral_must_not_raise_any_error(box_mesh):
     try:
-        singleMesh._check_if_only_linear_tetrahedral(box_mesh)
+        single_mesh.check_if_only_linear_tetrahedral(box_mesh)
     except ValueError:
         assert False
