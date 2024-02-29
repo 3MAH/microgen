@@ -33,11 +33,11 @@ class BoxMesh(SingleMesh):
             self,
             nodes: np.ndarray,
             elements: dict,
-            mesh: Optional[pv.UnstructuredGrid] = None,
+            pvmesh: Optional[pv.UnstructuredGrid] = None,
             name: Optional[np.ndarray] = None,
             nodes_index: Optional[np.ndarray] = None,
     ) -> None:
-        super().__init__(nodes=nodes, elements=elements, mesh=mesh, name=name, nodes_index=nodes_index)
+        super().__init__(nodes=nodes, elements=elements, pvmesh=pvmesh, name=name, nodes_index=nodes_index)
 
         self._rve = None
         self._closest_points_on_boundaries = None
@@ -267,7 +267,7 @@ class BoxMesh(SingleMesh):
 
         :return rve: RVE of the mesh bounding box
         """
-        if not (isinstance(self._mesh, pv.UnstructuredGrid)):
+        if not (isinstance(self._pvmesh, pv.UnstructuredGrid)):
             self._mesh = self.to_pyvista()
         xmin, xmax, ymin, ymax, zmin, zmax = self._mesh.bounds
         return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)

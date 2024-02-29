@@ -15,7 +15,7 @@ class SingleMesh:
     SingleMesh class to manage list of Nodes and Elements inside a Phase
     :param nodes: list of nodes (np.ndarray)
     :param elements : dictionary of elements (key: int, values : np.ndarray). The key is the element type
-    :param mesh : The pyvista mesh, if it exists already (this could be further generated)
+    :param pvmesh : The pyvista mesh, if it exists already (this could be further generated)
     :param nodes_index : index of node list (if different from the natural index of nodes array)       
     """
 
