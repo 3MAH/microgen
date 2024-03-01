@@ -3,7 +3,7 @@ Cubic mesh for FE
 """
 
 import warnings
-from typing import Optional
+from typing import Optional, NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -22,6 +22,12 @@ from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 USE_MULTI_RAY = False
 
 
+class ClosestCellsOnBoundaries(NamedTuple):
+    cells_id: npt.NDArray[np.int_]
+    intersection_point_coords: npt.NDArray[np.float_]
+    closest_opposing_cells_id: list[npt.NDArray[np.int_]]
+
+
 class BoxMesh(SingleMesh):
     """
     Class to manage list of Nodes and Elements inside a Rve
@@ -32,11 +38,11 @@ class BoxMesh(SingleMesh):
     """
 
     def __init__(
-        self,
-        nodes_coords: np.ndarray,
-        elements: dict[int, npt.NDArray[np.int_]],
-        pvmesh: Optional[pv.UnstructuredGrid] = None,
-        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+            self,
+            nodes_coords: np.ndarray,
+            elements: dict[int, npt.NDArray[np.int_]],
+            pvmesh: Optional[pv.UnstructuredGrid] = None,
+            nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
         super().__init__(
             nodes_coords=nodes_coords,
@@ -110,9 +116,9 @@ class BoxMesh(SingleMesh):
         return None
 
     def construct(
-        self,
-        rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.0e-8,
+            self,
+            rve: Optional[Rve] = None,
+            tol: Optional[float] = 1.0e-8,
     ) -> None:
         """
         Construct a box Mesh with list of points in faces (excluding edges), edges (excluding corners) and corners.
@@ -417,7 +423,7 @@ class BoxMesh(SingleMesh):
 
     @property
     def rve(
-        self,
+            self,
     ) -> Rve:
         """
         Return a representative volume element (Rve) of the considered mesh
@@ -432,8 +438,8 @@ class BoxMesh(SingleMesh):
 
     @rve.setter
     def rve(
-        self,
-        value: Rve,
+            self,
+            value: Rve,
     ) -> None:
         """
         set a representative volume element (Rve) of the considered mesh
@@ -444,7 +450,7 @@ class BoxMesh(SingleMesh):
         self._rve = value
 
     def _build_rve(
-        self,
+            self,
     ) -> Rve:
         """
         build a representative volume element (Rve) of the considered mesh from its bounding box
@@ -457,10 +463,10 @@ class BoxMesh(SingleMesh):
         return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def _closest_points_on_faces(
-        self,
-        k_neighbours: int = 3,
-        rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.0e-8,
+            self,
+            k_neighbours: int = 3,
+            rve: Optional[Rve] = None,
+            tol: Optional[float] = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite face to write interpolation relationship
@@ -577,9 +583,9 @@ class BoxMesh(SingleMesh):
         }
 
     def _closest_points_on_edges(
-        self,
-        rve: Rve = None,
-        tol: Optional[float] = 1.0e-8,
+            self,
+            rve: Rve = None,
+            tol: Optional[float] = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite edges to write interpolation relationship
@@ -706,10 +712,10 @@ class BoxMesh(SingleMesh):
         }
 
     def closest_points_on_boundaries(
-        self,
-        k_neighbours: int = 3,
-        rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.0e-8,
+            self,
+            k_neighbours: int = 3,
+            rve: Optional[Rve] = None,
+            tol: Optional[float] = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on faces and edges to write interpolation relationship
@@ -734,9 +740,9 @@ class BoxMesh(SingleMesh):
             return self._closest_points_on_boundaries
 
     def boundary_elements(
-        self,
-        rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.0e-4,
+            self,
+            rve: Optional[Rve] = None,
+            tol: Optional[float] = 1.0e-4,
     ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
         if isinstance(rve, Rve) == False:
             rve = self.rve
@@ -784,10 +790,10 @@ class BoxMesh(SingleMesh):
         return boundary_elements, boundary_elements["CellIDs"]
 
     def closest_cells_on_boundaries(
-        self,
-        rve: Optional[Rve] = None,
-        tol: Optional[float] = 1.0e-8,
-    ) -> dict:
+            self,
+            rve: Optional[Rve] = None,
+            tol: Optional[float] = 1.0e-8,
+    ) -> dict[str, ClosestCellsOnBoundaries]:
         """
         Find the cells to which a given point belongs to while using a ray tracing normal to the face on which it belongs
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
@@ -865,17 +871,17 @@ class BoxMesh(SingleMesh):
             list_ray_trace.append(raytraceresult)
 
         return {
-            "face_Xp": (
+            "face_Xp": ClosestCellsOnBoundaries(
                 list_cells_for_each_face[0],
                 list_ray_trace[0][0],
                 list_cells_for_each_face[0][list_ray_trace[0][2]],
             ),
-            "face_Yp": (
+            "face_Yp": ClosestCellsOnBoundaries(
                 list_cells_for_each_face[1],
                 list_ray_trace[1][0],
                 list_cells_for_each_face[1][list_ray_trace[1][2]],
             ),
-            "face_Zp": (
+            "face_Zp": ClosestCellsOnBoundaries(
                 list_cells_for_each_face[2],
                 list_ray_trace[2][0],
                 list_cells_for_each_face[2][list_ray_trace[2][2]],
