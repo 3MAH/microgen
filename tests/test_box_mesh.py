@@ -162,9 +162,9 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
     )
 
 
-def test_given_box_mesh__build_rve_must_build_correct_rve(default_box_mesh) -> None:
+def test_given_box_mesh_rve_property_must_build_correct_rve(default_box_mesh) -> None:
     target_rve = _default_rve()
-    test_rve = default_box_mesh._build_rve()
+    test_rve = default_box_mesh.rve
 
     assert (
         test_rve.center == target_rve.center
