@@ -109,8 +109,8 @@ def _box_mesh_elements() -> dict[int, npt.NDArray[np.float_]]:
     return elements_dict
 
 
-@pytest.fixture(scope="function")
-def default_box_mesh() -> BoxMesh:
+@pytest.fixture(name="default_box_mesh", scope="function")
+def fixture_default_box_mesh() -> BoxMesh:
     mesh = BoxMesh(_box_mesh_points(), _box_mesh_elements())
 
     return mesh
