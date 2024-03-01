@@ -42,15 +42,7 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
     return points
 
 
-def _box_mesh_grid(box_mesh_points) -> pv.UnstructuredGrid:
-    points = box_mesh_points
-    point_cloud = pv.PolyData(points)
-    grid = point_cloud.delaunay_3d(offset=100.0)
-
-    return grid
-
-
-def _box_mesh_elements() -> dict[int, npt.NDArray[np.float_]]:
+def _box_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.float_]]:
     elements_dict = {
         pv.CellType.TETRA: np.array(
             [

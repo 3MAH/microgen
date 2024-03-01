@@ -40,7 +40,7 @@ class BoxMesh(SingleMesh):
     def __init__(
             self,
             nodes_coords: np.ndarray,
-            elements: dict[int, npt.NDArray[np.int_]],
+            elements: dict[pv.CellType, npt.NDArray[np.int_]],
             pvmesh: Optional[pv.UnstructuredGrid] = None,
             nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
