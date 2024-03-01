@@ -3,7 +3,7 @@ Cubic mesh for FE
 """
 
 import warnings
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -75,12 +75,12 @@ class SingleMesh:
         return pv.UnstructuredGrid(cells, celltypes, self.nodes_coords)
 
     @staticmethod
-    def from_pyvista(pvmesh: pv.UnstructuredGrid):
+    def from_pyvista(pvmesh: Union[pv.UnstructuredGrid, pv.PolyData]):
         """Build a SingleMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case,
         the PolyData object is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
-        Mesh with multiple element type are not handled.
-        Note that for now singleMesh works only considering tetrahedral elements
+        Mesh with multiple element types are not handled.
+        Note that for now SingleMesh works only considering tetrahedral elements
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
 
