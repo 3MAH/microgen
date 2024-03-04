@@ -6,7 +6,7 @@ from microgen import SingleMesh, single_mesh
 
 
 def compare_dict_with_arrays_as_values(
-    dict1: dict[int, npt.NDArray[int]], dict2: dict[int, npt.NDArray[int]]
+    dict1: dict[int, npt.NDArray[np.int_]], dict2: dict[int, npt.NDArray[np.int_]]
 ) -> bool:
     """Return whether two dictionaries of arrays are equal"""
     if dict1.keys() != dict2.keys():
@@ -70,7 +70,7 @@ def _box_single_mesh_nodes() -> npt.NDArray[np.float_]:
     return nodes_array
 
 
-def _box_single_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.float_]]:
+def _box_single_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.int_]]:
     elements_dict = {
         pv.CellType.TETRA: np.array(
             [
