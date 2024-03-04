@@ -20,11 +20,11 @@ class SingleMesh:
     """
 
     def __init__(
-        self,
-        nodes_coords: np.ndarray,
-        elements: dict[pv.CellType, npt.NDArray[np.int_]],
-        pvmesh: Optional[pv.UnstructuredGrid] = None,
-        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+            self,
+            nodes_coords: np.ndarray,
+            elements: dict[pv.CellType, npt.NDArray[np.int_]],
+            pvmesh: Optional[pv.UnstructuredGrid] = None,
+            nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
         self.nodes_coords = nodes_coords
         self.elements = elements  # element dictionary
@@ -32,7 +32,7 @@ class SingleMesh:
         self.nodes_indices = (
             nodes_indices  # indices of nodes
         )
-        self._surface: Union[None, pv.PolyData] = None
+        self._surface: Optional[pv.PolyData] = None
 
     def _to_cells_and_celltype(self) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
         """
@@ -112,7 +112,7 @@ class SingleMesh:
 
     @property
     def pvmesh(
-        self,
+            self,
     ) -> pv.UnstructuredGrid:
         """
         Return the pyvista mesh (UnstructuredGrid) of the considered SingleMesh
@@ -125,7 +125,7 @@ class SingleMesh:
 
     @property
     def surface(
-        self,
+            self,
     ) -> pv.PolyData:
         """
         Return the surface mesh of the considered mesh
@@ -138,7 +138,7 @@ class SingleMesh:
         return self._surface
 
     def _extract_surface(
-        self,
+            self,
     ) -> pv.PolyData:
         """
         extract the surface mesh of a pv.UnstructuredGrid (stored in self.mesh) using the pyvista extract_surface filter.
@@ -175,8 +175,10 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
     # 25:'hex20'
 
     set_elm1d_type = {pv.CellType.LINE, pv.CellType.QUADRATIC_EDGE}
-    set_elm2d_type = {pv.CellType.TRIANGLE, pv.CellType.QUAD, pv.CellType.QUADRATIC_TRIANGLE, pv.CellType.QUADRATIC_QUAD}
-    set_elm3d_type_other_than_linear_tetra = {pv.CellType.HEXAHEDRON, pv.CellType.WEDGE, pv.CellType.PYRAMID, pv.CellType.QUADRATIC_TETRA, pv.CellType.QUADRATIC_HEXAHEDRON}
+    set_elm2d_type = {pv.CellType.TRIANGLE, pv.CellType.QUAD, pv.CellType.QUADRATIC_TRIANGLE,
+                      pv.CellType.QUADRATIC_QUAD}
+    set_elm3d_type_other_than_linear_tetra = {pv.CellType.HEXAHEDRON, pv.CellType.WEDGE, pv.CellType.PYRAMID,
+                                              pv.CellType.QUADRATIC_TETRA, pv.CellType.QUADRATIC_HEXAHEDRON}
 
     set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
 
