@@ -30,7 +30,7 @@ class SingleMesh:
         self.elements = elements  # element dictionary
         self._pvmesh = pvmesh
         self.nodes_indices = (
-            nodes_indices  # indices of nodes (i.e, if they come from a bigger mesh)
+            nodes_indices  # indices of nodes
         )
         self._surface : pv.PolyData = None
 
