@@ -32,7 +32,7 @@ class SingleMesh:
         self.nodes_indices = (
             nodes_indices  # indices of nodes
         )
-        self._surface : pv.PolyData = None
+        self._surface: Union[None, pv.PolyData] = None
 
     def _to_cells_and_celltype(self) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
         """
@@ -91,7 +91,7 @@ class SingleMesh:
 
         try:
             check_if_only_linear_tetrahedral(pvmesh)
-            elements = {10: pvmesh.cells_dict[10]}
+            elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
             return SingleMesh(pvmesh.points, elements, pvmesh)
         except ValueError as e:
             print(e)

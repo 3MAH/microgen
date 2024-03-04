@@ -42,7 +42,7 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
     return points
 
 
-def _box_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.float_]]:
+def _box_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.int_]]:
     elements_dict = {
         pv.CellType.TETRA: np.array(
             [
