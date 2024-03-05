@@ -86,7 +86,7 @@ class BoxMesh(SingleMesh):
         # raises an Exception if 3d elements other than linear tetrahedra are found in the mesh
         check_if_only_linear_tetrahedral(pvmesh)
         elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
-        return BoxMesh(pvmesh.points, elements, pvmesh)
+        return BoxMesh(pvmesh.points, elements)
 
     def _construct(
             self,
