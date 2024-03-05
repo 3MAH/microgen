@@ -431,13 +431,13 @@ class BoxMesh(SingleMesh):
         if not (isinstance(self._pvmesh, pv.UnstructuredGrid)):
             self._mesh = self.to_pyvista()
         xmin, xmax, ymin, ymax, zmin, zmax = self._mesh.bounds
-        return Rve.from_min_max(xmin, xmax, ymin, ymax, zmin, zmax)
+        return Rve.from_min_max(float(xmin), float(xmax), float(ymin), float(ymax), float(zmin), float(zmax))
 
     def _closest_points_on_faces(
             self,
             k_neighbours: int = 3,
             rve: Optional[Rve] = None,
-            tol: Optional[float] = 1.0e-8,
+            tol: float = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite face to write interpolation relationship
@@ -549,14 +549,14 @@ class BoxMesh(SingleMesh):
             index.append(index_temp_list)
 
         return {
-            "face_Xp": (index[0], dist[0]),
-            "face_Yp": (index[1], dist[1]),
-            "face_Zp": (index[2], dist[2]),
+            "face_Xp": (np.asarray(index[0]), np.asarray(dist[0])),
+            "face_Yp": (np.asarray(index[1]), np.asarray(dist[1])),
+            "face_Zp": (np.asarray(index[2]), np.asarray(dist[2])),
         }
 
     def _closest_points_on_edges(
             self,
-            rve: Rve = None,
+            rve: Optional[Rve] = None,
             tol: float = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
@@ -716,7 +716,7 @@ class BoxMesh(SingleMesh):
     def boundary_elements(
             self,
             rve: Optional[Rve] = None,
-            tol: Optional[float] = 1.0e-4,
+            tol: float = 1.0e-4,
     ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
         if rve is None:
             rve = self.rve
@@ -818,7 +818,6 @@ class BoxMesh(SingleMesh):
 
             directions = np.tile(normals[i], (np.shape(faces_m[i])[0], 1))
 
-            raytraceresult = []
             if USE_MULTI_RAY:
                 raytraceresult = surface_p.multi_ray_trace(
                     origins=faces_m[i], directions=directions
