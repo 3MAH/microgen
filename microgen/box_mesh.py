@@ -13,17 +13,16 @@ from scipy.spatial import KDTree
 from .rve import Rve
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
-'''
-We could in future versions make benefit of the embree library
-with multi ray tracing embedded in PyVista.
-However a very old version of embree (2) is nowadays bound in python
+# We could in future versions make benefit of the embree library
+# with multi ray tracing embedded in PyVista.
+# However, a very old version of embree (2) is nowadays bound in python
 # try:
 #     import trimesh
 #     import rtree
 #     import pyembree
 #     USE_MULTI_RAY = True
 # except ImportError:
-'''
+
 USE_MULTI_RAY = False
 
 
@@ -45,7 +44,6 @@ class BoxMesh(SingleMesh):
     Class to manage list of Nodes and Elements inside a Rve
     :param nodes_coords: list of nodes (np.ndarray)
     :param elements: list of elements (np.ndarray)
-    :param elm_type: type of elements (np.ndarray)
     :param nodes_indices : index of node list (if different from the natural index of nodes array)
     """
 
@@ -86,14 +84,11 @@ class BoxMesh(SingleMesh):
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
 
-        try:
-            # extract only the tetrahedral elements
-            check_if_only_linear_tetrahedral(pvmesh)
-            elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
-            return BoxMesh(pvmesh.points, elements, pvmesh)
-        except ValueError as e:
-            print(e)
-        return None
+        # extract only the tetrahedral elements
+        # raises an Exception if 3d elements other than linear tetrahedra are found in the mesh
+        check_if_only_linear_tetrahedral(pvmesh)
+        elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
+        return BoxMesh(pvmesh.points, elements, pvmesh)
 
     def _construct(
             self,

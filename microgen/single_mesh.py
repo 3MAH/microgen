@@ -10,6 +10,11 @@ import numpy.typing as npt
 import pyvista as pv
 
 
+class NotOnlyLinearTetrahedraError(Exception):
+    """Raised when 3d elements other than linear tetrahedra are found in a mesh"""
+    ...
+
+
 class SingleMesh:
     """
     SingleMesh class to manage list of Nodes and Elements inside a Phase
@@ -89,13 +94,12 @@ class SingleMesh:
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
 
-        try:
-            check_if_only_linear_tetrahedral(pvmesh)
-            elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
-            return SingleMesh(pvmesh.points, elements, pvmesh)
-        except ValueError as e:
-            print(e)
-        return None
+        # extract only the tetrahedral elements
+        # raises an Exception if 3d elements other than linear tetrahedra are found in the mesh
+        check_if_only_linear_tetrahedral(pvmesh)
+        elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
+        return SingleMesh(pvmesh.points, elements, pvmesh)
+
 
     @staticmethod
     def read(filename: str):
@@ -192,6 +196,6 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
         )
 
     if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_linear_tetra):
-        raise ValueError(
+        raise NotOnlyLinearTetrahedraError(
             "Mesh contains elements other than linear tetrahedra. \nUse triangulate() to ensure that only linear tetrahedra are used."
         )
