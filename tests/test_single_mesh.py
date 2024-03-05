@@ -2,7 +2,8 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
-from microgen import SingleMesh, single_mesh
+from microgen import SingleMesh
+from microgen.single_mesh import NotOnlyLinearTetrahedraError, check_if_only_linear_tetrahedral
 
 
 def compare_dict_with_arrays_as_values(
@@ -405,7 +406,7 @@ def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_wa
     )
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_1d_mesh_list:
-            single_mesh.check_if_only_linear_tetrahedral(mesh)
+            check_if_only_linear_tetrahedral(mesh)
 
 
 def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(
@@ -414,22 +415,22 @@ def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_wa
     warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_2d_mesh_list:
-            single_mesh.check_if_only_linear_tetrahedral(mesh)
+            check_if_only_linear_tetrahedral(mesh)
 
 
 def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(
     sample_3d_non_linear_tet_mesh_list,
 ) -> None:
     error_message_snippet = "Mesh contains elements other than linear tetrahedra."
-    with pytest.raises(ValueError, match=error_message_snippet):
+    with pytest.raises(NotOnlyLinearTetrahedraError, match=error_message_snippet):
         for mesh in sample_3d_non_linear_tet_mesh_list:
-            single_mesh.check_if_only_linear_tetrahedral(mesh)
+            check_if_only_linear_tetrahedral(mesh)
 
 
 def test_given_linear_tets_only_mesh__check_if_only_linear_tetrahedral_must_not_raise_any_error(
     box_mesh_grid,
 ):
     try:
-        single_mesh.check_if_only_linear_tetrahedral(box_mesh_grid)
+        check_if_only_linear_tetrahedral(box_mesh_grid)
     except ValueError:
         assert False
