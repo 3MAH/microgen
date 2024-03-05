@@ -412,7 +412,7 @@ def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_wa
 def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(
     sample_2d_mesh_list,
 ) -> None:
-    warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
+    warning_message = "2D elements are present in the PyVista UnstructuredGrid. They will be ignored."
     with pytest.warns(UserWarning, match=warning_message):
         for mesh in sample_2d_mesh_list:
             check_if_only_linear_tetrahedral(mesh)
