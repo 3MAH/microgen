@@ -669,8 +669,6 @@ class BoxMesh(SingleMesh):
         :param tol: tolerance
         """
 
-        if isinstance(self._closest_points_on_boundaries, dict):
-            return self._closest_points_on_boundaries
         if rve is None:
             rve = self.rve
 
