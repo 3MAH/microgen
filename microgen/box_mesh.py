@@ -3,7 +3,7 @@ Cubic mesh for FE
 """
 
 import warnings
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -68,7 +68,7 @@ class BoxMesh(SingleMesh):
         self._construct()
 
     @staticmethod
-    def from_pyvista(pvmesh: pv.UnstructuredGrid):
+    def from_pyvista(pvmesh: Union[pv.PolyData, pv.UnstructuredGrid]):
         """Build a BoxMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case,
         the PolyData object is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
