@@ -14,7 +14,9 @@ from .rve import Rve
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
 '''
-We could in future versions make benefit of the embree library with multi ray tracing embedded in PyVista. However a very old version of embree (2) is nowadays binded in python
+We could in future versions make benefit of the embree library
+with multi ray tracing embedded in PyVista.
+However a very old version of embree (2) is nowadays bound in python
 # try:
 #     import trimesh
 #     import rtree
@@ -26,6 +28,13 @@ USE_MULTI_RAY = False
 
 
 class ClosestCellsOnBoundaries(NamedTuple):
+    """
+    Class to manage closest cells on boundaries
+    :param cells_id: list of cells identification number
+    :param intersection_point_coords: list of intersection points of projected
+    rays from one face's nodes with the opposing face
+    :param closest_opposing_cells_id: list of closest cells identification number on opposing face
+    """
     cells_id: npt.NDArray[np.int_]
     intersection_point_coords: npt.NDArray[np.float_]
     closest_opposing_cells_id: list[npt.NDArray[np.int_]]
@@ -35,8 +44,8 @@ class BoxMesh(SingleMesh):
     """
     Class to manage list of Nodes and Elements inside a Rve
     :param nodes_coords: list of nodes (np.ndarray)
-    :param elements : list of elements (np.ndarray)
-    :param elm_type : type of elements (np.ndarray)
+    :param elements: list of elements (np.ndarray)
+    :param elm_type: type of elements (np.ndarray)
     :param nodes_indices : index of node list (if different from the natural index of nodes array)
     """
 
@@ -104,292 +113,292 @@ class BoxMesh(SingleMesh):
         closest_point_to_rve_center = np.linalg.norm(crd - rve.center, axis=1).argmin()
         self.center = crd[closest_point_to_rve_center]
 
-        self.face_list_Xm = np.where(np.abs(crd[:, 0] - rve.x_min) < tol)[0]
-        self.face_list_Xp = np.where(np.abs(crd[:, 0] - rve.x_max) < tol)[0]
+        self.face_list_xm = np.where(np.abs(crd[:, 0] - rve.x_min) < tol)[0]
+        self.face_list_xp = np.where(np.abs(crd[:, 0] - rve.x_max) < tol)[0]
 
-        self.face_list_Ym = np.where(np.abs(crd[:, 1] - rve.y_min) < tol)[0]
-        self.face_list_Yp = np.where(np.abs(crd[:, 1] - rve.y_max) < tol)[0]
+        self.face_list_ym = np.where(np.abs(crd[:, 1] - rve.y_min) < tol)[0]
+        self.face_list_yp = np.where(np.abs(crd[:, 1] - rve.y_max) < tol)[0]
 
-        self.face_list_Zm = np.where(np.abs(crd[:, 2] - rve.z_min) < tol)[0]
-        self.face_list_Zp = np.where(np.abs(crd[:, 2] - rve.z_max) < tol)[0]
+        self.face_list_zm = np.where(np.abs(crd[:, 2] - rve.z_min) < tol)[0]
+        self.face_list_zp = np.where(np.abs(crd[:, 2] - rve.z_max) < tol)[0]
 
-        self.edge_list_XmYm = np.intersect1d(
-            self.face_list_Xm, self.face_list_Ym, assume_unique=True
+        self.edge_list_xm_ym = np.intersect1d(
+            self.face_list_xm, self.face_list_ym, assume_unique=True
         )
-        self.edge_list_XpYm = np.intersect1d(
-            self.face_list_Xp, self.face_list_Ym, assume_unique=True
+        self.edge_list_xp_ym = np.intersect1d(
+            self.face_list_xp, self.face_list_ym, assume_unique=True
         )
-        self.edge_list_XpYp = np.intersect1d(
-            self.face_list_Xp, self.face_list_Yp, assume_unique=True
+        self.edge_list_xp_yp = np.intersect1d(
+            self.face_list_xp, self.face_list_yp, assume_unique=True
         )
-        self.edge_list_XmYp = np.intersect1d(
-            self.face_list_Xm, self.face_list_Yp, assume_unique=True
-        )
-
-        self.edge_list_XmZm = np.intersect1d(
-            self.face_list_Xm, self.face_list_Zm, assume_unique=True
-        )
-        self.edge_list_XpZm = np.intersect1d(
-            self.face_list_Xp, self.face_list_Zm, assume_unique=True
-        )
-        self.edge_list_XpZp = np.intersect1d(
-            self.face_list_Xp, self.face_list_Zp, assume_unique=True
-        )
-        self.edge_list_XmZp = np.intersect1d(
-            self.face_list_Xm, self.face_list_Zp, assume_unique=True
+        self.edge_list_xm_yp = np.intersect1d(
+            self.face_list_xm, self.face_list_yp, assume_unique=True
         )
 
-        self.edge_list_YmZm = np.intersect1d(
-            self.face_list_Ym, self.face_list_Zm, assume_unique=True
+        self.edge_list_xm_zm = np.intersect1d(
+            self.face_list_xm, self.face_list_zm, assume_unique=True
         )
-        self.edge_list_YpZm = np.intersect1d(
-            self.face_list_Yp, self.face_list_Zm, assume_unique=True
+        self.edge_list_xp_zm = np.intersect1d(
+            self.face_list_xp, self.face_list_zm, assume_unique=True
         )
-        self.edge_list_YpZp = np.intersect1d(
-            self.face_list_Yp, self.face_list_Zp, assume_unique=True
+        self.edge_list_xp_zp = np.intersect1d(
+            self.face_list_xp, self.face_list_zp, assume_unique=True
         )
-        self.edge_list_YmZp = np.intersect1d(
-            self.face_list_Ym, self.face_list_Zp, assume_unique=True
+        self.edge_list_xm_zp = np.intersect1d(
+            self.face_list_xm, self.face_list_zp, assume_unique=True
+        )
+
+        self.edge_list_ym_zm = np.intersect1d(
+            self.face_list_ym, self.face_list_zm, assume_unique=True
+        )
+        self.edge_list_yp_zm = np.intersect1d(
+            self.face_list_yp, self.face_list_zm, assume_unique=True
+        )
+        self.edge_list_yp_zp = np.intersect1d(
+            self.face_list_yp, self.face_list_zp, assume_unique=True
+        )
+        self.edge_list_ym_zp = np.intersect1d(
+            self.face_list_ym, self.face_list_zp, assume_unique=True
         )
 
         # extract corners from the intersection of edges
-        self.corner_list_XmYmZm = np.intersect1d(
-            self.edge_list_XmYm, self.edge_list_YmZm, assume_unique=True
+        self.corner_list_xm_ym_zm = np.intersect1d(
+            self.edge_list_xm_ym, self.edge_list_ym_zm, assume_unique=True
         )
-        self.corner_list_XmYpZm = np.intersect1d(
-            self.edge_list_XmYp, self.edge_list_YpZm, assume_unique=True
+        self.corner_list_xm_yp_zm = np.intersect1d(
+            self.edge_list_xm_yp, self.edge_list_yp_zm, assume_unique=True
         )
-        self.corner_list_XpYmZm = np.intersect1d(
-            self.edge_list_XpYm, self.edge_list_YmZm, assume_unique=True
+        self.corner_list_xp_ym_zm = np.intersect1d(
+            self.edge_list_xp_ym, self.edge_list_ym_zm, assume_unique=True
         )
-        self.corner_list_XpYpZm = np.intersect1d(
-            self.edge_list_XpYp, self.edge_list_YpZm, assume_unique=True
+        self.corner_list_xp_yp_zm = np.intersect1d(
+            self.edge_list_xp_yp, self.edge_list_yp_zm, assume_unique=True
         )
-        self.corner_list_XmYmZp = np.intersect1d(
-            self.edge_list_XmYm, self.edge_list_YmZp, assume_unique=True
+        self.corner_list_xm_ym_zp = np.intersect1d(
+            self.edge_list_xm_ym, self.edge_list_ym_zp, assume_unique=True
         )
-        self.corner_list_XmYpZp = np.intersect1d(
-            self.edge_list_XmYp, self.edge_list_YpZp, assume_unique=True
+        self.corner_list_xm_yp_zp = np.intersect1d(
+            self.edge_list_xm_yp, self.edge_list_yp_zp, assume_unique=True
         )
-        self.corner_list_XpYmZp = np.intersect1d(
-            self.edge_list_XpYm, self.edge_list_YmZp, assume_unique=True
+        self.corner_list_xp_ym_zp = np.intersect1d(
+            self.edge_list_xp_ym, self.edge_list_ym_zp, assume_unique=True
         )
-        self.corner_list_XpYpZp = np.intersect1d(
-            self.edge_list_XpYp, self.edge_list_YpZp, assume_unique=True
+        self.corner_list_xp_yp_zp = np.intersect1d(
+            self.edge_list_xp_yp, self.edge_list_yp_zp, assume_unique=True
         )
 
         # Remove nodes that belong to several sets
         all_corners = np.hstack(
             (
-                self.corner_list_XmYmZm,
-                self.corner_list_XmYpZm,
-                self.corner_list_XpYmZm,
-                self.corner_list_XpYpZm,
-                self.corner_list_XmYmZp,
-                self.corner_list_XmYpZp,
-                self.corner_list_XpYmZp,
-                self.corner_list_XpYpZp,
+                self.corner_list_xm_ym_zm,
+                self.corner_list_xm_yp_zm,
+                self.corner_list_xp_ym_zm,
+                self.corner_list_xp_yp_zm,
+                self.corner_list_xm_ym_zp,
+                self.corner_list_xm_yp_zp,
+                self.corner_list_xp_ym_zp,
+                self.corner_list_xp_yp_zp,
             )
         )
 
-        self.edge_list_XmYm = np.setdiff1d(
-            self.edge_list_XmYm, all_corners, assume_unique=True
+        self.edge_list_xm_ym = np.setdiff1d(
+            self.edge_list_xm_ym, all_corners, assume_unique=True
         )
-        self.edge_list_XpYm = np.setdiff1d(
-            self.edge_list_XpYm, all_corners, assume_unique=True
+        self.edge_list_xp_ym = np.setdiff1d(
+            self.edge_list_xp_ym, all_corners, assume_unique=True
         )
-        self.edge_list_XpYp = np.setdiff1d(
-            self.edge_list_XpYp, all_corners, assume_unique=True
+        self.edge_list_xp_yp = np.setdiff1d(
+            self.edge_list_xp_yp, all_corners, assume_unique=True
         )
-        self.edge_list_XmYp = np.setdiff1d(
-            self.edge_list_XmYp, all_corners, assume_unique=True
-        )
-
-        self.edge_list_XmZm = np.setdiff1d(
-            self.edge_list_XmZm, all_corners, assume_unique=True
-        )
-        self.edge_list_XpZm = np.setdiff1d(
-            self.edge_list_XpZm, all_corners, assume_unique=True
-        )
-        self.edge_list_XpZp = np.setdiff1d(
-            self.edge_list_XpZp, all_corners, assume_unique=True
-        )
-        self.edge_list_XmZp = np.setdiff1d(
-            self.edge_list_XmZp, all_corners, assume_unique=True
+        self.edge_list_xm_yp = np.setdiff1d(
+            self.edge_list_xm_yp, all_corners, assume_unique=True
         )
 
-        self.edge_list_YmZm = np.setdiff1d(
-            self.edge_list_YmZm, all_corners, assume_unique=True
+        self.edge_list_xm_zm = np.setdiff1d(
+            self.edge_list_xm_zm, all_corners, assume_unique=True
         )
-        self.edge_list_YpZm = np.setdiff1d(
-            self.edge_list_YpZm, all_corners, assume_unique=True
+        self.edge_list_xp_zm = np.setdiff1d(
+            self.edge_list_xp_zm, all_corners, assume_unique=True
         )
-        self.edge_list_YpZp = np.setdiff1d(
-            self.edge_list_YpZp, all_corners, assume_unique=True
+        self.edge_list_xp_zp = np.setdiff1d(
+            self.edge_list_xp_zp, all_corners, assume_unique=True
         )
-        self.edge_list_YmZp = np.setdiff1d(
-            self.edge_list_YmZp, all_corners, assume_unique=True
+        self.edge_list_xm_zp = np.setdiff1d(
+            self.edge_list_xm_zp, all_corners, assume_unique=True
+        )
+
+        self.edge_list_ym_zm = np.setdiff1d(
+            self.edge_list_ym_zm, all_corners, assume_unique=True
+        )
+        self.edge_list_yp_zm = np.setdiff1d(
+            self.edge_list_yp_zm, all_corners, assume_unique=True
+        )
+        self.edge_list_yp_zp = np.setdiff1d(
+            self.edge_list_yp_zp, all_corners, assume_unique=True
+        )
+        self.edge_list_ym_zp = np.setdiff1d(
+            self.edge_list_ym_zp, all_corners, assume_unique=True
         )
 
         all_edges_corners = np.hstack(
             (
-                self.edge_list_XmYm,
-                self.edge_list_XpYm,
-                self.edge_list_XpYp,
-                self.edge_list_XmYp,
-                self.edge_list_XmZm,
-                self.edge_list_XpZm,
-                self.edge_list_XpZp,
-                self.edge_list_XmZp,
-                self.edge_list_YmZm,
-                self.edge_list_YpZm,
-                self.edge_list_YpZp,
-                self.edge_list_YmZp,
+                self.edge_list_xm_ym,
+                self.edge_list_xp_ym,
+                self.edge_list_xp_yp,
+                self.edge_list_xm_yp,
+                self.edge_list_xm_zm,
+                self.edge_list_xp_zm,
+                self.edge_list_xp_zp,
+                self.edge_list_xm_zp,
+                self.edge_list_ym_zm,
+                self.edge_list_yp_zm,
+                self.edge_list_yp_zp,
+                self.edge_list_ym_zp,
                 all_corners,
             )
         )
 
-        self.face_list_Xm = np.setdiff1d(
-            self.face_list_Xm, all_edges_corners, assume_unique=True
+        self.face_list_xm = np.setdiff1d(
+            self.face_list_xm, all_edges_corners, assume_unique=True
         )
-        self.face_list_Xp = np.setdiff1d(
-            self.face_list_Xp, all_edges_corners, assume_unique=True
+        self.face_list_xp = np.setdiff1d(
+            self.face_list_xp, all_edges_corners, assume_unique=True
         )
-        self.face_list_Ym = np.setdiff1d(
-            self.face_list_Ym, all_edges_corners, assume_unique=True
+        self.face_list_ym = np.setdiff1d(
+            self.face_list_ym, all_edges_corners, assume_unique=True
         )
-        self.face_list_Yp = np.setdiff1d(
-            self.face_list_Yp, all_edges_corners, assume_unique=True
+        self.face_list_yp = np.setdiff1d(
+            self.face_list_yp, all_edges_corners, assume_unique=True
         )
-        self.face_list_Zm = np.setdiff1d(
-            self.face_list_Zm, all_edges_corners, assume_unique=True
+        self.face_list_zm = np.setdiff1d(
+            self.face_list_zm, all_edges_corners, assume_unique=True
         )
-        self.face_list_Zp = np.setdiff1d(
-            self.face_list_Zp, all_edges_corners, assume_unique=True
+        self.face_list_zp = np.setdiff1d(
+            self.face_list_zp, all_edges_corners, assume_unique=True
         )
 
-        self.edge_list_XmYm = self.edge_list_XmYm[
-            np.argsort(crd[self.edge_list_XmYm, 2])
+        self.edge_list_xm_ym = self.edge_list_xm_ym[
+            np.argsort(crd[self.edge_list_xm_ym, 2])
         ]
-        self.edge_list_XpYm = self.edge_list_XpYm[
-            np.argsort(crd[self.edge_list_XpYm, 2])
+        self.edge_list_xp_ym = self.edge_list_xp_ym[
+            np.argsort(crd[self.edge_list_xp_ym, 2])
         ]
-        self.edge_list_XpYp = self.edge_list_XpYp[
-            np.argsort(crd[self.edge_list_XpYp, 2])
+        self.edge_list_xp_yp = self.edge_list_xp_yp[
+            np.argsort(crd[self.edge_list_xp_yp, 2])
         ]
-        self.edge_list_XmYp = self.edge_list_XmYp[
-            np.argsort(crd[self.edge_list_XmYp, 2])
-        ]
-
-        self.edge_list_XmZm = self.edge_list_XmZm[
-            np.argsort(crd[self.edge_list_XmZm, 1])
-        ]
-        self.edge_list_XpZm = self.edge_list_XpZm[
-            np.argsort(crd[self.edge_list_XpZm, 1])
-        ]
-        self.edge_list_XpZp = self.edge_list_XpZp[
-            np.argsort(crd[self.edge_list_XpZp, 1])
-        ]
-        self.edge_list_XmZp = self.edge_list_XmZp[
-            np.argsort(crd[self.edge_list_XmZp, 1])
+        self.edge_list_xm_yp = self.edge_list_xm_yp[
+            np.argsort(crd[self.edge_list_xm_yp, 2])
         ]
 
-        self.edge_list_YmZm = self.edge_list_YmZm[
-            np.argsort(crd[self.edge_list_YmZm, 0])
+        self.edge_list_xm_zm = self.edge_list_xm_zm[
+            np.argsort(crd[self.edge_list_xm_zm, 1])
         ]
-        self.edge_list_YpZm = self.edge_list_YpZm[
-            np.argsort(crd[self.edge_list_YpZm, 0])
+        self.edge_list_xp_zm = self.edge_list_xp_zm[
+            np.argsort(crd[self.edge_list_xp_zm, 1])
         ]
-        self.edge_list_YpZp = self.edge_list_YpZp[
-            np.argsort(crd[self.edge_list_YpZp, 0])
+        self.edge_list_xp_zp = self.edge_list_xp_zp[
+            np.argsort(crd[self.edge_list_xp_zp, 1])
         ]
-        self.edge_list_YmZp = self.edge_list_YmZp[
-            np.argsort(crd[self.edge_list_YmZp, 0])
+        self.edge_list_xm_zp = self.edge_list_xm_zp[
+            np.argsort(crd[self.edge_list_xm_zp, 1])
+        ]
+
+        self.edge_list_ym_zm = self.edge_list_ym_zm[
+            np.argsort(crd[self.edge_list_ym_zm, 0])
+        ]
+        self.edge_list_yp_zm = self.edge_list_yp_zm[
+            np.argsort(crd[self.edge_list_yp_zm, 0])
+        ]
+        self.edge_list_yp_zp = self.edge_list_yp_zp[
+            np.argsort(crd[self.edge_list_yp_zp, 0])
+        ]
+        self.edge_list_ym_zp = self.edge_list_ym_zp[
+            np.argsort(crd[self.edge_list_ym_zp, 0])
         ]
 
         decimal_round = int(-np.log10(tol) - 1)
-        self.face_list_Xm = self.face_list_Xm[
+        self.face_list_xm = self.face_list_xm[
             np.lexsort(
                 (
-                    crd[self.face_list_Xm, 1],
-                    crd[self.face_list_Xm, 2].round(decimal_round),
+                    crd[self.face_list_xm, 1],
+                    crd[self.face_list_xm, 2].round(decimal_round),
                 )
             )
         ]
-        self.face_list_Xp = self.face_list_Xp[
+        self.face_list_xp = self.face_list_xp[
             np.lexsort(
                 (
-                    crd[self.face_list_Xp, 1],
-                    crd[self.face_list_Xp, 2].round(decimal_round),
+                    crd[self.face_list_xp, 1],
+                    crd[self.face_list_xp, 2].round(decimal_round),
                 )
             )
         ]
-        self.face_list_Ym = self.face_list_Ym[
+        self.face_list_ym = self.face_list_ym[
             np.lexsort(
                 (
-                    crd[self.face_list_Ym, 0],
-                    crd[self.face_list_Ym, 2].round(decimal_round),
+                    crd[self.face_list_ym, 0],
+                    crd[self.face_list_ym, 2].round(decimal_round),
                 )
             )
         ]
-        self.face_list_Yp = self.face_list_Yp[
+        self.face_list_yp = self.face_list_yp[
             np.lexsort(
                 (
-                    crd[self.face_list_Yp, 0],
-                    crd[self.face_list_Yp, 2].round(decimal_round),
+                    crd[self.face_list_yp, 0],
+                    crd[self.face_list_yp, 2].round(decimal_round),
                 )
             )
         ]
-        self.face_list_Zm = self.face_list_Zm[
+        self.face_list_zm = self.face_list_zm[
             np.lexsort(
                 (
-                    crd[self.face_list_Zm, 0],
-                    crd[self.face_list_Zm, 1].round(decimal_round),
+                    crd[self.face_list_zm, 0],
+                    crd[self.face_list_zm, 1].round(decimal_round),
                 )
             )
         ]
-        self.face_list_Zp = self.face_list_Zp[
+        self.face_list_zp = self.face_list_zp[
             np.lexsort(
                 (
-                    crd[self.face_list_Zp, 0],
-                    crd[self.face_list_Zp, 1].round(decimal_round),
+                    crd[self.face_list_zp, 0],
+                    crd[self.face_list_zp, 1].round(decimal_round),
                 )
             )
         ]
 
         self.corners = [
-            self.corner_list_XmYmZm,
-            self.corner_list_XmYpZm,
-            self.corner_list_XpYmZm,
-            self.corner_list_XpYpZm,
-            self.corner_list_XmYmZp,
-            self.corner_list_XmYpZp,
-            self.corner_list_XpYmZp,
-            self.corner_list_XpYpZp,
+            self.corner_list_xm_ym_zm,
+            self.corner_list_xm_yp_zm,
+            self.corner_list_xp_ym_zm,
+            self.corner_list_xp_yp_zm,
+            self.corner_list_xm_ym_zp,
+            self.corner_list_xm_yp_zp,
+            self.corner_list_xp_ym_zp,
+            self.corner_list_xp_yp_zp,
         ]
 
         self.edges = [
-            self.edge_list_XmYm,
-            self.edge_list_XpYm,
-            self.edge_list_XpYp,
-            self.edge_list_XmYp,
-            self.edge_list_XmZm,
-            self.edge_list_XpZm,
-            self.edge_list_XpZp,
-            self.edge_list_XmZp,
-            self.edge_list_YmZm,
-            self.edge_list_YpZm,
-            self.edge_list_YpZp,
-            self.edge_list_YmZp,
+            self.edge_list_xm_ym,
+            self.edge_list_xp_ym,
+            self.edge_list_xp_yp,
+            self.edge_list_xm_yp,
+            self.edge_list_xm_zm,
+            self.edge_list_xp_zm,
+            self.edge_list_xp_zp,
+            self.edge_list_xm_zp,
+            self.edge_list_ym_zm,
+            self.edge_list_yp_zm,
+            self.edge_list_yp_zp,
+            self.edge_list_ym_zp,
         ]
 
         self.faces = [
-            self.face_list_Xm,
-            self.face_list_Xp,
-            self.face_list_Ym,
-            self.face_list_Yp,
-            self.face_list_Zm,
-            self.face_list_Zp,
+            self.face_list_xm,
+            self.face_list_xp,
+            self.face_list_ym,
+            self.face_list_yp,
+            self.face_list_zm,
+            self.face_list_zp,
         ]
 
     @property
@@ -404,8 +413,7 @@ class BoxMesh(SingleMesh):
 
         if isinstance(self._rve, Rve):
             return self._rve
-        else:
-            return self._build_rve()
+        return self._build_rve()
 
     @rve.setter
     def rve(
@@ -428,10 +436,11 @@ class BoxMesh(SingleMesh):
 
         :return rve: RVE of the mesh bounding box
         """
-        if not (isinstance(self._pvmesh, pv.UnstructuredGrid)):
+        if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._mesh = self.to_pyvista()
         xmin, xmax, ymin, ymax, zmin, zmax = self._mesh.bounds
-        return Rve.from_min_max(float(xmin), float(xmax), float(ymin), float(ymax), float(zmin), float(zmax))
+        return Rve.from_min_max(float(xmin), float(xmax), float(ymin),
+                                float(ymax), float(zmin), float(zmax))
 
     def _closest_points_on_faces(
             self,
@@ -461,50 +470,50 @@ class BoxMesh(SingleMesh):
 
         crd = self.nodes_coords
 
-        all_face_Xp = np.hstack(
+        all_face_xp = np.hstack(
             (
-                self.face_list_Xp,
-                self.edge_list_XpYm,
-                self.edge_list_XpYp,
-                self.edge_list_XpZm,
-                self.edge_list_XpZp,
-                self.corner_list_XpYmZm,
-                self.corner_list_XpYpZm,
-                self.corner_list_XpYmZp,
-                self.corner_list_XpYpZp,
+                self.face_list_xp,
+                self.edge_list_xp_ym,
+                self.edge_list_xp_yp,
+                self.edge_list_xp_zm,
+                self.edge_list_xp_zp,
+                self.corner_list_xp_ym_zm,
+                self.corner_list_xp_yp_zm,
+                self.corner_list_xp_ym_zp,
+                self.corner_list_xp_yp_zp,
             )
         )
-        all_face_Yp = np.hstack(
+        all_face_yp = np.hstack(
             (
-                self.face_list_Yp,
-                self.edge_list_YpZm,
-                self.edge_list_YpZp,
-                self.edge_list_XmYp,
-                self.edge_list_XpYp,
-                self.corner_list_XmYpZm,
-                self.corner_list_XpYpZm,
-                self.corner_list_XmYpZp,
-                self.corner_list_XpYpZp,
+                self.face_list_yp,
+                self.edge_list_yp_zm,
+                self.edge_list_yp_zp,
+                self.edge_list_xm_yp,
+                self.edge_list_xp_yp,
+                self.corner_list_xm_yp_zm,
+                self.corner_list_xp_yp_zm,
+                self.corner_list_xm_yp_zp,
+                self.corner_list_xp_yp_zp,
             )
         )
-        all_face_Zp = np.hstack(
+        all_face_zp = np.hstack(
             (
-                self.face_list_Zp,
-                self.edge_list_YmZp,
-                self.edge_list_YpZp,
-                self.edge_list_XmZp,
-                self.edge_list_XpZp,
-                self.corner_list_XmYmZp,
-                self.corner_list_XpYmZp,
-                self.corner_list_XmYpZp,
-                self.corner_list_XpYpZp,
+                self.face_list_zp,
+                self.edge_list_ym_zp,
+                self.edge_list_yp_zp,
+                self.edge_list_xm_zp,
+                self.edge_list_xp_zp,
+                self.corner_list_xm_ym_zp,
+                self.corner_list_xp_ym_zp,
+                self.corner_list_xm_yp_zp,
+                self.corner_list_xp_yp_zp,
             )
         )
 
-        kdTrees = [
-            KDTree(crd[all_face_Xp]),
-            KDTree(crd[all_face_Yp]),
-            KDTree(crd[all_face_Zp]),
+        kd_trees = [
+            KDTree(crd[all_face_xp]),
+            KDTree(crd[all_face_yp]),
+            KDTree(crd[all_face_zp]),
         ]
 
         offsets = [
@@ -513,8 +522,8 @@ class BoxMesh(SingleMesh):
             np.array([0.0, 0.0, rve.dim_z]),
         ]
 
-        faces_m = [self.face_list_Xm, self.face_list_Ym, self.face_list_Zm]
-        all_faces_p = [all_face_Xp, all_face_Yp, all_face_Zp]
+        faces_m = [self.face_list_xm, self.face_list_ym, self.face_list_zm]
+        all_faces_p = [all_face_xp, all_face_yp, all_face_zp]
 
         dist = []
         index = []
@@ -529,7 +538,7 @@ class BoxMesh(SingleMesh):
                     "Number of query points is greater than the number of points in the KDTree."
                 )
 
-            dist_temp, index_temp = kdTrees[i].query(crd_face, minimum_query_points)
+            dist_temp, index_temp = kd_trees[i].query(crd_face, minimum_query_points)
             all_faces_p_i = all_faces_p[i]
             index_temp_list = all_faces_p_i[index_temp].tolist()
             if k_neighbours == 1:
@@ -572,46 +581,46 @@ class BoxMesh(SingleMesh):
 
         crd = self.nodes_coords
 
-        all_edge_XpYm = np.hstack(
-            (self.edge_list_XpYm, self.corner_list_XpYmZm, self.corner_list_XpYmZp)
+        all_edge_xp_ym = np.hstack(
+            (self.edge_list_xp_ym, self.corner_list_xp_ym_zm, self.corner_list_xp_ym_zp)
         )
-        all_edge_XpYp = np.hstack(
-            (self.edge_list_XpYp, self.corner_list_XpYpZm, self.corner_list_XpYpZp)
+        all_edge_xp_yp = np.hstack(
+            (self.edge_list_xp_yp, self.corner_list_xp_yp_zm, self.corner_list_xp_yp_zp)
         )
-        all_edge_XmYp = np.hstack(
-            (self.edge_list_XmYp, self.corner_list_XmYpZm, self.corner_list_XmYpZp)
-        )
-
-        all_edge_XpZm = np.hstack(
-            (self.edge_list_XpZm, self.corner_list_XpYmZm, self.corner_list_XpYpZm)
-        )
-        all_edge_XpZp = np.hstack(
-            (self.edge_list_XpZp, self.corner_list_XpYmZp, self.corner_list_XpYpZp)
-        )
-        all_edge_XmZp = np.hstack(
-            (self.edge_list_XmZp, self.corner_list_XmYmZp, self.corner_list_XmYpZp)
+        all_edge_xm_yp = np.hstack(
+            (self.edge_list_xm_yp, self.corner_list_xm_yp_zm, self.corner_list_xm_yp_zp)
         )
 
-        all_edge_YpZm = np.hstack(
-            (self.edge_list_YmZm, self.corner_list_XmYpZm, self.corner_list_XpYpZm)
+        all_edge_xp_zm = np.hstack(
+            (self.edge_list_xp_zm, self.corner_list_xp_ym_zm, self.corner_list_xp_yp_zm)
         )
-        all_edge_YpZp = np.hstack(
-            (self.edge_list_YpZp, self.corner_list_XmYpZp, self.corner_list_XpYpZp)
+        all_edge_xp_zp = np.hstack(
+            (self.edge_list_xp_zp, self.corner_list_xp_ym_zp, self.corner_list_xp_yp_zp)
         )
-        all_edge_YmZp = np.hstack(
-            (self.edge_list_YmZp, self.corner_list_XmYmZp, self.corner_list_XpYmZp)
+        all_edge_xm_zp = np.hstack(
+            (self.edge_list_xm_zp, self.corner_list_xm_ym_zp, self.corner_list_xm_yp_zp)
         )
 
-        kdTrees = [
-            KDTree(crd[all_edge_XpYm]),
-            KDTree(crd[all_edge_XpYp]),
-            KDTree(crd[all_edge_XmYp]),
-            KDTree(crd[all_edge_XpZm]),
-            KDTree(crd[all_edge_XpZp]),
-            KDTree(crd[all_edge_XmZp]),
-            KDTree(crd[all_edge_YpZm]),
-            KDTree(crd[all_edge_YpZp]),
-            KDTree(crd[all_edge_YmZp]),
+        all_edge_yp_zm = np.hstack(
+            (self.edge_list_ym_zm, self.corner_list_xm_yp_zm, self.corner_list_xp_yp_zm)
+        )
+        all_edge_yp_zp = np.hstack(
+            (self.edge_list_yp_zp, self.corner_list_xm_yp_zp, self.corner_list_xp_yp_zp)
+        )
+        all_edge_ym_zp = np.hstack(
+            (self.edge_list_ym_zp, self.corner_list_xm_ym_zp, self.corner_list_xp_ym_zp)
+        )
+
+        kd_trees = [
+            KDTree(crd[all_edge_xp_ym]),
+            KDTree(crd[all_edge_xp_yp]),
+            KDTree(crd[all_edge_xm_yp]),
+            KDTree(crd[all_edge_xp_zm]),
+            KDTree(crd[all_edge_xp_zp]),
+            KDTree(crd[all_edge_xm_zp]),
+            KDTree(crd[all_edge_yp_zm]),
+            KDTree(crd[all_edge_yp_zp]),
+            KDTree(crd[all_edge_ym_zp]),
         ]
 
         offsets = [
@@ -627,27 +636,27 @@ class BoxMesh(SingleMesh):
         ]
 
         edges_m = [
-            self.edge_list_XmYm,
-            self.edge_list_XmYm,
-            self.edge_list_XmYm,
-            self.edge_list_XmZm,
-            self.edge_list_XmZm,
-            self.edge_list_XmZm,
-            self.edge_list_YmZm,
-            self.edge_list_YmZm,
-            self.edge_list_YmZm,
+            self.edge_list_xm_ym,
+            self.edge_list_xm_ym,
+            self.edge_list_xm_ym,
+            self.edge_list_xm_zm,
+            self.edge_list_xm_zm,
+            self.edge_list_xm_zm,
+            self.edge_list_ym_zm,
+            self.edge_list_ym_zm,
+            self.edge_list_ym_zm,
         ]
 
         all_edges_p = [
-            all_edge_XpYm,
-            all_edge_XpYp,
-            all_edge_XmYp,
-            all_edge_XpZm,
-            all_edge_XpZp,
-            all_edge_XmZp,
-            all_edge_YpZm,
-            all_edge_YpZp,
-            all_edge_YmZp,
+            all_edge_xp_ym,
+            all_edge_xp_yp,
+            all_edge_xm_yp,
+            all_edge_xp_zm,
+            all_edge_xp_zp,
+            all_edge_xm_zp,
+            all_edge_yp_zm,
+            all_edge_yp_zp,
+            all_edge_ym_zp,
         ]
 
         dist = []
@@ -657,7 +666,7 @@ class BoxMesh(SingleMesh):
             offset = offsets[i]
             crd_edge = crd[edge] + offset
 
-            dist_temp, index_temp = kdTrees[i].query(crd_edge, 2)
+            dist_temp, index_temp = kd_trees[i].query(crd_edge, 2)
 
             dist_temp_list = dist_temp.tolist()
             all_edges_p_i = all_edges_p[i]
@@ -700,24 +709,29 @@ class BoxMesh(SingleMesh):
 
         if isinstance(self._closest_points_on_boundaries, dict):
             return self._closest_points_on_boundaries
-        else:
-            if rve is None:
-                rve = self.rve
+        if rve is None:
+            rve = self.rve
 
-            dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
-            dict_edges = self._closest_points_on_edges(rve, tol)
+        dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
+        dict_edges = self._closest_points_on_edges(rve, tol)
 
-            self._dict_faces = dict_faces
-            self._dict_edges = dict_edges
+        self._dict_faces = dict_faces
+        self._dict_edges = dict_edges
 
-            self._closest_points_on_boundaries = {**dict_faces, **dict_edges}
-            return self._closest_points_on_boundaries
+        self._closest_points_on_boundaries = {**dict_faces, **dict_edges}
+        return self._closest_points_on_boundaries
 
     def boundary_elements(
             self,
             rve: Optional[Rve] = None,
             tol: float = 1.0e-4,
     ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
+        """
+        Finds boundary elements of mesh with given tolerance
+
+        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param tol: tolerance
+        """
         if rve is None:
             rve = self.rve
 
@@ -792,9 +806,9 @@ class BoxMesh(SingleMesh):
         size_planes = [2.0 * rve.dx, 2.0 * rve.dy, 2.0 * rve.dz]
 
         faces_m = [
-            crd[self.face_list_Xm],
-            crd[self.face_list_Ym],
-            crd[self.face_list_Zm],
+            crd[self.face_list_xm],
+            crd[self.face_list_ym],
+            crd[self.face_list_zm],
         ]
         surface = self.surface
         surface["CellIDs"] = np.arange(surface.n_cells)
@@ -816,17 +830,17 @@ class BoxMesh(SingleMesh):
             ).extract_surface()
             list_cells_for_each_face.append(surface_p["CellIDs"])
 
-            directions = np.tile(normals[i], (np.shape(faces_m[i])[0], 1))
+            directions = np.tile(normals[i], (np.shape(face)[0], 1))
 
             if USE_MULTI_RAY:
                 raytraceresult = surface_p.multi_ray_trace(
-                    origins=faces_m[i], directions=directions
+                    origins=face, directions=directions
                 )
             else:
                 intersection_points = []
                 intersection_rays = []
                 intersection_cells = []
-                for j, face_m_i in enumerate(faces_m[i]):
+                for j, face_m_i in enumerate(face):
                     end_point = face_m_i + size_planes[i] * directions[j]
                     intersection_point, intersection_cell = surface_p.ray_trace(
                         origin=face_m_i, end_point=end_point
