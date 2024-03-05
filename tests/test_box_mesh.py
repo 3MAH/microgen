@@ -140,9 +140,9 @@ def test_given_box_mesh__construct_must_find_center_corners_edges_faces_node_set
     target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
     target_faces: list[int] = [4, 10, 12, 14, 16, 22]
 
-    box_mesh_corners = sorted(np.concatenate(default_box_mesh.corners, axis=0).tolist())
-    box_mesh_edges = sorted(np.concatenate(default_box_mesh.edges, axis=0).tolist())
-    box_mesh_faces = sorted(np.concatenate(default_box_mesh.faces, axis=0).tolist())
+    box_mesh_corners = sorted(np.concatenate(list(default_box_mesh.corners.values())))
+    box_mesh_edges = sorted(np.concatenate(list(default_box_mesh.edges.values())))
+    box_mesh_faces = sorted(np.concatenate(list(default_box_mesh.faces.values())))
 
     assert (
         (default_box_mesh.center == target_center).all()
