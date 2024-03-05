@@ -132,15 +132,13 @@ def _check_triangle_on_boundary(
     return False
 
 
-def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(
+def test_given_box_mesh__construct_must_find_center_corners_edges_faces_node_sets(
         default_box_mesh
 ) -> None:
     target_center: npt.NDArray[np.float_] = np.array([0.5, 0.5, 0.5])
     target_corners: list[int] = [0, 2, 6, 8, 18, 20, 24, 26]
     target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
     target_faces: list[int] = [4, 10, 12, 14, 16, 22]
-
-    default_box_mesh.construct(_default_rve())
 
     box_mesh_corners = sorted(np.concatenate(default_box_mesh.corners, axis=0).tolist())
     box_mesh_edges = sorted(np.concatenate(default_box_mesh.edges, axis=0).tolist())

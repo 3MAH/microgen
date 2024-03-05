@@ -42,7 +42,7 @@ class BoxMesh(SingleMesh):
 
     def __init__(
             self,
-            nodes_coords: np.ndarray,
+            nodes_coords: npt.NDArray[np.float_],
             elements: dict[pv.CellType, npt.NDArray[np.int_]],
             pvmesh: Optional[pv.UnstructuredGrid] = None,
             nodes_indices: Optional[npt.NDArray[np.int_]] = None,
@@ -54,45 +54,13 @@ class BoxMesh(SingleMesh):
             nodes_indices=nodes_indices,
         )
 
-        self._rve = None
-        self._closest_points_on_boundaries = None
+        self._rve: Optional[Rve] = None
+        self._closest_points_on_boundaries: Optional[
+            dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]] = None
 
-        self.center = None
+        self.center: Optional[npt.NDArray[np.float_]] = None
 
-        self.corner_list_XmYmZm = None
-        self.corner_list_XmYpZm = None
-        self.corner_list_XpYmZm = None
-        self.corner_list_XpYpZm = None
-        self.corner_list_XmYmZp = None
-        self.corner_list_XmYpZp = None
-        self.corner_list_XpYmZp = None
-        self.corner_list_XpYpZp = None
-
-        self.corners = []
-
-        self.edge_list_XmYm = None
-        self.edge_list_XpYm = None
-        self.edge_list_XpYp = None
-        self.edge_list_XmYp = None
-        self.edge_list_XmZm = None
-        self.edge_list_XpZm = None
-        self.edge_list_XpZp = None
-        self.edge_list_XmZp = None
-        self.edge_list_YmZm = None
-        self.edge_list_YpZm = None
-        self.edge_list_YpZp = None
-        self.edge_list_YmZp = None
-
-        self.edges = []
-
-        self.face_list_Xm = None
-        self.face_list_Ym = None
-        self.face_list_Zm = None
-        self.face_list_Xp = None
-        self.face_list_Yp = None
-        self.face_list_Zp = None
-
-        self.faces = []
+        self._construct(self.rve)
 
     @staticmethod
     def from_pyvista(pvmesh: pv.UnstructuredGrid):
@@ -112,16 +80,16 @@ class BoxMesh(SingleMesh):
         try:
             # extract only the tetrahedral elements
             check_if_only_linear_tetrahedral(pvmesh)
-            elements = {10: pvmesh.cells_dict[10]}
+            elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
             return BoxMesh(pvmesh.points, elements, pvmesh)
         except ValueError as e:
             print(e)
         return None
 
-    def construct(
+    def _construct(
             self,
             rve: Optional[Rve] = None,
-            tol: Optional[float] = 1.0e-8,
+            tol: float = 1.0e-8,
     ) -> None:
         """
         Construct a box Mesh with list of points in faces (excluding edges), edges (excluding corners) and corners.
@@ -129,7 +97,7 @@ class BoxMesh(SingleMesh):
         :param rve: RVE of the box microgen.Rve
         :param tol: tolerance to find the points on a face or an edge
         """
-        if isinstance(rve, Rve) == False:
+        if rve is None:
             rve = self.rve
 
         crd = self.nodes_coords
@@ -480,14 +448,15 @@ class BoxMesh(SingleMesh):
 
         :param k_neighbours : number of closest points
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param tol: tolerance
 
-        :return dict: a dictionnary with (np.array) of indices and a np.array of distances for each neighbor:
+        :return dict: a dictionary with (np.array) of indices and a np.array of distances for each neighbor:
             'face_Xp' : (index[0], dist[0]),
             'face_Yp' : (index[1], dist[1]),
             'face_Zp' : (index[2], dist[2])
         """
 
-        if isinstance(rve, Rve) == False:
+        if rve is None:
             rve = self.rve
 
         crd = self.nodes_coords
@@ -588,7 +557,7 @@ class BoxMesh(SingleMesh):
     def _closest_points_on_edges(
             self,
             rve: Rve = None,
-            tol: Optional[float] = 1.0e-8,
+            tol: float = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite edges to write interpolation relationship
@@ -598,7 +567,7 @@ class BoxMesh(SingleMesh):
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
         """
 
-        if isinstance(rve, Rve) == False:
+        if rve is None:
             rve = self.rve
 
         crd = self.nodes_coords
@@ -718,19 +687,21 @@ class BoxMesh(SingleMesh):
             self,
             k_neighbours: int = 3,
             rve: Optional[Rve] = None,
-            tol: Optional[float] = 1.0e-8,
+            tol: float = 1.0e-8,
     ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on faces and edges to write interpolation relationship
         if a displacement condition between pair nodes is defined
 
+        :param k_neighbours : number of closest points
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param tol: tolerance
         """
 
         if isinstance(self._closest_points_on_boundaries, dict):
             return self._closest_points_on_boundaries
         else:
-            if isinstance(rve, Rve) == False:
+            if rve is None:
                 rve = self.rve
 
             dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
@@ -747,7 +718,7 @@ class BoxMesh(SingleMesh):
             rve: Optional[Rve] = None,
             tol: Optional[float] = 1.0e-4,
     ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
-        if isinstance(rve, Rve) == False:
+        if rve is None:
             rve = self.rve
 
         normals = [
@@ -795,15 +766,15 @@ class BoxMesh(SingleMesh):
     def closest_cells_on_boundaries(
             self,
             rve: Optional[Rve] = None,
-            tol: Optional[float] = 1.0e-8,
+            tol: float = 1.0e-8,
     ) -> dict[str, ClosestCellsOnBoundaries]:
         """
-        Find the cells to which a given point belongs to while using a ray tracing normal to the face on which it belongs
+        Find the cells to which a given point belongs to by using a ray tracing normal to the face on which it belongs
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
-        :param tol : tolerance to evaluate the threshold between the cells and the boundary RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param tol : tolerance to evaluate the threshold between the cells and the boundary RVE of the mesh bounding box
         """
 
-        if isinstance(rve, Rve) == False:
+        if rve is None:
             rve = self.rve
 
         crd = self.nodes_coords
