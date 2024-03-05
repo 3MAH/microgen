@@ -51,13 +51,11 @@ class BoxMesh(SingleMesh):
             self,
             nodes_coords: npt.NDArray[np.float_],
             elements: dict[pv.CellType, npt.NDArray[np.int_]],
-            pvmesh: Optional[pv.UnstructuredGrid] = None,
             nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
         super().__init__(
             nodes_coords=nodes_coords,
             elements=elements,
-            pvmesh=pvmesh,
             nodes_indices=nodes_indices,
         )
 
@@ -432,8 +430,8 @@ class BoxMesh(SingleMesh):
         :return rve: RVE of the mesh bounding box
         """
         if not isinstance(self._pvmesh, pv.UnstructuredGrid):
-            self._mesh = self.to_pyvista()
-        xmin, xmax, ymin, ymax, zmin, zmax = self._mesh.bounds
+            self._pvmesh = self.to_pyvista()
+        xmin, xmax, ymin, ymax, zmin, zmax = self._pvmesh.bounds
         return Rve.from_min_max(float(xmin), float(xmax), float(ymin),
                                 float(ymax), float(zmin), float(zmax))
 
@@ -709,9 +707,6 @@ class BoxMesh(SingleMesh):
 
         dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
         dict_edges = self._closest_points_on_edges(rve, tol)
-
-        self._dict_faces = dict_faces
-        self._dict_edges = dict_edges
 
         self._closest_points_on_boundaries = {**dict_faces, **dict_edges}
         return self._closest_points_on_boundaries

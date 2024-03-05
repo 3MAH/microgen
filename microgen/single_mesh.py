@@ -12,7 +12,6 @@ import pyvista as pv
 
 class NotOnlyLinearTetrahedraError(Exception):
     """Raised when 3d elements other than linear tetrahedra are found in a mesh"""
-    ...
 
 
 class SingleMesh:
@@ -26,14 +25,13 @@ class SingleMesh:
 
     def __init__(
             self,
-            nodes_coords: np.ndarray,
+            nodes_coords: npt.NDArray[np.float_],
             elements: dict[pv.CellType, npt.NDArray[np.int_]],
-            pvmesh: Optional[pv.UnstructuredGrid] = None,
             nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
         self.nodes_coords = nodes_coords
         self.elements = elements  # element dictionary
-        self._pvmesh = pvmesh
+        self._pvmesh: Optional[pv.UnstructuredGrid] = None
         self.nodes_indices = (
             nodes_indices  # indices of nodes
         )
@@ -98,7 +96,7 @@ class SingleMesh:
         # raises an Exception if 3d elements other than linear tetrahedra are found in the mesh
         check_if_only_linear_tetrahedral(pvmesh)
         elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
-        return SingleMesh(pvmesh.points, elements, pvmesh)
+        return SingleMesh(pvmesh.points, elements)
 
 
     @staticmethod
@@ -150,7 +148,7 @@ class SingleMesh:
 
         :return pv.PolyData: surface mesh
         """
-        if not (isinstance(self._pvmesh, pv.UnstructuredGrid)):
+        if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._pvmesh = self.to_pyvista()
 
         return self._pvmesh.extract_surface()
