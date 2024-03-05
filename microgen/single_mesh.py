@@ -19,7 +19,6 @@ class SingleMesh:
     SingleMesh class to manage list of Nodes and Elements inside a Phase
     :param nodes_coords: list of nodes (np.ndarray)
     :param elements : dictionary of elements (key: int, values : np.ndarray). The key is the element type
-    :param pvmesh : The pyvista mesh, if it exists already (this could be further generated)
     :param nodes_indices : index of node list (if different from the natural index of nodes array)
     """
 
@@ -143,7 +142,7 @@ class SingleMesh:
             self,
     ) -> pv.PolyData:
         """
-        extract the surface mesh of a pv.UnstructuredGrid (stored in self.mesh) using the pyvista extract_surface filter.
+        extract the surface mesh of a pv.UnstructuredGrid (stored in self.mesh) using the pyvista extract_surface filter
         If the mesh as a pyvista Unstructured Grid does not exist, the to_pyvista() method is utilized to generate it
 
         :return pv.PolyData: surface mesh
@@ -190,10 +189,12 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
         )
     if set_cells_in_pvmesh.intersection(set_elm2d_type):
         warnings.warn(
-            "2D elements are present in the PyVista UnstructuredGrid. They will be ignored. \nSurface elements shall be extracted automatically from the 3d mesh"
+            "2D elements are present in the PyVista UnstructuredGrid. They will be ignored."
+            "\nSurface elements shall be extracted automatically from the 3d mesh"
         )
 
     if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_linear_tetra):
         raise NotOnlyLinearTetrahedraError(
-            "Mesh contains elements other than linear tetrahedra. \nUse triangulate() to ensure that only linear tetrahedra are used."
+            "Mesh contains elements other than linear tetrahedra."
+            "\nUse triangulate() to ensure that only linear tetrahedra are used."
         )
