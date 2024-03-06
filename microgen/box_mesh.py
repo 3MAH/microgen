@@ -60,11 +60,7 @@ class BoxMesh(SingleMesh):
         )
 
         self.rve = self._build_rve()
-        self._closest_points_on_boundaries: Optional[
-            dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]] = None
-
         self.center: Optional[npt.NDArray[np.float_]] = None
-
         self._construct()
 
     @staticmethod
@@ -675,8 +671,8 @@ class BoxMesh(SingleMesh):
         dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
         dict_edges = self._closest_points_on_edges(rve, tol)
 
-        self._closest_points_on_boundaries = {**dict_faces, **dict_edges}
-        return self._closest_points_on_boundaries
+        closest_points_on_boundaries = {**dict_faces, **dict_edges}
+        return closest_points_on_boundaries
 
     def boundary_elements(
             self,
