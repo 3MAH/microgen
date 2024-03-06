@@ -1,6 +1,7 @@
-from microgen import Box, ExtrudedPolygon, Phase, cutPhaseByShapeList, mesh
-import numpy as np
 import cadquery as cq
+import numpy as np
+
+from microgen import Box, ExtrudedPolygon, Phase, cutPhaseByShapeList, mesh
 
 side_length = 2.5  # side in mm of the hexagon
 poly_height = 2.5  # height in mm of the hexagon
@@ -12,7 +13,7 @@ h2 = abs(np.sin(theta) * side_length)
 
 thickness = 30  # mm
 
-with open('seedList.data', 'r') as f:
+with open("seedList.data") as f:
     seedList = [[1, 1, 1]]
     seedList = np.genfromtxt(f, delimiter="\t")
 

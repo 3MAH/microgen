@@ -461,7 +461,7 @@ class Tpms(BasicGeometry):
             for solid in tpms_solids
         ]
 
-        # if the number of shapes is greater than 1, it means that the solid is splitted
+        # if the number of shapes is greater than 1, it means that the solid is split
         # so it belongs to the required part
         part_solids = [solid for (number, solid) in list_solids if number > 1]
         part_shapes = [cq.Shape(solid.wrapped) for solid in part_solids]

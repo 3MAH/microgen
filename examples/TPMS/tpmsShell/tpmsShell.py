@@ -1,12 +1,8 @@
-from microgen import Tpms, surface_functions
 import cadquery as cq
 
-shell = (
-    cq.Workplane("front")
-    .box(3, 3, 3)
-    .faces("+Z or -X or +X")
-    .shell(0.1)
-)
+from microgen import Tpms, surface_functions
+
+shell = cq.Workplane("front").box(3, 3, 3).faces("+Z or -X or +X").shell(0.1)
 shell = shell.val()
 
 geometry = Tpms(

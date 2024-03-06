@@ -40,7 +40,7 @@ cd ..
 echo "Mesh"
 cd Mesh
 cd mmg
-python test_mmg.py
+python test_mmg3d.py
 cd ..
 cd mmg-voro
 python test_mmg.py

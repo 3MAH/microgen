@@ -3,7 +3,7 @@ Periodic function to cut a shape periodically according to a RVE
 """
 
 import warnings
-from typing import List, Dict
+from typing import Dict, List
 
 import cadquery as cq
 

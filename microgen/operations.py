@@ -1,10 +1,11 @@
 """
 Boolean operations
 """
-from __future__ import annotations
-from typing import Tuple, List, Sequence
 
-import OCP
+from __future__ import annotations
+
+from typing import List, Sequence, Tuple
+
 import cadquery as cq
 import numpy as np
 import pyvista as pv
@@ -92,9 +93,7 @@ def rotatePvEuler(
     return rotated_obj
 
 
-def rescale(
-    shape: cq.Shape, scale: float | Tuple[float, float, float]
-) -> cq.Shape:
+def rescale(shape: cq.Shape, scale: float | Tuple[float, float, float]) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -127,15 +126,10 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
         try:
             upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
             upgrader.Build()
-            shape = upgrader.Shape()  # type: OCP.TopoDS_Shape            
-            return cq.Shape(shape)            
+            shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
+            return cq.Shape(shape)
         except Exception:
             return cq.Shape(occ_Solids)
-
-
-
-
-
 
 
 def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
@@ -163,7 +157,7 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: List[cq.Shape]) -> Phase
     :param phaseToCut: phase to cut
     :param cqShapeList: list of cutting shapes
 
-    :return resultCut: cutted phase
+    :return resultCut: cut phase
     """
 
     resultCut = phaseToCut.shape
@@ -178,7 +172,7 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param cqShapeList: list of CQ Shape to cut
-    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
+    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cut
 
     :return cutted_shapes: list of CQ Shape
     """
@@ -212,7 +206,7 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param phaseList: list of phases to cut
-    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
+    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cut
 
     :return list of phases
     """

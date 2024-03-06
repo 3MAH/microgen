@@ -81,7 +81,7 @@ def _generate_mesh_with_boundary_triangles(
 
 def _get_number_of_boundary_triangles_from_boxmesh(input_mesh: BoxMesh) -> int:
     mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
-    n_boundary_triangles = mesh_boundary.n_faces
+    n_boundary_triangles = mesh_boundary.n_cells
 
     return n_boundary_triangles
 
@@ -90,7 +90,7 @@ def _add_required_triangles_to_mesh_file(
     input_mesh: BoxMesh, input_mesh_file: str, output_mesh_file: str
 ) -> None:
     n_required_triangles = _get_number_of_boundary_triangles_from_boxmesh(input_mesh)
-    with open(input_mesh_file, "r") as input_file:
+    with open(input_mesh_file) as input_file:
         lines = input_file.readlines()[:-1]  # remove last line End
 
     with open(output_mesh_file, "w+") as output_file:
@@ -105,7 +105,7 @@ def _add_required_triangles_to_mesh_file(
 def _remove_unnecessary_fields_from_mesh_file(
     input_mesh_file: str, output_mesh_file: str, mesh_version: int, dimension: int
 ) -> None:
-    with open(input_mesh_file, "r") as input_file:
+    with open(input_mesh_file) as input_file:
         lines = input_file.readlines()
 
     write_bool = True

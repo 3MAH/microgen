@@ -1,0 +1,81 @@
+repos:
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+  hooks:
+  - id: check-merge-conflict
+  - id: check-case-conflict
+  - id: trailing-whitespace
+  - id: check-docstring-first
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+  - id: check-toml
+  - id: check-symlinks
+  - id: check-xml
+  - id: detect-private-key
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.3.0
+  hooks:
+    - id: ruff
+      args: [--fix]
+    - id: ruff-format
+
+- repo: https://github.com/psf/black
+  rev: 24.2.0
+  hooks:
+  - id: black
+
+- repo: https://github.com/keewis/blackdoc
+  rev: v0.3.9
+  hooks:
+  - id: blackdoc
+    files: '\.py$'
+
+- repo: https://github.com/pycqa/isort
+  rev: 5.13.2
+  hooks:
+  - id: isort
+
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.2.6
+  hooks:
+  - id: codespell
+    files: ^.*\.(py|rst|md)$
+
+- repo: https://github.com/DanielNoord/pydocstringformatter
+  rev: v0.7.3
+  hooks:
+    - id: pydocstringformatter
+      args: [
+        "--style {numpydoc,pep257}",
+        "--no-strip-whitespace",
+        "--no-capitalize-first-letter",
+      ]
+
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.15.1
+  hooks:
+  - id: pyupgrade
+    args: [--py38-plus, --keep-runtime-typing]
+
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.28.0
+  hooks:
+    - id: check-github-workflows
+
+# - repo: https://github.com/PyCQA/bandit
+#   rev: 1.7.7
+#   hooks:
+#     - id: bandit
+
+# - repo: https://github.com/pylint-dev/pylint
+#   rev: v3.1.0
+#   hooks:
+#   - id: pylint
+#     # args: [--disable=import-error]
+
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: v1.8.0
+#   hooks:
+#   - id: mypy

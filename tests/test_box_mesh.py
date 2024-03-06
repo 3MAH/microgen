@@ -178,6 +178,6 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
             _check_triangle_on_boundary(boundary, triangle_index, rve)
         )
 
-    assert boundary.n_faces == expected_number_of_cells and all(
+    assert boundary.n_cells == expected_number_of_cells and all(
         bool_check_triangle_on_boundary_list
     )

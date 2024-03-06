@@ -25,7 +25,16 @@ classifiers = [
 dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
 [project.optional-dependencies]
-test = ['pytest', 'pytest-cov', 'pytest-xdist']
+dev = [
+    'pre-commit',
+    'ruff',
+    'black',
+    'isort',
+    "OCP-stubs@git+https://github.com/CadQuery/OCP-stubs.git",
+    'pytest',
+    'pytest-cov',
+    'pytest-xdist',
+]
 docs = [
     'ipykernel',
     'sphinx',
@@ -44,7 +53,7 @@ jupyter = [
     "sidecar",
     "jupyterview",
 ]
-all = ["microgen[test, docs, jupyter]"]
+all = ["microgen[dev, docs, jupyter]"]
 
 [project.urls]
 Documentation = 'https://microgen.readthedocs.io/en/latest'
@@ -54,6 +63,9 @@ Documentation = 'https://microgen.readthedocs.io/en/latest'
 [tool.setuptools.packages.find]
 include = ['microgen', 'microgen.*']
 
+[tool.isort]
+profile = "black"
+
 [tool.pytest.ini_options]
 filterwarnings = [
     # Ignore deprecation warnings from numpy
@@ -61,8 +73,5 @@ filterwarnings = [
 ]
 
 [[tool.mypy.overrides]]
-module = [
-    "gmsh",
-    "scipy.spatial"
-]
+module = ["gmsh", "scipy.spatial"]
 ignore_missing_imports = true

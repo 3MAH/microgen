@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
+
 from microgen import BoxMesh, Rve, Tpms, is_periodic, remesh
 from microgen.shape.surface_functions import gyroid
 

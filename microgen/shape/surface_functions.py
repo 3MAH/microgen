@@ -1,5 +1,6 @@
-from numpy import cos, sin
 import numpy as np
+from numpy import cos, sin
+
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """
@@ -65,10 +66,10 @@ def schwarzD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        shape.plot(color='white')
     """
     return (
-        sin(x) * sin(y) * sin(z) +
-        sin(x) * cos(y) * cos(z) +
-        cos(x) * sin(y) * cos(z) +
-        cos(x) * cos(y) * sin(z)
+        sin(x) * sin(y) * sin(z)
+        + sin(x) * cos(y) * cos(z)
+        + cos(x) * sin(y) * cos(z)
+        + cos(x) * cos(y) * sin(z)
     )
 
 
@@ -91,10 +92,7 @@ def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        shape.plot(color='white')
     """
-    return (
-        3 * cos(x) + cos(y) + cos(z) +
-        4 * cos(x) * cos(y) * cos(z)
-    )
+    return 3 * cos(x) + cos(y) + cos(z) + 4 * cos(x) * cos(y) * cos(z)
 
 
 def schoenIWP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -116,9 +114,8 @@ def schoenIWP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        shape.plot(color='white')
     """
-    return (
-        2 * (cos(x) * cos(y) + cos(y) * cos(z) + cos(z) * cos(x)) -
-        (cos(2 * x) + cos(2 * y) + cos(2 * z))
+    return 2 * (cos(x) * cos(y) + cos(y) * cos(z) + cos(z) * cos(x)) - (
+        cos(2 * x) + cos(2 * y) + cos(2 * z)
     )
 
 
@@ -141,9 +138,8 @@ def schoenFRD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        shape.plot(color='white')
     """
-    return (
-        4 * cos(x) * cos(y) * cos(z) -
-        (cos(2 * x) * cos(2 * y) + cos(2 * y) * cos(2 * z) + cos(2 * z) * cos(2 * x))
+    return 4 * cos(x) * cos(y) * cos(z) - (
+        cos(2 * x) * cos(2 * y) + cos(2 * y) * cos(2 * z) + cos(2 * z) * cos(2 * x)
     )
 
 
@@ -167,9 +163,9 @@ def fischerKochS(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        shape.plot(color='white')
     """
     return (
-        cos(2 * x) * sin(y) * cos(z) +
-        cos(x) * cos(2 * y) * sin(z) +
-        sin(x) * cos(y) * cos(2 * z)
+        cos(2 * x) * sin(y) * cos(z)
+        + cos(x) * cos(2 * y) * sin(z)
+        + sin(x) * cos(y) * cos(2 * z)
     )
 
 
@@ -193,10 +189,10 @@ def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        shape.plot(color='white')
     """
     return (
-        2 * cos(x) * cos(y) * cos(z) +
-        sin(2 * x) * sin(y) +
-        sin(x) * sin(2 * z) +
-        sin(2 * y) * sin(z)
+        2 * cos(x) * cos(y) * cos(z)
+        + sin(2 * x) * sin(y)
+        + sin(x) * sin(2 * z)
+        + sin(2 * y) * sin(z)
     )
 
 
@@ -296,6 +292,7 @@ def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
         - 0.4 * (cos(2 * x) + cos(2 * y) + cos(2 * z))
     )
 
+
 def honeycomb_gyroid(x: float, y: float, z: float) -> float:
     """
     .. math::
@@ -339,6 +336,7 @@ def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
     """
     return cos(x) + cos(y)
 
+
 def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
     """
     .. math::
@@ -359,6 +357,7 @@ def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
        shape.plot(color='white')
     """
     return cos(x) * cos(y) + sin(x) * sin(y) + sin(x) * cos(y) + cos(x) * sin(y)
+
 
 def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
     """
@@ -381,6 +380,7 @@ def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
     """
     return cos(x) * cos(y) + cos(y) + cos(x)
 
+
 def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
     """
     .. math::
@@ -401,7 +401,6 @@ def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
 
        shape.plot(color='white')
     """
-    return (
-        1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y))
-        - (cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x))
+    return 1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y)) - (
+        cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
