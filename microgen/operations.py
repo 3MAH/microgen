@@ -2,7 +2,9 @@
 Boolean operations
 """
 
-from typing import List, Sequence, Tuple, Union
+from __future__ import annotations
+
+from typing import List, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -17,7 +19,7 @@ from .rve import Rve
 
 def _getRotationAxes(
     psi: float, theta: float, phi: float
-) -> list[tuple[float, float, float]]:
+) -> List[Tuple[float, float, float]]:
     """
     Retrieve the 3 Euler rotation axes
 
@@ -40,12 +42,12 @@ def _getRotationAxes(
 
 
 def rotateEuler(
-    obj: Union[cq.Shape, cq.Workplane],
-    center: Union[np.ndarray, Tuple[float, float, float]],
+    obj: cq.Shape | cq.Workplane,
+    center: np.ndarray | Tuple[float, float, float],
     psi: float,
     theta: float,
     phi: float,
-) -> Union[cq.Shape, cq.Workplane]:
+) -> cq.Shape | cq.Workplane:
     """
     Rotates object according to XZX Euler angle convention
 
@@ -92,9 +94,7 @@ def rotatePvEuler(
     return rotated_obj
 
 
-def rescale(
-    shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]
-) -> cq.Shape:
+def rescale(shape: cq.Shape, scale: float | Tuple[float, float, float]) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -127,7 +127,7 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
         try:
             upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
             upgrader.Build()
-            shape = upgrader.Shape()  # type: OCP.TopoDS_Shape
+            shape: OCP.TopoDS_Shape = upgrader.Shape()
             return cq.Shape(shape)
         except Exception:
             return cq.Shape(occ_Solids)
@@ -142,7 +142,7 @@ def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
 
     :return phase_cut: final result
     """
-    phase_cut = []  # type: list[Phase]
+    phase_cut: List[Phase] = []
 
     for phase in phaseList:
         cut = BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped)
@@ -158,7 +158,7 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: List[cq.Shape]) -> Phase
     :param phaseToCut: phase to cut
     :param cqShapeList: list of cutting shapes
 
-    :return resultCut: cutted phase
+    :return resultCut: cut phase
     """
 
     resultCut = phaseToCut.shape
@@ -173,11 +173,11 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param cqShapeList: list of CQ Shape to cut
-    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
+    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cut
 
     :return cutted_shapes: list of CQ Shape
     """
-    cutted_shapes = []  # type: list[cq.Shape]
+    cutted_shapes: List[cq.Shape] = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
@@ -207,7 +207,7 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param phaseList: list of phases to cut
-    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cutted
+    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cut
 
     :return list of phases
     """
@@ -219,7 +219,7 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
 
 def rasterPhase(
     phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
-) -> Union[Phase, List[Phase]]:
+) -> Phase | List[Phase]:
     """
     Rasters solids from phase according to the rve divided by the given grid
 
@@ -230,7 +230,7 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solids: list[cq.Solid] = phase.split_solids(rve, grid)
+    solids: List[cq.Solid] = phase.split_solids(rve, grid)
 
     if phasePerRaster:
         return Phase.generate_phase_per_raster(solids, rve, grid)
@@ -283,9 +283,9 @@ def repeatPolyData(
                 new_mesh = mesh.copy()
                 new_mesh.translate(
                     (
-                        -rve.dim_x * (0.5 * grid[0] - 0.5 - i_x),
-                        -rve.dim_y * (0.5 * grid[1] - 0.5 - i_y),
-                        -rve.dim_z * (0.5 * grid[2] - 0.5 - i_z),
+                        -rve.dim[0] * (0.5 * grid[0] - 0.5 - i_x),
+                        -rve.dim[1] * (0.5 * grid[1] - 0.5 - i_y),
+                        -rve.dim[2] * (0.5 * grid[2] - 0.5 - i_z),
                     ),
                     inplace=True,
                 )

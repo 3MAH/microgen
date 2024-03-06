@@ -14,20 +14,21 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.8", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
       - name: Install
-        run: pip install .[test]
+        run: pip install .[dev]
 
       - name: Test
         run: pytest tests --cov-report term-missing --cov=microgen --numprocesses=auto

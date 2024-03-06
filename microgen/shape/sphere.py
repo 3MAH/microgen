@@ -3,7 +3,9 @@
 Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
+
 from random import random
+from typing import Tuple
 
 import cadquery as cq
 import pyvista as pv
@@ -26,7 +28,7 @@ class Sphere(BasicGeometry):
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
         radius: float = 1,
     ) -> None:
         super().__init__(shape="Sphere", center=center)

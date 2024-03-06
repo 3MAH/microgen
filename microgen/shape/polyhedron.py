@@ -3,7 +3,9 @@
 Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
+
 import copy
+from typing import Dict, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -27,9 +29,9 @@ class Polyhedron(BasicGeometry):
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
-        dic: dict[str, list] = {
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
+        dic: Dict[str, list] = {
             "vertices": [
                 (1.0, 1.0, 1.0),
                 (1.0, -1.0, -1.0),
@@ -94,7 +96,7 @@ def read_obj(filename: str):
     Reads vertices and faces from obj format file for polyhedron
     """
     dic = {"vertices": [], "faces": []}
-    with open(filename, "r") as f:
+    with open(filename) as f:
         for line in f:
             data = line.split(" ")
             if data[0] == "v":

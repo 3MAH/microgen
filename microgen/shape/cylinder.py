@@ -3,31 +3,33 @@
 Cylinder (:mod:`microgen.shape.cylinder`)
 =========================================
 """
+
+from typing import Tuple
+
 import cadquery as cq
 import pyvista as pv
 
 from ..operations import rotateEuler, rotatePvEuler
-
 from .basicGeometry import BasicGeometry
 
 
 class Cylinder(BasicGeometry):
     """
     Class to generate a cylinder
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Cylinder().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         height: float = 1,
         radius: float = 0.5,
     ) -> None:

@@ -3,32 +3,34 @@
 Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 =============================================
 """
+
+from typing import Tuple
+
 import cadquery as cq
-import pyvista as pv
 import numpy as np
+import pyvista as pv
 
 from ..operations import rotateEuler, rotatePvEuler
-
 from .basicGeometry import BasicGeometry
 
 
 class Ellipsoid(BasicGeometry):
     """
     Class to generate an ellipsoid
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Ellipsoid().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         a_x: float = 1,
         a_y: float = 0.5,
         a_z: float = 0.25,

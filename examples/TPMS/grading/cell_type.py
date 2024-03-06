@@ -1,8 +1,7 @@
 import numpy as np
-import pyvista as pv
 
 from microgen import Tpms
-from microgen.shape.surface_functions import gyroid, schwarzP, fischerKochS
+from microgen.shape.surface_functions import fischerKochS, gyroid, schwarzP
 
 repeat = 2
 k = 2.0
@@ -15,12 +14,14 @@ def exp_func(x, y, z):
     norm = x**2 + y**2 + z**2
     return 1 + np.exp(k * norm)
 
+
 def weight(x, y, z, points, index):
     denom = 0.0
     for p in points:
         denom += exp_func(x - p[0], y - p[1], z - p[2])
     point = points[index]
     return exp_func(x - point[0], y - point[1], z - point[2]) / denom
+
 
 def multi_morph(phi, x, y, z, points):
     result = 0.0
@@ -29,18 +30,21 @@ def multi_morph(phi, x, y, z, points):
         result += weight_func * surface_function(repeat * x, repeat * y, repeat * z)
     return result
 
+
 def trigraded(x, y, z):
     return multi_morph(
         phi=[schwarzP, gyroid, fischerKochS],
-        x=x, y=y, z=z,
-        points=[point_1, point_2, point_3]
+        x=x,
+        y=y,
+        z=z,
+        points=[point_1, point_2, point_3],
     )
 
 
 geometry = Tpms(
     surface_function=trigraded,
     offset=0.3,
-    cell_size=1.,
+    cell_size=1.0,
     repeat_cell=(repeat, repeat, repeat),
     resolution=50,
 )

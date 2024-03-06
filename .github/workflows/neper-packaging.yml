@@ -21,7 +21,7 @@ jobs:
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
           anaconda upload linux-64/*.tar.bz2 --force
-        
+
   macos:
     name: MacOS
     runs-on: "macos-latest"
@@ -39,7 +39,7 @@ jobs:
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
           anaconda upload osx-64/*.tar.bz2 --force
-        
+
   windows:
     name: Windows
     runs-on: "windows-latest"

@@ -1,5 +1,6 @@
-from microgen import Tpms, surface_functions
 import pyvista as pv
+
+from microgen import Tpms, surface_functions
 
 geometry = Tpms(
     surface_function=surface_functions.gyroid,

@@ -3,6 +3,7 @@
 Extruded Polygon (:mod:`microgen.shape.extrudedPolygon`)
 ========================================================
 """
+
 from typing import Sequence, Tuple
 
 import cadquery as cq
@@ -28,8 +29,8 @@ class ExtrudedPolygon(BasicGeometry):
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         listCorners: Sequence[Tuple[float, float]] = [
             (1, 0),
             (0.5, 0.5 * np.sqrt(3)),

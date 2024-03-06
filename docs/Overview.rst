@@ -14,11 +14,11 @@ Here are the main features:
 
 .. image:: https://anaconda.org/set3mah/microgen/badges/version.svg
     :target: https://anaconda.org/set3MAH/microgen
-    
+
 .. image:: https://badge.fury.io/py/microgen.svg
     :target: https://pypi.org/project/microgen/1.0/
 
-.. |3MAH| image:: https://3mah.github.io/assets/images/logo_3mah/3mah_logo_vsmall.png 
+.. |3MAH| image:: https://3mah.github.io/assets/images/logo_3mah/3mah_logo_vsmall.png
     :width: 50
     :alt: 3MAH website
     :target: https://3mah.github.io/
@@ -61,7 +61,7 @@ Brief examples
 
 
 .. jupyter-execute::
-   
+
    import microgen
 
    geometry = microgen.Tpms(

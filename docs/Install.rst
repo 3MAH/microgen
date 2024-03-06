@@ -26,7 +26,7 @@ With conda
 To modify the sources, clone this repository and install microgen:
 
 .. code-block:: bash
-   
+
    git clone https://github.com/3MAH/microgen.git
    cd microgen
    pip install -e .[all]

@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from functools import partial
 
 import numpy as np
-import pyvista as pv
 
 from microgen import CylindricalTpms
 from microgen.shape.surface_functions import gyroid

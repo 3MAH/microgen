@@ -10,18 +10,20 @@ TPMS (:mod:`microgen.shape.tpms`)
    pyvista.global_theme.split_sharp_edges = True
 
 """
+
+from __future__ import annotations
+
 import logging
-from typing import Callable, List, Literal, Optional, Sequence, Union
+from typing import Callable, List, Literal, Optional, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.shape.basicGeometry import BasicGeometry
+from microgen.shape import BasicGeometry
 
-from ..operations import fuseShapes, repeat_shape, rescale
-from ..rve import Rve
+from ..operations import fuseShapes, rotateEuler, rotatePvEuler
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
@@ -54,13 +56,13 @@ class Tpms(BasicGeometry):
     def __init__(
         self,
         surface_function: Field,
-        offset: Union[float, Field] = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
-        cell_size: Union[float, Sequence[float]] = 1.0,
-        repeat_cell: Union[int, Sequence[int]] = 1,
+        cell_size: float | Sequence[float] = 1.0,
+        repeat_cell: int | Sequence[int] = 1,
         resolution: int = 20,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         density: Optional[float] = None,
     ) -> None:
         """
@@ -186,16 +188,14 @@ class Tpms(BasicGeometry):
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
             bracket=[-bound, bound],
-            method="secant",
-            x0=0.5,
         ).root
         self._update_offset(computed_offset)
         logging.info("computed offset = %.3f", computed_offset)
 
     def _init_cell_parameters(
         self,
-        cell_size: Union[float, Sequence[float]],
-        repeat_cell: Union[int, Sequence[int]],
+        cell_size: float | Sequence[float],
+        repeat_cell: int | Sequence[int],
     ):
         if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
@@ -212,8 +212,8 @@ class Tpms(BasicGeometry):
             raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
     def vtk_sheet(self) -> pv.PolyData:
-        return self.grid.clip_scalar(scalars="upper_surface").clip_scalar(
-            scalars="lower_surface", invert=False
+        return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
+            scalars="upper_surface"
         )
 
     def vtk_upper_skeletal(self) -> pv.PolyData:
@@ -265,7 +265,7 @@ class Tpms(BasicGeometry):
         return self._lower_skeletal
 
     @property
-    def skeletals(self) -> tuple[pv.PolyData, pv.PolyData]:
+    def skeletals(self) -> Tuple[pv.PolyData, pv.PolyData]:
         """
         Returns both skeletal parts
         """
@@ -315,7 +315,7 @@ class Tpms(BasicGeometry):
         self.grid["surface"] = tpms_field.ravel(order="F")
         self._update_offset(self.offset)
 
-    def _update_offset(self, offset: Union[float, Callable]) -> None:
+    def _update_offset(self, offset: float | Callable) -> None:
         if isinstance(offset, float):
             self.offset = offset
         elif isinstance(offset, Callable):
@@ -348,7 +348,7 @@ class Tpms(BasicGeometry):
 
     def _create_surface(
         self,
-        isovalue: Union[float, np.ndarray] = 0.0,
+        isovalue: float | np.ndarray = 0.0,
         smoothing: int = 0,
         verbose: bool = False,
     ) -> cq.Shell:
@@ -370,8 +370,8 @@ class Tpms(BasicGeometry):
         return shell
 
     def _create_surfaces(
-        self, isovalues: list[float], smoothing: int = 0, verbose: bool = False
-    ) -> list[cq.Shell]:
+        self, isovalues: List[float], smoothing: int = 0, verbose: bool = False
+    ) -> List[cq.Shell]:
         """
         Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
 
@@ -392,7 +392,7 @@ class Tpms(BasicGeometry):
 
     def _generate_sheet_surfaces(
         self, eps: float, smoothing: int, verbose: bool
-    ) -> tuple[cq.Shape, cq.Shape]:
+    ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 + eps,
@@ -413,7 +413,7 @@ class Tpms(BasicGeometry):
 
     def _generate_lower_skeletal_surfaces(
         self, eps: float, smoothing: int, verbose: bool
-    ) -> tuple[cq.Shape, cq.Shape]:
+    ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 - eps,
@@ -427,7 +427,7 @@ class Tpms(BasicGeometry):
 
     def _generate_upper_skeletal_surfaces(
         self, eps: float, smoothing: int, verbose: bool
-    ) -> tuple[cq.Shape, cq.Shape]:
+    ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
             self.offset / 2.0,
             self.offset / 2.0 + eps,
@@ -461,7 +461,7 @@ class Tpms(BasicGeometry):
             for solid in tpms_solids
         ]
 
-        # if the number of shapes is greater than 1, it means that the solid is splitted
+        # if the number of shapes is greater than 1, it means that the solid is split
         # so it belongs to the required part
         part_solids = [solid for (number, solid) in list_solids if number > 1]
         part_shapes = [cq.Shape(solid.wrapped) for solid in part_solids]
@@ -545,24 +545,17 @@ class Tpms(BasicGeometry):
 
         shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
 
-        # if not np.array_equal(self.cell_size, np.array([1.0, 1.0, 1.0])):
-        #     shape = rescale(shape=shape, scale=self.cell_size)
-
-        # if not np.array_equal(self.repeat_cell, np.array([1, 1, 1])):
-        #     shape = repeat_shape(
-        #         unit_geom=shape,
-        #         rve=Rve(
-        #             dim_x=self.cell_size[0],
-        #             dim_y=self.cell_size[1],
-        #             dim_z=self.cell_size[2],
-        #             center=self.center,
-        #         ),
-        #         grid=self.repeat_cell,
-        #     )
-
         density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
         logging.info(f"TPMS density = {density:.2%}")
-        return shape
+
+        shape = rotateEuler(
+            obj=shape,
+            center=(0, 0, 0),
+            psi=self.orientation[0],
+            theta=self.orientation[1],
+            phi=self.orientation[2],
+        )
+        return shape.translate(self.center)
 
     def generateVtk(
         self,
@@ -592,7 +585,15 @@ class Tpms(BasicGeometry):
         polydata = polydata.clean().triangulate()
         density = polydata.volume / self.grid.volume
         logging.info(f"TPMS density = {density:.2%}")
-        return polydata
+
+        polydata = rotatePvEuler(
+            polydata,
+            center=(0, 0, 0),
+            psi=self.orientation[0],
+            theta=self.orientation[1],
+            phi=self.orientation[2],
+        )
+        return polydata.translate(xyz=self.center)
 
 
 class CylindricalTpms(Tpms):
@@ -604,12 +605,12 @@ class CylindricalTpms(Tpms):
         self,
         radius: float,
         surface_function: Field,
-        offset: Union[float, Field] = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
-        cell_size: Union[float, Sequence[float]] = 1.0,
-        repeat_cell: Union[int, Sequence[int]] = 1,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        cell_size: float | Sequence[float] = 1.0,
+        repeat_cell: int | Sequence[int] = 1,
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
         density: Optional[float] = None,
     ):
@@ -678,12 +679,12 @@ class SphericalTpms(Tpms):
         self,
         radius: float,
         surface_function: Field,
-        offset: Union[float, Field] = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
-        cell_size: Union[float, Sequence[float]] = 1.0,
-        repeat_cell: Union[int, Sequence[int]] = 1,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        cell_size: float | Sequence[float] = 1.0,
+        repeat_cell: int | Sequence[int] = 1,
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
         density: Optional[float] = None,
     ):

@@ -1,8 +1,8 @@
-import os
-from inspect import getmembers, isfunction
-from typing import Literal, Type, Union
+from __future__ import annotations
 
-import cadquery as cq
+from inspect import getmembers, isfunction
+from typing import Literal, Tuple, Type
+
 import numpy as np
 import pytest
 
@@ -126,8 +126,8 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
 @pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
 def test_tpms_given_sum_volume_must_be_cube_volume(
     surface: str,
-    repeat_cell: Union[int, tuple[int, int, int]],
-    cell_size: Union[float, tuple[float, float, float]],
+    repeat_cell: int | Tuple[int, int, int],
+    cell_size: float | Tuple[float, float, float],
 ):
     # Arrange
     tpms = microgen.Tpms(
@@ -193,8 +193,8 @@ def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lowe
 )
 def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond_and_be_between_zero_and_grid_volume(
     coord_sys_tpms: Type[microgen.Tpms],
-    repeat_cell_zero: tuple[int, int, int],
-    repeat_cell_max: tuple[int, int, int],
+    repeat_cell_zero: Tuple[int, int, int],
+    repeat_cell_max: Tuple[int, int, int],
 ):
     tpms_repeat_zero = coord_sys_tpms(
         radius=1.0,
@@ -339,7 +339,7 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: st
 
 @pytest.mark.parametrize("part_type", ["lower skeletal", "upper skeletal", "sheet"])
 def test_tpms_given_max_density_must_return_corresponding_offset(
-    part_type: Literal["sheet", "lower skeletal", "upper skeletal"]
+    part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
 ):
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
@@ -450,3 +450,35 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
 
     sheet = tpms.generateVtk(type_part="sheet").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
+
+
+def test_tpms_center_and_orientation_must_correspond():
+    center = (1.0, -2.0, 3.0)
+    orientation = (np.pi / 3, -np.pi / 4, np.pi / 5)
+
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        center=center,
+        orientation=orientation,
+    )
+    vtk_sheet = tpms.generateVtk(type_part="sheet")
+    cad_sheet = tpms.generate(type_part="sheet")
+
+    no_orientation = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        center=center,
+    )
+
+    assert np.allclose(vtk_sheet.center, center)
+    assert np.allclose(cad_sheet.Center().toTuple(), center, rtol=1e-3)
+
+    bbox = cad_sheet.BoundingBox()
+    bounds = (bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax, bbox.zmin, bbox.zmax)
+    assert np.allclose(bounds, vtk_sheet.bounds)
+
+    assert not np.allclose(
+        vtk_sheet.bounds,
+        no_orientation.generateVtk(type_part="sheet").bounds,
+    )

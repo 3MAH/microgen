@@ -1,8 +1,6 @@
-import numpy as np
-import pyvista as pv
-
 from microgen import Tpms
 from microgen.shape.surface_functions import gyroid
+
 
 def linear_graded_density(x, y, z):
     min_offset = 0.3
@@ -10,10 +8,11 @@ def linear_graded_density(x, y, z):
     length = x[-1] - x[0]
     return (max_offset - min_offset) * x / length + 0.5 * (min_offset + max_offset)
 
+
 def circular_graded_density(x: float, y: float, z: float) -> float:
     min_offset = 0.3
     max_offset = 2.0
-    radius = 10.
+    radius = 10.0
     return (max_offset - min_offset) * (x**2 + y**2) / radius**2 + min_offset
 
 
