@@ -24,7 +24,7 @@ Periodic Mesh
 mmg
 ---
 
-.. include:: ../../examples/Mesh/mmg/test_mmg.py
+.. include:: ../../examples/Mesh/mmg/test_mmg3d.py
    :literal:
 
 .. image:: ../_static/examples/mmg.png
