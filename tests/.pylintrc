@@ -1,0 +1,6 @@
+[MASTER]
+disable=
+  line-too-long,
+  missing-function-docstring,
+  missing-module-docstring,
+  missing-class-docstring,
