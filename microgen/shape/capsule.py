@@ -3,6 +3,8 @@
 Capsule (:mod:`microgen.shape.capsule`)
 =======================================
 """
+from typing import Tuple
+
 import cadquery as cq
 
 import pyvista as pv
@@ -14,20 +16,20 @@ from .basicGeometry import BasicGeometry
 class Capsule(BasicGeometry):
     """
     Class to generate a capsule (cylinder with hemispherical ends)
-    
+
     .. jupyter-execute::
        :hide-code:
-       
+
        import microgen
 
        shape = microgen.Capsule().generateVtk()
-       shape.plot(color='white') 
+       shape.plot(color='white')
     """
 
     def __init__(
         self,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
         height: float = 1,
         radius: float = 0.5,
     ) -> None:

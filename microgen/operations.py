@@ -1,8 +1,8 @@
 """
 Boolean operations
 """
-
-from typing import Union, Tuple, List, Sequence
+from __future__ import annotations
+from typing import Tuple, List, Sequence
 
 import OCP
 import cadquery as cq
@@ -17,7 +17,7 @@ from .rve import Rve
 
 def _getRotationAxes(
     psi: float, theta: float, phi: float
-) -> list[tuple[float, float, float]]:
+) -> List[Tuple[float, float, float]]:
     """
     Retrieve the 3 Euler rotation axes
 
@@ -40,12 +40,12 @@ def _getRotationAxes(
 
 
 def rotateEuler(
-    obj: Union[cq.Shape, cq.Workplane],
-    center: Union[np.ndarray, Tuple[float, float, float]],
+    obj: cq.Shape | cq.Workplane,
+    center: np.ndarray | Tuple[float, float, float],
     psi: float,
     theta: float,
     phi: float,
-) -> Union[cq.Shape, cq.Workplane]:
+) -> cq.Shape | cq.Workplane:
     """
     Rotates object according to XZX Euler angle convention
 
@@ -93,7 +93,7 @@ def rotatePvEuler(
 
 
 def rescale(
-    shape: cq.Shape, scale: Union[float, Tuple[float, float, float]]
+    shape: cq.Shape, scale: float | Tuple[float, float, float]
 ) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
@@ -147,7 +147,7 @@ def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
 
     :return phase_cut: final result
     """
-    phase_cut = []  # type: list[Phase]
+    phase_cut: List[Phase] = []
 
     for phase in phaseList:
         cut = BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped)
@@ -182,7 +182,7 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
 
     :return cutted_shapes: list of CQ Shape
     """
-    cutted_shapes = []  # type: list[cq.Shape]
+    cutted_shapes: List[cq.Shape] = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
@@ -268,7 +268,7 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
 
 def rasterPhase(
     phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
-) -> Union[Phase, List[Phase]]:
+) -> Phase | List[Phase]:
     """
     Rasters solids from phase according to the rve divided by the given grid
 
@@ -279,7 +279,7 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solidList: list[cq.Solid] = phase.buildSolids(rve, grid)
+    solidList: List[cq.Solid] = phase.buildSolids(rve, grid)
 
     if phasePerRaster:
         return Phase.generatePhasePerRaster(solidList, rve, grid)

@@ -6,10 +6,10 @@ Functions related to external softwares
 .. _Neper - Polycrystal Generation and Meshing: https://neper.info/
 .. _mmg - Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
 """
-
+from __future__ import annotations
 import subprocess
 import os
-from typing import Union
+from typing import Tuple, List, Dict
 
 import numpy as np
 
@@ -18,7 +18,7 @@ from microgen.shape import Polyhedron
 
 class Neper:
     @staticmethod
-    def run(filename: str, nbCell: int, dimCube: tuple[float, float, float]) -> None:
+    def run(filename: str, nbCell: int, dimCube: Tuple[float, float, float]) -> None:
         """
         Runs neper command from the command line
 
@@ -30,12 +30,14 @@ class Neper:
 
         .. _neper's documentation: https://neper.info/doc/neper_t.html#cmdoption-domain
         """
-        
+
         try:
             # Check if neper is installed and available in the PATH
             subprocess.run(["neper", "--version"], check=True)
-        except(subprocess.CalledProcessError, FileNotFoundError):
-            print("Neper is not installed. Please install Neper before running this command.")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print(
+                "Neper is not installed. Please install Neper before running this command."
+            )
             return
 
         command = "neper -T -n " + str(nbCell) + " -id 1 -dim 3"
@@ -53,7 +55,7 @@ class Neper:
         os.system(command)
 
     @staticmethod
-    def generateVoronoiFromTessFile(filename: str) -> list[Polyhedron]:
+    def generateVoronoiFromTessFile(filename: str) -> List[Polyhedron]:
         """
         Generates list of Voronoi polyhedron shapes from a tesselation file generated with neper
         """
@@ -91,7 +93,7 @@ class Neper:
         return polyhedra
 
     @staticmethod
-    def tessParse(filename: str) -> dict[str, dict]:
+    def tessParse(filename: str) -> Dict[str, dict]:
         """
         Parses tesselation file (.tess) generated with neper.
         Following .tess structure from `neper's`_ documentation:
@@ -289,7 +291,6 @@ def parseNeper(filename: str) -> tuple:
     i = 0
 
     for line in fid:
-
         if flagExtraction:
             if "*" in line:
                 flagExtraction = False
@@ -400,14 +401,14 @@ def parseNeper(filename: str) -> tuple:
     listeSommets = []
     listeSommetsOut = []
     for i in range(nbPolys):
-        voro = {}  # type: dict[str, Union[dict, list]]
+        voro: Dict[str, Dict | List] = {}
         voro["original"] = seed[i]
         voro["faces"] = []
         listeSommetsPoly = []
         sommets = []
         for facePoly in polys[i][1:]:
             listeSommetsFace = []
-            dicVertices = {}  # type: dict[str, list]
+            dicVertices: Dict[str, List] = {}
             dicVertices["vertices"] = []
             for segment in faces[facePoly - 1][1:]:
                 # Listes des sommets avec numérotation globale et faces associées
@@ -612,7 +613,7 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except(subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
@@ -731,7 +732,7 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except(subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )
@@ -873,7 +874,7 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except(subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print(
                 "mmg command did not work, check if it is installed or contact a developer"
             )

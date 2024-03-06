@@ -1,9 +1,11 @@
 import math as m
+from typing import Dict, List
 
 import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
+
 from microgen import BoxMesh, Rve
 
 
@@ -42,7 +44,7 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
     return points
 
 
-def _box_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.int_]]:
+def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
     elements_dict = {
         pv.CellType.TETRA: np.array(
             [
@@ -133,12 +135,12 @@ def _check_triangle_on_boundary(
 
 
 def test_given_box_mesh__construct_must_find_center_corners_edges_faces_node_sets(
-        default_box_mesh
+    default_box_mesh,
 ) -> None:
     target_center: npt.NDArray[np.float_] = np.array([0.5, 0.5, 0.5])
-    target_corners: list[int] = [0, 2, 6, 8, 18, 20, 24, 26]
-    target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
-    target_faces: list[int] = [4, 10, 12, 14, 16, 22]
+    target_corners: List[int] = [0, 2, 6, 8, 18, 20, 24, 26]
+    target_edges: List[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+    target_faces: List[int] = [4, 10, 12, 14, 16, 22]
 
     box_mesh_corners = sorted(np.concatenate(list(default_box_mesh.corners.values())))
     box_mesh_edges = sorted(np.concatenate(list(default_box_mesh.edges.values())))
@@ -165,7 +167,7 @@ def test_given_box_mesh_rve_property_must_build_correct_rve(default_box_mesh) ->
 
 
 def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_elements(
-        default_box_mesh
+    default_box_mesh,
 ) -> None:
     expected_number_of_cells = 48
     rve = _default_rve()

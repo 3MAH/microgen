@@ -16,7 +16,7 @@ Shape (:mod:`microgen.shape`)
 
 """
 
-from typing import Any
+from typing import Any, Tuple, Dict
 
 from . import surface_functions
 from .basicGeometry import BasicGeometry
@@ -32,9 +32,9 @@ from .tpms import CylindricalTpms, SphericalTpms, Tpms
 
 def newGeometry(
     shape: str,
-    param_geom: dict[str, Any],
-    center: tuple[float, float, float] = (0, 0, 0),
-    orientation: tuple[float, float, float] = (0, 0, 0),
+    param_geom: Dict[str, Any],
+    center: Tuple[float, float, float] = (0, 0, 0),
+    orientation: Tuple[float, float, float] = (0, 0, 0),
 ) -> BasicGeometry:
     """
     Creates a new basic geometry with given shape and geometrical parameters

@@ -3,10 +3,10 @@
 Basic Geometry (:mod:`microgen.shape.basicGeometry`)
 ====================================================
 """
-
+from __future__ import annotations
 import cadquery as cq
 
-from typing import Union
+from typing import Tuple
 
 
 class BasicGeometry:
@@ -23,15 +23,14 @@ class BasicGeometry:
     def __init__(
         self,
         shape: str,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Tuple[float, float, float] = (0, 0, 0),
+        orientation: Tuple[float, float, float] = (0, 0, 0),
     ) -> None:
-
         self.number = self.numInstances
         self.shape = shape
         self.center = center
         self.orientation = orientation
         self.name = self.shape + "_" + str(self.number)
 
-        self.geometry = None  # type: Union[cq.Shape, None]
+        self.geometry = None  # type: cq.Shape | None
         BasicGeometry.numInstances += 1
