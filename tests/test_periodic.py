@@ -3,7 +3,7 @@ import pytest
 from microgen import Phase, Rve, periodic, shape
 
 
-def generate_sphere(x, y, z, rve):
+def generate_sphere(x: float, y: float, z: float, rve: Rve):
     elem = shape.sphere.Sphere(center=(x, y, z), radius=0.1)
     phase = Phase(shape=elem.generate())
     periodic(phase=phase, rve=rve)
@@ -52,7 +52,3 @@ def test_periodic():
     generate_sphere(x=1, y=0, z=1, rve=rve)
     generate_sphere(x=1, y=1, z=0, rve=rve)
     generate_sphere(x=1, y=1, z=1, rve=rve)
-
-
-if __name__ == "__main__":
-    test_periodic()
