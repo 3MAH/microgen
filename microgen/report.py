@@ -1,11 +1,7 @@
 """Module managing errors."""
-from collections import namedtuple
-import re
-import subprocess
-import sys
-import warnings
 
 import scooby
+
 
 class Report(scooby.Report):
     """Generate a microgen software environment report.
@@ -57,14 +53,10 @@ class Report(scooby.Report):
         """Generate a :class:`scooby.Report` instance."""
 
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'scooby', 'gmsh', 'cadquery']
+        core = ["pyvista", "vtk", "numpy", "scooby", "gmsh", "cadquery"]
 
         # Optional packages.
-        optional = [
-            'matplotlib',
-            'pytest-cov',
-            'meshio'
-        ]
+        optional = ["matplotlib", "pytest-cov", "meshio"]
 
         scooby.Report.__init__(
             self,

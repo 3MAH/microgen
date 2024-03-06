@@ -1,7 +1,8 @@
-import pytest
 import numpy as np
 import numpy.typing as npt
+import pytest
 import pyvista as pv
+
 from microgen import is_periodic
 
 

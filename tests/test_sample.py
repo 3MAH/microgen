@@ -1,23 +1,27 @@
 import subprocess
-import microgen
-
 from sys import platform
+
+import microgen
 
 USE_NEPER = False
 try:
     # Check if neper is installed and available in the PATH
     subprocess.run(["neper", "--version"], check=True)
-    USE_NEPER = True    
-except(subprocess.CalledProcessError, FileNotFoundError):
+    USE_NEPER = True
+except (subprocess.CalledProcessError, FileNotFoundError):
     print("Neper is not installed. Please install Neper before running this command.")
     USE_NEPER = False
 
+
 def test_misc():
-    if USE_NEPER == True:
-        if platform != 'win32':
-            microgen.Neper.run(filename='tests/data/neper.tess', nbCell=2, dimCube=(1, 1, 1))
+    if USE_NEPER:
+        if platform != "win32":
+            microgen.Neper.run(
+                filename="tests/data/neper.tess", nbCell=2, dimCube=(1, 1, 1)
+            )
             microgen.parseNeper("tests/data/neper")
-            microgen.Neper.generateVoronoiFromTessFile('tests/data/neper.tess')
+            microgen.Neper.generateVoronoiFromTessFile("tests/data/neper.tess")
+
 
 def test_operations():
     elem = microgen.shape.Box(center=(0.5, 0.5, 0.5), dim_x=1, dim_y=1, dim_z=1)
@@ -26,7 +30,7 @@ def test_operations():
 
     elem = microgen.shape.Box(center=(0, 0, 0), dim_x=0.5, dim_y=0.5, dim_z=0.5)
     shape2 = elem.generate()
-    microgen.rescale(shape2, 2.)
+    microgen.rescale(shape2, 2.0)
 
     microgen.cutPhaseByShapeList(phaseToCut=phase1, cqShapeList=[shape2])
 

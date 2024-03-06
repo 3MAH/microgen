@@ -3,10 +3,10 @@
 Capsule (:mod:`microgen.shape.capsule`)
 =======================================
 """
+
 from typing import Tuple
 
 import cadquery as cq
-
 import pyvista as pv
 
 from ..operations import rotateEuler, rotatePvEuler

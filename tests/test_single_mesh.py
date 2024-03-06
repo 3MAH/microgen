@@ -399,7 +399,7 @@ def test_given_simple_periodic_pyvista_unstructured_grid_box_single_mesh_surface
     surf = mesh.surface
 
     assert (
-        surf.n_faces == target_n_cells
+        surf.n_cells == target_n_cells
         and surf.faces.all() == target_face_connectivity_array.all()
     )
 

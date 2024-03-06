@@ -3,12 +3,13 @@
 Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
-from typing import Tuple, Dict
+
+import copy
+from typing import Dict, Tuple
 
 import cadquery as cq
-import pyvista as pv
 import numpy as np
-import copy
+import pyvista as pv
 
 from .basicGeometry import BasicGeometry
 
@@ -95,7 +96,7 @@ def read_obj(filename: str):
     Reads vertices and faces from obj format file for polyhedron
     """
     dic = {"vertices": [], "faces": []}
-    with open(filename, "r") as f:
+    with open(filename) as f:
         for line in f:
             data = line.split(" ")
             if data[0] == "v":

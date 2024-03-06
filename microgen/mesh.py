@@ -1,6 +1,7 @@
 """
 Mesh using gmsh
 """
+
 from typing import Iterator, List, Tuple
 
 import gmsh

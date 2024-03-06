@@ -50,6 +50,7 @@ To modify the sources, clone this repository and install microgen:
 git clone https://github.com/3MAH/microgen.git
 cd microgen
 pip install -e .[all]
+pre-commit install
 ```
 
 The `-e` or `--editable` option allows to modify the sources without having to reinstall the package and `[all]` installs the optional development dependencies.

@@ -3,6 +3,7 @@
 Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
+
 from typing import Tuple
 
 import cadquery as cq

@@ -1,14 +1,9 @@
 import os
-import numpy as np
+
 import cadquery as cq
-from microgen import (
-    Rve,
-    Cylinder,
-    periodic,
-    cutPhases,
-    meshPeriodic,
-    Phase,
-)
+import numpy as np
+
+from microgen import Cylinder, Phase, Rve, cutPhases, meshPeriodic, periodic
 
 # ----------LOADTXT------------------------------------------------------------------------------------------#
 
@@ -73,9 +68,7 @@ for phase_elem in listPhases:
     periodicPhase = periodic(phase=phase_elem, rve=rve)
     listPeriodicPhases.append(periodicPhase)
 
-phases_cut = cutPhases(
-    phaseList=listPeriodicPhases, reverseOrder=False
-)
+phases_cut = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
 compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 
 cq.exporters.export(compound, "octettruss.step")

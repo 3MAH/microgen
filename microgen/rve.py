@@ -1,7 +1,9 @@
 """
 Representative Volume Element (RVE) or Representative Elementary Volume (REV)
 """
+
 from __future__ import annotations
+
 import cadquery as cq
 import numpy as np
 
@@ -44,25 +46,25 @@ class Rve:
 
     @classmethod
     def from_min_max(
-        cls, 
-        x_min: float = -0.5, 
-        x_max: float = 0.5, 
-        y_min: float = -0.5, 
-        y_max: float = 0.5, 
-        z_min: float = -0.5, 
+        cls,
+        x_min: float = -0.5,
+        x_max: float = 0.5,
+        y_min: float = -0.5,
+        y_max: float = 0.5,
+        z_min: float = -0.5,
         z_max: float = 0.5,
-        ) -> 'Rve':
-        """ 
+    ) -> Rve:
+        """
         :param x_min: min X dimension of the RVE
         :param x_max: max X dimension of the RVE
         :param x_min: min Y dimension of the RVE
         :param x_max: max Y dimension of the RVE
         :param x_min: min Z dimension of the RVE
-        :param x_max: max Z dimension of the RVE     
-        Generate a Rve from the min - max values   
-        """        
+        :param x_max: max Z dimension of the RVE
+        Generate a Rve from the min - max values
+        """
 
-        center = (0.5*(x_min + x_max), 0.5*(y_min + y_max), 0.5*(z_min + z_max))
+        center = (0.5 * (x_min + x_max), 0.5 * (y_min + y_max), 0.5 * (z_min + z_max))
         dim_x = abs(x_max - x_min)
         dim_y = abs(y_max - y_min)
         dim_z = abs(z_max - z_min)

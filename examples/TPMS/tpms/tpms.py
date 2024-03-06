@@ -30,15 +30,12 @@ for i, surface in enumerate(surfaces):
         offset=0.3,
         resolution=50,
     )
-    
+
     # center = (1.2 * (i_x - 0.5 * (n_col - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0)
     mesh = elem.sheet
     mesh.translate(
-        [
-            1.2 * (i_x - 0.5 * (n_col - 1)),
-            -1.2 * (i_y - 0.5 * (n_row - 1)),
-            0
-        ], inplace=True
+        [1.2 * (i_x - 0.5 * (n_col - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0],
+        inplace=True,
     )
     meshes.append(mesh)
 

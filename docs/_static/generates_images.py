@@ -1,15 +1,18 @@
-import pyvista as pv
 import os.path
 
+import pyvista as pv
 
-def show_example(filename, 
-                 screenshot=False,
-                 color=None,
-                 show_edges=False,
-                 screen_name=None,
-                 cmap='coolwarm',
-                 rotate=False,
-                 zoom=None):
+
+def show_example(
+    filename,
+    screenshot=False,
+    color=None,
+    show_edges=False,
+    screen_name=None,
+    cmap="coolwarm",
+    rotate=False,
+    zoom=None,
+):
     if not os.path.exists(filename):
         print(filename + " not found")
         return
@@ -17,7 +20,7 @@ def show_example(filename,
     mesh = pv.read(filename)
     plotter = pv.Plotter(off_screen=screenshot)
     if rotate:
-        plotter.camera_position = 'zy'
+        plotter.camera_position = "zy"
         plotter.camera.position = (-1, 0.5, 0.5)
         plotter.camera.focal_point = (mesh.center[0], mesh.center[1], mesh.center[2])
 
@@ -27,13 +30,13 @@ def show_example(filename,
     plotter.add_mesh(mesh, show_edges=show_edges, color=color, cmap=cmap)
     try:
         plotter.remove_scalar_bar()
-    except:
+    except Exception:
         pass
 
     if screenshot:
         if screen_name is None:
-            screen_name = filename.split('/')[-1].split('.')[0] + '.png'
-        screen_name = 'examples/' + screen_name
+            screen_name = filename.split("/")[-1].split(".")[0] + ".png"
+        screen_name = "examples/" + screen_name
         if os.path.exists(screen_name):
             print(screen_name + " already exists")
         plotter.screenshot(screen_name, transparent_background=True)
@@ -43,77 +46,63 @@ def show_example(filename,
 
 
 example_path = "../../examples/"
+show_example(filename=example_path + "BasicShapes/shapes/shapes.stl", screenshot=True)
+show_example(filename=example_path + "BasicShapes/platon/platon.stl", screenshot=True)
 show_example(
-    filename=example_path + "BasicShapes/shapes/shapes.stl",
-    screenshot=True
+    filename=example_path + "Lattices/honeycomb/honeycomb.stl", screenshot=True
 )
 show_example(
-    filename=example_path + "BasicShapes/platon/platon.stl",
-    screenshot=True
+    filename=example_path + "Lattices/octetTruss/octettruss.stl", screenshot=True
 )
-show_example(
-    filename=example_path + "Lattices/honeycomb/honeycomb.stl",
-    screenshot=True
-)
-show_example(
-    filename=example_path + "Lattices/octetTruss/octettruss.stl",
-    screenshot=True
-)
-show_example(
-    filename=example_path + "TPMS/tpmsShell/tpms_shell.stl",
-    screenshot=True
-)
+show_example(filename=example_path + "TPMS/tpmsShell/tpms_shell.stl", screenshot=True)
 show_example(
     filename=example_path + "TPMS/tpmsSphere/tpms_sphere.stl",
     screenshot=True,
     # zoom=0.2
 )
-show_example(
-    filename=example_path + "TPMS/gyroid/gyroid.stl",
-    screenshot=True
-)
+show_example(filename=example_path + "TPMS/gyroid/gyroid.stl", screenshot=True)
 show_example(
     filename=example_path + "3Doperations/repeatGeom/repeated_geometry.stl",
-    screenshot=True
+    screenshot=True,
 )
 show_example(
     filename=example_path + "3Doperations/rasterEllipsoid/rasterEllipsoid.vtk",
     screenshot=True,
     show_edges=True,
     rotate=True,
-    zoom=0.75
+    zoom=0.75,
 )
 show_example(
     filename=example_path + "3Doperations/voronoi/Voronoi.vtk",
     screenshot=True,
-    show_edges=False
+    show_edges=False,
 )
 show_example(
     filename=example_path + "3Doperations/voronoiGyroid/Gyroid-voro.vtk",
     screenshot=True,
-    show_edges=False
+    show_edges=False,
 )
 show_example(
     filename=example_path + "3Doperations/voronoi/Voronoi.vtk",
     screenshot=True,
     show_edges=True,
-    screen_name="Mesh.png"
+    screen_name="Mesh.png",
 )
 show_example(
     filename=example_path + "Lattices/octetTruss/octettruss.vtk",
     screenshot=True,
     show_edges=True,
-    color='white',
+    color="white",
     cmap=None,
-    screen_name="meshPeriodic.png"
+    screen_name="meshPeriodic.png",
 )
 show_example(
     filename=example_path + "Mesh/mmg/finalmesh.vtk",
     screenshot=True,
     show_edges=True,
-    color='white',
+    color="white",
     cmap=None,
-    screen_name="mmg.png"
+    screen_name="mmg.png",
 )
 
 

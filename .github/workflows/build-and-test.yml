@@ -28,7 +28,7 @@ jobs:
         run: sudo apt-get install libglu1-mesa
 
       - name: Install
-        run: pip install .[test]
+        run: pip install .[dev]
 
       - name: Test
         run: pytest tests --cov-report term-missing --cov=microgen --numprocesses=auto

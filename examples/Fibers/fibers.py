@@ -1,10 +1,7 @@
-import os
-import numpy as np
 import cadquery as cq
-from microgen import (
-    Cylinder
-)
-import progressbar # pip install progressbar2
+import progressbar  # pip install progressbar2
+
+from microgen import Cylinder
 
 
 def read_csv(filename):
@@ -16,7 +13,7 @@ def read_csv(filename):
     theta = []
     aspect_ratio = []
     index = []
-    with open(filename, "r") as f:
+    with open(filename) as f:
         f.readline()
         f.readline()
         for line in f:
@@ -49,9 +46,12 @@ bar = progressbar.ProgressBar(max_value=len(x))
 for i in range(len(x)):
     height = 250.0  # constant length = 150-350 µm (250) ou aléatoire
     radius = 0.5 * diameter[i]
-    elem = Cylinder(center=(x[i], y[i], z[i]), orientation=(psi[i], theta[i], phi[i]),
-                    height=height,
-                    radius=radius)
+    elem = Cylinder(
+        center=(x[i], y[i], z[i]),
+        orientation=(psi[i], theta[i], phi[i]),
+        height=height,
+        radius=radius,
+    )
     shapes.append(elem.generate())
     bar.update(i)
 

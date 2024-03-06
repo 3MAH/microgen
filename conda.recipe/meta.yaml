@@ -13,7 +13,7 @@ build:
 requirements:
   host:
     - python >=3.8
-    - pip    
+    - pip
   run:
     - python >=3.8
     - numpy

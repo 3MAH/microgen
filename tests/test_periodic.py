@@ -1,6 +1,6 @@
-from microgen import periodic, Rve, shape, Phase
-
 import pytest
+
+from microgen import Phase, Rve, periodic, shape
 
 
 def generate_sphere(x, y, z, rve):

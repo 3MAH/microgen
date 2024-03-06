@@ -1,5 +1,3 @@
-import pyvista as pv
-
 from microgen import SphericalTpms
 from microgen.shape.surface_functions import gyroid
 
