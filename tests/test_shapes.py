@@ -365,7 +365,7 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: st
 
 @pytest.mark.parametrize("part_type", ["lower skeletal", "upper skeletal", "sheet"])
 def test_tpms_given_max_density_must_return_corresponding_offset(
-    part_type: Literal["sheet", "lower skeletal", "upper skeletal"]
+    part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
 ):
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,

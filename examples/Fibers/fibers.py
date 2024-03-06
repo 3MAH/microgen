@@ -1,7 +1,4 @@
-import os
-
 import cadquery as cq
-import numpy as np
 import progressbar  # pip install progressbar2
 
 from microgen import Cylinder

@@ -1,6 +1,6 @@
 import cadquery as cq
 
-from microgen import Neper, Phase, Polyhedron, Tpms, mesh, parseNeper
+from microgen import Neper, Phase, Tpms, mesh
 from microgen.shape import surface_functions
 
 # We import the Polyhedra from Neper tessellation file

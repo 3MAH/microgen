@@ -3,6 +3,7 @@
 Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 =============================================
 """
+
 from typing import Tuple
 
 import cadquery as cq

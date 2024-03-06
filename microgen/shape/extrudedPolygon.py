@@ -3,6 +3,7 @@
 Extruded Polygon (:mod:`microgen.shape.extrudedPolygon`)
 ========================================================
 """
+
 from typing import Sequence, Tuple
 
 import cadquery as cq

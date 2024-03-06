@@ -18,7 +18,6 @@ Shape (:mod:`microgen.shape`)
 
 from typing import Any, Dict, Tuple
 
-from . import surface_functions
 from .basicGeometry import BasicGeometry
 from .box import Box
 from .capsule import Capsule
@@ -27,7 +26,7 @@ from .ellipsoid import Ellipsoid
 from .extrudedPolygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
 from .sphere import Sphere
-from .tpms import CylindricalTpms, SphericalTpms, Tpms
+from .tpms import Tpms
 
 
 def newGeometry(

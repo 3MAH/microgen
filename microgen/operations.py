@@ -8,7 +8,6 @@ from typing import List, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
-import OCP
 import pyvista as pv
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain

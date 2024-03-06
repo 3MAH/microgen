@@ -1,6 +1,6 @@
 import cadquery as cq
 
-from microgen import Neper, Phase, Polyhedron, Rve, mesh, parseNeper
+from microgen import Neper, Phase, mesh
 
 # # We import the Polyhedra from Neper tessellation file
 # listPolyhedra, seed, vertices, edges, faces, polys = parseNeper("test1")
