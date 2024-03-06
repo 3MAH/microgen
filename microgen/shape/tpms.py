@@ -11,7 +11,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 """
 import logging
-from typing import Callable, List, Union, Sequence, Literal, Optional
+from typing import Callable, List, Literal, Optional, Sequence, Union
 
 import cadquery as cq
 import numpy as np
@@ -19,7 +19,8 @@ import pyvista as pv
 from scipy.optimize import root_scalar
 
 from microgen.shape.basicGeometry import BasicGeometry
-from ..operations import fuseShapes, rescale, repeatShape
+
+from ..operations import fuseShapes, repeatShape, rescale, rotateEuler, rotatePvEuler
 from ..rve import Rve
 
 logging.basicConfig(level=logging.INFO)
@@ -544,24 +545,17 @@ class Tpms(BasicGeometry):
 
         shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
 
-        # if not np.array_equal(self.cell_size, np.array([1.0, 1.0, 1.0])):
-        #     shape = rescale(shape=shape, scale=self.cell_size)
-
-        # if not np.array_equal(self.repeat_cell, np.array([1, 1, 1])):
-        #     shape = repeatShape(
-        #         unit_geom=shape,
-        #         rve=Rve(
-        #             dim_x=self.cell_size[0],
-        #             dim_y=self.cell_size[1],
-        #             dim_z=self.cell_size[2],
-        #             center=self.center,
-        #         ),
-        #         grid=self.repeat_cell,
-        #     )
-
         density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
         logging.info(f"TPMS density = {density:.2%}")
-        return shape
+
+        shape = rotateEuler(
+            obj=shape,
+            center=(0, 0, 0),
+            psi=self.orientation[0],
+            theta=self.orientation[1],
+            phi=self.orientation[2],
+        )
+        return shape.translate(self.center)
 
     def generateVtk(
         self,
@@ -591,7 +585,15 @@ class Tpms(BasicGeometry):
         polydata = polydata.clean().triangulate()
         density = polydata.volume / self.grid.volume
         logging.info(f"TPMS density = {density:.2%}")
-        return polydata
+
+        polydata = rotatePvEuler(
+            polydata,
+            center=(0, 0, 0),
+            psi=self.orientation[0],
+            theta=self.orientation[1],
+            phi=self.orientation[2],
+        )
+        return polydata.translate(xyz=self.center)
 
 
 class CylindricalTpms(Tpms):
