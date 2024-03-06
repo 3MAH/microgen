@@ -59,3 +59,10 @@ filterwarnings = [
     # Ignore deprecation warnings from numpy
     "ignore:.* is a deprecated alias for .*:DeprecationWarning",
 ]
+
+[[tool.mypy.overrides]]
+module = [
+    "gmsh",
+    "scipy.spatial"
+]
+ignore_missing_imports = true
