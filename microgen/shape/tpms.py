@@ -23,8 +23,7 @@ from scipy.optimize import root_scalar
 
 from microgen.shape.basicGeometry import BasicGeometry
 
-from ..operations import fuseShapes, repeatShape, rescale
-from ..rve import Rve
+from ..operations import fuseShapes, rotateEuler, rotatePvEuler
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]

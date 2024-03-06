@@ -4,6 +4,14 @@
 *.egg-info
 **/__pycache__
 .coverage
+.mypy_cache
+.pytest_cache
+.venv*
+.vscode
+*.pyc
+/prof
+
+
 *.stl
 *.vtk
 *.step

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from inspect import getmembers, isfunction
-from typing import Literal, Type
+from typing import Literal, Tuple, Type
 
 import cadquery as cq
 import numpy as np
