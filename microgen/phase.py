@@ -1,8 +1,10 @@
 """
 Phase class to manage list of solids belonging to the same phase
 """
+
 from __future__ import annotations
 
+from typing import List, Optional, Sequence, Tuple
 from typing import List, Optional, Sequence, Tuple
 
 import cadquery as cq
@@ -246,7 +248,7 @@ class Phase:
 
     def rasterize(
         self, rve: Rve, grid: List[int], phasePerRaster: bool = True
-    ) -> Optional[List[Phase]]:
+    ) -> Optional[List["Phase"]]:
         """
         Rasters solids from phase according to the rve divided by the given grid
 
@@ -268,7 +270,7 @@ class Phase:
     @classmethod
     def generatePhasePerRaster(
         cls, solidList: List[cq.Solid], rve: Rve, grid: List[int]
-    ) -> List[Phase]:
+    ) -> List["Phase"]:
         """
         Rasters solids from phase according to the rve divided by the given grid
 

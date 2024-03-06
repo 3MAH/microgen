@@ -6,9 +6,9 @@ Functions related to external software
 .. _Neper - Polycrystal Generation and Meshing: https://neper.info/
 .. _mmg - Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
 """
+
 from __future__ import annotations
 
-import os
 import subprocess
 from typing import Dict, List, Tuple
 

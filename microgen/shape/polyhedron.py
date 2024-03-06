@@ -3,6 +3,7 @@
 Polyhedron (:mod:`microgen.shape.polyhedron`)
 =============================================
 """
+
 import copy
 from typing import Dict, Tuple
 

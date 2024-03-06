@@ -476,3 +476,35 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
 
     sheet = tpms.generateVtk(type_part="sheet").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
+
+
+def test_tpms_center_and_orientation_must_correspond():
+    center = (1.0, -2.0, 3.0)
+    orientation = (np.pi / 3, -np.pi / 4, np.pi / 5)
+
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        center=center,
+        orientation=orientation,
+    )
+    vtk_sheet = tpms.generateVtk(type_part="sheet")
+    cad_sheet = tpms.generate(type_part="sheet")
+
+    no_orientation = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        center=center,
+    )
+
+    assert np.allclose(vtk_sheet.center, center)
+    assert np.allclose(cad_sheet.Center().toTuple(), center, rtol=1e-3)
+
+    bbox = cad_sheet.BoundingBox()
+    bounds = (bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax, bbox.zmin, bbox.zmax)
+    assert np.allclose(bounds, vtk_sheet.bounds)
+
+    assert not np.allclose(
+        vtk_sheet.bounds,
+        no_orientation.generateVtk(type_part="sheet").bounds,
+    )
