@@ -14,6 +14,13 @@ repos:
   - id: check-xml
   - id: detect-private-key
 
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.3.0
+  hooks:
+    - id: ruff
+      args: [--fix]
+    - id: ruff-format
+
 - repo: https://github.com/psf/black
   rev: 23.9.1
   hooks:
@@ -57,7 +64,16 @@ repos:
   hooks:
     - id: check-github-workflows
 
-- repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
-  rev: v1.0.5
-  hooks:
-    - id: python-bandit-vulnerability-check
+# - repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
+#   rev: v1.0.5
+#   hooks:
+#     - id: python-bandit-vulnerability-check
+
+- id: bandit
+  name: bandit
+  description: 'Bandit is a tool for finding common security issues in Python code'
+  entry: bandit
+  language: python
+  language_version: python3
+  types: [python]
+  require_serial: true
