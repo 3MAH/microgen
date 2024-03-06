@@ -26,6 +26,8 @@ dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
 [project.optional-dependencies]
 dev = [
+    'pre-commit',
+    'ruff',
     'black',
     'isort',
     "OCP-stubs@git+https://github.com/CadQuery/OCP-stubs.git",
@@ -71,8 +73,5 @@ filterwarnings = [
 ]
 
 [[tool.mypy.overrides]]
-module = [
-    "gmsh",
-    "scipy.spatial"
-]
+module = ["gmsh", "scipy.spatial"]
 ignore_missing_imports = true
