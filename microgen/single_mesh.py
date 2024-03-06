@@ -3,7 +3,7 @@ Cubic mesh for FE
 """
 
 import warnings
-from typing import Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -23,20 +23,20 @@ class SingleMesh:
     """
 
     def __init__(
-            self,
-            nodes_coords: npt.NDArray[np.float_],
-            elements: dict[pv.CellType, npt.NDArray[np.int_]],
-            nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+        self,
+        nodes_coords: npt.NDArray[np.float_],
+        elements: Dict[pv.CellType, npt.NDArray[np.int_]],
+        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
         self.nodes_coords = nodes_coords
         self.elements = elements  # element dictionary
         self._pvmesh: Optional[pv.UnstructuredGrid] = None
-        self.nodes_indices = (
-            nodes_indices  # indices of nodes
-        )
+        self.nodes_indices = nodes_indices  # indices of nodes
         self._surface: Optional[pv.PolyData] = None
 
-    def _to_cells_and_celltype(self) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+    def _to_cells_and_celltype(
+        self,
+    ) -> Tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
         """
         Returns a numpy array, with the indices of the cells
         The “padding” indicating the number of points per cell is introduced
@@ -97,7 +97,6 @@ class SingleMesh:
         elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
         return SingleMesh(pvmesh.points, elements)
 
-
     @staticmethod
     def read(filename: str):
         """Build a SingleMesh from a pyvista mesh file. This function uses the pyvista load method.
@@ -113,7 +112,7 @@ class SingleMesh:
 
     @property
     def pvmesh(
-            self,
+        self,
     ) -> pv.UnstructuredGrid:
         """
         Return the pyvista mesh (UnstructuredGrid) of the considered SingleMesh
@@ -126,7 +125,7 @@ class SingleMesh:
 
     @property
     def surface(
-            self,
+        self,
     ) -> pv.PolyData:
         """
         Return the surface mesh of the considered mesh
@@ -139,7 +138,7 @@ class SingleMesh:
         return self._surface
 
     def _extract_surface(
-            self,
+        self,
     ) -> pv.PolyData:
         """
         extract the surface mesh of a pv.UnstructuredGrid (stored in self.mesh) using the pyvista extract_surface filter
@@ -176,10 +175,19 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
     # 25:'hex20'
 
     set_elm1d_type = {pv.CellType.LINE, pv.CellType.QUADRATIC_EDGE}
-    set_elm2d_type = {pv.CellType.TRIANGLE, pv.CellType.QUAD, pv.CellType.QUADRATIC_TRIANGLE,
-                      pv.CellType.QUADRATIC_QUAD}
-    set_elm3d_type_other_than_linear_tetra = {pv.CellType.HEXAHEDRON, pv.CellType.WEDGE, pv.CellType.PYRAMID,
-                                              pv.CellType.QUADRATIC_TETRA, pv.CellType.QUADRATIC_HEXAHEDRON}
+    set_elm2d_type = {
+        pv.CellType.TRIANGLE,
+        pv.CellType.QUAD,
+        pv.CellType.QUADRATIC_TRIANGLE,
+        pv.CellType.QUADRATIC_QUAD,
+    }
+    set_elm3d_type_other_than_linear_tetra = {
+        pv.CellType.HEXAHEDRON,
+        pv.CellType.WEDGE,
+        pv.CellType.PYRAMID,
+        pv.CellType.QUADRATIC_TETRA,
+        pv.CellType.QUADRATIC_HEXAHEDRON,
+    }
 
     set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
 

@@ -3,7 +3,7 @@ Cubic mesh for FE
 """
 
 import warnings
-from typing import Optional, NamedTuple, Union
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -34,9 +34,10 @@ class ClosestCellsOnBoundaries(NamedTuple):
     rays from one face's nodes with the opposing face
     :param closest_opposing_cells_id: list of closest cells identification number on opposing face
     """
+
     cells_id: npt.NDArray[np.int_]
     intersection_point_coords: npt.NDArray[np.float_]
-    closest_opposing_cells_id: list[npt.NDArray[np.int_]]
+    closest_opposing_cells_id: List[npt.NDArray[np.int_]]
 
 
 class BoxMesh(SingleMesh):
@@ -48,10 +49,10 @@ class BoxMesh(SingleMesh):
     """
 
     def __init__(
-            self,
-            nodes_coords: npt.NDArray[np.float_],
-            elements: dict[pv.CellType, npt.NDArray[np.int_]],
-            nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+        self,
+        nodes_coords: npt.NDArray[np.float_],
+        elements: Dict[pv.CellType, npt.NDArray[np.int_]],
+        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
         super().__init__(
             nodes_coords=nodes_coords,
@@ -85,8 +86,8 @@ class BoxMesh(SingleMesh):
         return BoxMesh(pvmesh.points, elements)
 
     def _construct(
-            self,
-            tol: float = 1.0e-8,
+        self,
+        tol: float = 1.0e-8,
     ) -> None:
         """
         Construct a box Mesh with list of points in faces (excluding edges), edges (excluding corners) and corners.
@@ -95,7 +96,9 @@ class BoxMesh(SingleMesh):
         """
 
         crd = self.nodes_coords
-        closest_point_to_rve_center = np.linalg.norm(crd - self.rve.center, axis=1).argmin()
+        closest_point_to_rve_center = np.linalg.norm(
+            crd - self.rve.center, axis=1
+        ).argmin()
         self.center = crd[closest_point_to_rve_center]
 
         face_list_xm = np.where(np.abs(crd[:, 0] - self.rve.x_min) < tol)[0]
@@ -107,44 +110,20 @@ class BoxMesh(SingleMesh):
         face_list_zm = np.where(np.abs(crd[:, 2] - self.rve.z_min) < tol)[0]
         face_list_zp = np.where(np.abs(crd[:, 2] - self.rve.z_max) < tol)[0]
 
-        edge_list_xm_ym = np.intersect1d(
-            face_list_xm, face_list_ym, assume_unique=True
-        )
-        edge_list_xp_ym = np.intersect1d(
-            face_list_xp, face_list_ym, assume_unique=True
-        )
-        edge_list_xp_yp = np.intersect1d(
-            face_list_xp, face_list_yp, assume_unique=True
-        )
-        edge_list_xm_yp = np.intersect1d(
-            face_list_xm, face_list_yp, assume_unique=True
-        )
+        edge_list_xm_ym = np.intersect1d(face_list_xm, face_list_ym, assume_unique=True)
+        edge_list_xp_ym = np.intersect1d(face_list_xp, face_list_ym, assume_unique=True)
+        edge_list_xp_yp = np.intersect1d(face_list_xp, face_list_yp, assume_unique=True)
+        edge_list_xm_yp = np.intersect1d(face_list_xm, face_list_yp, assume_unique=True)
 
-        edge_list_xm_zm = np.intersect1d(
-            face_list_xm, face_list_zm, assume_unique=True
-        )
-        edge_list_xp_zm = np.intersect1d(
-            face_list_xp, face_list_zm, assume_unique=True
-        )
-        edge_list_xp_zp = np.intersect1d(
-            face_list_xp, face_list_zp, assume_unique=True
-        )
-        edge_list_xm_zp = np.intersect1d(
-            face_list_xm, face_list_zp, assume_unique=True
-        )
+        edge_list_xm_zm = np.intersect1d(face_list_xm, face_list_zm, assume_unique=True)
+        edge_list_xp_zm = np.intersect1d(face_list_xp, face_list_zm, assume_unique=True)
+        edge_list_xp_zp = np.intersect1d(face_list_xp, face_list_zp, assume_unique=True)
+        edge_list_xm_zp = np.intersect1d(face_list_xm, face_list_zp, assume_unique=True)
 
-        edge_list_ym_zm = np.intersect1d(
-            face_list_ym, face_list_zm, assume_unique=True
-        )
-        edge_list_yp_zm = np.intersect1d(
-            face_list_yp, face_list_zm, assume_unique=True
-        )
-        edge_list_yp_zp = np.intersect1d(
-            face_list_yp, face_list_zp, assume_unique=True
-        )
-        edge_list_ym_zp = np.intersect1d(
-            face_list_ym, face_list_zp, assume_unique=True
-        )
+        edge_list_ym_zm = np.intersect1d(face_list_ym, face_list_zm, assume_unique=True)
+        edge_list_yp_zm = np.intersect1d(face_list_yp, face_list_zm, assume_unique=True)
+        edge_list_yp_zp = np.intersect1d(face_list_yp, face_list_zp, assume_unique=True)
+        edge_list_ym_zp = np.intersect1d(face_list_ym, face_list_zp, assume_unique=True)
 
         # extract corners from the intersection of edges
         corner_list_xm_ym_zm = np.intersect1d(
@@ -186,44 +165,20 @@ class BoxMesh(SingleMesh):
             )
         )
 
-        edge_list_xm_ym = np.setdiff1d(
-            edge_list_xm_ym, all_corners, assume_unique=True
-        )
-        edge_list_xp_ym = np.setdiff1d(
-            edge_list_xp_ym, all_corners, assume_unique=True
-        )
-        edge_list_xp_yp = np.setdiff1d(
-            edge_list_xp_yp, all_corners, assume_unique=True
-        )
-        edge_list_xm_yp = np.setdiff1d(
-            edge_list_xm_yp, all_corners, assume_unique=True
-        )
+        edge_list_xm_ym = np.setdiff1d(edge_list_xm_ym, all_corners, assume_unique=True)
+        edge_list_xp_ym = np.setdiff1d(edge_list_xp_ym, all_corners, assume_unique=True)
+        edge_list_xp_yp = np.setdiff1d(edge_list_xp_yp, all_corners, assume_unique=True)
+        edge_list_xm_yp = np.setdiff1d(edge_list_xm_yp, all_corners, assume_unique=True)
 
-        edge_list_xm_zm = np.setdiff1d(
-            edge_list_xm_zm, all_corners, assume_unique=True
-        )
-        edge_list_xp_zm = np.setdiff1d(
-            edge_list_xp_zm, all_corners, assume_unique=True
-        )
-        edge_list_xp_zp = np.setdiff1d(
-            edge_list_xp_zp, all_corners, assume_unique=True
-        )
-        edge_list_xm_zp = np.setdiff1d(
-            edge_list_xm_zp, all_corners, assume_unique=True
-        )
+        edge_list_xm_zm = np.setdiff1d(edge_list_xm_zm, all_corners, assume_unique=True)
+        edge_list_xp_zm = np.setdiff1d(edge_list_xp_zm, all_corners, assume_unique=True)
+        edge_list_xp_zp = np.setdiff1d(edge_list_xp_zp, all_corners, assume_unique=True)
+        edge_list_xm_zp = np.setdiff1d(edge_list_xm_zp, all_corners, assume_unique=True)
 
-        edge_list_ym_zm = np.setdiff1d(
-            edge_list_ym_zm, all_corners, assume_unique=True
-        )
-        edge_list_yp_zm = np.setdiff1d(
-            edge_list_yp_zm, all_corners, assume_unique=True
-        )
-        edge_list_yp_zp = np.setdiff1d(
-            edge_list_yp_zp, all_corners, assume_unique=True
-        )
-        edge_list_ym_zp = np.setdiff1d(
-            edge_list_ym_zp, all_corners, assume_unique=True
-        )
+        edge_list_ym_zm = np.setdiff1d(edge_list_ym_zm, all_corners, assume_unique=True)
+        edge_list_yp_zm = np.setdiff1d(edge_list_yp_zm, all_corners, assume_unique=True)
+        edge_list_yp_zp = np.setdiff1d(edge_list_yp_zp, all_corners, assume_unique=True)
+        edge_list_ym_zp = np.setdiff1d(edge_list_ym_zp, all_corners, assume_unique=True)
 
         all_edges_corners = np.hstack(
             (
@@ -243,63 +198,27 @@ class BoxMesh(SingleMesh):
             )
         )
 
-        face_list_xm = np.setdiff1d(
-            face_list_xm, all_edges_corners, assume_unique=True
-        )
-        face_list_xp = np.setdiff1d(
-            face_list_xp, all_edges_corners, assume_unique=True
-        )
-        face_list_ym = np.setdiff1d(
-            face_list_ym, all_edges_corners, assume_unique=True
-        )
-        face_list_yp = np.setdiff1d(
-            face_list_yp, all_edges_corners, assume_unique=True
-        )
-        face_list_zm = np.setdiff1d(
-            face_list_zm, all_edges_corners, assume_unique=True
-        )
-        face_list_zp = np.setdiff1d(
-            face_list_zp, all_edges_corners, assume_unique=True
-        )
+        face_list_xm = np.setdiff1d(face_list_xm, all_edges_corners, assume_unique=True)
+        face_list_xp = np.setdiff1d(face_list_xp, all_edges_corners, assume_unique=True)
+        face_list_ym = np.setdiff1d(face_list_ym, all_edges_corners, assume_unique=True)
+        face_list_yp = np.setdiff1d(face_list_yp, all_edges_corners, assume_unique=True)
+        face_list_zm = np.setdiff1d(face_list_zm, all_edges_corners, assume_unique=True)
+        face_list_zp = np.setdiff1d(face_list_zp, all_edges_corners, assume_unique=True)
 
-        edge_list_xm_ym = edge_list_xm_ym[
-            np.argsort(crd[edge_list_xm_ym, 2])
-        ]
-        edge_list_xp_ym = edge_list_xp_ym[
-            np.argsort(crd[edge_list_xp_ym, 2])
-        ]
-        edge_list_xp_yp = edge_list_xp_yp[
-            np.argsort(crd[edge_list_xp_yp, 2])
-        ]
-        edge_list_xm_yp = edge_list_xm_yp[
-            np.argsort(crd[edge_list_xm_yp, 2])
-        ]
+        edge_list_xm_ym = edge_list_xm_ym[np.argsort(crd[edge_list_xm_ym, 2])]
+        edge_list_xp_ym = edge_list_xp_ym[np.argsort(crd[edge_list_xp_ym, 2])]
+        edge_list_xp_yp = edge_list_xp_yp[np.argsort(crd[edge_list_xp_yp, 2])]
+        edge_list_xm_yp = edge_list_xm_yp[np.argsort(crd[edge_list_xm_yp, 2])]
 
-        edge_list_xm_zm = edge_list_xm_zm[
-            np.argsort(crd[edge_list_xm_zm, 1])
-        ]
-        edge_list_xp_zm = edge_list_xp_zm[
-            np.argsort(crd[edge_list_xp_zm, 1])
-        ]
-        edge_list_xp_zp = edge_list_xp_zp[
-            np.argsort(crd[edge_list_xp_zp, 1])
-        ]
-        edge_list_xm_zp = edge_list_xm_zp[
-            np.argsort(crd[edge_list_xm_zp, 1])
-        ]
+        edge_list_xm_zm = edge_list_xm_zm[np.argsort(crd[edge_list_xm_zm, 1])]
+        edge_list_xp_zm = edge_list_xp_zm[np.argsort(crd[edge_list_xp_zm, 1])]
+        edge_list_xp_zp = edge_list_xp_zp[np.argsort(crd[edge_list_xp_zp, 1])]
+        edge_list_xm_zp = edge_list_xm_zp[np.argsort(crd[edge_list_xm_zp, 1])]
 
-        edge_list_ym_zm = edge_list_ym_zm[
-            np.argsort(crd[edge_list_ym_zm, 0])
-        ]
-        edge_list_yp_zm = edge_list_yp_zm[
-            np.argsort(crd[edge_list_yp_zm, 0])
-        ]
-        edge_list_yp_zp = edge_list_yp_zp[
-            np.argsort(crd[edge_list_yp_zp, 0])
-        ]
-        edge_list_ym_zp = edge_list_ym_zp[
-            np.argsort(crd[edge_list_ym_zp, 0])
-        ]
+        edge_list_ym_zm = edge_list_ym_zm[np.argsort(crd[edge_list_ym_zm, 0])]
+        edge_list_yp_zm = edge_list_yp_zm[np.argsort(crd[edge_list_yp_zm, 0])]
+        edge_list_yp_zp = edge_list_yp_zp[np.argsort(crd[edge_list_yp_zp, 0])]
+        edge_list_ym_zp = edge_list_ym_zp[np.argsort(crd[edge_list_ym_zp, 0])]
 
         decimal_round = int(-np.log10(tol) - 1)
         face_list_xm = face_list_xm[
@@ -387,7 +306,7 @@ class BoxMesh(SingleMesh):
         }
 
     def _build_rve(
-            self,
+        self,
     ) -> Rve:
         """
         build a representative volume element (Rve) of the considered mesh from its bounding box
@@ -397,15 +316,16 @@ class BoxMesh(SingleMesh):
         if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._pvmesh = self.to_pyvista()
         xmin, xmax, ymin, ymax, zmin, zmax = self._pvmesh.bounds
-        return Rve.from_min_max(float(xmin), float(xmax), float(ymin),
-                                float(ymax), float(zmin), float(zmax))
+        return Rve.from_min_max(
+            float(xmin), float(xmax), float(ymin), float(ymax), float(zmin), float(zmax)
+        )
 
     def _closest_points_on_faces(
-            self,
-            k_neighbours: int = 3,
-            rve: Optional[Rve] = None,
-            tol: float = 1.0e-8,
-    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+        self,
+        k_neighbours: int = 3,
+        rve: Optional[Rve] = None,
+        tol: float = 1.0e-8,
+    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite face to write interpolation relationship
         if a displacement condition between pair nodes is defined on such opposite surfaces
@@ -522,10 +442,10 @@ class BoxMesh(SingleMesh):
         }
 
     def _closest_points_on_edges(
-            self,
-            rve: Optional[Rve] = None,
-            tol: float = 1.0e-8,
-    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+        self,
+        rve: Optional[Rve] = None,
+        tol: float = 1.0e-8,
+    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite edges to write interpolation relationship
         if a displacement condition between pair nodes is defined on such opposite surfaces
@@ -540,33 +460,69 @@ class BoxMesh(SingleMesh):
         crd = self.nodes_coords
 
         all_edge_xp_ym = np.hstack(
-            (self.edges["edge_xp_ym"], self.corners["corner_xp_ym_zm"], self.corners["corner_xp_ym_zp"])
+            (
+                self.edges["edge_xp_ym"],
+                self.corners["corner_xp_ym_zm"],
+                self.corners["corner_xp_ym_zp"],
+            )
         )
         all_edge_xp_yp = np.hstack(
-            (self.edges["edge_xp_yp"], self.corners["corner_xp_yp_zm"], self.corners["corner_xp_yp_zp"])
+            (
+                self.edges["edge_xp_yp"],
+                self.corners["corner_xp_yp_zm"],
+                self.corners["corner_xp_yp_zp"],
+            )
         )
         all_edge_xm_yp = np.hstack(
-            (self.edges["edge_xm_yp"], self.corners["corner_xm_yp_zm"], self.corners["corner_xm_yp_zp"])
+            (
+                self.edges["edge_xm_yp"],
+                self.corners["corner_xm_yp_zm"],
+                self.corners["corner_xm_yp_zp"],
+            )
         )
 
         all_edge_xp_zm = np.hstack(
-            (self.edges["edge_xp_zm"], self.corners["corner_xp_ym_zm"], self.corners["corner_xp_yp_zm"])
+            (
+                self.edges["edge_xp_zm"],
+                self.corners["corner_xp_ym_zm"],
+                self.corners["corner_xp_yp_zm"],
+            )
         )
         all_edge_xp_zp = np.hstack(
-            (self.edges["edge_xp_zp"], self.corners["corner_xp_ym_zp"], self.corners["corner_xp_yp_zp"])
+            (
+                self.edges["edge_xp_zp"],
+                self.corners["corner_xp_ym_zp"],
+                self.corners["corner_xp_yp_zp"],
+            )
         )
         all_edge_xm_zp = np.hstack(
-            (self.edges["edge_xm_zp"], self.corners["corner_xm_ym_zp"], self.corners["corner_xm_yp_zp"])
+            (
+                self.edges["edge_xm_zp"],
+                self.corners["corner_xm_ym_zp"],
+                self.corners["corner_xm_yp_zp"],
+            )
         )
 
         all_edge_yp_zm = np.hstack(
-            (self.edges["edge_ym_zm"], self.corners["corner_xm_yp_zm"], self.corners["corner_xp_yp_zm"])
+            (
+                self.edges["edge_ym_zm"],
+                self.corners["corner_xm_yp_zm"],
+                self.corners["corner_xp_yp_zm"],
+            )
         )
         all_edge_yp_zp = np.hstack(
-            (self.edges["edge_yp_zp"], self.corners["corner_xm_yp_zp"], self.corners["corner_xp_yp_zp"])
+            (
+                self.edges["edge_yp_zp"],
+                self.corners["corner_xm_yp_zp"],
+                self.corners["corner_xp_yp_zp"],
+            )
         )
         all_edge_ym_zp = np.hstack(
-            (self.edges["edge_ym_zp"], self.corners["corner_xm_ym_zp"], self.corners["corner_xp_ym_zp"])
+            (
+                self.edges["edge_ym_zp"],
+                self.corners["corner_xm_ym_zp"],
+                self.corners["corner_xp_ym_zp"],
+            )
         )
 
         kd_trees = [
@@ -651,11 +607,11 @@ class BoxMesh(SingleMesh):
         }
 
     def closest_points_on_boundaries(
-            self,
-            k_neighbours: int = 3,
-            rve: Optional[Rve] = None,
-            tol: float = 1.0e-8,
-    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+        self,
+        k_neighbours: int = 3,
+        rve: Optional[Rve] = None,
+        tol: float = 1.0e-8,
+    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on faces and edges to write interpolation relationship
         if a displacement condition between pair nodes is defined
@@ -675,10 +631,10 @@ class BoxMesh(SingleMesh):
         return closest_points_on_boundaries
 
     def boundary_elements(
-            self,
-            rve: Optional[Rve] = None,
-            tol: float = 1.0e-4,
-    ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
+        self,
+        rve: Optional[Rve] = None,
+        tol: float = 1.0e-4,
+    ) -> Tuple[pv.PolyData, npt.NDArray[np.int_]]:
         """
         Finds boundary elements of mesh with given tolerance
 
@@ -731,10 +687,10 @@ class BoxMesh(SingleMesh):
         return boundary_elements, boundary_elements["CellIDs"]
 
     def closest_cells_on_boundaries(
-            self,
-            rve: Optional[Rve] = None,
-            tol: float = 1.0e-8,
-    ) -> dict[str, ClosestCellsOnBoundaries]:
+        self,
+        rve: Optional[Rve] = None,
+        tol: float = 1.0e-8,
+    ) -> Dict[str, ClosestCellsOnBoundaries]:
         """
         Find the cells to which a given point belongs to by using a ray tracing normal to the face on which it belongs
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box

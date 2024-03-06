@@ -1,12 +1,12 @@
 from __future__ import annotations
+
 import os
-import pytest
 from inspect import getmembers, isfunction
-from typing import Type, Literal, Tuple
+from typing import Literal, Tuple, Type
 
 import cadquery as cq
 import numpy as np
-
+import pytest
 import microgen
 
 

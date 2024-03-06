@@ -1,6 +1,7 @@
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
+from typing import List
 
 import pyvista as pv
 
@@ -122,7 +123,7 @@ def _remove_unnecessary_fields_from_mesh_file(
         output_file.write("End\n")
 
 
-def _only_numbers_in_line(str_list: list[str]) -> bool:
+def _only_numbers_in_line(str_list: List[str]) -> bool:
     return all(not flag.isalpha() for flag in str_list)
 
 
