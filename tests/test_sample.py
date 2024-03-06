@@ -14,7 +14,7 @@ except (subprocess.CalledProcessError, FileNotFoundError):
 
 
 def test_misc():
-    if USE_NEPER == True:
+    if USE_NEPER:
         if platform != "win32":
             microgen.Neper.run(
                 filename="tests/data/neper.tess", nbCell=2, dimCube=(1, 1, 1)

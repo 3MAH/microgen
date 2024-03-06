@@ -81,7 +81,7 @@ def _generate_mesh_with_boundary_triangles(
 
 def _get_number_of_boundary_triangles_from_boxmesh(input_mesh: BoxMesh) -> int:
     mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
-    n_boundary_triangles = mesh_boundary.n_faces
+    n_boundary_triangles = mesh_boundary.n_cells
 
     return n_boundary_triangles
 

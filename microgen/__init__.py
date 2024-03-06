@@ -1,15 +1,79 @@
 import importlib.metadata
 
-from .box_mesh import *
-from .external import *
-from .mesh import *
-from .operations import *
-from .periodic import *
-from .phase import *
-from .report import *
-from .rve import *
-from .shape import *
-from .single_mesh import *
-from .test_utils import *
+from .box_mesh import BoxMesh
+from .external import Mmg, Neper, parseNeper
+from .mesh import mesh, meshPeriodic
+from .operations import (
+    cutPhaseByShapeList,
+    cutPhases,
+    cutPhasesByShape,
+    cutShapes,
+    fuseShapes,
+    rasterPhase,
+    repeatPolyData,
+    repeatShape,
+    rescale,
+    rotateEuler,
+    rotatePvEuler,
+)
+from .periodic import periodic
+from .phase import Phase
+from .report import Report
+from .rve import Rve
+from .shape import (
+    Box,
+    Capsule,
+    Cylinder,
+    CylindricalTpms,
+    Ellipsoid,
+    ExtrudedPolygon,
+    Polyhedron,
+    Sphere,
+    SphericalTpms,
+    Tpms,
+    newGeometry,
+    surface_functions,
+)
+from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
+from .test_utils import is_periodic
 
 __version__ = importlib.metadata.version(__package__ or __name__)
+
+__all__ = [
+    "Box",
+    "BoxMesh",
+    "Capsule",
+    "Cylinder",
+    "Ellipsoid",
+    "ExtrudedPolygon",
+    "Mmg",
+    "Neper",
+    "Phase",
+    "Polyhedron",
+    "Rve",
+    "Sphere",
+    "Tpms",
+    "CylindricalTpms",
+    "SphericalTpms",
+    "check_if_only_linear_tetrahedral",
+    "cutPhaseByShapeList",
+    "cutPhases",
+    "cutPhasesByShape",
+    "cutShapes",
+    "fuseShapes",
+    "is_periodic",
+    "mesh",
+    "meshPeriodic",
+    "newGeometry",
+    "parseNeper",
+    "periodic",
+    "rasterPhase",
+    "repeatPolyData",
+    "repeatShape",
+    "rescale",
+    "rotateEuler",
+    "rotatePvEuler",
+    "Report",
+    "SingleMesh",
+    "surface_functions",
+]

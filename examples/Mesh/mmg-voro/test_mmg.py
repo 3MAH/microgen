@@ -9,7 +9,7 @@ USE_MMG = False
 try:
     subprocess.run(["mmg3d_O3", "-h"])
     USE_MMG = True
-except:
+except Exception:
     print("mmg command did not work, check if it is installed or contact a developer")
 
 if USE_MMG:

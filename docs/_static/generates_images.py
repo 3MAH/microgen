@@ -30,7 +30,7 @@ def show_example(
     plotter.add_mesh(mesh, show_edges=show_edges, color=color, cmap=cmap)
     try:
         plotter.remove_scalar_bar()
-    except:
+    except Exception:
         pass
 
     if screenshot:

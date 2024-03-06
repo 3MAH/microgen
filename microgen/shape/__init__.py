@@ -18,6 +18,7 @@ Shape (:mod:`microgen.shape`)
 
 from typing import Any, Dict, Tuple
 
+from . import surface_functions
 from .basicGeometry import BasicGeometry
 from .box import Box
 from .capsule import Capsule
@@ -26,7 +27,26 @@ from .ellipsoid import Ellipsoid
 from .extrudedPolygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
 from .sphere import Sphere
-from .tpms import Tpms
+
+# from .surface_functions import (
+#     fischerKochS,
+#     gyroid,
+#     honeycomb,
+#     honeycomb_gyroid,
+#     honeycomb_lidinoid,
+#     honeycomb_schoenIWP,
+#     honeycomb_schwarzD,
+#     honeycomb_schwarzP,
+#     lidinoid,
+#     neovius,
+#     pmy,
+#     schoenFRD,
+#     schoenIWP,
+#     schwarzD,
+#     schwarzP,
+#     split_p,
+# )
+from .tpms import CylindricalTpms, SphericalTpms, Tpms
 
 
 def newGeometry(
@@ -98,3 +118,19 @@ def newGeometry(
         return Polyhedron(dic=param_geom["dic"])
     else:
         raise ValueError(f"{shape} name not recognised")
+
+
+__all__ = [
+    "Box",
+    "Capsule",
+    "CylindricalTpms",
+    "Cylinder",
+    "Ellipsoid",
+    "ExtrudedPolygon",
+    "Polyhedron",
+    "SphericalTpms",
+    "Sphere",
+    "Tpms",
+    "newGeometry",
+    "surface_functions",
+]

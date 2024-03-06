@@ -65,6 +65,6 @@ repos:
     - id: check-github-workflows
 
 # - repo: https://github.com/PyCQA/bandit
-#   rev: v1.7.7
+#   rev: 1.7.7
 #   hooks:
-#     - id: python-bandit-vulnerability-check
+#     - id: bandit
