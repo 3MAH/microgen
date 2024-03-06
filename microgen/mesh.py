@@ -21,12 +21,12 @@ class OutputMeshNotPeriodicError(Exception):
 
 
 def mesh(
-        mesh_file: str,
-        list_phases: List[Phase],
-        size: float,
-        order: int,
-        output_file: str = "Mesh.msh",
-        msh_file_version: int = 4,
+    mesh_file: str,
+    list_phases: List[Phase],
+    size: float,
+    order: int,
+    output_file: str = "Mesh.msh",
+    msh_file_version: int = 4,
 ) -> None:
     """
     Meshes step file with gmsh with list of phases management
@@ -46,14 +46,14 @@ def mesh(
 
 
 def mesh_periodic(
-        mesh_file: str,
-        rve: Rve,
-        list_phases: List[Phase],
-        size: float,
-        order: int,
-        output_file: str = "MeshPeriodic.msh",
-        msh_file_version: int = 4,
-        tol: float = 1e-8,
+    mesh_file: str,
+    rve: Rve,
+    list_phases: List[Phase],
+    size: float,
+    order: int,
+    output_file: str = "MeshPeriodic.msh",
+    msh_file_version: int = 4,
+    tol: float = 1e-8,
 ) -> None:
     """
     Meshes periodic geometries with gmsh
@@ -76,7 +76,15 @@ def mesh_periodic(
     _check_output_mesh_periodicity(output_file, tol)
 
 
-def is_periodic(nodes_coords: npt.NDArray[np.float_], tol: float = 1e-8, dim: int = 3) -> bool:
+def is_periodic(
+    nodes_coords: npt.NDArray[np.float_], tol: float = 1e-8, dim: int = 3
+) -> bool:
+    """Checks whether a mesh is periodic, given its nodes' coordinates
+
+    :param nodes_coords: list of nodes coordinates of the analyzed mesh
+    :param tol: tolerance
+    :param dim: mesh dimension
+    """
     # bounding box
     xmax = np.max(nodes_coords[:, 0])
     xmin = np.min(nodes_coords[:, 0])
@@ -144,8 +152,8 @@ def is_periodic(nodes_coords: npt.NDArray[np.float_], tol: float = 1e-8, dim: in
     if (nodes_coords[face_xp, 1:] - nodes_coords[face_xm, 1:] > tol).any():
         return False
     if (
-            dim > 1
-            and (nodes_coords[face_yp, ::2] - nodes_coords[face_ym, ::2] > tol).any()
+        dim > 1
+        and (nodes_coords[face_yp, ::2] - nodes_coords[face_ym, ::2] > tol).any()
     ):
         return False
     if dim > 2 and (nodes_coords[face_zp, :2] - nodes_coords[face_zm, :2] > tol).any():
@@ -170,10 +178,10 @@ def _generate_list_dim_tags(list_phases: List[Phase]) -> List[Tuple[int, int]]:
 
 
 def _initialize_mesh(
-        mesh_file: str,
-        list_phases: List[Phase],
-        order: int,
-        msh_file_version: int = 4,
+    mesh_file: str,
+    list_phases: List[Phase],
+    order: int,
+    msh_file_version: int = 4,
 ) -> None:
     gmsh.initialize()
     gmsh.option.setNumber(
@@ -199,8 +207,8 @@ def _initialize_mesh(
 
 
 def _finalize_mesh(
-        size: float,
-        output_file: str = "Mesh.msh",
+    size: float,
+    output_file: str = "Mesh.msh",
 ) -> None:
     list_dim_tags: List[Tuple[int, int]] = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(dimTags=list_dim_tags, size=size)
@@ -219,8 +227,10 @@ def _check_output_mesh_periodicity(output_mesh_file: str, tol: float = 1e-8) -> 
     gmsh.finalize()
 
     if not check_periodicity:
-        raise OutputMeshNotPeriodicError("Something went wrong: output mesh from meshPeriodic is not periodic."
-                                         "\n Try changing tolerance value or mesh size parameter")
+        raise OutputMeshNotPeriodicError(
+            "Something went wrong: output mesh from meshPeriodic is not periodic."
+            "\n Try changing tolerance value or mesh size parameter"
+        )
 
 
 def _set_periodic(rve: Rve) -> None:
@@ -229,7 +239,7 @@ def _set_periodic(rve: Rve) -> None:
 
 
 def _iter_bounding_boxes(
-        minimum: _Point3D, maximum: _Point3D, eps: float
+    minimum: _Point3D, maximum: _Point3D, eps: float
 ) -> Iterator[Tuple[np.ndarray, int]]:
     entities: List[Tuple[int, int]] = gmsh.model.getEntitiesInBoundingBox(
         *np.subtract(minimum, eps), *np.add(maximum, eps), dim=2
@@ -268,7 +278,7 @@ def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, in
 
         # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)
         for bounds_max, tag_max in _iter_bounding_boxes(
-                bounds_min[0], bounds_min[1], eps
+            bounds_min[0], bounds_min[1], eps
         ):
             if np.all(np.abs(np.subtract(bounds_max, bounds_min)) < eps):
                 yield tag_min, tag_max
