@@ -16,7 +16,7 @@ cq.exporters.export(compound, "compound.step")
 
 mesh(
     mesh_file="compound.step",
-    listPhases=raster,
+    list_phases=raster,
     size=0.03,
     order=1,
     output_file="rasterEllipsoid.vtk",

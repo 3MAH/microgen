@@ -23,7 +23,7 @@ cq.exporters.export(compound, "compound.step")
 
 mesh(
     mesh_file="compound.step",
-    listPhases=phases,
+    list_phases=phases,
     size=0.05,
     order=1,
     output_file="Gyroid-voro.vtk",
