@@ -102,7 +102,7 @@ def test_shapes():
 
     microgen.mesh(
         mesh_file="tests/data/compound.step",
-        listPhases=raster,
+        list_phases=raster,
         size=0.03,
         order=1,
         output_file="tests/data/compound.msh",
