@@ -1,11 +1,19 @@
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import List
+from typing import List, Union
 
 import pyvista as pv
 
-from microgen import BoxMesh
+from microgen import BoxMesh, is_periodic
+
+
+class InputBoxMeshNotPeriodicError(Exception):
+    """Raised when the input BoxMesh is not periodic"""
+
+
+class OutputMeshNotPeriodicError(Exception):
+    """Raised when output mesh of remesh_keeping_periodicity_for_fem is not periodic"""
 
 
 def remesh_keeping_periodicity_for_fem(
@@ -13,6 +21,7 @@ def remesh_keeping_periodicity_for_fem(
     output_mesh_file: str,
     mesh_version: int = 2,
     dimension: int = 3,
+    tol: float = 1e-8,
     hausd: float = None,
     hgrad: float = None,
     hmax: float = None,
@@ -20,12 +29,13 @@ def remesh_keeping_periodicity_for_fem(
     hsiz: float = None,
 ) -> None:
     """
-    Remeshes a mesh (.mesh file format) derived from a BoxMesh using mmg while keeping periodicity
+    Remeshes a mesh derived from a BoxMesh object using mmg while keeping periodicity
 
     :param input_mesh: BoxMesh to be remeshed
     :param output_mesh_file: output file (must be .mesh)
     :param mesh_version: mesh file version (default: 2)
     :param dimension: mesh dimension (default: 3)
+    :param tol: tolerance for periodicity check
 
     The following parameters are used to control mmg remeshing, see here for more info : https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
     :param hausd: Maximal Hausdorff distance for the boundaries approximation
@@ -39,6 +49,7 @@ def remesh_keeping_periodicity_for_fem(
     ) as boundary_triangles_file, NamedTemporaryFile(
         suffix=".mesh", delete=False
     ) as raw_output_mesh_file:
+        _check_mesh_periodicity(input_mesh, tol, dimension)
         _generate_mesh_with_required_triangles(input_mesh, boundary_triangles_file.name)
         _remesh_mmg(
             input_mesh_file=boundary_triangles_file.name,
@@ -58,6 +69,25 @@ def remesh_keeping_periodicity_for_fem(
     _remove_unnecessary_fields_from_mesh_file(
         raw_output_mesh_file.name, output_mesh_file, mesh_version, dimension
     )
+    _check_mesh_periodicity(output_mesh_file, tol, dimension)
+
+
+def _check_mesh_periodicity(
+    mesh: Union[str, BoxMesh], tol: float, dimension: int
+) -> None:
+    if isinstance(mesh, BoxMesh):
+        nodes_coord = mesh.to_pyvista().points
+    elif isinstance(mesh, str):
+        pv_mesh = pv.read(mesh)
+        nodes_coord = pv_mesh.points
+    else:
+        raise TypeError(
+            "mesh parameter is neither a BoxMesh object or a mesh file string"
+        )
+    periodicity = is_periodic(nodes_coords=nodes_coord, tol=tol, dim=dimension)
+
+    if not periodicity:
+        raise InputBoxMeshNotPeriodicError("Input mesh is not periodic")
 
 
 def _generate_mesh_with_required_triangles(
