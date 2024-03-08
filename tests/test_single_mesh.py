@@ -5,11 +5,8 @@ import numpy.typing as npt
 import pytest
 import pyvista as pv
 
-from microgen import SingleMesh
-from microgen.single_mesh import (
-    NotOnlyLinearTetrahedraError,
-    check_if_only_linear_tetrahedral,
-)
+from microgen import SingleMesh, check_if_only_linear_tetrahedral
+from microgen.single_mesh import NotOnlyLinearTetrahedraError
 
 
 def compare_dict_with_arrays_as_values(

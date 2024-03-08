@@ -7,7 +7,11 @@ import numpy.typing as npt
 import pytest
 import pyvista as pv
 
-from microgen import BoxMesh, Rve, Tpms, is_periodic, remesh
+from microgen import BoxMesh, Rve, Tpms, is_periodic
+from microgen.remesh import (
+    InputBoxMeshNotPeriodicError,
+    remesh_keeping_periodicity_for_fem,
+)
 from microgen.shape.surface_functions import gyroid
 
 _MESH_DIM = 3
@@ -134,6 +138,74 @@ def fixture_gyroid_mesh() -> BoxMesh:
     return gyroid_mesh
 
 
+@pytest.fixture(name="non_periodic_box_mesh", scope="function")
+def fixture_non_periodic_box_mesh() -> BoxMesh:
+    nodes = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [0.5, 0.5, 0.5],
+            [-0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5],
+            [0.5, 0.5, -0.5],
+            [0.5, -0.5, 0.5],
+            [0.5, -0.5, -0.5],
+            [-0.5, 0.5, 0.5],
+            [-0.5, 0.5, -0.5],
+            [0.0, 0.5, 0.0],
+            [0.0, -0.5, 0.0],
+            [0.5, 0.1, 0.0],
+            [-0.5, 0.0, 0.0],
+            [0.0, 0.0, 0.5],
+            [0.0, 0.0, -0.5],
+        ]
+    )
+    elements = np.array(
+        [
+            [4, 11, 6, 0, 14],
+            [4, 0, 9, 1, 11],
+            [4, 3, 10, 0, 13],
+            [4, 9, 0, 4, 11],
+            [4, 5, 11, 0, 13],
+            [4, 0, 11, 1, 13],
+            [4, 0, 10, 5, 13],
+            [4, 11, 5, 1, 13],
+            [4, 3, 10, 2, 12],
+            [4, 6, 10, 0, 14],
+            [4, 1, 9, 4, 11],
+            [4, 10, 3, 0, 12],
+            [4, 10, 3, 5, 13],
+            [4, 0, 10, 2, 14],
+            [4, 2, 10, 0, 12],
+            [4, 4, 11, 0, 14],
+            [4, 6, 11, 4, 14],
+            [4, 10, 6, 2, 14],
+            [4, 5, 10, 0, 11],
+            [4, 0, 10, 6, 11],
+            [4, 10, 5, 6, 11],
+            [4, 7, 9, 0, 12],
+            [4, 0, 9, 8, 12],
+            [4, 9, 7, 8, 12],
+            [4, 7, 9, 1, 13],
+            [4, 1, 9, 0, 13],
+            [4, 9, 7, 0, 13],
+            [4, 0, 12, 3, 13],
+            [4, 3, 12, 7, 13],
+            [4, 12, 0, 7, 13],
+            [4, 8, 12, 2, 14],
+            [4, 2, 12, 0, 14],
+            [4, 12, 8, 0, 14],
+            [4, 8, 9, 0, 14],
+            [4, 0, 9, 4, 14],
+            [4, 9, 8, 4, 14],
+        ]
+    )
+    cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
+    grid = pv.UnstructuredGrid(elements, cell_types, nodes)
+    mesh = BoxMesh.from_pyvista(grid)
+
+    return mesh
+
+
 @pytest.mark.parametrize(
     "shape",
     [
@@ -155,11 +227,22 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
 
         # Act
 
-        remesh.remesh_keeping_periodicity_for_fem(
-            shape, tmp_output_mesh_filename, hgrad=1.05
-        )
+        remesh_keeping_periodicity_for_fem(shape, tmp_output_mesh_filename, hgrad=1.05)
 
         # Assert
         assert is_periodic(_get_mesh_nodes_coords(tmp_mesh_filename)) and is_periodic(
             _get_mesh_nodes_coords(tmp_output_mesh_filename)
         )
+
+
+def test_given_non_periodic_box_mesh_remesh_must_raise_inputmeshnotperiodicerror(
+    non_periodic_box_mesh: BoxMesh,
+    tmp_output_mesh_filename: str,
+) -> None:
+    if USE_MMG:
+        with pytest.raises(
+            InputBoxMeshNotPeriodicError, match="Input mesh is not periodic"
+        ):
+            remesh_keeping_periodicity_for_fem(
+                non_periodic_box_mesh, tmp_output_mesh_filename, hgrad=1.05
+            )
