@@ -1,7 +1,7 @@
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import List, Union
+from typing import List, Optional, Union
 
 import pyvista as pv
 
@@ -22,11 +22,11 @@ def remesh_keeping_periodicity_for_fem(
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
-    hausd: float = None,
-    hgrad: float = None,
-    hmax: float = None,
-    hmin: float = None,
-    hsiz: float = None,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
 ) -> None:
     """
     Remeshes a mesh derived from a BoxMesh object using mmg while keeping periodicity
@@ -160,11 +160,11 @@ def _only_numbers_in_line(str_list: List[str]) -> bool:
 def _remesh_mmg(
     input_mesh_file: str,
     output_mesh_file: str,
-    hausd: float = None,
-    hgrad: float = None,
-    hmax: float = None,
-    hmin: float = None,
-    hsiz: float = None,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
 ) -> None:
     mmg_system_call = [
         "mmg3d_O3",
