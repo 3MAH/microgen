@@ -438,7 +438,4 @@ def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found
 def test_given_linear_tets_only_mesh__check_if_only_linear_tetrahedral_must_not_raise_any_error(
     box_mesh_grid,
 ):
-    try:
-        check_if_only_linear_tetrahedral(box_mesh_grid)
-    except ValueError:
-        assert False
+    check_if_only_linear_tetrahedral(box_mesh_grid)
