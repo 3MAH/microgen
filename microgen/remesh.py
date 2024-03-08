@@ -28,7 +28,7 @@ def remesh_keeping_periodicity_for_fem(
     hsiz: Optional[float] = None,
 ) -> pv.UnstructuredGrid:
     """
-    Remeshes a mesh derived from a BoxMesh object using mmg while keeping periodicity
+    Remeshes a mesh using mmg while keeping periodicity
 
     :param input_mesh: BoxMesh, pv.UnstructuredGrid or pv.PolyData mesh to be remeshed
     :param mesh_version: mesh file version (default: 2)
