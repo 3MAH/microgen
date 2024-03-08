@@ -48,11 +48,14 @@ def remesh_keeping_periodicity_for_fem(
         suffix=".mesh", delete=False
     ) as boundary_triangles_file, NamedTemporaryFile(
         suffix=".mesh", delete=False
+    ) as intermediate_mesh_file, NamedTemporaryFile(
+        suffix=".mesh", delete=False
     ) as raw_output_mesh_file:
         _check_mesh_periodicity(input_mesh, tol, dimension)
         _generate_mesh_with_required_triangles(input_mesh, boundary_triangles_file.name)
+        _preremesh_mmg(boundary_triangles_file.name, intermediate_mesh_file.name)
         _remesh_mmg(
-            input_mesh_file=boundary_triangles_file.name,
+            input_mesh_file=intermediate_mesh_file.name,
             output_mesh_file=raw_output_mesh_file.name,
             hausd=hausd,
             hgrad=hgrad,
@@ -63,6 +66,7 @@ def remesh_keeping_periodicity_for_fem(
         os.remove(
             boundary_triangles_file.name
         )  # to solve compatibility issues of NamedTemporaryFiles with Windows
+        os.remove(intermediate_mesh_file.name)
     os.remove(
         raw_output_mesh_file.name.replace(".mesh", ".sol")
     )  # Remove unused .sol file created by mmg
@@ -157,6 +161,21 @@ def _only_numbers_in_line(str_list: List[str]) -> bool:
     return all(not flag.isalpha() for flag in str_list)
 
 
+def _preremesh_mmg(
+    input_mesh_file: str,
+    output_mesh_file: str,
+) -> None:
+    mmg_system_call = [
+        "mmg3d_O3",
+        "-in",
+        input_mesh_file,
+        "-out",
+        output_mesh_file,
+        "-nofem",
+    ]
+    subprocess.call(mmg_system_call)
+
+
 def _remesh_mmg(
     input_mesh_file: str,
     output_mesh_file: str,
@@ -172,6 +191,8 @@ def _remesh_mmg(
         input_mesh_file,
         "-out",
         output_mesh_file,
+        "-ls",
+        "-nr",
     ]
     if hausd:
         mmg_system_call.extend(["-hausd", str(hausd)])
