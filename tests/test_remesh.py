@@ -1,15 +1,12 @@
 import subprocess
-from pathlib import Path
 
-import gmsh
 import numpy as np
-import numpy.typing as npt
 import pytest
 import pyvista as pv
 
-from microgen import BoxMesh, Rve, Tpms, is_periodic
+from microgen import BoxMesh, Tpms, is_periodic
 from microgen.remesh import (
-    InputBoxMeshNotPeriodicError,
+    InputMeshNotPeriodicError,
     remesh_keeping_periodicity_for_fem,
 )
 from microgen.shape.surface_functions import gyroid
@@ -24,38 +21,6 @@ try:
 except (subprocess.CalledProcessError, FileNotFoundError):
     print("mmg command did not work, check if it is installed or contact a developer")
     USE_MMG = False
-
-
-def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
-    gmsh.initialize()
-    gmsh.open(mesh_name)
-
-    _, nodes_coords, _ = gmsh.model.mesh.getNodes()
-    gmsh.finalize()
-
-    nodes_coords = nodes_coords.reshape(-1, _MESH_DIM)
-
-    return nodes_coords
-
-
-@pytest.fixture(name="tmp_dir", scope="function")
-def fixture_tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    tmp_dir_name = "test_tmp_dir"
-    return tmp_path_factory.mktemp(tmp_dir_name)
-
-
-@pytest.fixture(name="tmp_mesh_filename", scope="function")
-def fixture_tmp_mesh_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "shape.mesh").as_posix()
-
-
-@pytest.fixture(name="tmp_output_mesh_filename", scope="function")
-def fixture_tmp_output_mesh_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "shape.o.mesh").as_posix()
-
-
-def _default_rve() -> Rve:
-    return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
 
 
 @pytest.fixture(name="box_mesh", scope="function")
@@ -124,7 +89,6 @@ def fixture_box_mesh() -> BoxMesh:
     }
 
     mesh = BoxMesh(nodes_array, elements_dict)
-    mesh.rve = _default_rve()
 
     return mesh
 
@@ -216,33 +180,25 @@ def fixture_non_periodic_box_mesh() -> BoxMesh:
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
     shape: BoxMesh,
     request,
-    tmp_mesh_filename: str,
-    tmp_output_mesh_filename: str,
 ) -> None:
     if USE_MMG:
         # Arrange
 
         vtk_mesh = request.getfixturevalue(shape).to_pyvista()
-        pv.save_meshio(tmp_mesh_filename, vtk_mesh)
 
         # Act
 
-        remesh_keeping_periodicity_for_fem(shape, tmp_output_mesh_filename, hgrad=1.05)
+        remeshed_vtk_mesh = remesh_keeping_periodicity_for_fem(shape, hgrad=1.05)
 
         # Assert
-        assert is_periodic(_get_mesh_nodes_coords(tmp_mesh_filename)) and is_periodic(
-            _get_mesh_nodes_coords(tmp_output_mesh_filename)
-        )
+        assert is_periodic(vtk_mesh.points) and is_periodic(remeshed_vtk_mesh.points)
 
 
 def test_given_non_periodic_box_mesh_remesh_must_raise_inputmeshnotperiodicerror(
     non_periodic_box_mesh: BoxMesh,
-    tmp_output_mesh_filename: str,
 ) -> None:
     if USE_MMG:
         with pytest.raises(
-            InputBoxMeshNotPeriodicError, match="Input mesh is not periodic"
+            InputMeshNotPeriodicError, match="Input mesh is not periodic"
         ):
-            remesh_keeping_periodicity_for_fem(
-                non_periodic_box_mesh, tmp_output_mesh_filename, hgrad=1.05
-            )
+            remesh_keeping_periodicity_for_fem(non_periodic_box_mesh, hgrad=1.05)
