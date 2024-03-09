@@ -28,11 +28,10 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
-      - name: Install uv
-        run: pip install uv
-
       - name: Install
-        run: uv pip install --system microgen@. pytest pytest-xdist
+        run: |
+          pip install uv
+          uv pip install --system microgen@. pytest pytest-xdist
 
       - name: Test
         run: pytest tests --numprocesses=auto
