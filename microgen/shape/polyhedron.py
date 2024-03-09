@@ -88,7 +88,7 @@ class Polyhedron(BasicGeometry):
         vertices = np.array(self.dic["vertices"])
         faces = np.hstack(facesPv)
 
-        return pv.PolyData(vertices, faces)
+        return pv.PolyData(vertices, faces).compute_normals()
 
 
 def read_obj(filename: str):

@@ -395,9 +395,9 @@ class BoxMesh(SingleMesh):
         ]
 
         offsets = [
-            np.array([rve.dim_x, 0.0, 0.0]),
-            np.array([0.0, rve.dim_y, 0.0]),
-            np.array([0.0, 0.0, rve.dim_z]),
+            np.array([rve.dim[0], 0.0, 0.0]),
+            np.array([0.0, rve.dim[1], 0.0]),
+            np.array([0.0, 0.0, rve.dim[2]]),
         ]
 
         faces_m = [self.faces["face_xm"], self.faces["face_ym"], self.faces["face_zm"]]
@@ -538,15 +538,15 @@ class BoxMesh(SingleMesh):
         ]
 
         offsets = [
-            np.array([rve.dim_x, 0.0, 0.0]),
-            np.array([rve.dim_x, rve.dim_y, 0.0]),
-            np.array([0.0, rve.dim_y, 0.0]),
-            np.array([rve.dim_x, 0.0, 0.0]),
-            np.array([rve.dim_x, 0.0, rve.dim_z]),
-            np.array([0.0, 0.0, rve.dim_z]),
-            np.array([0.0, rve.dim_y, 0.0]),
-            np.array([0.0, rve.dim_y, rve.dim_z]),
-            np.array([0.0, 0.0, rve.dim_z]),
+            np.array([rve.dim[0], 0.0, 0.0]),
+            np.array([rve.dim[0], rve.dim[1], 0.0]),
+            np.array([0.0, rve.dim[1], 0.0]),
+            np.array([rve.dim[0], 0.0, 0.0]),
+            np.array([rve.dim[0], 0.0, rve.dim[2]]),
+            np.array([0.0, 0.0, rve.dim[2]]),
+            np.array([0.0, rve.dim[1], 0.0]),
+            np.array([0.0, rve.dim[1], rve.dim[2]]),
+            np.array([0.0, 0.0, rve.dim[2]]),
         ]
 
         edges_m = [

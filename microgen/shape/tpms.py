@@ -21,7 +21,7 @@ import numpy as np
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.shape.basicGeometry import BasicGeometry
+from microgen.shape import BasicGeometry
 
 from ..operations import fuseShapes, rotateEuler, rotatePvEuler
 

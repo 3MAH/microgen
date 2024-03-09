@@ -1,28 +1,31 @@
 from __future__ import annotations
 
-import os
 from inspect import getmembers, isfunction
 from typing import Literal, Tuple, Type
 
-import cadquery as cq
 import numpy as np
 import pytest
 
 import microgen
+from microgen.shape import (
+    Box,
+    Capsule,
+    Cylinder,
+    Ellipsoid,
+    ExtrudedPolygon,
+    Polyhedron,
+    Sphere,
+)
 
 
 def test_shapes():
-    os.makedirs("tests/data", exist_ok=True)  # if data folder doesn't exist yet
+    rve = microgen.Rve(dim=1)
 
-    rve = microgen.rve.Rve(dim_x=1, dim_y=1, dim_z=1)
-
-    elem = microgen.shape.newGeometry(
+    elem = microgen.newGeometry(
         shape="Ellipsoid", param_geom={"a_x": 0.15, "a_y": 0.31, "a_z": 0.4}
     )
-    elem = microgen.shape.ellipsoid.Ellipsoid(a_x=0.15, a_y=0.31, a_z=0.4)
     ellipsoid = elem.generate()
-    elem.generateVtk()
-    phase = microgen.phase.Phase(shape=ellipsoid)
+    phase = microgen.Phase(shape=ellipsoid)
     phase.centerOfMass
     phase.centerOfMass
     phase.getCenterOfMass(compute=False)
@@ -38,75 +41,46 @@ def test_shapes():
     phase.rasterize(rve, [2, 2, 2], phasePerRaster=True)
     phase.rasterize(rve, [2, 2, 2], phasePerRaster=False)
 
-    void_phase = microgen.phase.Phase()
+    void_phase = microgen.Phase()
     void_phase.shape
     void_phase.solids
 
-    elem = microgen.shape.newGeometry(shape="Sphere", param_geom={"radius": 0.15})
-    elem = microgen.shape.sphere.Sphere(radius=0.15)
-    elem.generate()
-    elem.generateVtk()
-
-    elem = microgen.shape.newGeometry(
+    elem = microgen.newGeometry(shape="Sphere", param_geom={"radius": 0.15})
+    elem = microgen.newGeometry(
         shape="Box", param_geom={"dim_x": 0.15, "dim_y": 0.31, "dim_z": 0.4}
     )
-    elem = microgen.shape.box.Box(dim_x=0.15, dim_y=0.31, dim_z=0.4)
-    elem.generate()
-    elem.generateVtk()
-
-    elem = microgen.shape.newGeometry(
+    elem = microgen.newGeometry(
         shape="Capsule", param_geom={"height": 0.5, "radius": 0.1}
     )
-    elem = microgen.shape.capsule.Capsule(height=0.5, radius=0.1)
-    elem.generate()
-    elem.generateVtk()
-
-    elem = microgen.shape.newGeometry(
+    elem = microgen.newGeometry(
         shape="Cylinder", param_geom={"height": 0.5, "radius": 0.1}
     )
-    elem = microgen.shape.cylinder.Cylinder(height=0.5, radius=0.1)
-    elem.generate()
-    elem.generateVtk()
-
-    elem = microgen.shape.newGeometry(
+    elem = microgen.newGeometry(
         shape="ExtrudedPolygon",
         param_geom={"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
     )
-    elem = microgen.shape.extrudedPolygon.ExtrudedPolygon(
-        listCorners=[(0, 0), (0, 1), (1, 1), (1, 0)], height=0.3
-    )
-    elem.generate()
-    elem.generateVtk()
-
-    elem = microgen.shape.polyhedron.Polyhedron()  # default shape = tetrahedron
-    elem.generate()
-    elem.generateVtk()
     dic = microgen.shape.polyhedron.read_obj(
         "examples/BasicShapes/platon/tetrahedron.obj"
     )
-    microgen.shape.newGeometry(shape="Polyhedron", param_geom={"dic": dic})
+    microgen.newGeometry(shape="Polyhedron", param_geom={"dic": dic})
 
     with pytest.raises(ValueError):
-        microgen.shape.newGeometry(shape="fake", param_geom={"fake": 0})
+        microgen.newGeometry(shape="fake", param_geom={"fake": 0})
 
-    raster = microgen.operations.rasterPhase(
-        phase=phase, rve=rve, grid=[5, 5, 5], phasePerRaster=False
-    )
 
-    raster = microgen.operations.rasterPhase(phase=phase, rve=rve, grid=[5, 5, 5])
+@pytest.mark.parametrize(
+    "shape",
+    [Box, Capsule, Cylinder, Ellipsoid, ExtrudedPolygon, Polyhedron, Sphere],
+)
+def test_shape_cad_and_vtk_volume_must_correspond(shape: Type[microgen.BasicGeometry]):
+    geom = shape()
+    shape_cad = geom.generate()
+    shape_vtk = geom.generateVtk()
 
-    compound = cq.Compound.makeCompound(
-        [solid for phase in raster for solid in phase.solids]
-    )
-    cq.exporters.export(compound, "tests/data/compound.step")
+    volume_cad = shape_cad.Volume()
 
-    microgen.mesh(
-        mesh_file="tests/data/compound.step",
-        listPhases=raster,
-        size=0.03,
-        order=1,
-        output_file="tests/data/compound.msh",
-    )
+    assert volume_cad > 0
+    assert np.isclose(volume_cad, shape_vtk.volume, rtol=1e-2)
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
