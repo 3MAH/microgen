@@ -32,7 +32,7 @@ jobs:
         run: pip install uv
 
       - name: Install
-        run: uv pip install "microgen @ ." pytest pytest-xdist
+        run: uv pip install --system microgen@. pytest pytest-xdist
 
       - name: Test
         run: pytest tests --numprocesses=auto
