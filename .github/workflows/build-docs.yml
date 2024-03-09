@@ -20,6 +20,9 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      - name: Install libGLU
+        run: sudo apt-get install libglu1-mesa
+
       - name: Install
         run: pip install .[docs]
 
