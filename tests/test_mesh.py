@@ -24,7 +24,7 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells():
 
     mesh(
         mesh_file="tests/data/compound.step",
-        listPhases=phases,
+        list_phases=phases,
         size=0.03,
         order=1,
         output_file="tests/data/compound.vtk",
