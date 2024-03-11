@@ -45,6 +45,10 @@ cd ..
 cd mmg-voro
 python test_mmg.py
 cd ..
+cd remesh
+echo "remeshing"
+python remesh.py
+cd ..
 cd ..
 
 echo "--TPMS--"

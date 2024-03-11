@@ -17,5 +17,5 @@ gyroid_vtk = pv.UnstructuredGrid(
 gyroid_vtk.save("data/initial_gyroid_mesh.vtk")
 gyroid_mesh = BoxMesh.from_pyvista(gyroid_vtk)
 
-remeshed_gyroid_mesh = remesh_keeping_periodicity_for_fem(gyroid_mesh, hmax=0.25)
+remeshed_gyroid_mesh = remesh_keeping_periodicity_for_fem(gyroid_mesh, hmax=0.02)
 remeshed_gyroid_mesh.save("data/remeshed_gyroid_mesh.vtk")
