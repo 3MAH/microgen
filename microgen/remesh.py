@@ -1,11 +1,10 @@
 import os
-import subprocess
 from tempfile import NamedTemporaryFile
 from typing import List, Optional, Union
 
 import pyvista as pv
 
-from microgen import BoxMesh, is_periodic
+from microgen import BoxMesh, Mmg, is_periodic
 
 
 class InputMeshNotPeriodicError(Exception):
@@ -70,15 +69,21 @@ def remesh_keeping_periodicity_for_fem(
         _generate_mesh_with_required_triangles(
             input_box_mesh, boundary_triangles_file.name
         )
-        _preremesh_mmg(boundary_triangles_file.name, premeshed_mesh_file.name)
-        _remesh_mmg(
-            input_mesh_file=premeshed_mesh_file.name,
-            output_mesh_file=raw_output_mesh_file.name,
+        Mmg.mmg3d(
+            input=boundary_triangles_file.name,
+            output=premeshed_mesh_file.name,
+            nofem=True,
+        )
+        Mmg.mmg3d(
+            input=premeshed_mesh_file.name,
+            output=raw_output_mesh_file.name,
             hausd=hausd,
             hgrad=hgrad,
             hmax=hmax,
             hmin=hmin,
             hsiz=hsiz,
+            ls=True,
+            nr=True,
         )
 
     _remove_unnecessary_fields_from_mesh_file(
@@ -170,49 +175,3 @@ def _remove_unnecessary_fields_from_mesh_file(
 
 def _only_numbers_in_line(str_list: List[str]) -> bool:
     return all(not flag.isalpha() for flag in str_list)
-
-
-def _preremesh_mmg(
-    input_mesh_file: str,
-    output_mesh_file: str,
-) -> None:
-    mmg_system_call = [
-        "mmg3d_O3",
-        "-in",
-        input_mesh_file,
-        "-out",
-        output_mesh_file,
-        "-nofem",
-    ]
-    subprocess.call(mmg_system_call)
-
-
-def _remesh_mmg(
-    input_mesh_file: str,
-    output_mesh_file: str,
-    hausd: Optional[float] = None,
-    hgrad: Optional[float] = None,
-    hmax: Optional[float] = None,
-    hmin: Optional[float] = None,
-    hsiz: Optional[float] = None,
-) -> None:
-    mmg_system_call = [
-        "mmg3d_O3",
-        "-in",
-        input_mesh_file,
-        "-out",
-        output_mesh_file,
-        "-ls",
-        "-nr",
-    ]
-    if hausd:
-        mmg_system_call.extend(["-hausd", str(hausd)])
-    if hgrad:
-        mmg_system_call.extend(["-hgrad", str(hgrad)])
-    if hmax:
-        mmg_system_call.extend(["-hmax", str(hmax)])
-    if hmin:
-        mmg_system_call.extend(["-hmin", str(hmin)])
-    if hsiz:
-        mmg_system_call.extend(["-hsiz", str(hsiz)])
-    subprocess.call(mmg_system_call)

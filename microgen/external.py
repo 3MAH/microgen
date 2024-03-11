@@ -530,63 +530,48 @@ class Mmg:
         if m:
             if isinstance(m, bool):
                 m = ""
-            cmd.append("-m")
-            cmd.append(str(m))
+            cmd.extend(["-m", str(m)])
         if v:
             if isinstance(v, bool):
                 v = 1
-            cmd.append("-v")
-            cmd.append(str(v))
+            cmd.extend(["-v", str(v)])
         if val:
             cmd.append("-val")
         if default:
             cmd.append("-default")
         if input:
-            cmd.append("-in")
-            cmd.append(input)
+            cmd.extend(["-in", input])
         if output:
-            cmd.append("-out")
-            cmd.append(output)
+            cmd.extend(["-out", output])
         if solution:
-            cmd.append("-sol")
-            cmd.append(solution)
+            cmd.extend(["-sol", solution])
         if metric:
-            cmd.append("-met")
-            cmd.append(metric)
+            cmd.extend(["-met", metric])
         if A:
             cmd.append("-A")
         if ar:
-            cmd.append("-ar")
-            cmd.append(str(ar))
+            cmd.extend(["-ar", str(ar)])
         if hausd:
-            cmd.append("-hausd")
-            cmd.append(str(hausd))
+            cmd.extend(["-hausd", str(hausd)])
         if hgrad:
-            cmd.append("-hgrad")
-            cmd.append(str(hgrad))
+            cmd.extend(["-hgrad", str(hgrad)])
         if hmax:
-            cmd.append("-hmax")
-            cmd.append(str(hmax))
+            cmd.extend(["-hmax", str(hmax)])
         if hmin:
-            cmd.append("-hmin")
-            cmd.append(str(hmin))
+            cmd.extend(["-hmin", str(hmin)])
         if hsiz:
-            cmd.append("-hsiz")
-            cmd.append(str(hsiz))
+            cmd.extend(["-hsiz", str(hsiz)])
         if lag or lag == 0:
             if isinstance(lag, bool):
                 lag = 0
-            cmd.append("-lag")
-            cmd.append(str(lag))
+            cmd.extend(["-lag", str(lag)])
         if ls or ls == 0:
             ls_value = ls
             if isinstance(ls_value, bool):
                 ls_value = 0
-            cmd.append("-ls")
-            cmd.append(str(ls_value))
+            cmd.extend(["-ls", str(ls_value)])
         if _3dMedit:
-            cmd.append("-3dMedit")
-            cmd.append(str(_3dMedit))
+            cmd.extend(["-3dMedit", str(_3dMedit)])
 
         if noinsert:
             cmd.append("-noinsert")
@@ -599,18 +584,15 @@ class Mmg:
         if nr:
             cmd.append("-nr")
         if nreg:
-            cmd.append("-nreg")
-            cmd.append(str(nreg))
+            cmd.extend(["-nreg", str(nreg)])
         if nsd:
-            cmd.append("-nsd")
-            cmd.append(str(nsd))
+            cmd.extend(["-nsd", str(nsd)])
         if optim:
             cmd.append("-optim")
         if opnbdy:
             cmd.append("-opnbdy")
         if rmc:
-            cmd.append("-rmc")
-            cmd.append(str(rmc))
+            cmd.extend(["-rmc", str(rmc)])
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
@@ -661,55 +643,42 @@ class Mmg:
         if m:
             if isinstance(m, bool):
                 m = ""
-            cmd.append("-m")
-            cmd.append(str(m))
+            cmd.extend(["-m", str(m)])
         if v:
             if isinstance(v, bool):
                 v = 1
-            cmd.append("-v")
-            cmd.append(str(v))
+            cmd.extend(["-v", str(v)])
         if val:
             cmd.append("-val")
         if default:
             cmd.append("-default")
         if input:
-            cmd.append("-in")
-            cmd.append(input)
+            cmd.extend(["-in", input])
         if output:
-            cmd.append("-out")
-            cmd.append(output)
+            cmd.extend(["-out", output])
         if solution:
-            cmd.append("-sol")
-            cmd.append(solution)
+            cmd.extend(["-sol", solution])
         if metric:
-            cmd.append("-met")
-            cmd.append(metric)
+            cmd.extend(["-met", metric])
         if A:
             cmd.append("-A")
         if ar:
-            cmd.append("-ar")
-            cmd.append(str(ar))
+            cmd.extend(["-ar", str(ar)])
         if hausd:
-            cmd.append("-hausd")
-            cmd.append(str(hausd))
+            cmd.extend(["-hausd", str(hausd)])
         if hgrad:
-            cmd.append("-hgrad")
-            cmd.append(str(hgrad))
+            cmd.extend(["-hgrad", str(hgrad)])
         if hmax:
-            cmd.append("-hmax")
-            cmd.append(str(hmax))
+            cmd.extend(["-hmax", str(hmax)])
         if hmin:
-            cmd.append("-hmin")
-            cmd.append(str(hmin))
+            cmd.extend(["-hmin", str(hmin)])
         if hsiz:
-            cmd.append("-hsiz")
-            cmd.append(str(hsiz))
+            cmd.extend(["-hsiz", str(hsiz)])
         if ls or ls == 0:
             ls_value = ls
             if isinstance(ls_value, bool):
                 ls_value = 0
-            cmd.append("-ls")
-            cmd.append(str(ls_value))
+            cmd.extend(["-ls", str(ls_value)])
         if noinsert:
             cmd.append("-noinsert")
         if nomove:
@@ -721,11 +690,9 @@ class Mmg:
         if nr:
             cmd.append("-nr")
         if nreg:
-            cmd.append("-nreg")
-            cmd.append(str(nreg))
+            cmd.extend(["-nreg", str(nreg)])
         if nsd:
-            cmd.append("-nsd")
-            cmd.append(str(nsd))
+            cmd.extend(["-nsd", str(nsd)])
         if optim:
             cmd.append("-optim")
         if rn:
@@ -784,65 +751,50 @@ class Mmg:
         if h:
             cmd.append("-h")
         if m:
-            if isinstance(m):
+            if isinstance(m, bool):
                 m = ""
-            cmd.append("-m")
-            cmd.append(str(m))
+            cmd.extend(["-m", str(m)])
         if v:
-            if isinstance(v):
+            if isinstance(v, bool):
                 v = 1
-            cmd.append("-v")
-            cmd.append(str(v))
+            cmd.extend(["-v", str(v)])
         if val:
             cmd.append("-val")
         if default:
             cmd.append("-default")
         if input:
-            cmd.append("-in")
-            cmd.append(input)
+            cmd.extend(["-in", input])
         if output:
-            cmd.append("-out")
-            cmd.append(output)
+            cmd.extend(["-out", output])
         if solution:
-            cmd.append("-sol")
-            cmd.append(solution)
+            cmd.extend(["-sol", solution])
         if metric:
-            cmd.append("-met")
-            cmd.append(metric)
+            cmd.extend(["-met", metric])
         if A:
             cmd.append("-A")
         if ar:
-            cmd.append("-ar")
-            cmd.append(str(ar))
+            cmd.extend(["-ar", str(ar)])
         if octree:
-            cmd.append("-octree")
-            cmd.append(str(octree))
+            cmd.extend(["-octree", str(octree)])
         if hausd:
-            cmd.append("-hausd")
-            cmd.append(str(hausd))
+            cmd.extend(["-hausd", str(hausd)])
         if hgrad:
-            cmd.append("-hgrad")
-            cmd.append(str(hgrad))
+            cmd.extend(["-hgrad", str(hgrad)])
         if hmax:
-            cmd.append("-hmax")
-            cmd.append(str(hmax))
+            cmd.extend(["-hmax", str(hmax)])
         if hmin:
-            cmd.append("-hmin")
-            cmd.append(str(hmin))
+            cmd.extend(["-hmin", str(hmin)])
         if hsiz:
-            cmd.append("-hsiz")
-            cmd.append(str(hsiz))
+            cmd.extend(["-hsiz", str(hsiz)])
         if lag or lag == 0:
             if isinstance(lag, bool):
                 lag = 0
-            cmd.append("-lag")
-            cmd.append(str(lag))
+            cmd.extend(["-lag", str(lag)])
         if ls or ls == 0:
             ls_value = ls
             if isinstance(ls_value, bool):
                 ls_value = 0
-            cmd.append("-ls")
-            cmd.append(str(ls_value))
+            cmd.extend(["-ls", str(ls_value)])
         if nofem:
             cmd.append("-nofem")
         if noinsert:
@@ -856,11 +808,9 @@ class Mmg:
         if nr:
             cmd.append("-nr")
         if nreg:
-            cmd.append("-nreg")
-            cmd.append(str(nreg))
+            cmd.extend(["-nreg", str(nreg)])
         if nsd:
-            cmd.append("-nsd")
-            cmd.append(str(nsd))
+            cmd.extend(["-nsd", str(nsd)])
         if optim:
             cmd.append("-optim")
         if optimLES:
@@ -868,8 +818,7 @@ class Mmg:
         if opnbdy:
             cmd.append("-opnbdy")
         if rmc:
-            cmd.append("-rmc")
-            cmd.append(str(rmc))
+            cmd.extend(["-rmc", str(rmc)])
         if rn:
             cmd.append("-rn")
 
