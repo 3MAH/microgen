@@ -2,7 +2,7 @@ import cadquery as cq
 
 from microgen import Rve, repeatShape
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1)
+rve = Rve(dim=1)
 
 unit_geom = cq.importers.importStep("octettruss.step")
 

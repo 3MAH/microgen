@@ -111,7 +111,7 @@ def fixture_default_box_mesh() -> BoxMesh:
 
 
 def _default_rve() -> Rve:
-    return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+    return Rve(center=(0.5, 0.5, 0.5))
 
 
 def _check_triangle_on_boundary(
@@ -158,11 +158,8 @@ def test_given_box_mesh_rve_property_must_build_correct_rve(default_box_mesh) ->
     target_rve = _default_rve()
     test_rve = default_box_mesh.rve
 
-    assert (
-        test_rve.center == target_rve.center
-        and test_rve.dim_x == target_rve.dim_x
-        and test_rve.dim_y == target_rve.dim_y
-        and test_rve.dim_z == target_rve.dim_z
+    assert np.all(test_rve.center == target_rve.center) and np.all(
+        test_rve.dim == target_rve.dim
     )
 
 

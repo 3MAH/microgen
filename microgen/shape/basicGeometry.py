@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Tuple
 
 import cadquery as cq
+import pyvista as pv
 
 
 class BasicGeometry:
@@ -36,3 +37,19 @@ class BasicGeometry:
 
         self.geometry: cq.Shape | None = None
         BasicGeometry.numInstances += 1
+
+    def generate(self) -> cq.Shape:
+        """
+        Generates the CAD shape
+
+        :return: cq.Shape
+        """
+        raise NotImplementedError
+
+    def generateVtk(self) -> pv.PolyData:
+        """
+        Generates the vtk mesh of the shape
+
+        :return: pv.PolyData
+        """
+        raise NotImplementedError

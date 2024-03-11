@@ -80,8 +80,11 @@ class ExtrudedPolygon(BasicGeometry):
         faces = np.arange(len(vertices))
         faces = np.insert(faces, 0, len(vertices))
 
-        poly = pv.PolyData(vertices, faces)
-        poly = poly.extrude([self.height, 0, 0], capping=capping)
+        poly = (
+            pv.PolyData(vertices, faces)
+            .extrude([self.height, 0, 0], capping=capping)
+            .compute_normals()
+        )
 
         poly = rotatePvEuler(
             poly,

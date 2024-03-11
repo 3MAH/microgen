@@ -21,17 +21,17 @@ from microgen import (
 
 @pytest.fixture(scope="function")
 def rve_unit() -> Rve:
-    return Rve(dim_x=1, dim_y=1, dim_z=1, center=(0.5, 0.5, 0.5))
+    return Rve(dim=1, center=(0.5, 0.5, 0.5))
 
 
 @pytest.fixture(scope="function")
 def rve_double() -> Rve:
-    return Rve(dim_x=2, dim_y=2, dim_z=2, center=(1.0, 1.0, 1.0))
+    return Rve(dim=2, center=(1.0, 1.0, 1.0))
 
 
 @pytest.fixture(scope="function")
 def rve_double_centered() -> Rve:
-    return Rve(dim_x=2, dim_y=2, dim_z=2, center=(0.0, 0.0, 0.0))
+    return Rve(dim=2, center=(0.0, 0.0, 0.0))
 
 
 @pytest.fixture(scope="function")
@@ -94,9 +94,9 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
         center=rve_unit.center,
         orientation=(0.0, 0.0, 0.0),
-        dim_x=rve_unit.dim_x,
-        dim_y=rve_unit.dim_y,
-        dim_z=rve_unit.dim_z,
+        dim_x=rve_unit.dim[0],
+        dim_y=rve_unit.dim[1],
+        dim_z=rve_unit.dim[2],
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_unit)
@@ -107,9 +107,9 @@ def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
         center=rve_double.center,
         orientation=(0.0, 0.0, 0.0),
-        dim_x=rve_double.dim_x,
-        dim_y=rve_double.dim_y,
-        dim_z=rve_double.dim_z,
+        dim_x=rve_double.dim[0],
+        dim_y=rve_double.dim[1],
+        dim_z=rve_double.dim[2],
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double)
@@ -122,9 +122,9 @@ def box_homogeneous_double_centered(
     shape = Box(
         center=rve_double_centered.center,
         orientation=(0.0, 0.0, 0.0),
-        dim_x=rve_double_centered.dim_x,
-        dim_y=rve_double_centered.dim_y,
-        dim_z=rve_double_centered.dim_z,
+        dim_x=rve_double_centered.dim[0],
+        dim_y=rve_double_centered.dim[1],
+        dim_z=rve_double_centered.dim[2],
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double_centered)

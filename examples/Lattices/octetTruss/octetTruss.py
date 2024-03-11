@@ -50,9 +50,10 @@ radius = DATA[9]
 
 # sections = read_sections(path_data,section_file)
 
-rve = Rve(dim_x=1, dim_y=1, dim_z=1)
+rve = Rve(dim=1)
 list_phases = []
 list_periodic_phases = []
+
 n = len(xc)
 
 for i in range(0, n):
@@ -65,8 +66,8 @@ for i in range(0, n):
     list_phases.append(Phase(shape=elem.generate()))
 
 for phase_elem in list_phases:
-    periodicPhase = periodic(phase=phase_elem, rve=rve)
-    list_periodic_phases.append(periodicPhase)
+    periodic_phase = periodic(phase=phase_elem, rve=rve)
+    list_periodic_phases.append(periodic_phase)
 
 phases_cut = cutPhases(phaseList=list_periodic_phases, reverseOrder=False)
 compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])

@@ -274,7 +274,7 @@ def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, in
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
     for bounds_min, tag_min in _iter_bounding_boxes(minimum, maximum, eps):
         # Translate the minimal bounds into the maximum value on axis surface
-        bounds_min[:, axis] += _get_deltas(rve)[axis]
+        bounds_min[:, axis] += rve.dim[axis]
 
         # Get all the entities on the corresponding surface (i.e. Xp, Yp or Zp)
         for bounds_max, tag_max in _iter_bounding_boxes(
@@ -285,10 +285,10 @@ def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, in
 
 
 def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
-    deltas = _get_deltas(rve)
     translation_matrix = np.eye(_DIM_COUNT + 1)
-    translation_matrix[axis, _DIM_COUNT] = deltas[axis]
+    translation_matrix[axis, _DIM_COUNT] = rve.dim[axis]
     translation: List[float] = list(translation_matrix.flatten())
+
     for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
         gmsh.model.mesh.setPeriodic(
             dim=2, tags=[tag_max], tagsMaster=[tag_min], affineTransform=translation

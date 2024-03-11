@@ -4,6 +4,7 @@ Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
 
+from random import random
 from typing import Tuple
 
 import cadquery as cq
@@ -36,12 +37,12 @@ class Sphere(BasicGeometry):
     def generate(self) -> cq.Shape:
         sphere = (
             cq.Workplane()
-            .sphere(self.radius)
-            .translate((self.center[0], self.center[1], self.center[2]))
+            .sphere(radius=self.radius, direct=[random() for _ in range(3)])
+            .translate(self.center)
         )
         return cq.Shape(sphere.val().wrapped)
 
-    def generateVtk(self, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
+    def generateVtk(self, theta_resolution=50, phi_resolution=50) -> pv.PolyData:
         return pv.Sphere(
             radius=self.radius,
             center=tuple(self.center),
