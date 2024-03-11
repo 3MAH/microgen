@@ -125,3 +125,6 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 <a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#mmg-voronoi">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/mmg-voro.png" height="250">
 </a>
+<a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#periodic-remeshing">
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/remeshed_mesh.png" height="250">
+</a>
