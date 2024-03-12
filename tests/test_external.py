@@ -1,5 +1,6 @@
-import microgen
 import pytest
+
+import microgen
 from microgen.external import MmgError
 
 
