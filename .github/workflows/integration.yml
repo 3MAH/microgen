@@ -26,7 +26,8 @@ jobs:
           micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
           environment-file: environment.yml
           create-args: python=${{ matrix.python-version }}
-          init-shell: powershell
+          init-shell: powershell bash
+          download-micromamba: true
           cache-environment: false
           post-cleanup: "all"
           log-level: trace
