@@ -43,19 +43,11 @@ def launch_test_examples(
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
             cmd = ["python", example]
-            with subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                shell=True,
-            ) as proc:
-                out, err = proc.communicate()
-                if proc.returncode != 0:
-                    print(proc.returncode)
-                    failed[example] = err
-                else:
-                    print(out)
+            try:
+                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as e:
+                failed[example] = e.output.decode("utf-8")
+                print(e.output.decode("utf-8"))
 
             print(dashed_line())
             print()
@@ -68,15 +60,24 @@ def launch_test_examples(
     return examples, failed
 
 
+GREEN = "\033[32m"
+RED = "\033[31m"
+RESET = "\033[0m"
+BOLD = "\033[1m"
+UNDERLINE = "\033[4m"
+
+
 def display_results(examples: List[str], failed: Dict[str, str]):
     """Display the results of the test examples.
     Raise an error if there are failed examples."""
-    print(dashed_line("RESULTS"))
-    print(f"Successful: {len(examples) - len(failed)}/ {len(examples)}")
+    print(dashed_line(f"{UNDERLINE}{BOLD}RESULTS{RESET}"))
+    print(
+        f"{UNDERLINE}{BOLD}{GREEN}Successful: {len(examples) - len(failed)}/ {len(examples)}{RESET}"
+    )
     if len(failed) > 0:
-        error_str = f"Failed: {len(failed)}\n"
+        error_str = f"{UNDERLINE}{BOLD}{RED}Failed: {len(failed)}{RESET}\n"
         for example, error in failed.items():
-            error_str += f"X\t{example}\n"
+            error_str += f"{RED}X\t{example}{RESET}\n"
             error_str += error + "\n"
         raise RuntimeError(error_str)
 

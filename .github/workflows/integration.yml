@@ -39,7 +39,7 @@ jobs:
         run: |
           pip install uv
           uv pip install --system microgen@. --no-deps
-        shell: micromamba-shell {0}
+        shell: bash -el {0}
 
       - name: Install
         if: runner.os == 'Windows'
@@ -51,12 +51,12 @@ jobs:
       - name: Examples
         if: runner.os == 'Linux'
         run: python examples/run_examples.py --no-mmg
-        shell: micromamba-shell {0}
+        shell: bash -el {0}
 
       - name: Examples
         if: runner.os == 'macOS'
         run: python examples/run_examples.py
-        shell: micromamba-shell {0}
+        shell: bash -el {0}
 
       - name: Examples
         if: runner.os == 'Windows'
