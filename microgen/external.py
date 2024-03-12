@@ -497,8 +497,8 @@ class Mmg:
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            mmg_failing_command = " ".join(cmd)
-            raise MmgError(f"mmg command '{mmg_failing_command}' failed") from error
+            mmg_failed_command = " ".join(cmd)
+            raise MmgError(f"mmg command '{mmg_failed_command}' failed") from error
 
     @staticmethod
     def mmg2d(
