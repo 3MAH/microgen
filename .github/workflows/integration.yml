@@ -1,6 +1,7 @@
 name: Integration Tests
 
 on:
+  pull_request:
   push:
     branches:
       - "*"
