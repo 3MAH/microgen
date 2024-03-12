@@ -40,7 +40,7 @@ cd ..
 echo "Mesh"
 if mmg3d_O3 -h; then
     echo "MMG3D is installed"
-    
+
     cd Mesh
     cd mmg
     python test_mmg3d.py

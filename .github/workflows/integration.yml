@@ -35,7 +35,7 @@ jobs:
       - name: Install
         run: |
           pip install uv
-          uv pip install --system microgen@.
+          uv pip install --system microgen@. --no-deps
 
       - name: Examples
         run: cd examples && bash run_examples.sh
