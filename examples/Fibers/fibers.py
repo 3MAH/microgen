@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cadquery as cq
 import progressbar  # pip install progressbar2
 
@@ -37,7 +39,8 @@ def convert_angles(phi, theta):
     return new_psi, new_theta, new_phi
 
 
-x, y, z, diameter, phi, theta, aspect_ratio, index = read_csv("fibers.csv")
+csv_file = str(Path(__file__).parent / "fibers.csv")
+x, y, z, diameter, phi, theta, aspect_ratio, index = read_csv(csv_file)
 psi, theta, phi = convert_angles(phi, theta)
 
 
@@ -62,8 +65,10 @@ for shape in shapes:
 
 compound = assemb.toCompound()
 
-cq.exporters.export(compound, "compound.step")
-cq.exporters.export(compound, "compound.stl")
+step_file = str(Path(__file__).parent / "compound.step")
+stl_file = str(Path(__file__).parent / "compound.stl")
+cq.exporters.export(compound, step_file)
+cq.exporters.export(compound, stl_file)
 
 
 # mesh(mesh_file='compound.step', listPhases=raster[1], size=0.03, order=1, output_file='Mesh.msh')

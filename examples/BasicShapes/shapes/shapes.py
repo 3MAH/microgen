@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cadquery as cq
 import numpy as np
 
@@ -42,4 +44,5 @@ for shape, param_geom in shapes.items():
     i = i + 1
 
 compound = assembly.toCompound()
-cq.exporters.export(compound, "shapes.stl")
+stl_file = str(Path(__file__).parent / "shapes.stl")
+cq.exporters.export(compound, stl_file)

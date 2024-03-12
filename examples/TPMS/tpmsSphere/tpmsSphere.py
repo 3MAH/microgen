@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pyvista as pv
 
 from microgen import Tpms, surface_functions
@@ -15,5 +17,6 @@ shape.flip_normals()
 sphere = pv.Sphere(radius=1.45)
 
 result = shape.boolean_intersection(sphere)
-result.save("tpmsSphere.vtk")
+vtk_file = Path(__file__).parent / "tpmsSphere.vtk"
+result.save(vtk_file)
 # result.plot(color='w')

@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["macos-latest"]
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.11"]
 
     steps:
@@ -29,6 +29,7 @@ jobs:
             python=${{ matrix.python-version }}
           init-shell: >-
             bash
+            powershell
           cache-environment: false
           post-cleanup: "all"
 
@@ -42,5 +43,16 @@ jobs:
         shell: micromamba-shell {0}
 
       - name: Examples
-        run: cd examples && bash run_examples.sh
+        if: runner.os == 'Linux'
+        run: python examples/run_examples.py --no-mmg
         shell: micromamba-shell {0}
+
+      - name: Examples
+        if: runner.os == 'macOS'
+        run: python examples/run_examples.py
+        shell: micromamba-shell {0}
+
+      - name: Examples
+        if: runner.os == 'Windows'
+        run: python examples/run_examples.py --no-mmg
+        shell: pwsh

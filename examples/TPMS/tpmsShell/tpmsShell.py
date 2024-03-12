@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cadquery as cq
 
 from microgen import Tpms, surface_functions
@@ -14,4 +16,5 @@ geometry = Tpms(
 shape = geometry.generate(type_part="sheet", smoothing=0)
 
 compound = cq.Compound.makeCompound([shell, shape])
-cq.exporters.export(compound, "tpms_shell.stl")
+stl_file = str(Path(__file__).parent / "tpms_shell.stl")
+cq.exporters.export(compound, stl_file)

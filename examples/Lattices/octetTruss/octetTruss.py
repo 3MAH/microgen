@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import cadquery as cq
 import numpy as np
@@ -7,13 +7,14 @@ from microgen import Cylinder, Phase, Rve, cutPhases, meshPeriodic, periodic
 
 # ----------LOADTXT------------------------------------------------------------------------------------------#
 
-dir = os.path.dirname(os.path.realpath("__file__"))
-# path
-path_data = dir + "/"
-Ngeomphase_file = "test_octet.dat"
+# dir = os.path.dirname(os.path.realpath("__file__"))
+# # path
+# path_data = dir + "/"
+# Ngeomphase_file = "test_octet.dat"
 
-# fichier
-NPhases_file = path_data + Ngeomphase_file
+# # fichier
+# NPhases_file = path_data + Ngeomphase_file
+NPhases_file = str(Path(__file__).parent / "test_octet.dat")
 
 dt = np.dtype(
     [
@@ -71,13 +72,17 @@ for phase_elem in listPhases:
 phases_cut = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
 compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 
-cq.exporters.export(compound, "octettruss.step")
-cq.exporters.export(compound, "octettruss.stl")
+step_file = str(Path(__file__).parent / "octettruss.step")
+stl_file = str(Path(__file__).parent / "octettruss.stl")
+cq.exporters.export(compound, step_file)
+cq.exporters.export(compound, stl_file)
+
+vtk_file = str(Path(__file__).parent / "octettruss.vtk")
 meshPeriodic(
-    mesh_file="octettruss.step",
+    mesh_file=step_file,
     rve=rve,
     listPhases=phases_cut,
     order=1,
     size=0.03,
-    output_file="octettruss.vtk",
+    output_file=vtk_file,
 )

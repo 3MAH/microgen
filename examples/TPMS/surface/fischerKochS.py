@@ -1,10 +1,13 @@
+from pathlib import Path
+
 from microgen import Tpms
 from microgen.shape.surface_functions import fischerKochS
 
 geometry = Tpms(surface_function=fischerKochS, repeat_cell=5)
 mesh = geometry.generateVtk(type_part="surface")
 
-mesh.save("surface.vtk")
+vtk_file = Path(__file__).parent / "surface.vtk"
+mesh.save(vtk_file)
 
 # pl = pv.Plotter()
 # pl.add_mesh(mesh)

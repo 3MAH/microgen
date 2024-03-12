@@ -1,10 +1,13 @@
+from pathlib import Path
+
 import cadquery as cq
 
 from microgen import Neper, Phase, Tpms, mesh
 from microgen.shape import surface_functions
 
 # We import the Polyhedra from Neper tessellation file
-polyhedra = Neper.generateVoronoiFromTessFile("test1")
+tess_file = str(Path(__file__).parent / "test1.tess")
+polyhedra = Neper.generateVoronoiFromTessFile(tess_file)
 
 gyroid = Tpms(
     center=(0.5, 0.5, 0.5),
@@ -19,12 +22,14 @@ for polyhedron in polyhedra:
     phases.append(Phase(shape=shape.intersect(gyroid)))
 
 compound = cq.Compound.makeCompound([phase.shape for phase in phases])
-cq.exporters.export(compound, "compound.step")
+step_file = str(Path(__file__).parent / "compound.step")
+cq.exporters.export(compound, step_file)
 
+vtk_file = str(Path(__file__).parent / "Gyroid-voro.vtk")
 mesh(
-    mesh_file="compound.step",
+    mesh_file=step_file,
     listPhases=phases,
     size=0.05,
     order=1,
-    output_file="Gyroid-voro.vtk",
+    output_file=vtk_file,
 )

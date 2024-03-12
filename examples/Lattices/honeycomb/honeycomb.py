@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cadquery as cq
 import numpy as np
 
@@ -13,7 +15,8 @@ h2 = abs(np.sin(theta) * side_length)
 
 thickness = 30  # mm
 
-with open("seedList.data") as f:
+data_file = str(Path(__file__).parent / "seedList.data")
+with open(data_file) as f:
     seedList = [[1, 1, 1]]
     seedList = np.genfromtxt(f, delimiter="\t")
 
@@ -40,12 +43,15 @@ boxPhase = Phase(shape=box.generate())
 
 honeycomb = cutPhaseByShapeList(phaseToCut=boxPhase, cqShapeList=shapeList)
 
-cq.exporters.export(honeycomb.shape, "honeycomb.step")
-cq.exporters.export(honeycomb.shape, "honeycomb.stl")
+step_file = str(Path(__file__).parent / "honeycomb.step")
+stl_file = str(Path(__file__).parent / "honeycomb.stl")
+cq.exporters.export(honeycomb.shape, step_file)
+cq.exporters.export(honeycomb.shape, stl_file)
+vtk_file = str(Path(__file__).parent / "honeycomb.vtk")
 mesh(
-    mesh_file="honeycomb.step",
+    mesh_file=step_file,
     listPhases=[honeycomb],
     size=1,
     order=1,
-    output_file="honeycomb.vtk",
+    output_file=vtk_file,
 )

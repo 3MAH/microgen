@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pyvista as pv
 
@@ -39,5 +41,6 @@ for i, surface in enumerate(surfaces):
     )
     meshes.append(mesh)
 
-pv.MultiBlock(meshes).save("surfaces.vtm")
+vtm_file = Path(__file__).parent / "surfaces.vtm"
+pv.MultiBlock(meshes).save(vtm_file)
 # pv.MultiBlock(meshes).plot(color="w")

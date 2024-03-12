@@ -1,31 +1,31 @@
 import os
-import subprocess
+from pathlib import Path
 
 import meshio
 
 import microgen
 
-USE_MMG = False
-try:
-    subprocess.run(["mmg3d_O3", "-h"])
-    USE_MMG = True
-except Exception:
-    print("mmg command did not work, check if it is installed or contact a developer")
+data_dir = Path(__file__).parent / "data"
+os.makedirs(data_dir, exist_ok=True)
 
-if USE_MMG:
-    meshIni = "Mesh.msh"
+msh_file = str(Path(__file__).parent / "Mesh.msh")
 
-    if "data" not in os.listdir("."):
-        os.mkdir("data")
+mesh = meshio.read(msh_file)
+mesh.write(str(data_dir / "meshIni.mesh"))
 
-    mesh = meshio.read(meshIni)
-    mesh.write("data/meshIni.mesh")
+microgen.external.Mmg.mmg3d(
+    input=str(data_dir / "meshIni.mesh"),
+    output=str(data_dir / "intermesh.mesh"),
+)
+microgen.external.Mmg.mmg3d(
+    input=str(data_dir / "intermesh.mesh"),
+    output=str(data_dir / "finalmesh.mesh"),
+    ls=True,
+    hsiz=0.03,
+)
 
-    microgen.external.Mmg.mmg3d(input="data/meshIni.mesh", output="data/intermesh.mesh")
-    microgen.external.Mmg.mmg3d(
-        input="data/intermesh.mesh", output="data/finalmesh.mesh", ls=True, hsiz=0.03
-    )
-
-    meshFinal = meshio.read("data/finalmesh.mesh")
-    meshFinal.write("finalmesh.msh", file_format="gmsh22")
-    meshFinal.write("finalmesh.vtk")
+meshFinal = meshio.read(str(data_dir / "finalmesh.mesh"))
+final_msh = str(Path(__file__).parent / "finalmesh.msh")
+final_vtk = str(Path(__file__).parent / "finalmesh.vtk")
+meshFinal.write(final_msh, file_format="gmsh22")
+meshFinal.write(final_vtk)

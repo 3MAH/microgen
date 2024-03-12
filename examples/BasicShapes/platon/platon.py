@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cadquery as cq
 
 import microgen
@@ -9,6 +11,7 @@ filenames = [
     "dodecahedron.obj",
     "icosahedron.obj",
 ]
+filenames = [str(Path(__file__).parent / file) for file in filenames]
 platon_solids = []
 
 i = 0
@@ -20,4 +23,5 @@ for filename in filenames:
     platon_solids.append(shape)
     i += 1
 
-cq.exporters.export(cq.Compound.makeCompound(platon_solids), "platon.stl")
+stl_file = str(Path(__file__).parent / "platon.stl")
+cq.exporters.export(cq.Compound.makeCompound(platon_solids), stl_file)
