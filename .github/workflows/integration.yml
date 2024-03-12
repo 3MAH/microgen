@@ -29,6 +29,7 @@ jobs:
           init-shell: powershell
           cache-environment: false
           post-cleanup: "all"
+          log-level: "TRACE"
 
       - name: Install libglu1-mesa for Linux
         if: runner.os == 'Linux'
