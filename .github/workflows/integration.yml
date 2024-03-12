@@ -29,7 +29,7 @@ jobs:
             python=${{ matrix.python-version }}
           init-shell: >-
             bash
-          cache-environment: true
+          cache-environment: false
           post-cleanup: "all"
 
       - if: runner.os == 'Linux'
@@ -40,6 +40,9 @@ jobs:
           pip install uv
           uv pip install --system microgen@. --no-deps
         shell: micromamba-shell {0}
+
+      - name: Tmp
+        run: mmg3d_O3 -h
 
       - name: Examples
         run: cd examples && bash run_examples.sh
