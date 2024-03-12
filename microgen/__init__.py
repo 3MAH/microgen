@@ -2,7 +2,7 @@ import importlib.metadata
 
 from .box_mesh import BoxMesh
 from .external import Mmg, Neper, parseNeper
-from .mesh import mesh, mesh_periodic, is_periodic
+from .mesh import is_periodic, mesh, mesh_periodic
 from .operations import (
     cutPhaseByShapeList,
     cutPhases,
