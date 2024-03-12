@@ -38,14 +38,21 @@ cd ..
 cd ..
 
 echo "Mesh"
-cd Mesh
-cd mmg
-python test_mmg3d.py
-cd ..
-cd mmg-voro
-python test_mmg.py
-cd ..
-cd ..
+if mmg3d_O3 -h; then
+    echo "MMG3D is installed"
+    
+    cd Mesh
+    cd mmg
+    python test_mmg3d.py
+    cd ..
+    cd mmg-voro
+    python test_mmg.py
+    cd ..
+    cd ..
+else
+    echo "MMG3D is not installed"
+    exit 1
+fi
 
 echo "--TPMS--"
 cd TPMS

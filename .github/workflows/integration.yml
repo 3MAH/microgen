@@ -1,0 +1,42 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - "*"
+
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+        python-version: ["3.8", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-version: "1.5.6-0" # any version from https://github.com/mamba-org/micromamba-releases
+          environment-file: environment.yml
+          init-shell: >-
+            bash
+          cache-environment: true
+          post-cleanup: "all"
+
+      - if: runner.os == 'Linux'
+        run: sudo apt-get install libglu1-mesa
+
+      - name: Install
+        run: |
+          pip install uv
+          uv pip install --system microgen@.
+
+      - name: Examples
+        run: cd examples && bash run_examples.sh
+        shell: micromamba-shell {0}
