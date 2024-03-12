@@ -15,4 +15,4 @@ def test_run_mmgs_with_no_arguments_must_raise_MmgError() -> None:
 
 def test_run_mmg3d_with_no_arguments_must_raise_MmgError() -> None:
     with pytest.raises(MmgError):
-        microgen.external.Mmg.mmgs()
+        microgen.external.Mmg.mmg3d()
