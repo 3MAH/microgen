@@ -485,6 +485,12 @@ def parseNeper(filename: str) -> tuple:
     return A, seed, listeSommetsOut, edges, faces, polys
 
 
+class MmgError(Exception):
+    """Raised when Mmg command fails"""
+
+    ...
+
+
 class Mmg:
     @staticmethod
     def mmg2d(
@@ -614,11 +620,8 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(
-                "mmg command did not work, check if it is installed or contact a developer"
-            )
-            return
+        except (subprocess.CalledProcessError, FileNotFoundError) as error:
+            raise MmgError(f"mmg command {cmd} failed") from error
 
     @staticmethod
     def mmgs(
@@ -733,11 +736,8 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(
-                "mmg command did not work, check if it is installed or contact a developer"
-            )
-            return
+        except (subprocess.CalledProcessError, FileNotFoundError) as error:
+            raise MmgError(f"mmg command {cmd} failed") from error
 
     @staticmethod
     def mmg3d(
@@ -875,8 +875,5 @@ class Mmg:
 
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(
-                "mmg command did not work, check if it is installed or contact a developer"
-            )
-            return
+        except (subprocess.CalledProcessError, FileNotFoundError) as error:
+            raise MmgError(f"mmg command {cmd} failed") from error
