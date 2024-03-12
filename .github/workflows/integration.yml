@@ -39,6 +39,7 @@ jobs:
         run: |
           pip install uv
           uv pip install --system microgen@. --no-deps
+        shell: micromamba-shell {0}
 
       - name: Examples
         run: cd examples && bash run_examples.sh
