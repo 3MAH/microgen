@@ -9,5 +9,5 @@ dependencies:
   - meshio
   - occt
   - cadquery
-  - mmg # [osx]
+  - mmg # [darwin]
 #  - neper
