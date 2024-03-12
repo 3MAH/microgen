@@ -27,9 +27,7 @@ jobs:
           environment-file: environment.yml
           create-args: >-
             python=${{ matrix.python-version }}
-          init-shell: >-
-            bash
-            powershell
+          init-shell: bash powershell
           cache-environment: false
           post-cleanup: "all"
 
@@ -37,10 +35,18 @@ jobs:
         run: sudo apt-get install libglu1-mesa
 
       - name: Install
+        if: runner.os != 'Windows'
         run: |
           pip install uv
           uv pip install --system microgen@. --no-deps
         shell: micromamba-shell {0}
+
+      - name: Install
+        if: runner.os == 'Windows'
+        run: |
+          pip install uv
+          uv pip install --system microgen@. --no-deps
+        shell: pwsh
 
       - name: Examples
         if: runner.os == 'Linux'
