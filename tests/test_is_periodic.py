@@ -143,7 +143,7 @@ def fixture_non_periodic_box_1_extra_node():
     return grid
 
 
-@pytest.fixture(name="non_periodic_box_shifted_node", scope="session")
+@pytest.fixture(name="non_periodic_box_shifted_node", scope="function")
 def fixture_non_periodic_box_shifted_node():
     nodes = _one_shifted_node_box_nodes()
     elements = _box_elements_same_number_of_nodes()
