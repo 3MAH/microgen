@@ -1,3 +1,4 @@
+name: microgen
 channels:
   - conda-forge
   - set3mah
