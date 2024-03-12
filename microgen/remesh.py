@@ -173,5 +173,5 @@ def _remove_unnecessary_fields_from_mesh_file(
         output_file.write("End\n")
 
 
-def _only_numbers_in_line(str_list: List[str]) -> bool:
-    return all(not flag.isalpha() for flag in str_list)
+def _only_numbers_in_line(line: List[str]) -> bool:
+    return all(not flag.isalpha() for flag in line)
