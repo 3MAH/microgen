@@ -493,6 +493,14 @@ class MmgError(Exception):
 
 class Mmg:
     @staticmethod
+    def _run_mmg_command(cmd: List[str]):
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        except (subprocess.CalledProcessError, FileNotFoundError) as error:
+            mmg_failing_command = " ".join(cmd)
+            raise MmgError(f"mmg command '{mmg_failing_command}' failed") from error
+
+    @staticmethod
     def mmg2d(
         d=None,
         h=None,
@@ -618,10 +626,7 @@ class Mmg:
             cmd.append("-rmc")
             cmd.append(str(rmc))
 
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            raise MmgError(f"mmg command {cmd} failed") from error
+        Mmg._run_mmg_command(cmd)
 
     @staticmethod
     def mmgs(
@@ -733,11 +738,7 @@ class Mmg:
             cmd.append("-optim")
         if rn:
             cmd.append("-rn")
-
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            raise MmgError(f"mmg command {cmd} failed") from error
+        Mmg._run_mmg_command(cmd)
 
     @staticmethod
     def mmg3d(
@@ -873,7 +874,4 @@ class Mmg:
         if rn:
             cmd.append("-rn")
 
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            raise MmgError(f"mmg command {cmd} failed") from error
+        Mmg._run_mmg_command(cmd)
