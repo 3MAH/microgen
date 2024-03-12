@@ -41,10 +41,6 @@ jobs:
           uv pip install --system microgen@. --no-deps
         shell: micromamba-shell {0}
 
-      - name: Tmp
-        run: mmg3d_O3 -h
-        shell: micromamba-shell {0}
-
       - name: Examples
         run: cd examples && bash run_examples.sh
         shell: micromamba-shell {0}
