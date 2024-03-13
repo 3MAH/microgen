@@ -340,7 +340,7 @@ def fixture_sample_3d_non_linear_tet_mesh_list() -> List[pv.UnstructuredGrid]:
 
 
 def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_single_mesh_from_pyvista_must_return_the_same_mesh(
-    box_mesh_grid,
+    box_mesh_grid: pv.UnstructuredGrid,
 ) -> None:
     mesh = SingleMesh.from_pyvista(box_mesh_grid)
 
@@ -351,7 +351,7 @@ def test_given_simple_periodic_pyvista_unstructured_grid_box_mesh_single_mesh_fr
 
 
 def test_given_simple_periodic_box_single_mesh_to_pyvista_must_return_the_same_mesh(
-    box_mesh,
+    box_mesh: SingleMesh,
 ) -> None:
     grid = box_mesh.to_pyvista()
 
@@ -359,7 +359,7 @@ def test_given_simple_periodic_box_single_mesh_to_pyvista_must_return_the_same_m
 
 
 def test_given_simple_periodic_pyvista_unstructured_grid_box_single_mesh_surface_must_find_surface_triangles_connectivity_array_and_number(
-    box_mesh_grid,
+    box_mesh_grid: pv.UnstructuredGrid,
 ) -> None:
     mesh = SingleMesh.from_pyvista(box_mesh_grid)
 
@@ -402,7 +402,7 @@ def test_given_simple_periodic_pyvista_unstructured_grid_box_single_mesh_surface
 
 
 def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_warning(
-    sample_1d_mesh_list,
+    sample_1d_mesh_list: List[pv.UnstructuredGrid],
 ) -> None:
     warning_message = (
         "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
@@ -413,7 +413,7 @@ def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_wa
 
 
 def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(
-    sample_2d_mesh_list,
+    sample_2d_mesh_list: List[pv.UnstructuredGrid],
 ) -> None:
     warning_message = (
         "2D elements are present in the PyVista UnstructuredGrid. They will be ignored."
@@ -424,7 +424,7 @@ def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_wa
 
 
 def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(
-    sample_3d_non_linear_tet_mesh_list,
+    sample_3d_non_linear_tet_mesh_list: List[pv.UnstructuredGrid],
 ) -> None:
     error_message_snippet = "Mesh contains elements other than linear tetrahedra."
     with pytest.raises(NotOnlyLinearTetrahedraError, match=error_message_snippet):
@@ -433,6 +433,6 @@ def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found
 
 
 def test_given_linear_tets_only_mesh__check_if_only_linear_tetrahedral_must_not_raise_any_error(
-    box_mesh_grid,
+    box_mesh_grid: pv.UnstructuredGrid,
 ):
     check_if_only_linear_tetrahedral(box_mesh_grid)
