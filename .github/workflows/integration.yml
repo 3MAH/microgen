@@ -59,7 +59,7 @@ jobs:
       - name: Examples on macOS
         if: runner.os == 'macOS'
         run: |
-          mamba install -c set3mah mmg
+          conda install -c set3mah mmg
           python examples/run_examples.py
         shell: micromamba-shell {0}
 
