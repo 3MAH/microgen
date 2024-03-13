@@ -25,6 +25,7 @@ jobs:
           generate-run-shell: true
           micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
           # environment-file: environment.yml
+          environment-name: microgen
           create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery
           init-shell: powershell bash
           download-micromamba: true
