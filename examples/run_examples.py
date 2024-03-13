@@ -1,11 +1,13 @@
 """Test examples"""
 
 import argparse
+import multiprocessing
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
@@ -42,19 +44,33 @@ def launch_test_examples(
     if nprocs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
-            cmd = ["python", example]
+            cmd = [sys.executable, example]
             try:
                 subprocess.run(cmd, check=True)
             except subprocess.CalledProcessError as e:
                 failed.append(example)
-                print(e.output.decode("utf-8"))
+                print(e)
 
             print(dashed_line())
             print()
     elif nprocs > 1:
-        # import multiprocessing
+        pool = multiprocessing.Pool(processes=nprocs)
+        results: Dict[str, multiprocessing.pool.AsyncResult] = {}
+        for i, example in enumerate(examples):
+            cmd = [sys.executable, example]
+            result = pool.apply_async(subprocess.run, (cmd,), {"check": True})
+            results[example] = result
 
-        raise NotImplementedError("nprocs > 1 not implemented")
+        pool.close()
+        pool.join()
+
+        for example, result in results.items():
+            if result.successful():
+                print(f"{GREEN}✓{RESET}", end="")
+            else:
+                failed.append(example)
+                print(f"{RED}X{RESET}", end="")
+        print()
     else:
         raise ValueError("nprocs must be greater than 0")
     return examples, failed
@@ -82,37 +98,38 @@ def display_results(examples: List[str], failed: List[str]):
         raise RuntimeError()
 
 
-parser = argparse.ArgumentParser(description="Run all examples")
-parser.add_argument(
-    "--exclude",
-    nargs="*",
-    help="Exclude directories from the examples",
-    default=[],
-)
-parser.add_argument(
-    "--no-mmg",
-    action="store_true",
-    help="Exclude MMG examples",
-)
-parser.add_argument(
-    "-n",
-    "--nprocs",
-    type=int,
-    help="Number of processes to use",
-    default=1,
-)
-
-PARENT_DIR = Path(__file__).parent
-
-EXCLUDE = parser.parse_args().exclude
-if parser.parse_args().no_mmg:
-    EXCLUDE.extend(["Mesh/mmg", "Mesh/mmg-voro"])
-EXCLUDE.append("Fibers")
-EXCLUDE = [str(PARENT_DIR / exclude) for exclude in EXCLUDE]
-
-display_results(
-    *launch_test_examples(
-        exclude_dirs=EXCLUDE,
-        nprocs=parser.parse_args().nprocs,
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run all examples")
+    parser.add_argument(
+        "--exclude",
+        nargs="*",
+        help="Exclude directories from the examples",
+        default=[],
     )
-)
+    parser.add_argument(
+        "--no-mmg",
+        action="store_true",
+        help="Exclude MMG examples",
+    )
+    parser.add_argument(
+        "-n",
+        "--nprocs",
+        type=int,
+        help="Number of processes to use",
+        default=1,
+    )
+
+    PARENT_DIR = Path(__file__).parent
+
+    EXCLUDE = parser.parse_args().exclude
+    if parser.parse_args().no_mmg:
+        EXCLUDE.extend(["Mesh/mmg", "Mesh/mmg-voro"])
+    EXCLUDE.append("Fibers")
+    EXCLUDE = [str(PARENT_DIR / exclude) for exclude in EXCLUDE]
+
+    display_results(
+        *launch_test_examples(
+            exclude_dirs=EXCLUDE,
+            nprocs=parser.parse_args().nprocs,
+        )
+    )

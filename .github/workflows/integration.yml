@@ -52,17 +52,17 @@ jobs:
 
       - name: Examples on Linux
         if: runner.os == 'Linux'
-        run: python examples/run_examples.py --no-mmg
+        run: python examples/run_examples.py --no-mmg -n 2
         shell: micromamba-shell {0}
 
       - name: Examples on macOS
         if: runner.os == 'macOS'
         run: |
           conda install -c set3mah mmg
-          python examples/run_examples.py
+          python examples/run_examples.py -n 2
         shell: micromamba-shell {0}
 
       - name: Examples on Windows
         if: runner.os == 'Windows'
-        run: python examples/run_examples.py --no-mmg
+        run: python examples/run_examples.py --no-mmg -n 2
         shell: pwsh
