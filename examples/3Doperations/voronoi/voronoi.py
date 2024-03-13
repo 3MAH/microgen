@@ -41,7 +41,7 @@ phases = [Phase(shape=shape) for shape in shapes]
 
 mesh(
     mesh_file="compound.step",
-    list_phases=phases,
+    listPhases=phases,
     size=0.05,
     order=1,
     output_file="Voronoi.vtk",

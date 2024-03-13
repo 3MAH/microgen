@@ -14,13 +14,13 @@ h2 = abs(np.sin(theta) * side_length)
 thickness = 30  # mm
 
 with open("seedList.data") as f:
-    seed_list = [[1, 1, 1]]
-    seed_list = np.genfromtxt(f, delimiter="\t")
+    seedList = [[1, 1, 1]]
+    seedList = np.genfromtxt(f, delimiter="\t")
 
 box = Box(dim_x=thickness, dim_y=60, dim_z=60)
 
 shapeList = []
-for seed in seed_list:
+for seed in seedList:
     poly = ExtrudedPolygon(
         center=(seed[0] - thickness, seed[1], seed[2]),
         listCorners=[
@@ -44,7 +44,7 @@ cq.exporters.export(honeycomb.shape, "honeycomb.step")
 cq.exporters.export(honeycomb.shape, "honeycomb.stl")
 mesh(
     mesh_file="honeycomb.step",
-    list_phases=[honeycomb],
+    listPhases=[honeycomb],
     size=1,
     order=1,
     output_file="honeycomb.vtk",

@@ -3,7 +3,7 @@ import os
 import cadquery as cq
 import numpy as np
 
-from microgen import Cylinder, Phase, Rve, cutPhases, mesh_periodic, periodic
+from microgen import Cylinder, Phase, Rve, cutPhases, meshPeriodic, periodic
 
 # ----------LOADTXT------------------------------------------------------------------------------------------#
 
@@ -51,8 +51,8 @@ radius = DATA[9]
 # sections = read_sections(path_data,section_file)
 
 rve = Rve(dim=1)
-list_phases = []
-list_periodic_phases = []
+listPhases = []
+listPeriodicPhases = []
 
 n = len(xc)
 
@@ -63,21 +63,21 @@ for i in range(0, n):
         height=height[i],
         radius=radius[i],
     )
-    list_phases.append(Phase(shape=elem.generate()))
+    listPhases.append(Phase(shape=elem.generate()))
 
-for phase_elem in list_phases:
-    periodic_phase = periodic(phase=phase_elem, rve=rve)
-    list_periodic_phases.append(periodic_phase)
+for phase_elem in listPhases:
+    periodicPhase = periodic(phase=phase_elem, rve=rve)
+    listPeriodicPhases.append(periodicPhase)
 
-phases_cut = cutPhases(phaseList=list_periodic_phases, reverseOrder=False)
+phases_cut = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
 compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
 
 cq.exporters.export(compound, "octettruss.step")
 cq.exporters.export(compound, "octettruss.stl")
-mesh_periodic(
+meshPeriodic(
     mesh_file="octettruss.step",
     rve=rve,
-    list_phases=phases_cut,
+    listPhases=phases_cut,
     order=1,
     size=0.03,
     output_file="octettruss.vtk",

@@ -14,7 +14,7 @@ from microgen import (
     cutPhases,
     fuseShapes,
     is_periodic,
-    mesh_periodic,
+    meshPeriodic,
     periodic,
 )
 
@@ -183,10 +183,10 @@ def test_octettruss_mesh_must_be_periodic(
     cqoctet, listcqphases, rve = request.getfixturevalue(shape)
 
     cq.exporters.export(cqoctet, tmp_output_compound_filename)
-    mesh_periodic(
+    meshPeriodic(
         mesh_file=tmp_output_compound_filename,
         rve=rve,
-        list_phases=listcqphases,
+        listPhases=listcqphases,
         size=0.03,
         order=1,
         output_file=tmp_output_vtk_filename,
