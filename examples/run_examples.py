@@ -66,7 +66,7 @@ def launch_test_examples(
 
         for example, result in results.items():
             if result.successful():
-                print(f"{GREEN}✓{RESET}", end="")
+                print(f"{GREEN}.{RESET}", end="")
             else:
                 failed.append(example)
                 print(f"{RED}X{RESET}", end="")
@@ -114,10 +114,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "-n",
         "--nprocs",
-        type=int,
         help="Number of processes to use",
-        default=1,
+        default="1",
     )
+    if parser.parse_args().nprocs == "auto":
+        nprocs = multiprocessing.cpu_count()
+    elif parser.parse_args().isdecimal():
+        number = int(parser.parse_args().nprocs)
+        if number > 0:
+            nprocs = int(parser.parse_args().nprocs)
+    else:
+        raise ValueError("nprocs must be a positive integer")
+
+    print(f"Running {nprocs} processes")
 
     PARENT_DIR = Path(__file__).parent
 
@@ -130,6 +139,6 @@ if __name__ == "__main__":
     display_results(
         *launch_test_examples(
             exclude_dirs=EXCLUDE,
-            nprocs=parser.parse_args().nprocs,
+            nprocs=nprocs,
         )
     )
