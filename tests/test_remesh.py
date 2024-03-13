@@ -1,10 +1,10 @@
-import subprocess
 import warnings
-from typing import Union
+from distutils.spawn import find_executable
 
 import numpy as np
 import pytest
 import pyvista as pv
+from _pytest.fixtures import FixtureRequest
 
 from microgen import BoxMesh, Tpms, is_periodic
 from microgen.remesh import (
@@ -16,13 +16,9 @@ from microgen.shape.surface_functions import gyroid
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
-USE_MMG = False
-try:
-    subprocess.check_output("mmg3d_O3", stderr=subprocess.STDOUT)
-    USE_MMG = True
-except (subprocess.CalledProcessError, FileNotFoundError):
+USE_MMG = find_executable("mmg3d_O3") is not None
+if not USE_MMG:
     warnings.warn("MMG will not be used in these tests")
-    USE_MMG = False
 
 
 @pytest.fixture(name="box_mesh", scope="function")
@@ -178,17 +174,20 @@ def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
-    shape: Union[BoxMesh, pv.UnstructuredGrid],
+    shape: str,
+    request: FixtureRequest,
 ) -> None:
+    # Arrange
+    input_mesh = request.getfixturevalue(shape)
     # Act
     if USE_MMG:
-        remeshed_shape = remesh_keeping_periodicity_for_fem(shape, hgrad=1.05)
+        remeshed_shape = remesh_keeping_periodicity_for_fem(input_mesh, hgrad=1.05)
 
-        if isinstance(shape, BoxMesh):
-            shape = shape.to_pyvista()
+        if isinstance(input_mesh, BoxMesh):
+            input_mesh = input_mesh.to_pyvista()
             remeshed_shape = remeshed_shape.to_pyvista()
         # Assert
-        assert is_periodic(shape.points) and is_periodic(remeshed_shape.points)
+        assert is_periodic(input_mesh.points) and is_periodic(remeshed_shape.points)
 
 
 def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
