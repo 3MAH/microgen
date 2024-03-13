@@ -9,6 +9,12 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+GREEN = "\033[32m"
+RED = "\033[31m"
+RESET = "\033[0m"
+BOLD = "\033[1m"
+UNDERLINE = "\033[4m"
+
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
     """Get all the example paths in the examples directory.
@@ -34,35 +40,42 @@ def dashed_line(string: Optional[str] = "", char: str = "-") -> str:
     return char * left_padding + title + char * right_padding
 
 
+def run_example(example: str) -> subprocess.CompletedProcess:
+    """Run an example and return True if it was successful."""
+    cmd = [sys.executable, example]
+    process = subprocess.run(cmd, check=False)
+    return process
+
+
 def launch_test_examples(
     exclude_dirs: List[str],
-    nprocs: int = 1,
+    n_procs: int = 1,
 ) -> Tuple[List[str], List[str]]:
     """Launch all the examples and return the paths of the examples that failed."""
     examples = get_example_paths(exclude_dirs=exclude_dirs)
     failed: List[str] = []
-    if nprocs == 1:
+    if n_procs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
-            cmd = [sys.executable, example]
-            try:
-                subprocess.run(cmd, check=True)
-            except subprocess.CalledProcessError as e:
+            process = subprocess.run([sys.executable, example], check=True)
+            if process.returncode != 0:
                 failed.append(example)
-                print(e)
 
             print(dashed_line())
             print()
-    elif nprocs > 1:
-        pool = multiprocessing.Pool(processes=nprocs)
+    elif n_procs > 1:
         results: Dict[str, multiprocessing.pool.AsyncResult] = {}
-        for i, example in enumerate(examples):
-            cmd = [sys.executable, example]
-            result = pool.apply_async(subprocess.run, (cmd,), {"check": True})
-            results[example] = result
+        with multiprocessing.Pool(processes=n_procs) as pool:
+            for example in examples:
+                result = pool.apply_async(
+                    subprocess.run,
+                    ([sys.executable, example],),
+                    {"check": True},
+                )
+                results[example] = result
 
-        pool.close()
-        pool.join()
+            pool.close()
+            pool.join()
 
         for example, result in results.items():
             if result.successful():
@@ -76,26 +89,21 @@ def launch_test_examples(
     return examples, failed
 
 
-GREEN = "\033[32m"
-RED = "\033[31m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
-UNDERLINE = "\033[4m"
-
-
 def display_results(examples: List[str], failed: List[str]):
     """Display the results of the test examples.
     Raise an error if there are failed examples."""
     print(dashed_line(f"{UNDERLINE}{BOLD}RESULTS{RESET}"))
     print(
-        f"{UNDERLINE}{BOLD}{GREEN}Successful: {len(examples) - len(failed)}/ {len(examples)}{RESET}"
+        f"{UNDERLINE}{BOLD}{GREEN}\
+            Successful: {len(examples) - len(failed)}/ {len(examples)}\
+                {RESET}"
     )
     if len(failed) > 0:
         error_str = f"{UNDERLINE}{BOLD}{RED}Failed: {len(failed)}{RESET}\n"
         for example in failed:
             error_str += f"{RED}X\t{example}{RESET}\n"
         print(error_str)
-        raise RuntimeError()
+        raise RuntimeError(f"{len(failed)} examples failed")
 
 
 if __name__ == "__main__":
@@ -114,15 +122,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "-n",
         "--nprocs",
-        help="Number of processes to use",
+        help="Number of processes to use, \
+            'auto' to use all available cores. Default is 1.",
         default="1",
     )
-    if parser.parse_args().nprocs == "auto":
+    str_nprocs = parser.parse_args().nprocs
+    if str_nprocs == "auto":
         nprocs = multiprocessing.cpu_count()
-    elif parser.parse_args().isdecimal():
-        number = int(parser.parse_args().nprocs)
+    elif str_nprocs.isdecimal():
+        number = int(str_nprocs)
         if number > 0:
-            nprocs = int(parser.parse_args().nprocs)
+            nprocs = number
     else:
         raise ValueError("nprocs must be a positive integer")
 
@@ -139,6 +149,6 @@ if __name__ == "__main__":
     display_results(
         *launch_test_examples(
             exclude_dirs=EXCLUDE,
-            nprocs=nprocs,
+            n_procs=nprocs,
         )
     )
