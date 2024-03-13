@@ -1,11 +1,12 @@
 import subprocess
 import warnings
+from typing import Union
 
 import numpy as np
 import pytest
 import pyvista as pv
 
-from microgen import Tpms, is_periodic
+from microgen import BoxMesh, Tpms, is_periodic
 from microgen.remesh import (
     InputMeshNotPeriodicError,
     remesh_keeping_periodicity_for_fem,
@@ -25,8 +26,8 @@ except (subprocess.CalledProcessError, FileNotFoundError):
 
 
 @pytest.fixture(name="box_mesh", scope="function")
-def fixture_box_mesh() -> pv.UnstructuredGrid:
-    nodes = np.array(
+def fixture_box_mesh() -> BoxMesh:
+    nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
             [0.5, 0.5, 0.5],
@@ -46,49 +47,50 @@ def fixture_box_mesh() -> pv.UnstructuredGrid:
         ]
     )
 
-    elements = np.array(
-        [
-            [4, 11, 6, 0, 14],
-            [4, 0, 9, 1, 11],
-            [4, 3, 10, 0, 13],
-            [4, 9, 0, 4, 11],
-            [4, 5, 11, 0, 13],
-            [4, 0, 11, 1, 13],
-            [4, 0, 10, 5, 13],
-            [4, 11, 5, 1, 13],
-            [4, 3, 10, 2, 12],
-            [4, 6, 10, 0, 14],
-            [4, 1, 9, 4, 11],
-            [4, 10, 3, 0, 12],
-            [4, 10, 3, 5, 13],
-            [4, 0, 10, 2, 14],
-            [4, 2, 10, 0, 12],
-            [4, 4, 11, 0, 14],
-            [4, 6, 11, 4, 14],
-            [4, 10, 6, 2, 14],
-            [4, 5, 10, 0, 11],
-            [4, 0, 10, 6, 11],
-            [4, 10, 5, 6, 11],
-            [4, 7, 9, 0, 12],
-            [4, 0, 9, 8, 12],
-            [4, 9, 7, 8, 12],
-            [4, 7, 9, 1, 13],
-            [4, 1, 9, 0, 13],
-            [4, 9, 7, 0, 13],
-            [4, 0, 12, 3, 13],
-            [4, 3, 12, 7, 13],
-            [4, 12, 0, 7, 13],
-            [4, 8, 12, 2, 14],
-            [4, 2, 12, 0, 14],
-            [4, 12, 8, 0, 14],
-            [4, 8, 9, 0, 14],
-            [4, 0, 9, 4, 14],
-            [4, 9, 8, 4, 14],
-        ]
-    )
+    elements_dict = {
+        pv.CellType.TETRA: np.array(
+            [
+                [11, 6, 0, 14],
+                [0, 9, 1, 11],
+                [3, 10, 0, 13],
+                [9, 0, 4, 11],
+                [5, 11, 0, 13],
+                [0, 11, 1, 13],
+                [0, 10, 5, 13],
+                [11, 5, 1, 13],
+                [3, 10, 2, 12],
+                [6, 10, 0, 14],
+                [1, 9, 4, 11],
+                [10, 3, 0, 12],
+                [10, 3, 5, 13],
+                [0, 10, 2, 14],
+                [2, 10, 0, 12],
+                [4, 11, 0, 14],
+                [6, 11, 4, 14],
+                [10, 6, 2, 14],
+                [5, 10, 0, 11],
+                [0, 10, 6, 11],
+                [10, 5, 6, 11],
+                [7, 9, 0, 12],
+                [0, 9, 8, 12],
+                [9, 7, 8, 12],
+                [7, 9, 1, 13],
+                [1, 9, 0, 13],
+                [9, 7, 0, 13],
+                [0, 12, 3, 13],
+                [3, 12, 7, 13],
+                [12, 0, 7, 13],
+                [8, 12, 2, 14],
+                [2, 12, 0, 14],
+                [12, 8, 0, 14],
+                [8, 9, 0, 14],
+                [0, 9, 4, 14],
+                [9, 8, 4, 14],
+            ]
+        )
+    }
 
-    cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
-    mesh = pv.UnstructuredGrid(elements, cell_types, nodes)
+    mesh = BoxMesh(nodes_array, elements_dict)
 
     return mesh
 
@@ -176,14 +178,15 @@ def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
-    shape: pv.UnstructuredGrid,
+    shape: Union[BoxMesh, pv.UnstructuredGrid],
 ) -> None:
+    # Act
     if USE_MMG:
-        # Act
-        remeshed_shape = remesh_keeping_periodicity_for_fem(
-            shape, hgrad=1.05
-        ).to_pyvista()
+        remeshed_shape = remesh_keeping_periodicity_for_fem(shape, hgrad=1.05)
 
+        if isinstance(shape, BoxMesh):
+            shape = shape.to_pyvista()
+            remeshed_shape = remeshed_shape.to_pyvista()
         # Assert
         assert is_periodic(shape.points) and is_periodic(remeshed_shape.points)
 
