@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
@@ -35,18 +35,18 @@ def dashed_line(string: Optional[str] = "", char: str = "-") -> str:
 def launch_test_examples(
     exclude_dirs: List[str],
     nprocs: int = 1,
-) -> Tuple[List[str], Dict[str, str]]:
+) -> Tuple[List[str], List[str]]:
     """Launch all the examples and return the paths of the examples that failed."""
     examples = get_example_paths(exclude_dirs=exclude_dirs)
-    failed: Dict[str, str] = {}
+    failed: List[str] = []
     if nprocs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
             cmd = ["python", example]
             try:
-                subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                subprocess.run(cmd, check=True)
             except subprocess.CalledProcessError as e:
-                failed[example] = e.output.decode("utf-8")
+                failed.append(example)
                 print(e.output.decode("utf-8"))
 
             print(dashed_line())
@@ -67,7 +67,7 @@ BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
 
 
-def display_results(examples: List[str], failed: Dict[str, str]):
+def display_results(examples: List[str], failed: List[str]):
     """Display the results of the test examples.
     Raise an error if there are failed examples."""
     print(dashed_line(f"{UNDERLINE}{BOLD}RESULTS{RESET}"))
@@ -76,10 +76,10 @@ def display_results(examples: List[str], failed: Dict[str, str]):
     )
     if len(failed) > 0:
         error_str = f"{UNDERLINE}{BOLD}{RED}Failed: {len(failed)}{RESET}\n"
-        for example, error in failed.items():
+        for example in failed:
             error_str += f"{RED}X\t{example}{RESET}\n"
-            error_str += error + "\n"
-        raise RuntimeError(error_str)
+        print(error_str)
+        raise RuntimeError()
 
 
 parser = argparse.ArgumentParser(description="Run all examples")
