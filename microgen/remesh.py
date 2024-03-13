@@ -1,6 +1,6 @@
 import os
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Union
+from typing import List, Optional, Union, overload
 
 import pyvista as pv
 
@@ -15,8 +15,9 @@ class OutputMeshNotPeriodicError(Exception):
     """Raised when output mesh of remesh_keeping_periodicity_for_fem is not periodic"""
 
 
+@overload
 def remesh_keeping_periodicity_for_fem(
-    input_mesh: Union[BoxMesh, pv.UnstructuredGrid, pv.PolyData],
+    input_mesh: BoxMesh,
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
@@ -25,11 +26,38 @@ def remesh_keeping_periodicity_for_fem(
     hmax: Optional[float] = None,
     hmin: Optional[float] = None,
     hsiz: Optional[float] = None,
-) -> pv.UnstructuredGrid:
+) -> BoxMesh: ...
+
+
+@overload
+def remesh_keeping_periodicity_for_fem(
+    input_mesh: pv.UnstructuredGrid,
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
+) -> pv.UnstructuredGrid: ...
+
+
+def remesh_keeping_periodicity_for_fem(
+    input_mesh: Union[BoxMesh, pv.UnstructuredGrid],
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
+) -> Union[BoxMesh, pv.UnstructuredGrid]:
     """
     Remeshes a mesh using mmg while keeping periodicity
 
-    :param input_mesh: BoxMesh, pv.UnstructuredGrid or pv.PolyData mesh to be remeshed
+    :param input_mesh: BoxMesh or pv.UnstructuredGrid mesh to be remeshed
     :param mesh_version: mesh file version (default: 2)
     :param dimension: mesh dimension (default: 3)
     :param tol: tolerance for periodicity check
@@ -43,16 +71,14 @@ def remesh_keeping_periodicity_for_fem(
     :param hmin: Minimal edge size
     :param hsiz: Build a constant size map of size hsiz
     """
-    if isinstance(input_mesh, (pv.UnstructuredGrid, pv.PolyData)):
+    if isinstance(input_mesh, pv.UnstructuredGrid):
         nodes_coords = input_mesh.points
         input_box_mesh = BoxMesh.from_pyvista(input_mesh)
     elif isinstance(input_mesh, BoxMesh):
         nodes_coords = input_mesh.to_pyvista().points
         input_box_mesh = input_mesh
     else:
-        raise TypeError(
-            "Input mesh is neither a BoxMesh, nor pv.UnstructuredGrid, nor pv.PolyData"
-        )
+        raise TypeError("Input mesh is neither a BoxMesh nor a pv.UnstructuredGrid")
 
     if not is_periodic(nodes_coords, tol, dimension):
         raise InputMeshNotPeriodicError("Input mesh is not periodic")
@@ -110,7 +136,10 @@ def remesh_keeping_periodicity_for_fem(
     for file in trash_files_list:
         os.remove(file)
 
-    return output_mesh
+    if isinstance(input_mesh, BoxMesh):
+        return BoxMesh.from_pyvista(output_mesh)
+    elif isinstance(input_mesh, pv.UnstructuredGrid):
+        return output_mesh
 
 
 def _generate_mesh_with_required_triangles(
