@@ -24,8 +24,8 @@ jobs:
         with:
           generate-run-shell: true
           micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
-          environment-file: environment.yml
-          create-args: python=${{ matrix.python-version }}
+          # environment-file: environment.yml
+          create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery
           init-shell: powershell bash
           download-micromamba: true
           cache-environment: false
@@ -40,7 +40,6 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           pip install uv
-          uv pip install --upgrade cadquery
           uv pip install --system microgen@. --no-deps
         shell: micromamba-shell {0}
 
@@ -48,7 +47,6 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           pip install uv
-          uv pip install --upgrade cadquery
           uv pip install --system microgen@. --no-deps
         shell: pwsh
 
@@ -59,7 +57,9 @@ jobs:
 
       - name: Examples on macOS
         if: runner.os == 'macOS'
-        run: python examples/run_examples.py
+        run: |
+          mamba install -c set3mah mmg
+          python examples/run_examples.py
         shell: micromamba-shell {0}
 
       - name: Examples on Windows

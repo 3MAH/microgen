@@ -5,9 +5,10 @@ channels:
 
 dependencies:
   - pyvista
+  - scipy
   - python-gmsh
   - meshio
-  - occt
+  # - occt
   - cadquery
-  - mmg # [osx]
+  # - mmg
 #  - neper
