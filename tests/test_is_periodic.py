@@ -125,7 +125,7 @@ def _one_extra_node_box_nodes() -> npt.NDArray[np.float_]:
 
 
 @pytest.fixture(name="periodic_box", scope="function")
-def fixture_periodic_box():
+def fixture_periodic_box() -> pv.UnstructuredGrid:
     nodes = _periodic_box_nodes()
     elements = _box_elements_same_number_of_nodes()
     cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
@@ -135,7 +135,7 @@ def fixture_periodic_box():
 
 
 @pytest.fixture(name="non_periodic_box_1_extra_node", scope="function")
-def fixture_non_periodic_box_1_extra_node():
+def fixture_non_periodic_box_1_extra_node() -> pv.UnstructuredGrid:
     points = _one_extra_node_box_nodes()
     point_cloud = pv.PolyData(points)
     grid = point_cloud.delaunay_3d(offset=100.0)
@@ -144,7 +144,7 @@ def fixture_non_periodic_box_1_extra_node():
 
 
 @pytest.fixture(name="non_periodic_box_shifted_node", scope="function")
-def fixture_non_periodic_box_shifted_node():
+def fixture_non_periodic_box_shifted_node() -> pv.UnstructuredGrid:
     nodes = _one_shifted_node_box_nodes()
     elements = _box_elements_same_number_of_nodes()
     cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
