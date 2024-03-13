@@ -340,7 +340,7 @@ def fixture_sample_3d_non_linear_tet_mesh_list() -> List[pv.UnstructuredGrid]:
     ]
 
 
-def test_given_simple_grid_from_pyvista_must_return_the_same_mesh(
+def test_check_single_mesh_consistency_when_importing_mesh_from_pyvista(
     simple_grid: pv.UnstructuredGrid,
 ) -> None:
     mesh = SingleMesh.from_pyvista(simple_grid)
@@ -350,7 +350,7 @@ def test_given_simple_grid_from_pyvista_must_return_the_same_mesh(
     )
 
 
-def test_given_simple_single_mesh_to_pyvista_must_return_the_same_mesh(
+def test_check_single_mesh_consistency_when_exporting_mesh_to_pyvista(
     box_mesh: SingleMesh,
 ) -> None:
     grid = box_mesh.to_pyvista()
@@ -358,7 +358,7 @@ def test_given_simple_single_mesh_to_pyvista_must_return_the_same_mesh(
     assert are_elements_equal(grid.cells_dict, box_mesh.elements)
 
 
-def test_given_simple_grid_surface_must_find_surface_triangles_connectivity_array_and_number(
+def test_single_mesh_consistency_when_extracting_surface_mesh(
     simple_grid: pv.UnstructuredGrid,
 ) -> None:
     mesh = SingleMesh.from_pyvista(simple_grid)
