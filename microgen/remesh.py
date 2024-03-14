@@ -138,8 +138,7 @@ def remesh_keeping_periodicity_for_fem(
 
     if isinstance(input_mesh, BoxMesh):
         return BoxMesh.from_pyvista(output_mesh)
-    elif isinstance(input_mesh, pv.UnstructuredGrid):
-        return output_mesh
+    return output_mesh
 
 
 def _generate_mesh_with_required_triangles(
