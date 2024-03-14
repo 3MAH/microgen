@@ -193,8 +193,11 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
 def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
     non_periodic_mesh: pv.UnstructuredGrid,
 ) -> None:
+    edge_length_gradient = 1.05
     if USE_MMG:
         with pytest.raises(
             InputMeshNotPeriodicError, match="Input mesh is not periodic"
         ):
-            remesh_keeping_periodicity_for_fem(non_periodic_mesh, hgrad=1.05)
+            remesh_keeping_periodicity_for_fem(
+                non_periodic_mesh, hgrad=edge_length_gradient
+            )
