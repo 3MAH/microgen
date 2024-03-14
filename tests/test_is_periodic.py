@@ -153,23 +153,25 @@ def fixture_non_periodic_box_shifted_node() -> pv.UnstructuredGrid:
     return grid
 
 
-def test_given_periodic_box_is_periodic_must_return_true(periodic_box):
+def test_given_periodic_box_is_periodic_must_return_true(
+    periodic_box: pv.UnstructuredGrid,
+) -> None:
     crd = periodic_box.points
 
     assert is_periodic(crd)
 
 
 def test_given_non_periodic_box_with_an_extra_node_is_periodic_must_return_false(
-    non_periodic_box_1_extra_node,
-):
+    non_periodic_box_1_extra_node: pv.UnstructuredGrid,
+) -> None:
     crd = non_periodic_box_1_extra_node.points
 
     assert not is_periodic(crd)
 
 
 def test_given_non_periodic_box_with_a_shifted_node_but_no_extra_node_is_periodic_must_return_false(
-    non_periodic_box_shifted_node,
-):
+    non_periodic_box_shifted_node: pv.UnstructuredGrid,
+) -> None:
     crd = non_periodic_box_shifted_node.points
 
     assert not is_periodic(crd)
