@@ -2,7 +2,7 @@ import importlib.metadata
 
 from .box_mesh import BoxMesh
 from .external import Mmg, Neper, parseNeper
-from .mesh import mesh, meshPeriodic
+from .mesh import is_periodic, mesh, meshPeriodic
 from .operations import (
     cutPhaseByShapeList,
     cutPhases,
@@ -35,7 +35,6 @@ from .shape import (
     surface_functions,
 )
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
-from .test_utils import is_periodic
 
 __version__ = importlib.metadata.version(__package__ or __name__)
 

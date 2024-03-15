@@ -54,6 +54,7 @@ radius = DATA[9]
 rve = Rve(dim=1)
 listPhases = []
 listPeriodicPhases = []
+
 n = len(xc)
 
 for i in range(0, n):

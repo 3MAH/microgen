@@ -1,63 +1,144 @@
 import os
-import subprocess
 from tempfile import NamedTemporaryFile
-from typing import List
+from typing import List, Optional, Union, overload
 
 import pyvista as pv
 
-from microgen import BoxMesh
+from microgen import BoxMesh, Mmg, is_periodic
+
+
+class InputMeshNotPeriodicError(Exception):
+    """Raised when input mesh of remesh_keeping_periodicity_for_fem is not periodic"""
+
+
+class OutputMeshNotPeriodicError(Exception):
+    """Raised when output mesh of remesh_keeping_periodicity_for_fem is not periodic"""
+
+
+@overload
+def remesh_keeping_periodicity_for_fem(
+    input_mesh: BoxMesh,
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
+) -> BoxMesh: ...
+
+
+@overload
+def remesh_keeping_periodicity_for_fem(
+    input_mesh: pv.UnstructuredGrid,
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
+) -> pv.UnstructuredGrid: ...
 
 
 def remesh_keeping_periodicity_for_fem(
-    input_mesh: BoxMesh,
-    output_mesh_file: str,
+    input_mesh: Union[BoxMesh, pv.UnstructuredGrid],
     mesh_version: int = 2,
     dimension: int = 3,
-    hausd: float = None,
-    hgrad: float = None,
-    hmax: float = None,
-    hmin: float = None,
-    hsiz: float = None,
-) -> None:
+    tol: float = 1e-8,
+    hausd: Optional[float] = None,
+    hgrad: Optional[float] = None,
+    hmax: Optional[float] = None,
+    hmin: Optional[float] = None,
+    hsiz: Optional[float] = None,
+) -> Union[BoxMesh, pv.UnstructuredGrid]:
     """
-    Remeshes a mesh (.mesh file format) derived from a BoxMesh using mmg while keeping periodicity
+    Remeshes a mesh using mmg while keeping periodicity
 
-    :param input_mesh: BoxMesh to be remeshed
-    :param output_mesh_file: output file (must be .mesh)
+    :param input_mesh: BoxMesh or pv.UnstructuredGrid mesh to be remeshed
     :param mesh_version: mesh file version (default: 2)
     :param dimension: mesh dimension (default: 3)
+    :param tol: tolerance for periodicity check
 
-    The following parameters are used to control mmg remeshing, see here for more info : https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
+    The following parameters are used to control mmg remeshing, see here for more info :
+    https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
+
     :param hausd: Maximal Hausdorff distance for the boundaries approximation
     :param hgrad: Gradation value, ie ratio between lengths of adjacent mesh edges
     :param hmax: Maximal edge size
     :param hmin: Minimal edge size
     :param hsiz: Build a constant size map of size hsiz
     """
+    if isinstance(input_mesh, pv.UnstructuredGrid):
+        nodes_coords = input_mesh.points
+        input_box_mesh = BoxMesh.from_pyvista(input_mesh)
+    elif isinstance(input_mesh, BoxMesh):
+        nodes_coords = input_mesh.to_pyvista().points
+        input_box_mesh = input_mesh
+    else:
+        raise TypeError("Input mesh is neither a BoxMesh nor a pv.UnstructuredGrid")
+
+    if not is_periodic(nodes_coords, tol, dimension):
+        raise InputMeshNotPeriodicError("Input mesh is not periodic")
+
     with NamedTemporaryFile(
         suffix=".mesh", delete=False
     ) as boundary_triangles_file, NamedTemporaryFile(
         suffix=".mesh", delete=False
-    ) as raw_output_mesh_file:
-        _generate_mesh_with_required_triangles(input_mesh, boundary_triangles_file.name)
-        _remesh_mmg(
-            input_mesh_file=boundary_triangles_file.name,
-            output_mesh_file=raw_output_mesh_file.name,
+    ) as premeshed_mesh_file, NamedTemporaryFile(
+        suffix=".mesh", delete=False
+    ) as raw_output_mesh_file, NamedTemporaryFile(
+        suffix=".mesh", delete=False
+    ) as output_mesh_file:
+        _generate_mesh_with_required_triangles(
+            input_box_mesh, boundary_triangles_file.name
+        )
+        Mmg.mmg3d(
+            input=boundary_triangles_file.name,
+            output=premeshed_mesh_file.name,
+            nofem=True,
+        )
+        Mmg.mmg3d(
+            input=premeshed_mesh_file.name,
+            output=raw_output_mesh_file.name,
             hausd=hausd,
             hgrad=hgrad,
             hmax=hmax,
             hmin=hmin,
             hsiz=hsiz,
+            ls=True,
+            nr=True,
         )
-        os.remove(
-            boundary_triangles_file.name
-        )  # to solve compatibility issues of NamedTemporaryFiles with Windows
-    os.remove(
-        raw_output_mesh_file.name.replace(".mesh", ".sol")
-    )  # Remove unused .sol file created by mmg
+
     _remove_unnecessary_fields_from_mesh_file(
-        raw_output_mesh_file.name, output_mesh_file, mesh_version, dimension
+        raw_output_mesh_file.name, output_mesh_file.name, mesh_version, dimension
     )
+
+    output_mesh = pv.UnstructuredGrid(output_mesh_file.name)
+
+    if not is_periodic(output_mesh.points, tol, dimension):
+        raise OutputMeshNotPeriodicError(
+            "Something went wrong: output mesh is not periodic"
+        )
+
+    # Remove unused .sol files created by mmg
+    # Solve compatibility issues of NamedTemporaryFiles with Windows
+    trash_files_list = [
+        boundary_triangles_file.name,
+        premeshed_mesh_file.name,
+        premeshed_mesh_file.name.replace(".mesh", ".sol"),
+        raw_output_mesh_file.name,
+        raw_output_mesh_file.name.replace(".mesh", ".sol"),
+        output_mesh_file.name,
+    ]
+    for file in trash_files_list:
+        os.remove(file)
+
+    if isinstance(input_mesh, BoxMesh):
+        return BoxMesh.from_pyvista(output_mesh)
+    return output_mesh
 
 
 def _generate_mesh_with_required_triangles(
@@ -114,43 +195,11 @@ def _remove_unnecessary_fields_from_mesh_file(
         output_file.write("Dimension " + str(dimension) + "\n\n")
         for line in lines:
             if not _only_numbers_in_line(line.strip().split(" ")):
-                if "Vertices" == line.strip() or "Tetrahedra" == line.strip():
-                    write_bool = True
-                else:
-                    write_bool = False
+                write_bool = bool(line.strip() in ("Vertices", "Tetrahedra"))
             if write_bool:
                 output_file.write(line)
         output_file.write("End\n")
 
 
-def _only_numbers_in_line(str_list: List[str]) -> bool:
-    return all(not flag.isalpha() for flag in str_list)
-
-
-def _remesh_mmg(
-    input_mesh_file: str,
-    output_mesh_file: str,
-    hausd: float = None,
-    hgrad: float = None,
-    hmax: float = None,
-    hmin: float = None,
-    hsiz: float = None,
-) -> None:
-    mmg_system_call = [
-        "mmg3d_O3",
-        "-in",
-        input_mesh_file,
-        "-out",
-        output_mesh_file,
-    ]
-    if hausd:
-        mmg_system_call.extend(["-hausd", str(hausd)])
-    if hgrad:
-        mmg_system_call.extend(["-hgrad", str(hgrad)])
-    if hmax:
-        mmg_system_call.extend(["-hmax", str(hmax)])
-    if hmin:
-        mmg_system_call.extend(["-hmin", str(hmin)])
-    if hsiz:
-        mmg_system_call.extend(["-hsiz", str(hsiz)])
-    subprocess.call(mmg_system_call)
+def _only_numbers_in_line(line: List[str]) -> bool:
+    return all(not flag.isalpha() for flag in line)

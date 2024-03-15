@@ -37,3 +37,15 @@ mmg Voronoi
    :literal:
 
 .. image:: ../_static/examples/mmg-voro.png
+
+
+Periodic remeshing
+------------------
+
+.. include:: ../../examples/Mesh/remesh/remesh.py
+   :literal:
+
+.. image:: ../_static/examples/initial_mesh.png
+    :width: 49 %
+.. image:: ../_static/examples/remeshed_mesh.png
+    :width: 49 %
