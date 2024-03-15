@@ -40,13 +40,6 @@ def dashed_line(string: Optional[str] = "", char: str = "-") -> str:
     return char * left_padding + title + char * right_padding
 
 
-def run_example(example: str) -> subprocess.CompletedProcess:
-    """Run an example and return True if it was successful."""
-    cmd = [sys.executable, example]
-    process = subprocess.run(cmd, check=False)
-    return process
-
-
 def launch_test_examples(
     exclude_dirs: List[str],
     n_procs: int = 1,
