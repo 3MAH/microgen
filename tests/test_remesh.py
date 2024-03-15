@@ -179,9 +179,12 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
 ) -> None:
     # Arrange
     input_mesh = request.getfixturevalue(shape)
+    edge_length_gradient = 1.05
     # Act
     if USE_MMG:
-        remeshed_shape = remesh_keeping_periodicity_for_fem(input_mesh, hgrad=1.05)
+        remeshed_shape = remesh_keeping_periodicity_for_fem(
+            input_mesh, hgrad=edge_length_gradient
+        )
 
         if isinstance(input_mesh, BoxMesh):
             input_mesh = input_mesh.to_pyvista()
