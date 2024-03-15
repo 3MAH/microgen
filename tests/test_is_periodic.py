@@ -6,8 +6,7 @@ import pyvista as pv
 from microgen import is_periodic
 
 
-@pytest.fixture(scope="session")
-def periodic_box_nodes() -> npt.NDArray[np.float_]:
+def _periodic_box_nodes() -> npt.NDArray[np.float_]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -31,8 +30,7 @@ def periodic_box_nodes() -> npt.NDArray[np.float_]:
     return nodes_array
 
 
-@pytest.fixture(scope="session")
-def one_shifted_node_box_nodes() -> npt.NDArray[np.float_]:
+def _one_shifted_node_box_nodes() -> npt.NDArray[np.float_]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -56,8 +54,7 @@ def one_shifted_node_box_nodes() -> npt.NDArray[np.float_]:
     return nodes_array
 
 
-@pytest.fixture(scope="session")
-def box_elements_same_number_of_nodes() -> npt.NDArray[int]:
+def _box_elements_same_number_of_nodes() -> npt.NDArray[np.int_]:
     elements = np.array(
         [
             [4, 11, 6, 0, 14],
@@ -102,8 +99,7 @@ def box_elements_same_number_of_nodes() -> npt.NDArray[int]:
     return elements
 
 
-@pytest.fixture(scope="session")
-def one_extra_node_box_nodes() -> npt.NDArray[np.float_]:
+def _one_extra_node_box_nodes() -> npt.NDArray[np.float_]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -128,58 +124,54 @@ def one_extra_node_box_nodes() -> npt.NDArray[np.float_]:
     return nodes_array
 
 
-@pytest.fixture(scope="session")
-def periodic_box(periodic_box_nodes, box_elements_same_number_of_nodes):
-    celltypes = np.full(
-        box_elements_same_number_of_nodes.shape[0], pv.CellType.TETRA, dtype=np.uint8
-    )
-    grid = pv.UnstructuredGrid(
-        box_elements_same_number_of_nodes, celltypes, periodic_box_nodes
-    )
+@pytest.fixture(name="periodic_box", scope="function")
+def fixture_periodic_box() -> pv.UnstructuredGrid:
+    nodes = _periodic_box_nodes()
+    elements = _box_elements_same_number_of_nodes()
+    cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
+    grid = pv.UnstructuredGrid(elements, cell_types, nodes)
 
     return grid
 
 
-@pytest.fixture(scope="session")
-def non_periodic_box_1_extra_node(one_extra_node_box_nodes):
-    points = one_extra_node_box_nodes
+@pytest.fixture(name="non_periodic_box_1_extra_node", scope="function")
+def fixture_non_periodic_box_1_extra_node() -> pv.UnstructuredGrid:
+    points = _one_extra_node_box_nodes()
     point_cloud = pv.PolyData(points)
     grid = point_cloud.delaunay_3d(offset=100.0)
 
     return grid
 
 
-@pytest.fixture(scope="session")
-def non_periodic_box_shifted_node(
-    one_shifted_node_box_nodes, box_elements_same_number_of_nodes
-):
-    celltypes = np.full(
-        box_elements_same_number_of_nodes.shape[0], pv.CellType.TETRA, dtype=np.uint8
-    )
-    grid = pv.UnstructuredGrid(
-        box_elements_same_number_of_nodes, celltypes, one_shifted_node_box_nodes
-    )
+@pytest.fixture(name="non_periodic_box_shifted_node", scope="function")
+def fixture_non_periodic_box_shifted_node() -> pv.UnstructuredGrid:
+    nodes = _one_shifted_node_box_nodes()
+    elements = _box_elements_same_number_of_nodes()
+    cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
+    grid = pv.UnstructuredGrid(elements, cell_types, nodes)
 
     return grid
 
 
-def test_given_periodic_box_is_periodic_must_return_true(periodic_box):
+def test_given_periodic_box_is_periodic_must_return_true(
+    periodic_box: pv.UnstructuredGrid,
+) -> None:
     crd = periodic_box.points
 
     assert is_periodic(crd)
 
 
 def test_given_non_periodic_box_with_an_extra_node_is_periodic_must_return_false(
-    non_periodic_box_1_extra_node,
-):
+    non_periodic_box_1_extra_node: pv.UnstructuredGrid,
+) -> None:
     crd = non_periodic_box_1_extra_node.points
 
     assert not is_periodic(crd)
 
 
 def test_given_non_periodic_box_with_a_shifted_node_but_no_extra_node_is_periodic_must_return_false(
-    non_periodic_box_shifted_node,
-):
+    non_periodic_box_shifted_node: pv.UnstructuredGrid,
+) -> None:
     crd = non_periodic_box_shifted_node.points
 
     assert not is_periodic(crd)

@@ -1,57 +1,24 @@
-import subprocess
-from pathlib import Path
+import warnings
+from distutils.spawn import find_executable
 
-import gmsh
 import numpy as np
-import numpy.typing as npt
 import pytest
 import pyvista as pv
+from _pytest.fixtures import FixtureRequest
 
-from microgen import BoxMesh, Rve, Tpms, is_periodic, remesh
+from microgen import BoxMesh, Tpms, is_periodic
+from microgen.remesh import (
+    InputMeshNotPeriodicError,
+    remesh_keeping_periodicity_for_fem,
+)
 from microgen.shape.surface_functions import gyroid
 
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
-USE_MMG = False
-try:
-    subprocess.check_output("mmg3d_O3", stderr=subprocess.STDOUT)
-    USE_MMG = True
-except (subprocess.CalledProcessError, FileNotFoundError):
-    print("mmg command did not work, check if it is installed or contact a developer")
-    USE_MMG = False
-
-
-def _get_mesh_nodes_coords(mesh_name: str) -> npt.NDArray[np.float_]:
-    gmsh.initialize()
-    gmsh.open(mesh_name)
-
-    _, nodes_coords, _ = gmsh.model.mesh.getNodes()
-    gmsh.finalize()
-
-    nodes_coords = nodes_coords.reshape(-1, _MESH_DIM)
-
-    return nodes_coords
-
-
-@pytest.fixture(name="tmp_dir", scope="function")
-def fixture_tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    tmp_dir_name = "test_tmp_dir"
-    return tmp_path_factory.mktemp(tmp_dir_name)
-
-
-@pytest.fixture(name="tmp_mesh_filename", scope="function")
-def fixture_tmp_mesh_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "shape.mesh").as_posix()
-
-
-@pytest.fixture(name="tmp_output_mesh_filename", scope="function")
-def fixture_tmp_output_mesh_filename(tmp_dir: Path) -> str:
-    return (tmp_dir / "shape.o.mesh").as_posix()
-
-
-def _default_rve() -> Rve:
-    return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+USE_MMG = find_executable("mmg3d_O3") is not None
+if not USE_MMG:
+    warnings.warn("MMG will not be used in these tests")
 
 
 @pytest.fixture(name="box_mesh", scope="function")
@@ -120,18 +87,83 @@ def fixture_box_mesh() -> BoxMesh:
     }
 
     mesh = BoxMesh(nodes_array, elements_dict)
-    mesh.rve = _default_rve()
 
     return mesh
 
 
 @pytest.fixture(name="gyroid_mesh", scope="function")
-def fixture_gyroid_mesh() -> BoxMesh:
+def fixture_gyroid_mesh() -> pv.UnstructuredGrid:
     gyroid_vtk = pv.UnstructuredGrid(
         Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet")
     )
-    gyroid_mesh = BoxMesh.from_pyvista(gyroid_vtk)
-    return gyroid_mesh
+    return gyroid_vtk
+
+
+@pytest.fixture(name="non_periodic_mesh", scope="function")
+def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
+    nodes = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [0.5, 0.5, 0.5],
+            [-0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5],
+            [0.5, 0.5, -0.5],
+            [0.5, -0.5, 0.5],
+            [0.5, -0.5, -0.5],
+            [-0.5, 0.5, 0.5],
+            [-0.5, 0.5, -0.5],
+            [0.0, 0.5, 0.0],
+            [0.0, -0.5, 0.0],
+            [0.5, 0.1, 0.0],
+            [-0.5, 0.0, 0.0],
+            [0.0, 0.0, 0.5],
+            [0.0, 0.0, -0.5],
+        ]
+    )
+    elements = np.array(
+        [
+            [4, 11, 6, 0, 14],
+            [4, 0, 9, 1, 11],
+            [4, 3, 10, 0, 13],
+            [4, 9, 0, 4, 11],
+            [4, 5, 11, 0, 13],
+            [4, 0, 11, 1, 13],
+            [4, 0, 10, 5, 13],
+            [4, 11, 5, 1, 13],
+            [4, 3, 10, 2, 12],
+            [4, 6, 10, 0, 14],
+            [4, 1, 9, 4, 11],
+            [4, 10, 3, 0, 12],
+            [4, 10, 3, 5, 13],
+            [4, 0, 10, 2, 14],
+            [4, 2, 10, 0, 12],
+            [4, 4, 11, 0, 14],
+            [4, 6, 11, 4, 14],
+            [4, 10, 6, 2, 14],
+            [4, 5, 10, 0, 11],
+            [4, 0, 10, 6, 11],
+            [4, 10, 5, 6, 11],
+            [4, 7, 9, 0, 12],
+            [4, 0, 9, 8, 12],
+            [4, 9, 7, 8, 12],
+            [4, 7, 9, 1, 13],
+            [4, 1, 9, 0, 13],
+            [4, 9, 7, 0, 13],
+            [4, 0, 12, 3, 13],
+            [4, 3, 12, 7, 13],
+            [4, 12, 0, 7, 13],
+            [4, 8, 12, 2, 14],
+            [4, 2, 12, 0, 14],
+            [4, 12, 8, 0, 14],
+            [4, 8, 9, 0, 14],
+            [4, 0, 9, 4, 14],
+            [4, 9, 8, 4, 14],
+        ]
+    )
+    cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
+    mesh = pv.UnstructuredGrid(elements, cell_types, nodes)
+
+    return mesh
 
 
 @pytest.mark.parametrize(
@@ -142,24 +174,33 @@ def fixture_gyroid_mesh() -> BoxMesh:
     ],
 )
 def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
-    shape: BoxMesh,
-    request,
-    tmp_mesh_filename: str,
-    tmp_output_mesh_filename: str,
+    shape: str,
+    request: FixtureRequest,
 ) -> None:
+    # Arrange
+    input_mesh = request.getfixturevalue(shape)
+    edge_length_gradient = 1.05
+    # Act
     if USE_MMG:
-        # Arrange
-
-        vtk_mesh = request.getfixturevalue(shape).to_pyvista()
-        pv.save_meshio(tmp_mesh_filename, vtk_mesh)
-
-        # Act
-
-        remesh.remesh_keeping_periodicity_for_fem(
-            shape, tmp_output_mesh_filename, hgrad=1.05
+        remeshed_shape = remesh_keeping_periodicity_for_fem(
+            input_mesh, hgrad=edge_length_gradient
         )
 
+        if isinstance(input_mesh, BoxMesh):
+            input_mesh = input_mesh.to_pyvista()
+            remeshed_shape = remeshed_shape.to_pyvista()
         # Assert
-        assert is_periodic(_get_mesh_nodes_coords(tmp_mesh_filename)) and is_periodic(
-            _get_mesh_nodes_coords(tmp_output_mesh_filename)
-        )
+        assert is_periodic(input_mesh.points) and is_periodic(remeshed_shape.points)
+
+
+def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
+    non_periodic_mesh: pv.UnstructuredGrid,
+) -> None:
+    edge_length_gradient = 1.05
+    if USE_MMG:
+        with pytest.raises(
+            InputMeshNotPeriodicError, match="Input mesh is not periodic"
+        ):
+            remesh_keeping_periodicity_for_fem(
+                non_periodic_mesh, hgrad=edge_length_gradient
+            )

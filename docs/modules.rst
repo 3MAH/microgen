@@ -41,6 +41,14 @@ Mesh
    :undoc-members:
    :show-inheritance:
 
+Remesh
+-----------------------------------
+
+.. automodule:: microgen.remesh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 External
 -----------------------------------
 
