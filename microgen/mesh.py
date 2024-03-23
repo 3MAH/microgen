@@ -6,7 +6,6 @@ from typing import Dict, Iterator, List, Tuple
 
 import gmsh
 import numpy as np
-import numpy.typing as npt
 
 from .phase import Phase
 from .rve import Rve

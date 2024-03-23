@@ -99,7 +99,7 @@ def read_obj(filename: str):
     Reads vertices and faces from obj format file for polyhedron
     """
     dic = {"vertices": [], "faces": []}
-    with open(file=filename, mode="r", encoding="utf-8") as file:
+    with open(file=filename, encoding="utf-8") as file:
         for line in file:
             data = line.split(" ")
             if data[0] == "v":

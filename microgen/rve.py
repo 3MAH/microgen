@@ -4,7 +4,6 @@ Representative Volume Element (RVE) or Representative Elementary Volume (REV)
 
 from __future__ import annotations
 
-import warnings
 from typing import List, Optional, Tuple, Union
 
 import cadquery as cq

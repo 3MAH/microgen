@@ -8,7 +8,7 @@ shapes = {
     "sphere": {"radius": 0.5},
     "capsule": {"height": 0.5, "radius": 0.3},
     "cylinder": {"height": 0.5, "radius": 0.5},
-    "ellipsoid": {"a_x": 0.5, "a_y": 0.25, "a_z": 0.3},
+    "ellipsoid": {"radii": (0.5, 0.25, 0.3)},
     "extrudedpolygon": {
         "listCorners": [
             (0.5, 0),
