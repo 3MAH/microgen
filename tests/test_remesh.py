@@ -1,3 +1,5 @@
+"""Tests for the remesh module."""
+
 import subprocess
 from pathlib import Path
 
@@ -51,7 +53,7 @@ def fixture_tmp_output_mesh_filename(tmp_dir: Path) -> str:
 
 
 def _default_rve() -> Rve:
-    return Rve(dim_x=1.0, dim_y=1.0, dim_z=1.0, center=(0.5, 0.5, 0.5))
+    return Rve(dim=1.0, center=(0.5, 0.5, 0.5))
 
 
 @pytest.fixture(name="box_mesh", scope="function")

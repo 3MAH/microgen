@@ -1,3 +1,5 @@
+"""Definition of the surface functions used to generate the Tpms geometry."""
+
 import numpy as np
 from numpy import cos, sin
 
@@ -293,7 +295,7 @@ def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     )
 
 
-def honeycomb_gyroid(x: float, y: float, z: float) -> float:
+def honeycomb_gyroid(x: float, y: float, _: float) -> float:
     """
     .. math::
        sin(x) cos(y) + sin(y) + cos(x) = 0
@@ -315,7 +317,7 @@ def honeycomb_gyroid(x: float, y: float, z: float) -> float:
     return sin(x) * cos(y) + sin(y) + cos(x)
 
 
-def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
+def honeycomb_schwarzP(x: float, y: float, _: float) -> float:
     """
     .. math::
        cos(x) + cos(y) = 0
@@ -337,7 +339,7 @@ def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
     return cos(x) + cos(y)
 
 
-def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
+def honeycomb_schwarzD(x: float, y: float, _: float) -> float:
     """
     .. math::
        cos(x) cos(y) + sin(x) sin(y) + sin(x) cos(y) + cos(x) sin(y) = 0
@@ -359,7 +361,7 @@ def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
     return cos(x) * cos(y) + sin(x) * sin(y) + sin(x) * cos(y) + cos(x) * sin(y)
 
 
-def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
+def honeycomb_schoenIWP(x: float, y: float, _: float) -> float:
     """
     .. math::
        cos(x) cos(y) + cos(y) + cos(x) = 0
@@ -381,7 +383,7 @@ def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
     return cos(x) * cos(y) + cos(y) + cos(x)
 
 
-def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
+def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
     """
     .. math::
        1.1 (sin(2 x) cos(y) + sin(2 y) sin(x) + cos(x) sin(y))

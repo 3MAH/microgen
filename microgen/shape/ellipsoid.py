@@ -31,21 +31,17 @@ class Ellipsoid(BasicGeometry):
         self,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
-        a_x: float = 1,
-        a_y: float = 0.5,
-        a_z: float = 0.25,
+        radii: Tuple[float, float, float] = (1, 0.5, 0.25),
     ) -> None:
         super().__init__(shape="Ellipsoid", center=center, orientation=orientation)
-        self.a_x = a_x
-        self.a_y = a_y
-        self.a_z = a_z
+        self.radii = radii
 
     def generate(self) -> cq.Shape:
         transform_mat = cq.Matrix(
             [
-                [self.a_x, 0, 0, self.center[0]],
-                [0, self.a_y, 0, self.center[1]],
-                [0, 0, self.a_z, self.center[2]],
+                [self.radii[0], 0, 0, self.center[0]],
+                [0, self.radii[1], 0, self.center[1]],
+                [0, 0, self.radii[2], self.center[2]],
             ]
         )
 
@@ -63,9 +59,9 @@ class Ellipsoid(BasicGeometry):
     def generateVtk(self) -> pv.PolyData:
         transform_matrix = np.array(
             [
-                [self.a_x, 0, 0, self.center[0]],
-                [0, self.a_y, 0, self.center[1]],
-                [0, 0, self.a_z, self.center[2]],
+                [self.radii[0], 0, 0, self.center[0]],
+                [0, self.radii[1], 0, self.center[1]],
+                [0, 0, self.radii[2], self.center[2]],
                 [0, 0, 0, 1],
             ]
         )

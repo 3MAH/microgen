@@ -4,7 +4,7 @@ Extruded Polygon (:mod:`microgen.shape.extrudedPolygon`)
 ========================================================
 """
 
-from typing import Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -31,17 +31,19 @@ class ExtrudedPolygon(BasicGeometry):
         self,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
-        listCorners: Sequence[Tuple[float, float]] = [
-            (1, 0),
-            (0.5, 0.5 * np.sqrt(3)),
-            (-0.5, 0.5 * np.sqrt(3)),
-            (-1, 0),
-            (-0.5, -0.5 * np.sqrt(3)),
-            (0.5, -0.5 * np.sqrt(3)),
-            (1, 0),
-        ],  # hexagon
+        listCorners: Optional[Sequence[Tuple[float, float]]] = None,
         height: float = 1,
     ) -> None:
+        if listCorners is None:
+            listCorners = [
+                (1, 0),
+                (0.5, 0.5 * np.sqrt(3)),
+                (-0.5, 0.5 * np.sqrt(3)),
+                (-1, 0),
+                (-0.5, -0.5 * np.sqrt(3)),
+                (0.5, -0.5 * np.sqrt(3)),
+                (1, 0),
+            ]  # hexagon
         super().__init__(
             shape="ExtrudedPolygon", center=center, orientation=orientation
         )
@@ -68,15 +70,14 @@ class ExtrudedPolygon(BasicGeometry):
         return cq.Shape(poly.val().wrapped)
 
     def generateVtk(self, capping=True) -> pv.PolyData:
-        vertices = []
-        for corner in self.listCorners:
-            vertices.append(
-                [
-                    self.center[0] - 0.5 * self.height,
-                    self.center[1] + corner[0],
-                    self.center[2] + corner[1],
-                ]
-            )
+        vertices = [
+            [
+                self.center[0] - 0.5 * self.height,
+                self.center[1] + corner[0],
+                self.center[2] + corner[1],
+            ]
+            for corner in self.listCorners
+        ]
         faces = np.arange(len(vertices))
         faces = np.insert(faces, 0, len(vertices))
 

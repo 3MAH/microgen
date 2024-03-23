@@ -1,3 +1,5 @@
+"""Tests for the SingleMesh class and related"""
+
 from typing import Dict, List
 
 import numpy as np
@@ -22,7 +24,7 @@ def compare_dict_with_arrays_as_values(
 
 
 def _box_mesh_points() -> npt.NDArray[np.float_]:
-    points = np.array(
+    return np.array(
         [
             [0.0, 0.0, 0.0],
             [0.5, 0.5, 0.5],
@@ -41,20 +43,17 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
             [0.0, 0.0, -0.5],
         ]
     )
-    return points
 
 
 @pytest.fixture(name="box_mesh_grid", scope="function")
 def fixture_box_mesh_grid() -> pv.UnstructuredGrid:
     points = _box_mesh_points()
     point_cloud = pv.PolyData(points)
-    grid = point_cloud.delaunay_3d(offset=100.0)
-
-    return grid
+    return point_cloud.delaunay_3d(offset=100.0)
 
 
 def _box_single_mesh_nodes() -> npt.NDArray[np.float_]:
-    nodes_array = np.array(
+    return np.array(
         [
             [0.0, 0.0, 0.0],
             [0.5, 0.5, 0.5],
@@ -74,11 +73,9 @@ def _box_single_mesh_nodes() -> npt.NDArray[np.float_]:
         ]
     )
 
-    return nodes_array
-
 
 def _box_single_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
-    elements_dict = {
+    return {
         pv.CellType.TETRA: np.array(
             [
                 [11, 6, 0, 14],
@@ -121,32 +118,24 @@ def _box_single_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
         )
     }
 
-    return elements_dict
-
 
 @pytest.fixture(name="box_mesh", scope="function")
 def fixture_box_mesh() -> SingleMesh:
-    box = SingleMesh(_box_single_mesh_nodes(), _box_single_mesh_elements())
-
-    return box
+    return SingleMesh(_box_single_mesh_nodes(), _box_single_mesh_elements())
 
 
 def _linear_1d_mesh() -> pv.UnstructuredGrid:
     points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
     cells = [2, 0, 1]
     celltypes = [pv.CellType.LINE]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _quadratic_1d_mesh() -> pv.UnstructuredGrid:
     points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [1.0, 0.0, 0.0]])
     cells = [3, 0, 1, 2]
     celltypes = [pv.CellType.QUADRATIC_EDGE]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _linear_2d_quad_mesh() -> pv.UnstructuredGrid:
@@ -155,9 +144,7 @@ def _linear_2d_quad_mesh() -> pv.UnstructuredGrid:
     )
     cells = [4, 0, 1, 2, 3]
     celltypes = [pv.CellType.QUAD]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _quadratic_2d_quad_mesh() -> pv.UnstructuredGrid:
@@ -175,18 +162,14 @@ def _quadratic_2d_quad_mesh() -> pv.UnstructuredGrid:
     )
     cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
     celltypes = [pv.CellType.QUADRATIC_QUAD]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _linear_2d_triangle_mesh() -> pv.UnstructuredGrid:
     points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
     cells = [3, 0, 1, 2]
     celltypes = [pv.CellType.TRIANGLE]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _quadratic_2d_triangle_mesh() -> pv.UnstructuredGrid:
@@ -202,9 +185,7 @@ def _quadratic_2d_triangle_mesh() -> pv.UnstructuredGrid:
     )
     cells = [6, 0, 1, 2, 3, 4, 5]
     celltypes = [pv.CellType.QUADRATIC_TRIANGLE]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _linear_3d_hex_mesh() -> pv.UnstructuredGrid:
@@ -222,9 +203,7 @@ def _linear_3d_hex_mesh() -> pv.UnstructuredGrid:
     )
     cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
     celltypes = [pv.CellType.HEXAHEDRON]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _quadratic_3d_hex_mesh() -> pv.UnstructuredGrid:
@@ -254,9 +233,7 @@ def _quadratic_3d_hex_mesh() -> pv.UnstructuredGrid:
     )
     cells = [20, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
     celltypes = [pv.CellType.QUADRATIC_HEXAHEDRON]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _quadratic_3d_tet_mesh() -> pv.UnstructuredGrid:
@@ -276,9 +253,7 @@ def _quadratic_3d_tet_mesh() -> pv.UnstructuredGrid:
     )
     cells = [10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     celltypes = [pv.CellType.QUADRATIC_TETRA]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _linear_3d_wedge_mesh() -> pv.UnstructuredGrid:
@@ -294,9 +269,7 @@ def _linear_3d_wedge_mesh() -> pv.UnstructuredGrid:
     )
     cells = [6, 0, 1, 2, 3, 4, 5]
     celltypes = [pv.CellType.WEDGE]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 def _linear_3d_pyramid_mesh() -> pv.UnstructuredGrid:
@@ -311,9 +284,7 @@ def _linear_3d_pyramid_mesh() -> pv.UnstructuredGrid:
     )
     cells = [5, 0, 1, 2, 3, 4]
     celltypes = [pv.CellType.PYRAMID]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-
-    return grid
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
 
 @pytest.fixture(name="sample_1d_mesh_list", scope="function")

@@ -42,7 +42,7 @@ class Phase:
         if shape is None and solids == []:
             print("Empty phase")
 
-        self.name = "Phase_" + str(self.numInstances)
+        self.name = f"Phase_{str(self.numInstances)}"
 
         self._centerOfMass = None
         self._inertiaMatrix = None
@@ -54,11 +54,9 @@ class Phase:
         Returns the center of 'mass' of an object.
         :param compute: if False and centerOfMass already exists, does not compute it (use carefully)
         """
-        if isinstance(self._centerOfMass, np.ndarray) and not compute:
-            return self._centerOfMass
-        else:
+        if not isinstance(self._centerOfMass, np.ndarray) or compute:
             self._computeCenterOfMass()
-            return self._centerOfMass
+        return self._centerOfMass
 
     centerOfMass = property(getCenterOfMass)
 
@@ -77,11 +75,9 @@ class Phase:
         Calculates the inertia Matrix of an object.
         :param compute: if False and inertiaMatrix already exists, does not compute it (use carefully)
         """
-        if isinstance(self._inertiaMatrix, np.ndarray) and not compute:
-            return self._inertiaMatrix
-        else:
+        if not isinstance(self._inertiaMatrix, np.ndarray) or compute:
             self._computeInertiaMatrix()
-            return self._inertiaMatrix
+        return self._inertiaMatrix
 
     inertiaMatrix = property(getInertiaMatrix)
 
@@ -223,8 +219,7 @@ class Phase:
                         ),
                     )
         compound = xyz_repeat.toCompound()
-        shape = cq.Shape(compound.wrapped)
-        return shape
+        return cq.Shape(compound.wrapped)
 
     def repeat(self, rve: Rve, grid: Tuple[int, int, int]) -> None:
         """

@@ -1,7 +1,9 @@
+"""Test for Phase class"""
+
 import numpy as np
 
 from microgen import Phase, Rve, rasterPhase
-from microgen.shape import Sphere
+from microgen.shape import Box, Ellipsoid, Sphere
 
 
 def test_phase_sphere_rasterize_must_have_correct_number_of_solids() -> None:
@@ -16,3 +18,74 @@ def test_phase_sphere_rasterize_must_have_correct_number_of_solids() -> None:
 
     assert len(phases) == np.prod(grid)
     assert len(phases) == len(raster.solids)
+
+
+def test_phase_rasterize_phase_per_raster_should_return_the_right_object():
+    rve = Rve(dim=1)
+    sphere = Sphere(radius=0.5).generate()
+    phase = Phase(shape=sphere)
+    phases = phase.rasterize(rve, [3, 3, 3], phasePerRaster=True)
+    assert isinstance(phases, list)
+    assert len(phases) == 27
+
+    phase.rasterize(rve, [2, 2, 2], phasePerRaster=False)
+    assert len(phase.solids) == 8
+
+
+def test_phase_repeat_should_repeat_the_shape_in_the_rve():
+    rve = Rve(dim=1)
+    box = Box(dim=(1.0, 1.0, 1.0)).generate()
+    volume_before = box.Volume()
+    phase = Phase(shape=box)
+    phase.repeat(rve, (1, 2, 1))
+    assert len(phase.solids) == 2
+    assert phase.shape.Volume() == 2.0 * volume_before
+
+
+def test_phase_rescale_should_change_the_size_of_the_shape():
+    radius = 1.0
+    scale = 1.5
+    phase = Phase(shape=Sphere(radius=radius).generate())
+    volume_before = phase.shape.Volume()
+    phase.rescale(scale)
+    assert np.isclose(phase.shape.Volume(), volume_before * scale**3, rtol=1e-2)
+
+
+def test_phase_translate_should_shift_centers_corresponding_to_the_translation():
+    center = (1.0, 0.5, -0.5)
+    phase = Phase(shape=Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate())
+    phase.translate((1, 0, 0))
+    assert np.allclose(phase.centerOfMass, (2.0, 0.5, -0.5), rtol=1e-4)
+    phase.translate(np.array([0, 1, 1]))
+    assert np.allclose(phase.centerOfMass, (2.0, 1.5, 0.5), rtol=1e-4)
+
+
+def test_phase_center_of_mass_should_return_the_right_values():
+    center = (1.0, 0.5, -0.5)
+    phase = Phase(shape=Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate())
+    assert np.allclose(phase.centerOfMass, center, rtol=1e-4)
+    assert np.allclose(
+        phase.getCenterOfMass(compute=False), phase.centerOfMass, rtol=1e-4
+    )
+
+
+def test_phase_inertia_matrix_should_return_the_right_values():
+    radius = 1.5
+    phase = Phase(shape=Sphere(radius=radius).generate())
+    assert np.allclose(
+        phase.inertiaMatrix, np.diag([phase.shape.Volume() * 2 / 5 * radius**2] * 3)
+    )
+    assert np.allclose(phase.getInertiaMatrix(compute=False), phase.inertiaMatrix)
+
+
+def test_phase_solids_and_shape_properties_should_return_the_right_values():
+    ellipsoid = Ellipsoid(radii=(0.15, 0.31, 0.4)).generate()
+    phase = Phase(shape=ellipsoid)
+    assert phase.solids == [ellipsoid]
+    assert phase.shape == ellipsoid
+
+
+def test_phase_empty_should_have_empty_shape_and_solids():
+    void_phase = Phase()
+    assert void_phase.shape is None
+    assert void_phase.solids == []

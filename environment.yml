@@ -9,5 +9,5 @@ dependencies:
   - pytest-cov
   - occt=7.7.0
   - cadquery=2.3.1
-#  - mmg
+  - mmg
 #  - neper

@@ -101,14 +101,14 @@ class BoxMesh(SingleMesh):
         ).argmin()
         self.center = crd[closest_point_to_rve_center]
 
-        face_list_xm = np.where(np.abs(crd[:, 0] - self.rve.x_min) < tol)[0]
-        face_list_xp = np.where(np.abs(crd[:, 0] - self.rve.x_max) < tol)[0]
+        face_list_xm = np.where(np.abs(crd[:, 0] - self.rve.min_point[0]) < tol)[0]
+        face_list_xp = np.where(np.abs(crd[:, 0] - self.rve.max_point[0]) < tol)[0]
 
-        face_list_ym = np.where(np.abs(crd[:, 1] - self.rve.y_min) < tol)[0]
-        face_list_yp = np.where(np.abs(crd[:, 1] - self.rve.y_max) < tol)[0]
+        face_list_ym = np.where(np.abs(crd[:, 1] - self.rve.min_point[1]) < tol)[0]
+        face_list_yp = np.where(np.abs(crd[:, 1] - self.rve.max_point[1]) < tol)[0]
 
-        face_list_zm = np.where(np.abs(crd[:, 2] - self.rve.z_min) < tol)[0]
-        face_list_zp = np.where(np.abs(crd[:, 2] - self.rve.z_max) < tol)[0]
+        face_list_zm = np.where(np.abs(crd[:, 2] - self.rve.min_point[2]) < tol)[0]
+        face_list_zp = np.where(np.abs(crd[:, 2] - self.rve.max_point[2]) < tol)[0]
 
         edge_list_xm_ym = np.intersect1d(face_list_xm, face_list_ym, assume_unique=True)
         edge_list_xp_ym = np.intersect1d(face_list_xp, face_list_ym, assume_unique=True)
@@ -653,20 +653,20 @@ class BoxMesh(SingleMesh):
             np.array([0.0, 0.0, 1.0]),
         ]
         origins_p = [
-            np.array([rve.x_min, rve.center[1], rve.center[2]]),
-            np.array([rve.x_max, rve.center[1], rve.center[2]]),
-            np.array([rve.center[0], rve.y_min, rve.center[2]]),
-            np.array([rve.center[0], rve.y_max, rve.center[2]]),
-            np.array([rve.center[0], rve.center[1], rve.z_min]),
-            np.array([rve.center[0], rve.center[1], rve.z_max]),
+            np.array([rve.min_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.max_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.center[0], rve.min_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.max_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.center[1], rve.min_point[2]]),
+            np.array([rve.center[0], rve.center[1], rve.max_point[2]]),
         ]
         size_planes = [
-            2.0 * rve.dx,
-            2.0 * rve.dx,
-            2.0 * rve.dy,
-            2.0 * rve.dy,
-            2.0 * rve.dz,
-            2.0 * rve.dz,
+            2.0 * rve.dim[0],
+            2.0 * rve.dim[0],
+            2.0 * rve.dim[1],
+            2.0 * rve.dim[1],
+            2.0 * rve.dim[2],
+            2.0 * rve.dim[2],
         ]
 
         surface = self.surface
@@ -708,11 +708,11 @@ class BoxMesh(SingleMesh):
             np.array([0.0, 0.0, 1.0]),
         ]
         origins_p = [
-            np.array([rve.x_max, rve.center[1], rve.center[2]]),
-            np.array([rve.center[0], rve.y_max, rve.center[2]]),
-            np.array([rve.center[0], rve.center[1], rve.z_max]),
+            np.array([rve.max_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.center[0], rve.max_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.center[1], rve.max_point[2]]),
         ]
-        size_planes = [2.0 * rve.dx, 2.0 * rve.dy, 2.0 * rve.dz]
+        size_planes = [2.0 * rve.dim[0], 2.0 * rve.dim[1], 2.0 * rve.dim[2]]
 
         faces_m = [
             crd[self.faces["face_xm"]],

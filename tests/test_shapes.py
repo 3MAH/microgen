@@ -1,7 +1,9 @@
+"""Tests for the shapes module."""
+
 from __future__ import annotations
 
 from inspect import getmembers, isfunction
-from typing import Literal, Tuple, Type
+from typing import Any, Dict, Literal, Tuple, Type
 
 import numpy as np
 import pytest
@@ -18,52 +20,39 @@ from microgen.shape import (
 )
 
 
-def test_shapes():
-    rve = microgen.Rve(dim=1)
+@pytest.mark.parametrize(
+    ("shape", "params"),
+    [
+        (Box, {"dim": (0.15, 0.31, 0.4)}),
+        (Capsule, {"height": 0.5, "radius": 0.1}),
+        (Cylinder, {"height": 0.5, "radius": 0.1}),
+        (Ellipsoid, {"radii": (0.15, 0.31, 0.4)}),
+        (
+            ExtrudedPolygon,
+            {"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
+        ),
+        (
+            Polyhedron,
+            {
+                "dic": microgen.shape.polyhedron.read_obj(
+                    "examples/BasicShapes/platon/tetrahedron.obj"
+                )
+            },
+        ),
+        (Sphere, {"radius": 0.15}),
+    ],
+)
+def test_new_geometry_and_native_shape_must_have_same_volume(
+    shape: Type[microgen.BasicGeometry], params: Dict[str, Any]
+):
+    key = shape.__name__
+    new_geom = microgen.newGeometry(shape=key, param_geom=params)
+    native_shape = shape(**params)
 
-    elem = microgen.newGeometry(
-        shape="Ellipsoid", param_geom={"a_x": 0.15, "a_y": 0.31, "a_z": 0.4}
-    )
-    ellipsoid = elem.generate()
-    phase = microgen.Phase(shape=ellipsoid)
-    phase.centerOfMass
-    phase.centerOfMass
-    phase.getCenterOfMass(compute=False)
-    phase.inertiaMatrix
-    phase.inertiaMatrix
-    phase.getInertiaMatrix(compute=False)
-    phase.solids
-    phase.shape
-    phase.translate((1, 0, 0))
-    phase.translate(np.array([0, 1, 1]))
-    phase.rescale(1.5)
-    phase.repeat(rve, (1, 2, 1))
-    phase.rasterize(rve, [2, 2, 2], phasePerRaster=True)
-    phase.rasterize(rve, [2, 2, 2], phasePerRaster=False)
+    assert new_geom.generateVtk().volume == native_shape.generateVtk().volume
 
-    void_phase = microgen.Phase()
-    void_phase.shape
-    void_phase.solids
 
-    elem = microgen.newGeometry(shape="Sphere", param_geom={"radius": 0.15})
-    elem = microgen.newGeometry(
-        shape="Box", param_geom={"dim_x": 0.15, "dim_y": 0.31, "dim_z": 0.4}
-    )
-    elem = microgen.newGeometry(
-        shape="Capsule", param_geom={"height": 0.5, "radius": 0.1}
-    )
-    elem = microgen.newGeometry(
-        shape="Cylinder", param_geom={"height": 0.5, "radius": 0.1}
-    )
-    elem = microgen.newGeometry(
-        shape="ExtrudedPolygon",
-        param_geom={"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
-    )
-    dic = microgen.shape.polyhedron.read_obj(
-        "examples/BasicShapes/platon/tetrahedron.obj"
-    )
-    microgen.newGeometry(shape="Polyhedron", param_geom={"dic": dic})
-
+def test_new_geometry_given_wrong_shape_must_raise_ValueError():
     with pytest.raises(ValueError):
         microgen.newGeometry(shape="fake", param_geom={"fake": 0})
 
@@ -246,7 +235,7 @@ def test_tpms_given_generate_surface_must_not_be_empty():
 
 
 def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond():
-    def variable_offset(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def variable_offset(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x + 1.5
 
     tpms = microgen.Tpms(
@@ -264,7 +253,7 @@ def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond():
 def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_ValueError(
     param: float,
 ):
-    def variable_offset(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def variable_offset(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x + param  # x ∈ [-0.5, 0.5]
 
     # offset must be in [0, 2 * max(gyroid)]
@@ -411,7 +400,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
     sheet = tpms.generateVtk(type_part="lower skeletal").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
-    def including_negative_values(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def including_negative_values(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x
 
     tpms = microgen.Tpms(
@@ -426,7 +415,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
 
 
 def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error_with_cadquery():
-    def all_negative(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def all_negative(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return -1.0 + x
 
     tpms = microgen.Tpms(
@@ -438,7 +427,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
 
     assert tpms.generateVtk(type_part="sheet").volume == 0.0
 
-    def including_negative_values(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def including_negative_values(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x
 
     tpms = microgen.Tpms(

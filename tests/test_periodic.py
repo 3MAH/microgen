@@ -1,3 +1,5 @@
+"""Test the periodic function."""
+
 import pytest
 
 from microgen import Phase, Rve, periodic, shape

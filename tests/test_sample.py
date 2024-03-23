@@ -1,3 +1,5 @@
+"""Test the microgen package."""
+
 import subprocess
 from sys import platform
 
@@ -14,21 +16,20 @@ except (subprocess.CalledProcessError, FileNotFoundError):
 
 
 def test_misc():
-    if USE_NEPER:
-        if platform != "win32":
-            microgen.Neper.run(
-                filename="tests/data/neper.tess", nbCell=2, dimCube=(1, 1, 1)
-            )
-            microgen.parseNeper("tests/data/neper")
-            microgen.Neper.generateVoronoiFromTessFile("tests/data/neper.tess")
+    if USE_NEPER and platform != "win32":
+        microgen.Neper.run(
+            filename="tests/data/neper.tess", nbCell=2, dimCube=(1, 1, 1)
+        )
+        microgen.parseNeper("tests/data/neper")
+        microgen.Neper.generateVoronoiFromTessFile("tests/data/neper.tess")
 
 
 def test_operations():
-    elem = microgen.Box(center=(0.5, 0.5, 0.5), dim_x=1, dim_y=1, dim_z=1)
+    elem = microgen.Box(center=(0.5, 0.5, 0.5), dim=(1, 1, 1))
     shape1 = elem.generate()
     phase1 = microgen.Phase(shape=shape1)
 
-    elem = microgen.Box(center=(0, 0, 0), dim_x=0.5, dim_y=0.5, dim_z=0.5)
+    elem = microgen.Box(center=(0, 0, 0), dim=(0.5, 0.5, 0.5))
     shape2 = elem.generate()
     microgen.rescale(shape2, 2.0)
 
@@ -37,7 +38,7 @@ def test_operations():
     microgen.cutPhasesByShape(phaseList=[phase1], cut_obj=shape2)
 
     rve = microgen.Rve(dim=1, center=(0.5, 0.5, 0.5))
-    microgen.repeatShape(shape1, rve, grid=[2, 2, 2])
+    microgen.repeatShape(shape1, rve, grid=(2, 2, 2))
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+"""Tests for the meshPeriodic module."""
+
 from pathlib import Path
 from typing import List, Union
 
@@ -53,40 +55,57 @@ def tmp_output_vtk_filename(tmp_dir: Path) -> str:
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def _generate_cqcompound_octettruss(rve: Rve):
     # data to generate octet truss cylinders
-    xc = np.array([0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, 0.0])
-    yc = np.array([0.5, 0.5, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.5, 0.5])
-    zc = np.array([0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5])
-    psi = np.array(
-        [45.0, -45.0, 0.0, 0.0, 90.0, 90.0, 0.0, 0.0, 90.0, 90.0, 45.0, -45.0]
+    centers = np.array(
+        [
+            [0.5, 0.5, 0.0],
+            [0.5, 0.5, 0.0],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.0, 0.5, 0.5],
+            [0.0, 0.5, 0.5],
+            [0.5, 0.5, 0.0],
+            [0.5, 0.5, 0.0],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.0, 0.5, 0.5],
+            [0.0, 0.5, 0.5],
+        ]
     )
-    theta = np.array(
-        [0.0, 0.0, -90.0, -90.0, -90.0, -90.0, 90.0, 90.0, 90.0, 90.0, 0.0, 0.0]
+    angles = np.array(
+        [
+            [45.0, 0.0, 0.0],
+            [-45.0, 0.0, 0.0],
+            [0.0, -90.0, 45.0],
+            [0.0, -90.0, -45.0],
+            [90.0, -90.0, 45.0],
+            [90.0, -90.0, -45.0],
+            [0.0, 90.0, -45.0],
+            [0.0, 90.0, 45.0],
+            [90.0, 90.0, -45.0],
+            [90.0, 90.0, 45.0],
+            [45.0, 0.0, 0.0],
+            [-45.0, 0.0, 0.0],
+        ]
     )
-    phi = np.array(
-        [0.0, 0.0, 45.0, -45.0, 45.0, -45.0, -45.0, 45.0, -45.0, 45.0, 0.0, 0.0]
-    )
-    height = np.full_like(xc, 2.0)
-    radius = np.full_like(xc, 0.05)
+    height = np.full_like(centers[:, 0], 2.0)
+    radius = np.full_like(centers[:, 0], 0.05)
 
-    listPhases: List[Phase] = []
-    listPeriodicPhases: List[Phase] = []
-    n = len(xc)
-
-    for i in range(0, n):
-        elem = Cylinder(
-            center=(xc[i], yc[i], zc[i]),
-            orientation=(psi[i], theta[i], phi[i]),
-            height=height[i],
-            radius=radius[i],
+    phases = [
+        Phase(
+            shape=Cylinder(
+                center=centers[i],
+                orientation=angles[i],
+                height=height[i],
+                radius=radius[i],
+            ).generate()
         )
-        phase = Phase(shape=elem.generate())
-        listPhases.append(phase)
+        for i in range(len(centers))
+    ]
+    periodic_phases: List[Phase] = [
+        periodic(phase=phase_elem, rve=rve) for phase_elem in phases
+    ]
 
-    for phase_elem in listPhases:
-        periodicPhase = periodic(phase=phase_elem, rve=rve)
-        listPeriodicPhases.append(periodicPhase)
-
-    return listPeriodicPhases
+    return periodic_phases
 
 
 @pytest.fixture(scope="function")
@@ -94,9 +113,7 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
         center=rve_unit.center,
         orientation=(0.0, 0.0, 0.0),
-        dim_x=rve_unit.dim[0],
-        dim_y=rve_unit.dim[1],
-        dim_z=rve_unit.dim[2],
+        dim=rve_unit.dim,
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_unit)
@@ -107,9 +124,7 @@ def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
         center=rve_double.center,
         orientation=(0.0, 0.0, 0.0),
-        dim_x=rve_double.dim[0],
-        dim_y=rve_double.dim[1],
-        dim_z=rve_double.dim[2],
+        dim=rve_double.dim,
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double)
@@ -122,9 +137,7 @@ def box_homogeneous_double_centered(
     shape = Box(
         center=rve_double_centered.center,
         orientation=(0.0, 0.0, 0.0),
-        dim_x=rve_double_centered.dim[0],
-        dim_y=rve_double_centered.dim[1],
-        dim_z=rve_double_centered.dim[2],
+        dim=rve_double_centered.dim,
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double_centered)

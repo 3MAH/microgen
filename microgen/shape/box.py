@@ -30,19 +30,15 @@ class Box(BasicGeometry):
         self,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
-        dim_x: float = 1,
-        dim_y: float = 1,
-        dim_z: float = 1,
+        dim: Tuple[float, float, float] = (1, 1, 1),
     ) -> None:
         super().__init__(shape="Box", center=center, orientation=orientation)
-        self.dim_x = dim_x
-        self.dim_y = dim_y
-        self.dim_z = dim_z
+        self.dim = dim
 
     def generate(self) -> cq.Shape:
         box = (
             cq.Workplane()
-            .box(self.dim_x, self.dim_y, self.dim_z)
+            .box(*self.dim)
             .translate((self.center[0], self.center[1], self.center[2]))
         )
         box = rotateEuler(
@@ -57,12 +53,12 @@ class Box(BasicGeometry):
     def generateVtk(self, level=0, quads=True) -> pv.PolyData:
         box = pv.Box(
             bounds=(
-                self.center[0] - 0.5 * self.dim_x,
-                self.center[0] + 0.5 * self.dim_x,
-                self.center[1] - 0.5 * self.dim_y,
-                self.center[1] + 0.5 * self.dim_y,
-                self.center[2] - 0.5 * self.dim_z,
-                self.center[2] + 0.5 * self.dim_z,
+                self.center[0] - 0.5 * self.dim[0],
+                self.center[0] + 0.5 * self.dim[0],
+                self.center[1] - 0.5 * self.dim[1],
+                self.center[1] + 0.5 * self.dim[1],
+                self.center[2] - 0.5 * self.dim[2],
+                self.center[2] + 0.5 * self.dim[2],
             ),
             level=level,
             quads=quads,

@@ -21,6 +21,7 @@ from .phase import Phase
 from .report import Report
 from .rve import Rve
 from .shape import (
+    BasicGeometry,
     Box,
     Capsule,
     Cylinder,
@@ -40,6 +41,7 @@ from .test_utils import is_periodic
 __version__ = importlib.metadata.version(__package__ or __name__)
 
 __all__ = [
+    "BasicGeometry",
     "Box",
     "BoxMesh",
     "Capsule",

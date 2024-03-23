@@ -5,7 +5,7 @@ Polyhedron (:mod:`microgen.shape.polyhedron`)
 """
 
 import copy
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -31,25 +31,28 @@ class Polyhedron(BasicGeometry):
         self,
         center: Tuple[float, float, float] = (0, 0, 0),
         orientation: Tuple[float, float, float] = (0, 0, 0),
-        dic: Dict[str, list] = {
-            "vertices": [
-                (1.0, 1.0, 1.0),
-                (1.0, -1.0, -1.0),
-                (-1.0, 1.0, -1.0),
-                (-1.0, -1.0, 1.0),
-            ],
-            "faces": [
-                {"vertices": [0, 1, 2]},
-                {"vertices": [0, 3, 1]},
-                {"vertices": [0, 2, 3]},
-                {"vertices": [1, 2, 3]},
-            ],
-        },
+        dic: Optional[Dict[str, list]] = None,
     ) -> None:
         """
         .. warning:
-            Give a center parameter only if the polyhedron must be translated from its original position.
+            Give a center parameter only if the polyhedron must be
+            translated from its original position.
         """
+        if dic is None:
+            dic = {
+                "vertices": [
+                    (1.0, 1.0, 1.0),
+                    (1.0, -1.0, -1.0),
+                    (-1.0, 1.0, -1.0),
+                    (-1.0, -1.0, 1.0),
+                ],
+                "faces": [
+                    {"vertices": [0, 1, 2]},
+                    {"vertices": [0, 3, 1]},
+                    {"vertices": [0, 2, 3]},
+                    {"vertices": [1, 2, 3]},
+                ],
+            }
         super().__init__(shape="Polyhedron", center=center, orientation=orientation)
         self.dic = dic
         self.faces_ixs = [face["vertices"] for face in dic["faces"]]
@@ -96,17 +99,11 @@ def read_obj(filename: str):
     Reads vertices and faces from obj format file for polyhedron
     """
     dic = {"vertices": [], "faces": []}
-    with open(filename) as f:
-        for line in f:
+    with open(file=filename, mode="r", encoding="utf-8") as file:
+        for line in file:
             data = line.split(" ")
             if data[0] == "v":
-                x = float(data[1])
-                y = float(data[2])
-                z = float(data[3])
-                dic["vertices"].append([x, y, z])
+                dic["vertices"].append([float(coord) for coord in data[1:]])
             elif data[0] == "f":
-                vertices = data[1:]
-                for i in range(len(vertices)):
-                    vertices[i] = int(vertices[i]) - 1
-                dic["faces"].append({"vertices": vertices})
+                dic["faces"].append({"vertices": [int(vert) - 1 for vert in data[1:]]})
     return dic

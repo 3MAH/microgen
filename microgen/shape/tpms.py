@@ -129,7 +129,8 @@ class Tpms(BasicGeometry):
         resolution: int = 20,
     ) -> float:
         """
-        Returns the offset corresponding to the required density for the specified part of the given surface_function.
+        Returns the offset corresponding to the required density
+        for the specified part of the given surface_function.
 
         :param surface_function: tpms function
         :param part_type: type of the part (sheet, lower skeletal or upper skeletal)
@@ -212,14 +213,17 @@ class Tpms(BasicGeometry):
             raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
     def vtk_sheet(self) -> pv.PolyData:
+        """Returns sheet part"""
         return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
             scalars="upper_surface"
         )
 
     def vtk_upper_skeletal(self) -> pv.PolyData:
+        """Returns upper skeletal part"""
         return self.grid.clip_scalar(scalars="upper_surface", invert=False)
 
     def vtk_lower_skeletal(self) -> pv.PolyData:
+        """Returns lower skeletal part"""
         return self.grid.clip_scalar(scalars="lower_surface")
 
     @property

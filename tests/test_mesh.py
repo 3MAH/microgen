@@ -1,3 +1,5 @@
+"""Tests for mesh module."""
+
 import os
 
 import cadquery as cq

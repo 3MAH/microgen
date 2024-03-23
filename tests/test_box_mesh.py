@@ -1,3 +1,5 @@
+"""Test the BoxMesh class from microgen.box_mesh module."""
+
 import math as m
 from typing import Dict, List
 
@@ -10,7 +12,7 @@ from microgen import BoxMesh, Rve
 
 
 def _box_mesh_points() -> npt.NDArray[np.float_]:
-    points = np.array(
+    return np.array(
         [
             [1.0, 1.0, 1.0],
             [1.0, 0.5, 1.0],
@@ -41,11 +43,10 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
             [0.0, 0.0, 0.0],
         ]
     )
-    return points
 
 
 def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
-    elements_dict = {
+    return {
         pv.CellType.TETRA: np.array(
             [
                 [3, 4, 1, 9],
@@ -100,14 +101,10 @@ def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
         )
     }
 
-    return elements_dict
-
 
 @pytest.fixture(name="default_box_mesh", scope="function")
 def fixture_default_box_mesh() -> BoxMesh:
-    mesh = BoxMesh(_box_mesh_points(), _box_mesh_elements())
-
-    return mesh
+    return BoxMesh(_box_mesh_points(), _box_mesh_elements())
 
 
 def _default_rve() -> Rve:
@@ -120,9 +117,9 @@ def _check_triangle_on_boundary(
     triangle = surface_mesh.get_cell(triangle_index)
     triangle_nodes_coords = triangle.points.tolist()
     rve_boundaries = [
-        (rve.x_min, rve.x_max),
-        (rve.y_min, rve.y_max),
-        (rve.z_min, rve.z_max),
+        (rve.min_point[0], rve.max_point[0]),
+        (rve.min_point[1], rve.max_point[1]),
+        (rve.min_point[2], rve.max_point[2]),
     ]
     for i, rve_axis_min_max in enumerate(rve_boundaries):
         for rve_axis_boundary in rve_axis_min_max:
@@ -169,12 +166,10 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
     expected_number_of_cells = 48
     rve = _default_rve()
     boundary, boundary_cells_index = default_box_mesh.boundary_elements(rve)
-    bool_check_triangle_on_boundary_list = []
-    for triangle_index in boundary_cells_index:
-        bool_check_triangle_on_boundary_list.append(
-            _check_triangle_on_boundary(boundary, triangle_index, rve)
-        )
-
+    bool_check_triangle_on_boundary_list = [
+        _check_triangle_on_boundary(boundary, triangle_index, rve)
+        for triangle_index in boundary_cells_index
+    ]
     assert boundary.n_cells == expected_number_of_cells and all(
         bool_check_triangle_on_boundary_list
     )

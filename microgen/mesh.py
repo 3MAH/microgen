@@ -109,7 +109,7 @@ def _initialize_mesh(
     listTags = _generate_list_tags(listPhases)
     for i, tags in enumerate(listTags):
         ps_i = gmsh.model.addPhysicalGroup(dim=_DIM_COUNT, tags=tags)
-        gmsh.model.setPhysicalName(dim=_DIM_COUNT, tag=ps_i, name="Mat" + str(i))
+        gmsh.model.setPhysicalName(dim=_DIM_COUNT, tag=ps_i, name=f"Mat{str(i)}")
 
 
 def _finalize_mesh(
@@ -142,23 +142,10 @@ def _iter_bounding_boxes(
         yield bounds, tag
 
 
-def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.dx, rve.dy, rve.dz])
-
-
-def _get_min(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.x_min, rve.y_min, rve.z_min])
-
-
-def _get_max(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.x_max, rve.y_max, rve.z_max])
-
-
 def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, int]]:
-    deltas = _get_deltas(rve)
-    eps: float = 1.0e-3 * min(deltas)
-    minimum = _get_min(rve)
-    maximum = _get_max(rve)
+    eps: float = 1.0e-3 * min(rve.dim)
+    minimum = rve.min_point
+    maximum = rve.max_point.copy()
     maximum[axis] = minimum[axis]
 
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
