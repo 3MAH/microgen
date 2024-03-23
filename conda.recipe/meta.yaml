@@ -27,7 +27,7 @@ test:
   imports:
     - microgen
   commands:
-    # - pip check
+    - pip check
   requires:
     - pip
 

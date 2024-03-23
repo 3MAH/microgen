@@ -16,6 +16,7 @@ except (subprocess.CalledProcessError, FileNotFoundError):
 
 
 def test_misc():
+    """Test the miscellaneous functions of the microgen package."""
     if USE_NEPER and platform != "win32":
         microgen.Neper.run(
             filename="tests/data/neper.tess", nbCell=2, dimCube=(1, 1, 1)
@@ -25,6 +26,7 @@ def test_misc():
 
 
 def test_operations():
+    """Test the operations of the microgen package."""
     elem = microgen.Box(center=(0.5, 0.5, 0.5), dim=(1, 1, 1))
     shape1 = elem.generate()
     phase1 = microgen.Phase(shape=shape1)
@@ -39,8 +41,3 @@ def test_operations():
 
     rve = microgen.Rve(dim=1, center=(0.5, 0.5, 0.5))
     microgen.repeatShape(shape1, rve, grid=(2, 2, 2))
-
-
-if __name__ == "__main__":
-    test_misc()
-    test_operations()

@@ -1,7 +1,7 @@
 """Tests for the meshPeriodic module."""
 
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import cadquery as cq
 import numpy as np
@@ -21,39 +21,46 @@ from microgen import (
 )
 
 
-@pytest.fixture(scope="function")
-def rve_unit() -> Rve:
+@pytest.fixture(scope="function", name="rve_unit")
+def fixture_rve_unit() -> Rve:
+    """Return a 1D RVE centered at (0.5, 0.5, 0.5)."""
     return Rve(dim=1, center=(0.5, 0.5, 0.5))
 
 
-@pytest.fixture(scope="function")
-def rve_double() -> Rve:
+@pytest.fixture(scope="function", name="rve_double")
+def fixture_rve_double() -> Rve:
+    """Return a 2D RVE centered at (1.0, 1.0, 1.0)."""
     return Rve(dim=2, center=(1.0, 1.0, 1.0))
 
 
-@pytest.fixture(scope="function")
-def rve_double_centered() -> Rve:
+@pytest.fixture(scope="function", name="rve_double_centered")
+def fixture_rve_double_centered() -> Rve:
+    """Return a 2D RVE centered at the origin."""
     return Rve(dim=2, center=(0.0, 0.0, 0.0))
 
 
-@pytest.fixture(scope="function")
-def tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+@pytest.fixture(scope="function", name="tmp_dir")
+def fixture_tmp_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Return a temporary directory."""
     tmp_dir_name = "test_tmp_dir"
     return tmp_path_factory.mktemp(tmp_dir_name)
 
 
-@pytest.fixture(scope="function")
-def tmp_output_compound_filename(tmp_dir: Path) -> str:
+@pytest.fixture(scope="function", name="tmp_output_compound_filename")
+def fixture_tmp_output_compound_filename(tmp_dir: Path) -> str:
+    """Return the compound filename."""
     return (tmp_dir / "compound.step").as_posix()
 
 
-@pytest.fixture(scope="function")
-def tmp_output_vtk_filename(tmp_dir: Path) -> str:
+@pytest.fixture(scope="function", name="tmp_output_vtk_filename")
+def fixture_tmp_output_vtk_filename(tmp_dir: Path) -> str:
+    """Return the VTK filename."""
     return (tmp_dir / "octettruss.vtk").as_posix()
 
 
 @pytest.mark.filterwarnings("ignore:Object intersecting")
 def _generate_cqcompound_octettruss(rve: Rve):
+    """Generate a compound of octet truss cylinders."""
     # data to generate octet truss cylinders
     centers = np.array(
         [
@@ -109,7 +116,8 @@ def _generate_cqcompound_octettruss(rve: Rve):
 
 
 @pytest.fixture(scope="function")
-def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
+def box_homogeneous_unit(rve_unit: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
+    """Return a homogeneous box RVE."""
     shape = Box(
         center=rve_unit.center,
         orientation=(0.0, 0.0, 0.0),
@@ -120,7 +128,8 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 
 
 @pytest.fixture(scope="function")
-def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
+def box_homogeneous_double(rve_double: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
+    """Return a homogeneous box RVE."""
     shape = Box(
         center=rve_double.center,
         orientation=(0.0, 0.0, 0.0),
@@ -133,7 +142,8 @@ def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def box_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, List[Phase]):
+) -> Tuple[cq.Shape, List[Phase], Rve]:
+    """Return a homogeneous box RVE."""
     shape = Box(
         center=rve_double_centered.center,
         orientation=(0.0, 0.0, 0.0),
@@ -144,7 +154,8 @@ def box_homogeneous_double_centered(
 
 
 @pytest.fixture(scope="function")
-def octet_truss_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
+def octet_truss_homogeneous_unit(rve_unit: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
+    """Return a homogeneous octet truss RVE."""
     listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
     merged = fuseShapes(
         [phase.shape for phase in listPeriodicPhases], retain_edges=False
@@ -156,7 +167,8 @@ def octet_truss_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def octet_truss_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, List[Phase]):
+) -> Tuple[cq.Shape, List[Phase], Rve]:
+    """Return a homogeneous octet truss RVE."""
     listPeriodicPhases = _generate_cqcompound_octettruss(rve_double_centered)
     merged = fuseShapes(
         [phase.shape for phase in listPeriodicPhases], retain_edges=False
@@ -166,7 +178,8 @@ def octet_truss_homogeneous_double_centered(
 
 
 @pytest.fixture(scope="function")
-def octet_truss_heterogeneous(rve_unit: Rve) -> (cq.Compound, List[Phase]):
+def octet_truss_heterogeneous(rve_unit: Rve) -> Tuple[cq.Compound, List[Phase], Rve]:
+    """Return a heterogeneous octet truss RVE."""
     listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
     listcqphases = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
     return (
@@ -193,6 +206,7 @@ def test_octettruss_mesh_must_be_periodic(
     tmp_output_compound_filename: str,
     tmp_output_vtk_filename: str,
 ):
+    """Test the meshPeriodic function."""
     cqoctet, listcqphases, rve = request.getfixturevalue(shape)
 
     cq.exporters.export(cqoctet, tmp_output_compound_filename)

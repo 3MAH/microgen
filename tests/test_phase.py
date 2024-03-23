@@ -21,6 +21,7 @@ def test_phase_sphere_rasterize_must_have_correct_number_of_solids() -> None:
 
 
 def test_phase_rasterize_phase_per_raster_should_return_the_right_object():
+    """Test the Phase class with a shape."""
     rve = Rve(dim=1)
     sphere = Sphere(radius=0.5).generate()
     phase = Phase(shape=sphere)
@@ -33,6 +34,7 @@ def test_phase_rasterize_phase_per_raster_should_return_the_right_object():
 
 
 def test_phase_repeat_should_repeat_the_shape_in_the_rve():
+    """Test the Phase class with a shape."""
     rve = Rve(dim=1)
     box = Box(dim=(1.0, 1.0, 1.0)).generate()
     volume_before = box.Volume()
@@ -43,6 +45,7 @@ def test_phase_repeat_should_repeat_the_shape_in_the_rve():
 
 
 def test_phase_rescale_should_change_the_size_of_the_shape():
+    """Test the Phase class with a shape."""
     radius = 1.0
     scale = 1.5
     phase = Phase(shape=Sphere(radius=radius).generate())
@@ -52,6 +55,7 @@ def test_phase_rescale_should_change_the_size_of_the_shape():
 
 
 def test_phase_translate_should_shift_centers_corresponding_to_the_translation():
+    """Test the Phase class with a shape."""
     center = (1.0, 0.5, -0.5)
     phase = Phase(shape=Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate())
     phase.translate((1, 0, 0))
@@ -61,6 +65,7 @@ def test_phase_translate_should_shift_centers_corresponding_to_the_translation()
 
 
 def test_phase_center_of_mass_should_return_the_right_values():
+    """Test the Phase class with a shape."""
     center = (1.0, 0.5, -0.5)
     phase = Phase(shape=Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate())
     assert np.allclose(phase.centerOfMass, center, rtol=1e-4)
@@ -70,6 +75,7 @@ def test_phase_center_of_mass_should_return_the_right_values():
 
 
 def test_phase_inertia_matrix_should_return_the_right_values():
+    """Test the Phase class with a shape."""
     radius = 1.5
     phase = Phase(shape=Sphere(radius=radius).generate())
     assert np.allclose(
@@ -79,6 +85,7 @@ def test_phase_inertia_matrix_should_return_the_right_values():
 
 
 def test_phase_solids_and_shape_properties_should_return_the_right_values():
+    """Test the Phase class with a shape."""
     ellipsoid = Ellipsoid(radii=(0.15, 0.31, 0.4)).generate()
     phase = Phase(shape=ellipsoid)
     assert phase.solids == [ellipsoid]
@@ -86,6 +93,7 @@ def test_phase_solids_and_shape_properties_should_return_the_right_values():
 
 
 def test_phase_empty_should_have_empty_shape_and_solids():
+    """Test the Phase class with no shape."""
     void_phase = Phase()
     assert void_phase.shape is None
     assert void_phase.solids == []

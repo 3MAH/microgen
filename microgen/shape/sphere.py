@@ -4,10 +4,10 @@ Sphere (:mod:`microgen.shape.sphere`)
 =============================================
 """
 
-from random import random
 from typing import Tuple
 
 import cadquery as cq
+import numpy as np
 import pyvista as pv
 
 from .basicGeometry import BasicGeometry
@@ -35,9 +35,14 @@ class Sphere(BasicGeometry):
         self.radius = radius
 
     def generate(self) -> cq.Shape:
+        # Temporary workaround bug fix for OpenCascade bug using a random
+        # direct parameter for cq.Workplane().sphere() method
+        # Related to issue https://github.com/CadQuery/cadquery/issues/1461
+        _seed = 38
+        _random_direction_creation_axis = tuple(np.random.default_rng(_seed).random(3))
         sphere = (
             cq.Workplane()
-            .sphere(radius=self.radius, direct=[random() for _ in range(3)])
+            .sphere(radius=self.radius, direct=_random_direction_creation_axis)
             .translate(self.center)
         )
         return cq.Shape(sphere.val().wrapped)

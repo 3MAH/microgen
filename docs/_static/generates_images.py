@@ -104,6 +104,22 @@ show_example(
     cmap=None,
     screen_name="mmg.png",
 )
+show_example(
+    filename=example_path + "Mesh/remesh/data/initial_gyroid_mesh.vtk",
+    screenshot=True,
+    show_edges=True,
+    color="white",
+    cmap=None,
+    screen_name="initial_mesh.png",
+)
+show_example(
+    filename=example_path + "Mesh/remesh/data/remeshed_gyroid_mesh.vtk",
+    screenshot=True,
+    show_edges=True,
+    color="white",
+    cmap=None,
+    screen_name="remeshed_mesh.png",
+)
 
 
 # show_example(

@@ -2,10 +2,11 @@
 Mesh using gmsh
 """
 
-from typing import Iterator, List, Tuple
+from typing import Dict, Iterator, List, Tuple
 
 import gmsh
 import numpy as np
+import numpy.typing as npt
 
 from .phase import Phase
 from .rve import Rve
@@ -13,6 +14,10 @@ from .rve import Rve
 _DIM_COUNT = 3
 _BOUNDS_COUNT = 2
 _Point3D = np.ndarray
+
+
+class OutputMeshNotPeriodicError(Exception):
+    """Raised when output mesh from meshPeriodic is not periodic"""
 
 
 def mesh(
@@ -48,6 +53,7 @@ def meshPeriodic(
     order: int,
     output_file: str = "MeshPeriodic.msh",
     mshFileVersion: int = 4,
+    tol: float = 1e-8,
 ) -> None:
     """
     Meshes periodic geometries with gmsh
@@ -59,6 +65,7 @@ def meshPeriodic(
     :param order: see `gmsh.model.mesh.setOrder(order)`_
     :param output_file: output file (.msh, .vtk)
     :param mshFileVersion: gmsh file version
+    :param tol: tolerance for periodicity check
 
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
@@ -66,28 +73,78 @@ def meshPeriodic(
     _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
     _set_periodic(rve)
     _finalize_mesh(size, output_file)
+    _check_output_mesh_periodicity(output_file, tol)
 
 
-def _generate_list_tags(listPhases: List[Phase]) -> List[List[int]]:
-    listTags: List[List[int]] = []
+def is_periodic(nodes_coords: np.ndarray, tol: float = 1e-8) -> bool:
+    dim = nodes_coords.shape[1]
+
+    min_point = np.min(nodes_coords, axis=0)
+    max_point = np.max(nodes_coords, axis=0)
+
+    faces: List[Dict[str, np.ndarray]] = [
+        {
+            "-": np.where(np.abs(nodes_coords[:, i] - min_point[i]) < tol)[0],
+            "+": np.where(np.abs(nodes_coords[:, i] - max_point[i]) < tol)[0],
+        }
+        for i in range(dim)
+    ]
+
+    for i in range(dim):
+        if faces[i]["-"].shape != faces[i]["+"].shape:
+            return False
+
+    def _sort_dim(
+        indices: np.ndarray,
+        dim_a: int,
+        dim_b: int,
+        decimal_round: int = int(-np.log10(tol) - 1),
+    ) -> np.ndarray:
+        return indices[
+            np.lexsort(
+                (
+                    nodes_coords[indices, dim_a],
+                    nodes_coords[indices, dim_b].round(decimal_round),
+                )
+            )
+        ]
+
+    for i in range(dim):
+        dim_a = (i + 1) % dim
+        dim_b = (i + 2) % dim
+        faces[i]["-"] = _sort_dim(faces[i]["-"], dim_a, dim_b)
+        faces[i]["+"] = _sort_dim(faces[i]["+"], dim_a, dim_b)
+
+    for i, face in enumerate(faces):
+        mask = np.ones(dim, dtype=bool)
+        mask[i] = False
+        diff = nodes_coords[face["+"]] - nodes_coords[face["-"]]
+        if (diff[:, mask] > tol).any():
+            return False
+
+    return True
+
+
+def _generate_list_tags(list_phases: List[Phase]) -> List[List[int]]:
+    list_tags: List[List[int]] = []
     start: int = 1
-    for phase in listPhases:
+    for phase in list_phases:
         stop = start + len(phase.solids)
-        listTags.append(list(range(start, stop)))
+        list_tags.append(list(range(start, stop)))
         start = stop
-    return listTags
+    return list_tags
 
 
-def _generate_list_dim_tags(listPhases: List[Phase]) -> List[Tuple[int, int]]:
-    nbTags = sum(len(phase.solids) for phase in listPhases)
-    return [(_DIM_COUNT, tag) for tag in range(1, nbTags + 1)]
+def _generate_list_dim_tags(list_phases: List[Phase]) -> List[Tuple[int, int]]:
+    nb_tags = sum(len(phase.solids) for phase in list_phases)
+    return [(_DIM_COUNT, tag) for tag in range(1, nb_tags + 1)]
 
 
 def _initialize_mesh(
     mesh_file: str,
-    listPhases: List[Phase],
+    list_phases: List[Phase],
     order: int,
-    mshFileVersion: int = 4,
+    msh_file_version: int = 4,
 ) -> None:
     gmsh.initialize()
     gmsh.option.setNumber(
@@ -95,19 +152,19 @@ def _initialize_mesh(
     )  # this would still print errors, but not warnings
 
     gmsh.model.mesh.setOrder(order=order)
-    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=mshFileVersion)
+    gmsh.option.setNumber(name="Mesh.MshFileVersion", value=msh_file_version)
     gmsh.model.occ.importShapes(fileName=mesh_file, highestDimOnly=True)
 
-    listDimTags = _generate_list_dim_tags(listPhases)
-    if len(listDimTags) > 1:
+    list_dim_tags = _generate_list_dim_tags(list_phases)
+    if len(list_dim_tags) > 1:
         gmsh.model.occ.fragment(
-            objectDimTags=listDimTags[:-1], toolDimTags=[listDimTags[-1]]
+            objectDimTags=list_dim_tags[:-1], toolDimTags=[list_dim_tags[-1]]
         )
 
     gmsh.model.occ.synchronize()
 
-    listTags = _generate_list_tags(listPhases)
-    for i, tags in enumerate(listTags):
+    list_tags = _generate_list_tags(list_phases)
+    for i, tags in enumerate(list_tags):
         ps_i = gmsh.model.addPhysicalGroup(dim=_DIM_COUNT, tags=tags)
         gmsh.model.setPhysicalName(dim=_DIM_COUNT, tag=ps_i, name=f"Mat{str(i)}")
 
@@ -121,6 +178,22 @@ def _finalize_mesh(
     gmsh.model.mesh.generate(dim=_DIM_COUNT)
     gmsh.write(fileName=output_file)
     gmsh.finalize()
+
+
+def _check_output_mesh_periodicity(output_mesh_file: str, tol: float = 1e-8) -> None:
+    gmsh.initialize()
+    gmsh.open(output_mesh_file)
+    dimension = gmsh.model.getDimension()
+    _, nodes_coords, _ = gmsh.model.mesh.getNodes(dim=dimension)
+    nodes_coords = nodes_coords.reshape((-1, dimension))
+    check_periodicity = is_periodic(nodes_coords, tol)
+    gmsh.finalize()
+
+    if not check_periodicity:
+        raise OutputMeshNotPeriodicError(
+            "Something went wrong: output mesh from meshPeriodic is not periodic."
+            "\n Try changing tolerance value or mesh size parameter"
+        )
 
 
 def _set_periodic(rve: Rve) -> None:

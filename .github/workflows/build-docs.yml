@@ -1,0 +1,37 @@
+name: Build Documentation
+
+on:
+  push:
+    branches:
+      - "*"
+
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  build-and-test:
+    runs-on: "ubuntu-latest"
+    env:
+      PYVISTA_OFF_SCREEN: "True"
+      ALLOW_PLOTTING: true
+      SHELLOPTS: "errexit:pipefail"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install libGLU
+        run: sudo apt-get install libglu1-mesa
+
+      - name: Install
+        run: pip install .[docs]
+
+      - name: Install vtk
+        run: pip uninstall vtk -y && pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
+
+      - name: Build docs
+        run: make -C docs html

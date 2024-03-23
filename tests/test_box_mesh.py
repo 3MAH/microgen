@@ -104,6 +104,7 @@ def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
 
 @pytest.fixture(name="default_box_mesh", scope="function")
 def fixture_default_box_mesh() -> BoxMesh:
+    """Return a BoxMesh instance with default values."""
     return BoxMesh(_box_mesh_points(), _box_mesh_elements())
 
 
@@ -134,6 +135,7 @@ def _check_triangle_on_boundary(
 def test_given_box_mesh__construct_must_find_center_corners_edges_faces_node_sets(
     default_box_mesh,
 ) -> None:
+    """Test if the BoxMesh class can find the center, corners, edges, and faces of a box."""
     target_center: npt.NDArray[np.float_] = np.array([0.5, 0.5, 0.5])
     target_corners: List[int] = [0, 2, 6, 8, 18, 20, 24, 26]
     target_edges: List[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
@@ -152,6 +154,7 @@ def test_given_box_mesh__construct_must_find_center_corners_edges_faces_node_set
 
 
 def test_given_box_mesh_rve_property_must_build_correct_rve(default_box_mesh) -> None:
+    """Test if the BoxMesh class can build the Rve instance correctly."""
     target_rve = _default_rve()
     test_rve = default_box_mesh.rve
 
@@ -163,6 +166,7 @@ def test_given_box_mesh_rve_property_must_build_correct_rve(default_box_mesh) ->
 def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_elements(
     default_box_mesh,
 ) -> None:
+    """Test if the BoxMesh class can find the boundary surface elements of a box."""
     expected_number_of_cells = 48
     rve = _default_rve()
     boundary, boundary_cells_index = default_box_mesh.boundary_elements(rve)
