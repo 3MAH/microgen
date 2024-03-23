@@ -14,9 +14,6 @@ _DIM = 3
 
 class Rve:
     """
-    :param dim_x: X dimension of the RVE
-    :param dim_y: Y dimension of the RVE
-    :param dim_z: Z dimension of the RVE
     :param center: center of the RVE
     :param dim: dimensions of the RVE
     """

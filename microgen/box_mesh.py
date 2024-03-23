@@ -90,7 +90,8 @@ class BoxMesh(SingleMesh):
         tol: float = 1.0e-8,
     ) -> None:
         """
-        Construct a box Mesh with list of points in faces (excluding edges), edges (excluding corners) and corners.
+        Construct a box Mesh with list of points in faces (excluding edges),
+        edges (excluding corners) and corners.
 
         :param tol: tolerance to find the points on a face or an edge
         """
@@ -328,16 +329,21 @@ class BoxMesh(SingleMesh):
     ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
         """
         Find the closest points on opposite face to write interpolation relationship
-        if a displacement condition between pair nodes is defined on such opposite surfaces
-        It takes the set of points on faces 'face_Xm', 'face_Ym', 'face_Zm' (excluding edges and corners)
-        and returns for each opposite face the closest points (index of the points, distance) of the
+        if a displacement condition between pair nodes is defined
+        on such opposite surfaces
+        It takes the set of points on faces 'face_Xm', 'face_Ym',
+        'face_Zm' (excluding edges and corners)
+        and returns for each opposite face the closest points
+        (index of the points, distance) of the
         projected point on the corresponding opposite face
 
         :param k_neighbours : number of closest points
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box. if None,
+        the rve is built from the mesh bounding box
         :param tol: tolerance
 
-        :return dict: a dictionary with (np.array) of indices and a np.array of distances for each neighbor:
+        :return dict: a dictionary with (np.array) of indices and
+        a np.array of distances for each neighbor:
             'face_Xp' : (index[0], dist[0]),
             'face_Yp' : (index[1], dist[1]),
             'face_Zp' : (index[2], dist[2])
@@ -425,12 +431,13 @@ class BoxMesh(SingleMesh):
             else:
                 dist_temp_list = dist_temp.tolist()
 
-            # If pair nodes exist (opposite node exactly match), return only the pair node (the closest neighbour)
+            # If pair nodes exist (opposite node exactly match),
+            # return only the pair node (the closest neighbour)
             if k_neighbours > 1:
-                for i in range(0, len(dist_temp)):
+                for i in range(len(dist_temp)):
                     if dist_temp_list[i][0] < tol:
-                        dist_temp_list[i] = dist_temp_list[i][0:1]
-                        index_temp_list[i] = index_temp_list[i][0:1]
+                        dist_temp_list[i] = dist_temp_list[i][:1]
+                        index_temp_list[i] = index_temp_list[i][:1]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
@@ -451,7 +458,8 @@ class BoxMesh(SingleMesh):
         if a displacement condition between pair nodes is defined on such opposite surfaces
         Note : the closest neighbours is set as 2 for edges
 
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box.
+        if None, the rve is built from the mesh bounding box
         """
 
         if rve is None:
@@ -586,10 +594,10 @@ class BoxMesh(SingleMesh):
             all_edges_p_i = all_edges_p[i]
             index_temp_list = all_edges_p_i[index_temp].tolist()
 
-            for i in range(0, len(dist_temp)):
+            for i in range(len(dist_temp)):
                 if dist_temp_list[i][0] < tol:
-                    dist_temp_list[i] = dist_temp_list[i][0:1]
-                    index_temp_list[i] = index_temp_list[i][0:1]
+                    dist_temp_list[i] = dist_temp_list[i][:1]
+                    index_temp_list[i] = index_temp_list[i][:1]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
@@ -617,7 +625,8 @@ class BoxMesh(SingleMesh):
         if a displacement condition between pair nodes is defined
 
         :param k_neighbours : number of closest points
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box.
+        if None, the rve is built from the mesh bounding box
         :param tol: tolerance
         """
 
@@ -638,7 +647,8 @@ class BoxMesh(SingleMesh):
         """
         Finds boundary elements of mesh with given tolerance
 
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box.
+        if None, the rve is built from the mesh bounding box
         :param tol: tolerance
         """
         if rve is None:
@@ -692,9 +702,12 @@ class BoxMesh(SingleMesh):
         tol: float = 1.0e-8,
     ) -> Dict[str, ClosestCellsOnBoundaries]:
         """
-        Find the cells to which a given point belongs to by using a ray tracing normal to the face on which it belongs
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
-        :param tol : tolerance to evaluate the threshold between the cells and the boundary RVE of the mesh bounding box
+        Find the cells to which a given point belongs to by using a ray tracing
+        normal to the face on which it belongs
+        :param rve : RVE of the mesh bounding box. if None, the rve is built
+        from the mesh bounding box
+        :param tol : tolerance to evaluate the threshold between the cells and
+        the boundary RVE of the mesh bounding box
         """
 
         if rve is None:

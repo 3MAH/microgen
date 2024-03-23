@@ -17,7 +17,7 @@ from .phase import Phase
 from .rve import Rve
 
 
-def _getRotationAxes(
+def _get_rotation_axes(
     psi: float, theta: float, phi: float
 ) -> List[Tuple[float, float, float]]:
     """
@@ -29,7 +29,7 @@ def _getRotationAxes(
 
     :return: a list containing the three 3D Euler rotation axes
     """
-    psi_rad, theta_rad, phi_rad = np.deg2rad((psi, theta, phi))
+    psi_rad, theta_rad, _ = np.deg2rad((psi, theta, phi))
     return [
         (0.0, 0.0, 1.0),
         (np.cos(psi_rad), np.sin(psi_rad), 0.0),
@@ -60,7 +60,7 @@ def rotateEuler(
     :return: Rotated object
     """
     center_vector = cq.Vector(*center)
-    z, u, z2 = _getRotationAxes(psi, theta, phi)
+    z, u, z2 = _get_rotation_axes(psi, theta, phi)
     for axis, angle in zip((z, u, z2), (psi, theta, phi)):
         obj = obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
     return obj
@@ -84,7 +84,7 @@ def rotatePvEuler(
 
     :return: Rotated object
     """
-    z, u, z2 = _getRotationAxes(psi, theta, phi)
+    z, u, z2 = _get_rotation_axes(psi, theta, phi)
 
     rotated_obj = obj.rotate_vector(
         vector=z, angle=psi, point=tuple(center), inplace=False
@@ -123,14 +123,13 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
 
     if retain_edges:
         return cq.Shape(occ_Solids)
-    else:
-        try:
-            upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
-            upgrader.Build()
-            shape: OCP.TopoDS_Shape = upgrader.Shape()
-            return cq.Shape(shape)
-        except Exception:
-            return cq.Shape(occ_Solids)
+    try:
+        upgrader = ShapeUpgrade_UnifySameDomain(occ_Solids, True, True, True)
+        upgrader.Build()
+        shape: OCP.TopoDS_Shape = upgrader.Shape()
+        return cq.Shape(shape)
+    except Exception:
+        return cq.Shape(occ_Solids)
 
 
 def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
@@ -173,16 +172,13 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param cqShapeList: list of CQ Shape to cut
-    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cut
+    :param reverseOrder: bool, order for cutting shapes,
+    when True: the last shape of the list is not cut
 
     :return cutted_shapes: list of CQ Shape
     """
     cutted_shapes: List[cq.Shape] = []
-    if reverseOrder:
-        cqShapeList_inv = cqShapeList[::-1]
-    else:
-        cqShapeList_inv = cqShapeList
-
+    cqShapeList_inv = cqShapeList[::-1] if reverseOrder else cqShapeList
     cut_shape = cqShapeList_inv[0].copy()
     cutted_shapes.append(cut_shape)
 
@@ -207,7 +203,8 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
     :param phaseList: list of phases to cut
-    :param reverseOrder: bool, order for cutting shapes, when True: the last shape of the list is not cut
+    :param reverseOrder: bool, order for cutting shapes,
+    when True: the last shape of the list is not cut
 
     :return list of phases
     """

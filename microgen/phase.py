@@ -4,6 +4,7 @@ Phase class to manage list of solids belonging to the same phase
 
 from __future__ import annotations
 
+import warnings
 from typing import List, Optional, Sequence, Tuple
 
 import cadquery as cq
@@ -52,7 +53,8 @@ class Phase:
     def getCenterOfMass(self, compute: bool = True) -> np.ndarray:
         """
         Returns the center of 'mass' of an object.
-        :param compute: if False and centerOfMass already exists, does not compute it (use carefully)
+        :param compute: if False and centerOfMass already
+        exists, does not compute it (use carefully)
         """
         if not isinstance(self._centerOfMass, np.ndarray) or compute:
             self._computeCenterOfMass()
@@ -73,7 +75,8 @@ class Phase:
     def getInertiaMatrix(self, compute: bool = True) -> np.ndarray:
         """
         Calculates the inertia Matrix of an object.
-        :param compute: if False and inertiaMatrix already exists, does not compute it (use carefully)
+        :param compute: if False and inertiaMatrix already
+        exists, does not compute it (use carefully)
         """
         if not isinstance(self._inertiaMatrix, np.ndarray) or compute:
             self._computeInertiaMatrix()
@@ -90,40 +93,40 @@ class Phase:
 
         inm = Properties.MatrixOfInertia()
         self._inertiaMatrix = np.array(
-            [
-                [inm.Value(1, 1), inm.Value(1, 2), inm.Value(1, 3)],
-                [inm.Value(2, 1), inm.Value(2, 2), inm.Value(2, 3)],
-                [inm.Value(3, 1), inm.Value(3, 2), inm.Value(3, 3)],
-            ]
+            [[inm.Value(i, j) for j in range(1, 4)] for i in range(1, 4)]
         )
 
     @property
     def shape(self) -> Optional[cq.Shape]:
+        """Get shape of phase"""
         if self._shape is not None:
             return self._shape
-        elif len(self._solids) > 0:
+        if len(self._solids) > 0:
             # there may be a faster way
             compound = cq.Compound.makeCompound(self._solids)
             self._shape = cq.Shape(compound.wrapped)
             return self._shape
-        else:
-            print("No shape or solids")
-            return None
+        warnings.warn("No shape or solids")
+        return None
 
     @property
     def solids(self) -> List[cq.Solid]:
+        """Get list of solids"""
         if len(self._solids) > 0:
             return self._solids
-        elif self._shape is not None:
+        if self._shape is not None:
             self._solids = self._shape.Solids()
             return self._solids
-        else:
-            print("No solids or shape")
-            return []
+        warnings.warn("No solids or shape")
+        return []
 
     def translate(self, vec: Sequence[float]) -> None:
-        self._shape.move(cq.Location(cq.Vector(*vec)))
-        self._computeCenterOfMass()
+        """Translate phase by vector vec"""
+        if self._shape is not None:
+            self._shape.move(cq.Location(cq.Vector(*vec)))
+            self._computeCenterOfMass()
+        else:
+            raise ValueError("No shape to translate, self._shape is None")
 
     @staticmethod
     def rescaleShape(

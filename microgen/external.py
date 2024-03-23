@@ -145,7 +145,7 @@ class Neper:
                         cells["mode"].append(int(id))
             elif tag == "  *seed":
                 cells["seed"] = []
-                for i in range(cells["number_of_cells"]):
+                for _ in range(cells["number_of_cells"]):
                     data = f.readline().split()
                     cells["seed"].append(
                         {
@@ -158,7 +158,7 @@ class Neper:
                     )
             elif tag == "  *ori":
                 cells["ori"] = {"descriptor": f.readline()}
-                for i in range(cells["number_of_cells"]):
+                for _ in range(cells["number_of_cells"]):
                     data = f.readline().split()
                     cells["ori"]["cellid_param"] = [
                         float(data[0]),
@@ -188,7 +188,7 @@ class Neper:
             "ver_z": [],
             "ver_state": [],
         }
-        for i in range(vertices["total_number_of_vertices"]):
+        for _ in range(vertices["total_number_of_vertices"]):
             data = f.readline().split()
             vertices["ver_id"].append(int(data[0]))
             vertices["ver_x"].append(float(data[1]))
@@ -207,7 +207,7 @@ class Neper:
             "ver_2": [],
             "edge_state": [],
         }
-        for i in range(edges["total_number_of_edges"]):
+        for _ in range(edges["total_number_of_edges"]):
             data = f.readline().split()
             edges["edge_id"].append(int(data[0]))
             edges["ver_1"].append(int(data[1]))
@@ -224,7 +224,7 @@ class Neper:
             "vertices": [],
             "edges": [],
         }
-        for i in range(faces["total_number_of_faces"]):
+        for _ in range(faces["total_number_of_faces"]):
             data = f.readline().split()
             faces["face_id"].append(int(data[0]))
             n_ver = int(data[1])

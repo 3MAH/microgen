@@ -1,3 +1,5 @@
+"""Microstructure generation package."""
+
 import importlib.metadata
 
 from .box_mesh import BoxMesh

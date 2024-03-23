@@ -3,13 +3,42 @@ Periodic function to cut a shape periodically according to a RVE
 """
 
 import warnings
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import cadquery as cq
+import numpy as np
 
 from .operations import fuseShapes
 from .phase import Phase
 from .rve import Rve
+
+FACES = ["x-", "x+", "y-", "y+", "z-", "z+"]
+
+DIRECTION = {
+    "x-": (-1, 0, 0),
+    "x+": (1, 0, 0),
+    "y-": (0, -1, 0),
+    "y+": (0, 1, 0),
+    "z-": (0, 0, -1),
+    "z+": (0, 0, 1),
+}
+
+FACE_DIR = {
+    "x-": ">X",
+    "x+": "<X",
+    "y-": ">Y",
+    "y+": "<Y",
+    "z-": ">Z",
+    "z+": "<Z",
+}
+INVERSE_FACE_DIR = {
+    "x-": "<X",
+    "x+": ">X",
+    "y-": "<Y",
+    "y+": ">Y",
+    "z-": "<Z",
+    "z+": ">Z",
+}
 
 
 def periodic(phase: Phase, rve: Rve) -> Phase:
@@ -22,19 +51,9 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
     :return phase: resulting phase
     """
 
+    periodic_object: List[cq.Workplane]
     wk_plane = cq.Workplane().add(phase.solids)  # shape to cut
-    periodic_object: List[cq.Workplane] = []
 
-    faces = ["x-", "x+", "y-", "y+", "z-", "z+"]
-
-    direction = {
-        "x-": (-1, 0, 0),
-        "x+": (1, 0, 0),
-        "y-": (0, -1, 0),
-        "y+": (0, 1, 0),
-        "z-": (0, 0, -1),
-        "z+": (0, 0, 1),
-    }
     basePnt = {
         "x-": (rve.min_point[0], 0, 0),
         "x+": (rve.max_point[0], 0, 0),
@@ -42,16 +61,6 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         "y+": (0, rve.max_point[1], 0),
         "z-": (0, 0, rve.min_point[2]),
         "z+": (0, 0, rve.max_point[2]),
-    }
-
-    face_dir = {"x-": ">X", "x+": "<X", "y-": ">Y", "y+": "<Y", "z-": ">Z", "z+": "<Z"}
-    inverse_face_dir = {
-        "x-": "<X",
-        "x+": ">X",
-        "y-": "<Y",
-        "y+": ">Y",
-        "z-": "<Z",
-        "z+": ">Z",
     }
 
     translate = {
@@ -63,13 +72,61 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         "z+": (0, 0, -rve.dim[2]),
     }
 
-    intersected_faces: List[str] = []
+    intersected_faces, planes, partitions = _get_periodic_splitting_infos(
+        base_pnt=basePnt, wk_plane=wk_plane
+    )
 
+    intersected_faces = _remove_opposite_intersected_faces(intersected_faces)
+
+    if not intersected_faces:  # if no intersected faces = nothing to do
+        periodic_object = [wk_plane]
+
+    elif len(intersected_faces) == 1:  # one face intersected
+        periodic_object = _intersect_face(
+            intersected_faces=intersected_faces,
+            partitions=partitions,
+            rve=rve,
+            translate=translate,
+        )
+    elif len(intersected_faces) == 2:  # two faces intersected (edge)
+        periodic_object = _intersect_edge(
+            intersected_faces=intersected_faces,
+            partitions=partitions,
+            rve=rve,
+            translate=translate,
+            planes=planes,
+        )
+    elif len(intersected_faces) == 3:  # three faces intersected (corner)
+        periodic_object = _intersect_corner(
+            intersected_faces=intersected_faces,
+            partitions=partitions,
+            rve=rve,
+            translate=translate,
+            planes=planes,
+        )
+    solids = [solid.copy() for wp in periodic_object for solid in wp.val().Solids()]
+    shape = fuseShapes(
+        cqShapeList=[cq.Shape(solid.wrapped) for solid in solids],
+        retain_edges=False,
+    )
+
+    return Phase(shape=shape)
+
+
+def _get_periodic_splitting_infos(
+    base_pnt: Dict[str, np.ndarray],
+    wk_plane: cq.Workplane,
+) -> Tuple[
+    List[str],
+    Dict[str, cq.Face],
+    Dict[str, cq.Workplane],
+]:
+    intersected_faces: List[str] = []
     planes: Dict[str, cq.Face] = {}
     partitions: Dict[str, cq.Workplane] = {}
-    for face in faces:
+    for face in FACES:
         planes[face] = cq.Face.makePlane(
-            basePnt=basePnt[face], dir=direction[face]
+            basePnt=base_pnt[face], dir=DIRECTION[face]
         )  # planes composing the Rve box
         partitions[face] = wk_plane.split(
             cq.Workplane().add(planes[face])
@@ -79,143 +136,136 @@ def periodic(phase: Phase, rve: Rve) -> Phase:
         if len(partitions[face].solids().all()) > 1:
             intersected_faces.append(face)
 
-    if "x-" in intersected_faces and "x+" in intersected_faces:
-        intersected_faces.remove("x-")
-        intersected_faces.remove("x+")
-        warnings.warn(
-            "Object intersecting x+ and x- faces: not doing anything in this direction"
-        )
-    if "y-" in intersected_faces and "y+" in intersected_faces:
-        intersected_faces.remove("y-")
-        intersected_faces.remove("y+")
-        warnings.warn(
-            "Object intersecting y+ and y- faces: not doing anything in this direction"
-        )
-    if "z-" in intersected_faces and "z+" in intersected_faces:
-        intersected_faces.remove("z-")
-        intersected_faces.remove("z+")
-        warnings.warn(
-            "Object intersecting z+ and z- faces: not doing anything in this direction"
-        )
+    return intersected_faces, planes, partitions
 
-    if len(intersected_faces) == 0:  # if no intersected faces = nothing to do
-        periodic_object.append(wk_plane)
 
-    elif len(intersected_faces) == 1:  # one face intersected
-        f_0 = intersected_faces[0]
-        periodic_object.append(
-            partitions[f_0]
-            .solids(face_dir[f_0])  # add the part of the
-            .intersect(rve.box)  # object included in the rve
-        )
-        periodic_object.append(
-            partitions[f_0]
-            .solids(inverse_face_dir[f_0])  # translate the outside part of
-            .translate(translate[f_0])  # the object in the rve and add
-            .intersect(rve.box)  # it to the final object
-        )
+def _remove_opposite_intersected_faces(intersected_faces: List[str]) -> List[str]:
+    for axis in ["x", "y", "z"]:
+        if f"{axis}-" in intersected_faces and f"{axis}+" in intersected_faces:
+            intersected_faces.remove(f"{axis}-")
+            intersected_faces.remove(f"{axis}+")
+            warnings.warn(
+                f"Object intersecting {axis}+ and {axis}- faces: \
+                    not doing anything in this direction"
+            )
+    return intersected_faces
 
-    elif len(intersected_faces) == 2:  # two faces intersected (edge)
-        f_0 = intersected_faces[0]
-        f_1 = intersected_faces[1]
 
-        part = (
-            cq.Workplane()
-            .add(partitions[f_0].solids(face_dir[f_0]))
-            .split(cq.Workplane().add(planes[f_1]))
-        )
-        periodic_object.append(part.solids(face_dir[f_1]).intersect(rve.box))
-        periodic_object.append(
-            part.solids(inverse_face_dir[f_1])
-            .translate(translate[f_1])
-            .intersect(rve.box)
-        )
+def _intersect_face(
+    intersected_faces: List[str],
+    partitions: Dict[str, cq.Workplane],
+    rve: Rve,
+    translate: Dict[str, Tuple[float, float, float]],
+) -> List[cq.Workplane]:
+    f_0 = intersected_faces[0]
+    return [
+        partitions[f_0].solids(FACE_DIR[f_0]).intersect(rve.box),  # add the part of the
+        partitions[f_0]
+        .solids(INVERSE_FACE_DIR[f_0])  # translate the outside part of
+        .translate(translate[f_0])  # the object in the rve and add
+        .intersect(rve.box),
+    ]
 
-        part = (
-            cq.Workplane()
-            .add(partitions[f_0].solids(inverse_face_dir[f_0]))
-            .split(cq.Workplane().add(planes[f_1]))
-        )
-        periodic_object.append(
-            part.solids(face_dir[f_1]).translate(translate[f_0]).intersect(rve.box)
-        )
-        tslt = (
-            translate[f_0][0] + translate[f_1][0],
-            translate[f_0][1] + translate[f_1][1],
-            translate[f_0][2] + translate[f_1][2],
-        )
-        periodic_object.append(
-            part.solids(inverse_face_dir[f_1]).translate(tslt).intersect(rve.box)
-        )
 
-    elif len(intersected_faces) == 3:  # three faces intersected (corner)
-        f_0 = intersected_faces[0]
-        f_1 = intersected_faces[1]
-        f_2 = intersected_faces[2]
+def _intersect_edge(
+    intersected_faces: List[str],
+    partitions: Dict[str, cq.Workplane],
+    rve: Rve,
+    translate: Dict[str, Tuple[float, float, float]],
+    planes: Dict[str, cq.Face],
+) -> List[cq.Workplane]:
+    f_0 = intersected_faces[0]
+    f_1 = intersected_faces[1]
 
-        new_part = (
-            cq.Workplane()
-            .add(partitions[f_0].solids(face_dir[f_0]))
-            .split(cq.Workplane().add(planes[f_1]))
-            .solids(face_dir[f_1])
+    part = (
+        cq.Workplane()
+        .add(partitions[f_0].solids(FACE_DIR[f_0]))
+        .split(cq.Workplane().add(planes[f_1]))
+    )
+    periodic_object = [
+        part.solids(FACE_DIR[f_1]).intersect(rve.box),
+        part.solids(INVERSE_FACE_DIR[f_1]).translate(translate[f_1]).intersect(rve.box),
+    ]
+    tslt = tuple(translate[f_0][i] + translate[f_1][i] for i in range(3))
+    part = (
+        cq.Workplane()
+        .add(partitions[f_0].solids(INVERSE_FACE_DIR[f_0]))
+        .split(cq.Workplane().add(planes[f_1]))
+    )
+    periodic_object.extend(
+        (
+            part.solids(FACE_DIR[f_1]).translate(translate[f_0]).intersect(rve.box),
+            part.solids(INVERSE_FACE_DIR[f_1]).translate(tslt).intersect(rve.box),
         )
-        periodic_object.append(new_part.solids(face_dir[f_2]).intersect(rve.box))
-        periodic_object.append(
-            new_part.solids(inverse_face_dir[f_2])
-            .translate(translate[f_2])
-            .intersect(rve.box)
-        )
+    )
+    return periodic_object
 
-        new_part = (
-            cq.Workplane()
-            .add(partitions[f_0].solids(face_dir[f_0]))
-            .split(cq.Workplane().add(planes[f_1]))
-            .solids(inverse_face_dir[f_1])
-        )
-        periodic_object.append(
-            new_part.solids(face_dir[f_1]).translate(translate[f_1]).intersect(rve.box)
-        )
-        periodic_object.append(
-            new_part.solids(inverse_face_dir[f_1])
+
+def _intersect_corner(
+    intersected_faces: List[str],
+    partitions: Dict[str, cq.Workplane],
+    rve: Rve,
+    translate: Dict[str, Tuple[float, float, float]],
+    planes: Dict[str, cq.Face],
+) -> List[cq.Workplane]:
+    f_0 = intersected_faces[0]
+    f_1 = intersected_faces[1]
+    f_2 = intersected_faces[2]
+
+    new_part = (
+        cq.Workplane()
+        .add(partitions[f_0].solids(FACE_DIR[f_0]))
+        .split(cq.Workplane().add(planes[f_1]))
+        .solids(FACE_DIR[f_1])
+    )
+    periodic_object = [
+        new_part.solids(FACE_DIR[f_2]).intersect(rve.box),
+        new_part.solids(INVERSE_FACE_DIR[f_2])
+        .translate(translate[f_2])
+        .intersect(rve.box),
+    ]
+    new_part = (
+        cq.Workplane()
+        .add(partitions[f_0].solids(FACE_DIR[f_0]))
+        .split(cq.Workplane().add(planes[f_1]))
+        .solids(INVERSE_FACE_DIR[f_1])
+    )
+    periodic_object.extend(
+        (
+            new_part.solids(FACE_DIR[f_1]).translate(translate[f_1]).intersect(rve.box),
+            new_part.solids(INVERSE_FACE_DIR[f_1])
             .translate((0, translate[f_1][1], translate[f_2][2]))
-            .intersect(rve.box)
+            .intersect(rve.box),
         )
-
-        new_part = (
-            cq.Workplane()
-            .add(partitions[f_0].solids(inverse_face_dir[f_0]))
-            .split(cq.Workplane().add(planes[f_1]))
-            .solids(face_dir[f_1])
-        )
-        periodic_object.append(
-            new_part.solids(face_dir[f_2]).translate(translate[f_0]).intersect(rve.box)
-        )
-        periodic_object.append(
-            new_part.solids(inverse_face_dir[f_2])
+    )
+    new_part = (
+        cq.Workplane()
+        .add(partitions[f_0].solids(INVERSE_FACE_DIR[f_0]))
+        .split(cq.Workplane().add(planes[f_1]))
+        .solids(FACE_DIR[f_1])
+    )
+    periodic_object.extend(
+        (
+            new_part.solids(FACE_DIR[f_2]).translate(translate[f_0]).intersect(rve.box),
+            new_part.solids(INVERSE_FACE_DIR[f_2])
             .translate((translate[f_0][0], 0, translate[f_2][2]))
-            .intersect(rve.box)
+            .intersect(rve.box),
         )
-
-        new_part = (
-            cq.Workplane()
-            .add(partitions[f_0].solids(inverse_face_dir[f_0]))
-            .split(cq.Workplane().add(planes[f_1]))
-            .solids(inverse_face_dir[f_1])
-        )
-        periodic_object.append(
-            new_part.solids(face_dir[f_2])
+    )
+    new_part = (
+        cq.Workplane()
+        .add(partitions[f_0].solids(INVERSE_FACE_DIR[f_0]))
+        .split(cq.Workplane().add(planes[f_1]))
+        .solids(INVERSE_FACE_DIR[f_1])
+    )
+    periodic_object.extend(
+        (
+            new_part.solids(FACE_DIR[f_2])
             .translate((translate[f_0][0], translate[f_1][1], 0))
-            .intersect(rve.box)
-        )
-        periodic_object.append(
-            new_part.solids(inverse_face_dir[f_2])
+            .intersect(rve.box),
+            new_part.solids(INVERSE_FACE_DIR[f_2])
             .translate((translate[f_0][0], translate[f_1][1], translate[f_2][2]))
-            .intersect(rve.box)
+            .intersect(rve.box),
         )
-
-    listSolids = [wp.val().Solids() for wp in periodic_object]
-    flat_list = [solid.copy() for solids in listSolids for solid in solids]
-    to_fuse = [cq.Shape(solid.wrapped) for solid in flat_list]
-    shape = fuseShapes(cqShapeList=to_fuse, retain_edges=False)
-
-    return Phase(shape=shape)
+    )
+    return periodic_object

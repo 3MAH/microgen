@@ -18,8 +18,10 @@ class SingleMesh:
     """
     SingleMesh class to manage list of Nodes and Elements inside a Phase
     :param nodes_coords: list of nodes (np.ndarray)
-    :param elements : dictionary of elements (key: int, values : np.ndarray). The key is the element type
-    :param nodes_indices : index of node list (if different from the natural index of nodes array)
+    :param elements : dictionary of elements (key: int, values : np.ndarray).
+    The key is the element type
+    :param nodes_indices : index of node list (if different from
+    the natural index of nodes array)
     """
 
     def __init__(
@@ -42,7 +44,8 @@ class SingleMesh:
         The “padding” indicating the number of points per cell is introduced
         exactly as a pyvista UnstructuredGrid.cells property
 
-        :return cells and cells_type : A tuple of flattened arrays that contains all cells and cells_type
+        :return cells and cells_type :
+        A tuple of flattened arrays that contains all cells and cells_type
 
         Note that if only tetrahedral elements are handled py SingleMesh, this function
         is able to handle multiple cells for future updates
@@ -129,7 +132,8 @@ class SingleMesh:
     ) -> pv.PolyData:
         """
         Return the surface mesh of the considered mesh
-        If it does not exist, the surface mesh is generated using the extract_surface() method from pyvista :
+        If it does not exist, the surface mesh is generated using the
+        extract_surface() method from pyvista :
         https://docs.pyvista.org/version/stable/api/core/_autosummary/pyvista.DataSetFilters.extract_surface.html#pyvista.DataSetFilters.extract_surface
         """
         if not isinstance(self._surface, pv.PolyData):
@@ -141,8 +145,10 @@ class SingleMesh:
         self,
     ) -> pv.PolyData:
         """
-        extract the surface mesh of a pv.UnstructuredGrid (stored in self.mesh) using the pyvista extract_surface filter
-        If the mesh as a pyvista Unstructured Grid does not exist, the to_pyvista() method is utilized to generate it
+        extract the surface mesh of a pv.UnstructuredGrid (stored in
+        self.mesh) using the pyvista extract_surface filter
+        If the mesh as a pyvista Unstructured Grid does not exist, the
+        to_pyvista() method is utilized to generate it
 
         :return pv.PolyData: surface mesh
         """
@@ -154,9 +160,12 @@ class SingleMesh:
 
 def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
     """
-    Check if only linear tetrahedral elements with 10 nodes are present in the pyvista UnstructuredGrid object
-    Warnings are prompted if 1D or 2D elements are present since they are not considered
-    An error is raised if the mesh contains other than linear_tetrahedral 3D elements
+    Check if only linear tetrahedral elements with 10 nodes
+    are present in the pyvista UnstructuredGrid object
+    Warnings are prompted if 1D or 2D elements are
+    present since they are not considered
+    An error is raised if the mesh contains
+    other than linear_tetrahedral 3D elements
 
     :param pvmesh: The pyvista UnstructuredGrid object
     """

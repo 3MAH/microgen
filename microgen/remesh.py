@@ -1,3 +1,5 @@
+"""Remeshing module for microgen"""
+
 import os
 from tempfile import NamedTemporaryFile
 from typing import List, Optional, Union, overload
@@ -80,7 +82,7 @@ def remesh_keeping_periodicity_for_fem(
     else:
         raise TypeError("Input mesh is neither a BoxMesh nor a pv.UnstructuredGrid")
 
-    if not is_periodic(nodes_coords, tol, dimension):
+    if not is_periodic(nodes_coords, tol):
         raise InputMeshNotPeriodicError("Input mesh is not periodic")
 
     with NamedTemporaryFile(
@@ -118,7 +120,7 @@ def remesh_keeping_periodicity_for_fem(
 
     output_mesh = pv.UnstructuredGrid(output_mesh_file.name)
 
-    if not is_periodic(output_mesh.points, tol, dimension):
+    if not is_periodic(output_mesh.points, tol):
         raise OutputMeshNotPeriodicError(
             "Something went wrong: output mesh is not periodic"
         )
@@ -162,19 +164,18 @@ def _generate_mesh_with_boundary_triangles(
 
 def _get_number_of_boundary_triangles_from_boxmesh(input_mesh: BoxMesh) -> int:
     mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
-    n_boundary_triangles = mesh_boundary.n_cells
 
-    return n_boundary_triangles
+    return mesh_boundary.n_cells
 
 
 def _add_required_triangles_to_mesh_file(
     input_mesh: BoxMesh, input_mesh_file: str, output_mesh_file: str
 ) -> None:
     n_required_triangles = _get_number_of_boundary_triangles_from_boxmesh(input_mesh)
-    with open(input_mesh_file) as input_file:
+    with open(file=input_mesh_file, encoding="utf-8") as input_file:
         lines = input_file.readlines()[:-1]  # remove last line End
 
-    with open(output_mesh_file, "w+") as output_file:
+    with open(file=output_mesh_file, mode="w+", encoding="utf-8") as output_file:
         output_file.writelines(lines)
         output_file.write("RequiredTriangles\n")
         output_file.write(str(n_required_triangles) + "\n")
@@ -186,16 +187,16 @@ def _add_required_triangles_to_mesh_file(
 def _remove_unnecessary_fields_from_mesh_file(
     input_mesh_file: str, output_mesh_file: str, mesh_version: int, dimension: int
 ) -> None:
-    with open(input_mesh_file) as input_file:
+    with open(file=input_mesh_file, encoding="utf-8") as input_file:
         lines = input_file.readlines()
 
     write_bool = True
-    with open(output_mesh_file, "w+") as output_file:
-        output_file.write("MeshVersionFormatted " + str(mesh_version) + "\n\n")
-        output_file.write("Dimension " + str(dimension) + "\n\n")
+    with open(file=output_mesh_file, mode="w+", encoding="utf-8") as output_file:
+        output_file.write(f"MeshVersionFormatted {mesh_version}\n\n")
+        output_file.write(f"Dimension {dimension}\n\n")
         for line in lines:
             if not _only_numbers_in_line(line.strip().split(" ")):
-                write_bool = bool(line.strip() in ("Vertices", "Tetrahedra"))
+                write_bool = line.strip() in ("Vertices", "Tetrahedra")
             if write_bool:
                 output_file.write(line)
         output_file.write("End\n")

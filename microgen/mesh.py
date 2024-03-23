@@ -37,8 +37,10 @@ def mesh(
     :param output_file: output file (.msh, .vtk)
     :param mshFileVersion: gmsh file version
 
-    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
-    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
+    .. _gmsh.model.mesh.setOrder(order): \
+        https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): \
+        https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
     _finalize_mesh(size, output_file)
@@ -66,8 +68,10 @@ def meshPeriodic(
     :param mshFileVersion: gmsh file version
     :param tol: tolerance for periodicity check
 
-    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
-    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
+    .. _gmsh.model.mesh.setOrder(order): \
+        https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): \
+        https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     _initialize_mesh(mesh_file, listPhases, order, mshFileVersion)
     _set_periodic(rve)
@@ -76,6 +80,11 @@ def meshPeriodic(
 
 
 def is_periodic(nodes_coords: np.ndarray, tol: float = 1e-8) -> bool:
+    """Return True if the nodes_coords are periodic, False otherwise.
+
+    :param nodes_coords: nodes coordinates
+    :param tol: tolerance for periodicity check
+    """
     dim = nodes_coords.shape[1]
 
     min_point = np.min(nodes_coords, axis=0)
