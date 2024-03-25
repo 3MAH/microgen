@@ -16,7 +16,7 @@ Here are the main features:
     :target: https://anaconda.org/set3MAH/microgen
 
 .. image:: https://badge.fury.io/py/microgen.svg
-    :target: https://pypi.org/project/microgen/1.0/
+    :target: https://pypi.org/project/microgen/
 
 .. |3MAH| image:: https://3mah.github.io/assets/images/logo_3mah/3mah_logo_vsmall.png
     :width: 50
