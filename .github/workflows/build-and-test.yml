@@ -35,7 +35,3 @@ jobs:
 
       - name: Test
         run: pytest tests --numprocesses=auto
-
-      - name: Examples
-        if: runner.os != 'Windows'
-        run: cd examples && bash run_examples.sh

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cadquery as cq
 
 from microgen import Neper, Phase, mesh
@@ -30,19 +32,22 @@ from microgen import Neper, Phase, mesh
 #     output_file="Voronoi.vtk",
 # )
 
-polyhedra = Neper.generateVoronoiFromTessFile("test1.tess")
+tess_file = str(Path(__file__).parent / "test1.tess")
+polyhedra = Neper.generateVoronoiFromTessFile(tess_file)
 
 shapes = [poly.generate() for poly in polyhedra]
 
 compound = cq.Compound.makeCompound(shapes)
-cq.exporters.export(compound, "compound.step")
+step_file = str(Path(__file__).parent / "compound.step")
+cq.exporters.export(compound, step_file)
 
 phases = [Phase(shape=shape) for shape in shapes]
 
+vtk_file = str(Path(__file__).parent / "Voronoi.vtk")
 mesh(
-    mesh_file="compound.step",
+    mesh_file=step_file,
     listPhases=phases,
     size=0.05,
     order=1,
-    output_file="Voronoi.vtk",
+    output_file=vtk_file,
 )

@@ -1,13 +1,14 @@
+name: microgen
 channels:
   - conda-forge
   - set3mah
 
 dependencies:
-  - pyvista>=0.39
+  - pyvista
+  - scipy
   - python-gmsh
   - meshio
-  - pytest-cov
-  - occt=7.7.0
-  - cadquery=2.3.1
-#  - mmg
+  # - occt
+  - cadquery
+  # - mmg
 #  - neper

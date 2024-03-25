@@ -1,0 +1,68 @@
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "*"
+
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  run-examples:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.9", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          generate-run-shell: true
+          micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
+          # environment-file: environment.yml
+          environment-name: microgen
+          create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery
+          init-shell: powershell bash
+          download-micromamba: true
+          cache-environment: false
+          post-cleanup: "all"
+
+      - name: Install libglu1-mesa for Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get install libglu1-mesa
+
+      - name: Install microgen for Linux and macOS
+        if: runner.os != 'Windows'
+        run: |
+          pip install uv
+          uv pip install --system microgen@. --no-deps
+        shell: micromamba-shell {0}
+
+      - name: Install microgen for Windows
+        if: runner.os == 'Windows'
+        run: |
+          pip install uv
+          uv pip install --system microgen@. --no-deps
+        shell: pwsh
+
+      - name: Examples on Linux
+        if: runner.os == 'Linux'
+        run: python examples/run_examples.py --no-mmg -n auto
+        shell: micromamba-shell {0}
+
+      - name: Examples on macOS
+        if: runner.os == 'macOS'
+        run: |
+          conda install -c set3mah mmg
+          python examples/run_examples.py -n auto
+        shell: micromamba-shell {0}
+
+      - name: Examples on Windows
+        if: runner.os == 'Windows'
+        run: python examples/run_examples.py --no-mmg -n auto
+        shell: pwsh
