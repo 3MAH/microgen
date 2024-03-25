@@ -37,7 +37,7 @@ class Cylinder(BasicGeometry):
         self.radius = radius
         self.height = height
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         cylinder = (
             cq.Workplane("YZ")
             .circle(self.radius)
@@ -55,7 +55,7 @@ class Cylinder(BasicGeometry):
         )
         return cq.Shape(cylinder.val().wrapped)
 
-    def generateVtk(self, resolution=100, capping=True) -> pv.PolyData:
+    def generateVtk(self, resolution=100, capping=True, **kwargs) -> pv.PolyData:
         cylinder = pv.Cylinder(
             center=tuple(self.center),
             direction=(1.0, 0.0, 0.0),

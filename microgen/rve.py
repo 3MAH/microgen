@@ -47,7 +47,7 @@ class Rve:
         self.matrix_number = 0
 
     @classmethod
-    def from_min_max(
+    def from_min_max(  # pylint: disable=too-many-arguments
         cls,
         x_min: float = -0.5,
         x_max: float = 0.5,
@@ -71,3 +71,8 @@ class Rve:
         dim_y = abs(y_max - y_min)
         dim_z = abs(z_max - z_min)
         return Rve(dim=(dim_x, dim_y, dim_z), center=center)
+
+    @property
+    def volume(self):
+        """Get the volume of the RVE"""
+        return np.prod(self.dim)

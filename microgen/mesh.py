@@ -19,7 +19,7 @@ class OutputMeshNotPeriodicError(Exception):
     """Raised when output mesh from meshPeriodic is not periodic"""
 
 
-def mesh(
+def mesh(  # pylint: disable=too-many-arguments
     mesh_file: str,
     listPhases: List[Phase],
     size: float,
@@ -46,7 +46,7 @@ def mesh(
     _finalize_mesh(size, output_file)
 
 
-def meshPeriodic(
+def meshPeriodic(  # pylint: disable=too-many-arguments
     mesh_file: str,
     rve: Rve,
     listPhases: List[Phase],

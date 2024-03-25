@@ -35,7 +35,7 @@ class Box(BasicGeometry):
         super().__init__(shape="Box", center=center, orientation=orientation)
         self.dim = dim
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         box = (
             cq.Workplane()
             .box(*self.dim)
@@ -50,7 +50,7 @@ class Box(BasicGeometry):
         )
         return cq.Shape(box.val().wrapped)
 
-    def generateVtk(self, level=0, quads=True) -> pv.PolyData:
+    def generateVtk(self, level=0, quads=True, **kwargs) -> pv.PolyData:
         box = pv.Box(
             bounds=(
                 self.center[0] - 0.5 * self.dim[0],

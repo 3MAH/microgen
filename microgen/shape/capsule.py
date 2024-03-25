@@ -37,7 +37,7 @@ class Capsule(BasicGeometry):
         self.height = height
         self.radius = radius
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         cylinder = cq.Solid.makeCylinder(
             self.radius,
             self.height,
@@ -73,7 +73,12 @@ class Capsule(BasicGeometry):
         return capsule
 
     def generateVtk(
-        self, resolution=100, theta_resolution=50, phi_resolution=50, capping=True
+        self,
+        resolution=100,
+        theta_resolution=50,
+        phi_resolution=50,
+        capping=True,
+        **kwargs,
     ) -> pv.PolyData:
         cylinder = pv.Cylinder(
             center=self.center,

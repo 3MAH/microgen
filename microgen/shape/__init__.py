@@ -30,7 +30,7 @@ from .sphere import Sphere
 from .tpms import CylindricalTpms, SphericalTpms, Tpms
 
 
-def newGeometry(
+def newGeometry(  # pylint: disable=too-many-return-statements
     shape: str,
     param_geom: Dict[str, Any],
     center: Tuple[float, float, float] = (0, 0, 0),

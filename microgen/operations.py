@@ -10,8 +10,15 @@ import cadquery as cq
 import numpy as np
 import OCP
 import pyvista as pv
-from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
-from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+from OCP.BRepAlgoAPI import (
+    BRepAlgoAPI_Cut,  # pylint: disable=import-error, no-name-in-module
+)
+from OCP.BRepAlgoAPI import (
+    BRepAlgoAPI_Fuse,  # pylint: disable=import-error, no-name-in-module; pylint: disable=import-error, no-name-in-module
+)
+from OCP.ShapeUpgrade import (
+    ShapeUpgrade_UnifySameDomain,  # pylint: disable=import-error, no-name-in-module; pylint: disable=import-error, no-name-in-module
+)
 
 from .phase import Phase
 from .rve import Rve
@@ -128,7 +135,7 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
         upgrader.Build()
         shape: OCP.TopoDS_Shape = upgrader.Shape()
         return cq.Shape(shape)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return cq.Shape(occ_Solids)
 
 

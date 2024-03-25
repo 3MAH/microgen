@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 
 
-class Tpms(BasicGeometry):
+class Tpms(BasicGeometry):  # pylint: disable=too-many-instance-attributes
     """
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
     geometry from a given mathematical function, with given offset
@@ -53,7 +53,7 @@ class Tpms(BasicGeometry):
         - :class:`~microgen.shape.surface_functions.honeycomb_lidinoid`
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         surface_function: Field,
         offset: float | Field = 0.0,
@@ -165,7 +165,7 @@ class Tpms(BasicGeometry):
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)
+        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)  # pylint: disable=protected-access
         if self.density > max_density:
             raise ValueError(
                 f"density ({self.density}) must be lower than {max_density} for \
@@ -183,7 +183,7 @@ class Tpms(BasicGeometry):
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
-            temp_tpms._update_offset(offset)
+            temp_tpms._update_offset(offset)  # pylint: disable=protected-access
             return polydata_func().volume / grid_volume
 
         computed_offset = root_scalar(
@@ -473,7 +473,7 @@ class Tpms(BasicGeometry):
             cqShapeList=part_shapes, retain_edges=False
         )  # True or False ?
 
-    def generate(
+    def generate(  # pylint: disable=too-many-branches
         self,
         type_part: Literal[
             "sheet", "lower skeletal", "upper skeletal", "surface"
@@ -481,6 +481,7 @@ class Tpms(BasicGeometry):
         smoothing: int = 0,
         verbose: bool = True,
         algo_resolution: Optional[int] = None,
+        **kwargs,
     ) -> cq.Shape:
         """
         :param type_part: part of the TPMS desired \
@@ -550,7 +551,7 @@ class Tpms(BasicGeometry):
         shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
 
         density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
-        logging.info(f"TPMS density = {density:.2%}")
+        logging.info("TPMS density = %.2f%%", density * 100)
 
         shape = rotateEuler(
             obj=shape,
@@ -563,8 +564,14 @@ class Tpms(BasicGeometry):
 
     def generateVtk(
         self,
-        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
+        type_part: Literal[
+            "sheet",
+            "lower skeletal",
+            "upper skeletal",
+            "surface",
+        ] = "sheet",
         algo_resolution: Optional[int] = None,
+        **kwargs,
     ) -> pv.PolyData:
         """
         :param type_part: part of the TPMS desireds
@@ -588,7 +595,7 @@ class Tpms(BasicGeometry):
         polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
         polydata = polydata.clean().triangulate()
         density = polydata.volume / self.grid.volume
-        logging.info(f"TPMS density = {density:.2%}")
+        logging.info("TPMS density = %.2f%%", density * 100)
 
         polydata = rotatePvEuler(
             polydata,
@@ -605,7 +612,7 @@ class CylindricalTpms(Tpms):
     Class used to generate cylindrical TPMS geometries (sheet or skeletals parts).
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         radius: float,
         surface_function: Field,
@@ -679,7 +686,7 @@ class SphericalTpms(Tpms):
     Class used to generate spherical TPMS geometries (sheet or skeletals parts).
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         radius: float,
         surface_function: Field,

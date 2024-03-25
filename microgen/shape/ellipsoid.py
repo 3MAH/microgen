@@ -36,7 +36,7 @@ class Ellipsoid(BasicGeometry):
         super().__init__(shape="Ellipsoid", center=center, orientation=orientation)
         self.radii = radii
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         transform_mat = cq.Matrix(
             [
                 [self.radii[0], 0, 0, self.center[0]],
@@ -56,7 +56,7 @@ class Ellipsoid(BasicGeometry):
         )
         return ellipsoid
 
-    def generateVtk(self) -> pv.PolyData:
+    def generateVtk(self, **kwargs) -> pv.PolyData:
         transform_matrix = np.array(
             [
                 [self.radii[0], 0, 0, self.center[0]],

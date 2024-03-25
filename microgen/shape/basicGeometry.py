@@ -38,7 +38,7 @@ class BasicGeometry:
         self.geometry: cq.Shape | None = None
         BasicGeometry.numInstances += 1
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         """
         Generates the CAD shape
 
@@ -46,7 +46,7 @@ class BasicGeometry:
         """
         raise NotImplementedError
 
-    def generateVtk(self) -> pv.PolyData:
+    def generateVtk(self, **kwargs) -> pv.PolyData:
         """
         Generates the vtk mesh of the shape
 

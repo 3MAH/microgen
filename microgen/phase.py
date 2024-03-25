@@ -9,8 +9,8 @@ from typing import List, Optional, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
-from OCP.BRepGProp import BRepGProp
-from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp  # pylint: disable=no-name-in-module, import-error
+from OCP.GProp import GProp_GProps  # pylint: disable=no-name-in-module, import-error
 
 from .rve import Rve
 

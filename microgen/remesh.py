@@ -18,7 +18,7 @@ class OutputMeshNotPeriodicError(Exception):
 
 
 @overload
-def remesh_keeping_periodicity_for_fem(
+def remesh_keeping_periodicity_for_fem(  # pylint: disable=too-many-arguments
     input_mesh: BoxMesh,
     mesh_version: int = 2,
     dimension: int = 3,
@@ -32,7 +32,7 @@ def remesh_keeping_periodicity_for_fem(
 
 
 @overload
-def remesh_keeping_periodicity_for_fem(
+def remesh_keeping_periodicity_for_fem(  # pylint: disable=too-many-arguments
     input_mesh: pv.UnstructuredGrid,
     mesh_version: int = 2,
     dimension: int = 3,
@@ -45,7 +45,7 @@ def remesh_keeping_periodicity_for_fem(
 ) -> pv.UnstructuredGrid: ...
 
 
-def remesh_keeping_periodicity_for_fem(
+def remesh_keeping_periodicity_for_fem(  # pylint: disable=too-many-arguments, too-many-locals
     input_mesh: Union[BoxMesh, pv.UnstructuredGrid],
     mesh_version: int = 2,
     dimension: int = 3,
