@@ -11,8 +11,8 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
         with:
             miniforge-variant: Mambaforge
             miniforge-version: latest
@@ -21,8 +21,7 @@ jobs:
 
       - name: Install
         shell: bash -l {0}
-        run: |
-          mamba install -c conda-forge -c cadquery -c set3mah microgen
+        run: mamba install -c conda-forge -c cadquery -c set3mah microgen
 
       - name: Test
         shell: bash -l {0}
