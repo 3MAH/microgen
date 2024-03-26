@@ -61,6 +61,9 @@ class Rve:  # pylint: disable=too-many-instance-attributes, too-few-public-metho
                 stacklevel=2,
             )
 
+        if np.any(self.dim <= 0):
+            raise ValueError("Dimensions of the RVE must be greater than 0")
+
         self.min_point = self.center - 0.5 * self.dim
         self.max_point = self.center + 0.5 * self.dim
 

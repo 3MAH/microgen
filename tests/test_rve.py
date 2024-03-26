@@ -69,6 +69,18 @@ def test_rve_deprecated_dim() -> None:
         assert np.all(rve.dim == [1, 1, 1])
 
 
+def test_rve_given_negative_or_zero_dim_must_raise_error() -> None:
+    """Test Rve dim with negative values must raise error."""
+    with pytest.raises(ValueError):
+        Rve(dim=-1)
+
+    with pytest.raises(ValueError):
+        Rve(dim=0)
+
+    with pytest.raises(ValueError):
+        Rve(dim=(1, -1, 0))
+
+
 def test_rve_from_min_max_must_return_expected_rve() -> None:
     """Test Rve from_min_max class method must return expected Rve."""
     rve = Rve.from_min_max()
