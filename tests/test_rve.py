@@ -33,7 +33,7 @@ def test_rve_invalid_center_value() -> None:
         Rve(center=np.array([1, 2]))
 
     with pytest.raises(ValueError):
-        Rve(center=1)
+        Rve(center=1)  # type: ignore
 
 
 def test_rve_dim_must_have_expected_value() -> None:
