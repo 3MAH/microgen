@@ -13,7 +13,7 @@ import numpy as np
 _DIM = 3
 
 
-class Rve:
+class Rve:  # pylint: disable=too-many-instance-attributes, too-few-public-methods
     """
     :param dim_x: X dimension of the RVE
     :param dim_y: Y dimension of the RVE
@@ -22,45 +22,47 @@ class Rve:
     :param dim: dimensions of the RVE
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         dim_x: Optional[float] = None,
         dim_y: Optional[float] = None,
         dim_z: Optional[float] = None,
         center: Union[np.ndarray, Tuple, List] = (0, 0, 0),
-        dim: Optional[Union[float, np.ndarray, Tuple, List]] = 1,
+        dim: Union[float, np.ndarray, Tuple, List] = 1,
     ) -> None:
-        if isinstance(center, (Tuple, List)) and len(center) == _DIM:
+        if isinstance(center, (tuple, list)) and len(center) == _DIM:
             self.center = np.array(center)
         elif isinstance(center, np.ndarray) and center.shape == (_DIM,):
             self.center = center
         else:
             raise ValueError(f"center must be an array or Sequence of length {_DIM}")
 
-        if (
-            dim is not None
-            and dim_x is not None
-            and dim_y is not None
-            and dim_z is not None
-        ):
-            raise ValueError("Either dim or dim_x, dim_y, dim_z must be specified")
-
         if isinstance(dim, (int, float)):
             self.dim = np.array([dim for _ in range(_DIM)])
-        elif isinstance(dim, (Tuple, List)) and len(dim) == _DIM:
+        elif isinstance(dim, (tuple, list)) and len(dim) == _DIM:
             self.dim = np.array(dim)
         elif isinstance(dim, np.ndarray) and dim.shape == (_DIM,):
             self.dim = dim
-        elif dim is None:
-            if dim_x is None or dim_y is None or dim_z is None:
-                raise ValueError("dim must be specified")
-            warnings.warn(
-                "dim_x, dim_y, dim_z will be deprecated, use 'dim' instead.",
-                DeprecationWarning,
-            )
-            self.dim = np.array([dim_x, dim_y, dim_z])
         else:
             raise ValueError(f"dim must be an array or Sequence of length {_DIM}")
+
+        if dim_x is not None or dim_y is not None or dim_z is not None:
+            self.dim = np.array(
+                [
+                    dim_x if dim_x is not None else self.dim[0],
+                    dim_y if dim_y is not None else self.dim[1],
+                    dim_z if dim_z is not None else self.dim[2],
+                ]
+            )
+            warnings.warn(
+                f"dim_x, dim_y, dim_z are deprecated, use 'dim' instead. \
+                    Now dim is set to [{self.dim[0]}, {self.dim[1]}, {self.dim[2]}]",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        if np.any(self.dim <= 0):
+            raise ValueError("Dimensions of the RVE must be greater than 0")
 
         self.min_point = self.center - 0.5 * self.dim
         self.max_point = self.center + 0.5 * self.dim
@@ -92,7 +94,7 @@ class Rve:
         self.matrix_number = 0
 
     @classmethod
-    def from_min_max(
+    def from_min_max(  # pylint: disable=too-many-arguments
         cls,
         x_min: float = -0.5,
         x_max: float = 0.5,
