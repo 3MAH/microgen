@@ -46,15 +46,7 @@ class Rve:  # pylint: disable=too-many-instance-attributes, too-few-public-metho
         else:
             raise ValueError(f"dim must be an array or Sequence of length {_DIM}")
 
-        if dim_x is not None and dim_y is not None and dim_z is not None:
-            self.dim = np.array([dim_x, dim_y, dim_z])
-            warnings.warn(
-                f"dim_x, dim_y, dim_z are deprecated, use 'dim' instead. \
-                    Now dim is set to [{self.dim[0]}, {self.dim[1]}, {self.dim[2]}]",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        elif dim_x is not None or dim_y is not None or dim_z is not None:
+        if dim_x is not None or dim_y is not None or dim_z is not None:
             self.dim = np.array(
                 [
                     dim_x if dim_x is not None else self.dim[0],
