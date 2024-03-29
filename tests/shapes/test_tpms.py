@@ -1,3 +1,5 @@
+"""Tests for the TPMS shapes generation."""
+
 from __future__ import annotations
 
 from inspect import getmembers, isfunction
@@ -13,6 +15,7 @@ import microgen
 def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
     type_part: Literal["sheet", "lower skeletal", "upper skeletal"],
 ):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
@@ -31,6 +34,7 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
 def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent(
     type_part: Literal["lower skeletal", "upper skeletal"],
 ):
+    """Test for the volume of the TPMS skeletals generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.schwarzP,
@@ -45,7 +49,8 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
-def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_equivalent_volume_with_cadquery_and_vtk():
+def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volumewith_cad_and_vtk():
+    """Test for non-default cell size and repeat cell values."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=0.3,
@@ -53,7 +58,7 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_equivalent_v
         repeat_cell=(2, 1, 2),
     )
 
-    shape_cadquery = tpms.generate(type_part="sheet", smoothing=0, verbose=False)
+    shape_cadquery = tpms.generate(type_part="sheet")
     shape_vtk = tpms.generateVtk(type_part="sheet")
 
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
@@ -69,6 +74,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
     repeat_cell: int | Tuple[int, int, int],
     cell_size: float | Tuple[float, float, float],
 ):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
         surface_function=getattr(microgen.surface_functions, surface),
@@ -95,6 +101,7 @@ def test_tpms_given_density_must_match_computed_density(
     surface: str,
     density: float,
 ):
+    """Test for the density of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
         surface_function=getattr(microgen.surface_functions, surface), density=density
@@ -113,6 +120,7 @@ def test_tpms_given_density_must_match_computed_density(
 def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(
     coord_sys_tpms: Type[microgen.Tpms],
 ):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = coord_sys_tpms(
         radius=1.0,
         surface_function=microgen.surface_functions.gyroid,
@@ -131,11 +139,15 @@ def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lowe
         (microgen.SphericalTpms, (1, 0, 0), (1, 100, 100)),
     ],
 )
-def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond_and_be_between_zero_and_grid_volume(
+def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond(
     coord_sys_tpms: Type[microgen.Tpms],
     repeat_cell_zero: Tuple[int, int, int],
     repeat_cell_max: Tuple[int, int, int],
 ):
+    """Test for zero and max repeat cell values.
+    The volume of the sheet, lower skeletal, and upper skeletal must be the same for zero and
+    max repeat cell values and be between 0 and the volume of the grid.
+    """
     tpms_repeat_zero = coord_sys_tpms(
         radius=1.0,
         surface_function=microgen.surface_functions.gyroid,
@@ -173,6 +185,7 @@ def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond_and_
 
 
 def test_tpms_given_generate_surface_must_not_be_empty():
+    """Test for the surface of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=1.0,
@@ -186,7 +199,9 @@ def test_tpms_given_generate_surface_must_not_be_empty():
 
 
 def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond():
-    def variable_offset(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
+
+    def variable_offset(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x + 1.5
 
     tpms = microgen.Tpms(
@@ -201,10 +216,12 @@ def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond():
 
 
 @pytest.mark.parametrize("param", [0.3, 4.0])
-def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_ValueError(
+def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_error(
     param: float,
 ):
-    def variable_offset(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
+
+    def variable_offset(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x + param  # x ∈ [-0.5, 0.5]
 
     # offset must be in [0, 2 * max(gyroid)]
@@ -217,7 +234,8 @@ def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_Value
         tpms.generate(type_part="sheet")
 
 
-def test_tpms_generate_given_wrong_type_part_parameter_must_raise_ValueError():
+def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=0.5,
@@ -228,7 +246,8 @@ def test_tpms_generate_given_wrong_type_part_parameter_must_raise_ValueError():
         tpms.generate(type_part="fake")
 
 
-def test_tpms_given_wrong_cell_size_parameter_must_raise_ValueError():
+def test_tpms_given_wrong_cell_size_parameter_must_raise_error():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     with pytest.raises(ValueError):
         microgen.Tpms(
             surface_function=microgen.surface_functions.gyroid,
@@ -236,7 +255,8 @@ def test_tpms_given_wrong_cell_size_parameter_must_raise_ValueError():
         )
 
 
-def test_tpms_given_wrong_repeat_cell_parameter_must_raise_ValueError():
+def test_tpms_given_wrong_repeat_cell_parameter_must_raise_error():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     with pytest.raises(ValueError):
         microgen.Tpms(
             surface_function=microgen.surface_functions.gyroid,
@@ -244,7 +264,8 @@ def test_tpms_given_wrong_repeat_cell_parameter_must_raise_ValueError():
         )
 
 
-def test_tpms_given_wrong_density_parameter_must_raise_ValueError():
+def test_tpms_given_wrong_density_parameter_must_raise_error():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     with pytest.raises(ValueError):
         microgen.Tpms(
             surface_function=microgen.surface_functions.gyroid,
@@ -268,6 +289,7 @@ def test_tpms_given_wrong_density_parameter_must_raise_ValueError():
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
 def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: str):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         density=0.2,
@@ -281,6 +303,7 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: st
 def test_tpms_given_max_density_must_return_corresponding_offset(
     part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
 ):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
     )
@@ -297,6 +320,7 @@ def test_tpms_given_max_density_must_return_corresponding_offset(
 
 
 def test_tpms_given_100_percent_sheet_density_must_return_a_cube():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         density=1.0,
@@ -306,6 +330,7 @@ def test_tpms_given_100_percent_sheet_density_must_return_a_cube():
 
 
 def test_tpms_given_density_must_return_corresponding_offset():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
     )
@@ -319,6 +344,7 @@ def test_tpms_given_density_must_return_corresponding_offset():
 
 
 def test_tpms_given_property_must_return_the_same_value():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         density=0.2,
@@ -332,6 +358,7 @@ def test_tpms_given_property_must_return_the_same_value():
 
 
 def test_tpms_given_surface_must_not_be_empty():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
     )
@@ -341,6 +368,7 @@ def test_tpms_given_surface_must_not_be_empty():
 
 
 def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_error_with_cadquery():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=-1.0,
@@ -351,7 +379,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
     sheet = tpms.generateVtk(type_part="lower skeletal").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
-    def including_negative_values(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def including_negative_values(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x
 
     tpms = microgen.Tpms(
@@ -366,7 +394,9 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
 
 
 def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error_with_cadquery():
-    def all_negative(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
+
+    def all_negative(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return -1.0 + x
 
     tpms = microgen.Tpms(
@@ -378,7 +408,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
 
     assert tpms.generateVtk(type_part="sheet").volume == 0.0
 
-    def including_negative_values(x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def including_negative_values(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x
 
     tpms = microgen.Tpms(
@@ -393,6 +423,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
 
 
 def test_tpms_center_and_orientation_must_correspond():
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     center = (1.0, -2.0, 3.0)
     orientation = (np.pi / 3, -np.pi / 4, np.pi / 5)
 

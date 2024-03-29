@@ -40,7 +40,7 @@ class Ellipsoid(BasicGeometry):
         self.a_y = a_y
         self.a_z = a_z
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         transform_mat = cq.Matrix(
             [
                 [self.a_x, 0, 0, self.center[0]],
@@ -60,7 +60,7 @@ class Ellipsoid(BasicGeometry):
         )
         return ellipsoid
 
-    def generateVtk(self) -> pv.PolyData:
+    def generateVtk(self, **kwargs) -> pv.PolyData:
         transform_matrix = np.array(
             [
                 [self.a_x, 0, 0, self.center[0]],

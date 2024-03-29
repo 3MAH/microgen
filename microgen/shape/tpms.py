@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 
 
-class Tpms(BasicGeometry):
+class Tpms(BasicGeometry):  # pylint: disable=too-many-instance-attributes
     """
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
     geometry from a given mathematical function, with given offset
@@ -53,7 +53,7 @@ class Tpms(BasicGeometry):
         - :class:`~microgen.shape.surface_functions.honeycomb_lidinoid`
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         surface_function: Field,
         offset: float | Field = 0.0,
@@ -129,7 +129,8 @@ class Tpms(BasicGeometry):
         resolution: int = 20,
     ) -> float:
         """
-        Returns the offset corresponding to the required density for the specified part of the given surface_function.
+        Returns the offset corresponding to the required density for the specified part
+        of the given surface_function.
 
         :param surface_function: tpms function
         :param part_type: type of the part (sheet, lower skeletal or upper skeletal)
@@ -164,7 +165,7 @@ class Tpms(BasicGeometry):
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)
+        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)  # pylint: disable=protected-access
         if self.density > max_density:
             raise ValueError(
                 f"density ({self.density}) must be lower than {max_density} for \
@@ -182,7 +183,7 @@ class Tpms(BasicGeometry):
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
-            temp_tpms._update_offset(offset)
+            temp_tpms._update_offset(offset)  # pylint: disable=protected-access
             return polydata_func().volume / grid_volume
 
         computed_offset = root_scalar(
@@ -212,14 +213,17 @@ class Tpms(BasicGeometry):
             raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
 
     def vtk_sheet(self) -> pv.PolyData:
+        """Returns sheet part"""
         return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
             scalars="upper_surface"
         )
 
     def vtk_upper_skeletal(self) -> pv.PolyData:
+        """Returns upper skeletal part"""
         return self.grid.clip_scalar(scalars="upper_surface", invert=False)
 
     def vtk_lower_skeletal(self) -> pv.PolyData:
+        """Returns lower skeletal part"""
         return self.grid.clip_scalar(scalars="lower_surface")
 
     @property
@@ -469,45 +473,10 @@ class Tpms(BasicGeometry):
             cqShapeList=part_shapes, retain_edges=False
         )  # True or False ?
 
-    def generate(
+    def _check_offset(
         self,
-        type_part: Literal[
-            "sheet", "lower skeletal", "upper skeletal", "surface"
-        ] = "sheet",
-        smoothing: int = 0,
-        verbose: bool = True,
-        algo_resolution: Optional[int] = None,
-    ) -> cq.Shape:
-        """
-        :param type_part: part of the TPMS desired \
-            ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
-        :param smoothing: smoothing loop iterations
-        :param verbose: display progressbar of the conversion to CadQuery object
-        :param algo_resolution: if offset must be computed to fit density, \
-            resolution of the temporary TPMS used to compute the offset
-
-        :return: CadQuery Shape object of the required TPMS part
-        """
-        if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
-            raise ValueError(
-                f"'type_part' ({type_part}) must be 'sheet', \
-                    'lower skeletal', 'upper skeletal' or 'surface'",
-            )
-
-        if type_part == "surface":
-            if self.offset != 0.0:
-                logging.warning("offset is ignored for 'surface' part")
-            if self.density is not None:
-                logging.warning("density is ignored for 'surface' part")
-            return self._create_surface(
-                isovalue=0, smoothing=smoothing, verbose=verbose
-            )
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(
-                part_type=type_part, resolution=algo_resolution
-            )
-
+        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
+    ):
         if "skeletal" in type_part:
             if (
                 isinstance(self.offset, (int, float)) and self.offset < 0.0
@@ -539,6 +508,48 @@ class Tpms(BasicGeometry):
                         than {offset_limit} for the given TPMS function"
             )
 
+    def generate(
+        self,
+        type_part: Literal[
+            "sheet", "lower skeletal", "upper skeletal", "surface"
+        ] = "sheet",
+        smoothing: int = 0,
+        verbose: bool = True,
+        algo_resolution: Optional[int] = None,
+        **kwargs,
+    ) -> cq.Shape:
+        """
+        :param type_part: part of the TPMS desired \
+            ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
+        :param smoothing: smoothing loop iterations
+        :param verbose: display progressbar of the conversion to CadQuery object
+        :param algo_resolution: if offset must be computed to fit density, \
+            resolution of the temporary TPMS used to compute the offset
+
+        :return: CadQuery Shape object of the required TPMS part
+        """
+        if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
+            raise ValueError(
+                f"'type_part' ({type_part}) must be 'sheet', \
+                    'lower skeletal', 'upper skeletal' or 'surface'",
+            )
+
+        if type_part == "surface":
+            if self.offset != 0.0:
+                logging.warning("offset is ignored for 'surface' part")
+            if self.density is not None:
+                logging.warning("density is ignored for 'surface' part")
+            return self._create_surface(
+                isovalue=0, smoothing=smoothing, verbose=verbose
+            )
+
+        if self.density is not None:
+            self._compute_offset_to_fit_density(
+                part_type=type_part, resolution=algo_resolution
+            )
+
+        self._check_offset(type_part)
+
         eps = self.offset / 3.0
         if isinstance(self.offset, float) and self.offset == 0.0:
             eps = 0.1 * np.min(self.cell_size)
@@ -546,7 +557,7 @@ class Tpms(BasicGeometry):
         shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
 
         density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
-        logging.info(f"TPMS density = {density:.2%}")
+        logging.info("TPMS density = %d%%", round(density * 100, 2))
 
         shape = rotateEuler(
             obj=shape,
@@ -559,8 +570,11 @@ class Tpms(BasicGeometry):
 
     def generateVtk(
         self,
-        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
+        type_part: Literal[
+            "sheet", "lower skeletal", "upper skeletal", "surface"
+        ] = "sheet",
         algo_resolution: Optional[int] = None,
+        **kwargs,
     ) -> pv.PolyData:
         """
         :param type_part: part of the TPMS desireds
@@ -584,7 +598,7 @@ class Tpms(BasicGeometry):
         polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
         polydata = polydata.clean().triangulate()
         density = polydata.volume / self.grid.volume
-        logging.info(f"TPMS density = {density:.2%}")
+        logging.info("TPMS density = %d%%", round(density * 100, 2))
 
         polydata = rotatePvEuler(
             polydata,
@@ -601,7 +615,7 @@ class CylindricalTpms(Tpms):
     Class used to generate cylindrical TPMS geometries (sheet or skeletals parts).
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         radius: float,
         surface_function: Field,
@@ -675,7 +689,7 @@ class SphericalTpms(Tpms):
     Class used to generate spherical TPMS geometries (sheet or skeletals parts).
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         radius: float,
         surface_function: Field,
