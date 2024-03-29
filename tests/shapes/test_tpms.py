@@ -49,7 +49,7 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
-def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volumewith_cad_and_vtk():
+def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_with_cad_and_vtk():
     """Test for non-default cell size and repeat cell values."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
