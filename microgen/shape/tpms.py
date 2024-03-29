@@ -446,7 +446,7 @@ class Tpms(BasicGeometry):
         smoothing: int,
         verbose: bool,
     ):
-        box = cq.Workplane("front").box(1, 1, 1)
+        box = cq.Workplane("front").box(*(self.cell_size * self.repeat_cell))
 
         surface, test_surface = getattr(
             self, f"_generate_{type_part.replace(' ', '_')}_surfaces"
