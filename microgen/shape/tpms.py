@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 
 
-class Tpms(BasicGeometry):  # pylint: disable=too-many-instance-attributes
+class Tpms(BasicGeometry):
     """
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
     geometry from a given mathematical function, with given offset
@@ -53,7 +53,7 @@ class Tpms(BasicGeometry):  # pylint: disable=too-many-instance-attributes
         - :class:`~microgen.shape.surface_functions.honeycomb_lidinoid`
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         surface_function: Field,
         offset: float | Field = 0.0,
@@ -165,7 +165,7 @@ class Tpms(BasicGeometry):  # pylint: disable=too-many-instance-attributes
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)  # pylint: disable=protected-access
+        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)
         if self.density > max_density:
             raise ValueError(
                 f"density ({self.density}) must be lower than {max_density} for \
@@ -183,7 +183,7 @@ class Tpms(BasicGeometry):  # pylint: disable=too-many-instance-attributes
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
-            temp_tpms._update_offset(offset)  # pylint: disable=protected-access
+            temp_tpms._update_offset(offset)
             return polydata_func().volume / grid_volume
 
         computed_offset = root_scalar(
@@ -615,7 +615,7 @@ class CylindricalTpms(Tpms):
     Class used to generate cylindrical TPMS geometries (sheet or skeletals parts).
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         radius: float,
         surface_function: Field,
@@ -689,7 +689,7 @@ class SphericalTpms(Tpms):
     Class used to generate spherical TPMS geometries (sheet or skeletals parts).
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         radius: float,
         surface_function: Field,

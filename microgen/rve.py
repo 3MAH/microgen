@@ -13,7 +13,7 @@ import numpy as np
 _DIM = 3
 
 
-class Rve:  # pylint: disable=too-many-instance-attributes, too-few-public-methods
+class Rve:
     """
     :param dim_x: X dimension of the RVE
     :param dim_y: Y dimension of the RVE
@@ -22,7 +22,7 @@ class Rve:  # pylint: disable=too-many-instance-attributes, too-few-public-metho
     :param dim: dimensions of the RVE
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         dim_x: Optional[float] = None,
         dim_y: Optional[float] = None,
@@ -94,7 +94,7 @@ class Rve:  # pylint: disable=too-many-instance-attributes, too-few-public-metho
         self.matrix_number = 0
 
     @classmethod
-    def from_min_max(  # pylint: disable=too-many-arguments
+    def from_min_max(
         cls,
         x_min: float = -0.5,
         x_max: float = 0.5,
