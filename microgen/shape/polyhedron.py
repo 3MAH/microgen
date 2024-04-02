@@ -56,7 +56,7 @@ class Polyhedron(BasicGeometry):
         for ixs in self.faces_ixs:
             ixs.append(ixs[0])
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         faces = []
         for ixs in self.faces_ixs:
             lines = []
@@ -79,7 +79,7 @@ class Polyhedron(BasicGeometry):
         solid = cq.Solid.makeSolid(shell)
         return cq.Shape(solid.wrapped)
 
-    def generateVtk(self) -> pv.PolyData:
+    def generateVtk(self, **kwargs) -> pv.PolyData:
         facesPv = copy.deepcopy(self.faces_ixs)
         for vertices_in_face in facesPv:
             del vertices_in_face[-1]

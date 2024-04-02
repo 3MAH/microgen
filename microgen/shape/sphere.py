@@ -34,7 +34,7 @@ class Sphere(BasicGeometry):
         super().__init__(shape="Sphere", center=center)
         self.radius = radius
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         # Temporary workaround bug fix for OpenCascade bug using a random
         # direct parameter for cq.Workplane().sphere() method
         # Related to issue https://github.com/CadQuery/cadquery/issues/1461
@@ -47,7 +47,9 @@ class Sphere(BasicGeometry):
         )
         return cq.Shape(sphere.val().wrapped)
 
-    def generateVtk(self, theta_resolution=50, phi_resolution=50) -> pv.PolyData:
+    def generateVtk(
+        self, theta_resolution=50, phi_resolution=50, **kwargs
+    ) -> pv.PolyData:
         return pv.Sphere(
             radius=self.radius,
             center=tuple(self.center),

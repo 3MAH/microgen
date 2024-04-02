@@ -21,11 +21,6 @@ repos:
       args: [--fix]
     - id: ruff-format
 
-- repo: https://github.com/psf/black
-  rev: 24.2.0
-  hooks:
-  - id: black
-
 - repo: https://github.com/keewis/blackdoc
   rev: v0.3.9
   hooks:

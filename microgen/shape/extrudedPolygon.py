@@ -48,7 +48,7 @@ class ExtrudedPolygon(BasicGeometry):
         self.listCorners = listCorners
         self.height = height
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **kwargs) -> cq.Shape:
         poly = (
             cq.Workplane("YZ")
             .polyline(self.listCorners)
@@ -67,7 +67,7 @@ class ExtrudedPolygon(BasicGeometry):
         )
         return cq.Shape(poly.val().wrapped)
 
-    def generateVtk(self, capping=True) -> pv.PolyData:
+    def generateVtk(self, capping=True, **kwargs) -> pv.PolyData:
         vertices = []
         for corner in self.listCorners:
             vertices.append(
