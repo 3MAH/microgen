@@ -106,26 +106,12 @@ class Tpms(BasicGeometry):
             raise ValueError("density must be between 0 and 1")
         self.density = density
 
-    def _max_density(
-        self,
-        part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        resolution: Optional[int] = None,
-    ) -> float:
-        if part_type == "sheet":
-            return 1.0
-        tpms = Tpms(
-            surface_function=self.surface_function,
-            offset=0.0,
-            resolution=resolution if resolution is not None else self.resolution,
-        )
-        return tpms.generateVtk(type_part=part_type).volume / tpms.grid.volume
-
     @classmethod
     def offset_from_density(
         cls,
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        density: float | Literal["max"] = "max",
+        density: float,
         resolution: int = 20,
     ) -> float:
         """
@@ -139,14 +125,6 @@ class Tpms(BasicGeometry):
 
         :return: corresponding offset value
         """
-        if not isinstance(density, (int, float)) and density != "max":
-            raise ValueError("density must be a float between 0 and 1 or 'max'")
-        if density == "max":
-            if part_type == "sheet":
-                tpms = Tpms(surface_function=surface_function, resolution=resolution)
-                return 2.0 * np.max(tpms.grid["surface"])
-            return 0.0  # skeletal
-
         tpms = Tpms(surface_function=surface_function, density=density)
         tpms._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
 
@@ -161,34 +139,34 @@ class Tpms(BasicGeometry):
     ) -> None:
         if self.density is None:
             raise ValueError("density must be given to compute offset")
+
+        min_field = np.min(self.grid["surface"])
+        max_field = np.max(self.grid["surface"])
+        if part_type == "sheet":
+            min_offset = 0.0
+            max_offset = 2.0 * max(abs(min_field), max_field)
+        else:
+            min_offset = 2.0 * min_field
+            max_offset = 2.0 * max_field
+
+        if self.density == 1.0:
+            offset = max_offset if part_type == "sheet" else min_offset
+            self._update_offset(offset)
+            return
+
         temp_tpms = Tpms(
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        max_density = temp_tpms._max_density(part_type=part_type, resolution=resolution)
-        if self.density > max_density:
-            raise ValueError(
-                f"density ({self.density}) must be lower than {max_density} for \
-                    the {part_type} part of the given TPMS function"
-            )
-
-        if self.density == max_density:
-            offset = 2.0 * np.max(self.grid["surface"]) if part_type == "sheet" else 0.0
-            self._update_offset(offset)
-            return
-
-        bound = 2.0 * np.max(self.grid["surface"])
-        grid_volume = temp_tpms.grid.volume
-
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
             temp_tpms._update_offset(offset)
-            return polydata_func().volume / grid_volume
+            return abs(polydata_func().volume)
 
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
-            bracket=[-bound, bound],
+            bracket=[min_offset, max_offset],
         ).root
         self._update_offset(computed_offset)
         logging.info("computed offset = %.3f", computed_offset)
@@ -556,9 +534,6 @@ class Tpms(BasicGeometry):
 
         shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
 
-        density = shape.Volume() / (np.prod(self.repeat_cell) * np.prod(self.cell_size))
-        logging.info("TPMS density = %d%%", round(density * 100, 2))
-
         shape = rotateEuler(
             obj=shape,
             center=(0, 0, 0),
@@ -597,8 +572,6 @@ class Tpms(BasicGeometry):
             )
         polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
         polydata = polydata.clean().triangulate()
-        density = polydata.volume / self.grid.volume
-        logging.info("TPMS density = %d%%", round(density * 100, 2))
 
         polydata = rotatePvEuler(
             polydata,
