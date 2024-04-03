@@ -111,7 +111,7 @@ class Tpms(BasicGeometry):
         cls,
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        density: float = 0.3,
+        density: float,
         resolution: int = 20,
     ) -> float:
         """

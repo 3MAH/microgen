@@ -313,7 +313,8 @@ def test_tpms_given_density_must_return_corresponding_offset():
         density=0.5,
         part_type="sheet",
     )
-    assert 0 < offset < -2.0 * np.min(tpms.grid["surface"])
+    max_offset = -2.0 * np.min(tpms.grid["surface"])
+    assert 0 < offset < max_offset
 
 
 def test_tpms_given_property_must_return_the_same_value():
