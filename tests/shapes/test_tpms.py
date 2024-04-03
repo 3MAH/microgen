@@ -302,7 +302,7 @@ def test_tpms_given_100_percent_density_must_return_a_cube(
     )
 
 
-def test_tpms_given_density_must_return_corresponding_offset():
+def test_tpms_offset_from_density_given_density_must_return_valid_offset():
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
