@@ -139,10 +139,6 @@ class Tpms(BasicGeometry):
     ) -> None:
         if self.density is None:
             raise ValueError("density must be given to compute offset")
-        temp_tpms = Tpms(
-            surface_function=self.surface_function,
-            resolution=resolution if resolution is not None else self.resolution,
-        )
 
         min_field = np.min(self.grid["surface"])
         max_field = np.max(self.grid["surface"])
@@ -158,13 +154,15 @@ class Tpms(BasicGeometry):
             self._update_offset(offset)
             return
 
-        grid_volume = temp_tpms.grid.volume
-
+        temp_tpms = Tpms(
+            surface_function=self.surface_function,
+            resolution=resolution if resolution is not None else self.resolution,
+        )
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
             temp_tpms._update_offset(offset)
-            return polydata_func().volume / grid_volume
+            return polydata_func().volume
 
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
