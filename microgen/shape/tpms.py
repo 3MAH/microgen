@@ -162,7 +162,7 @@ class Tpms(BasicGeometry):
 
         def density(offset: float) -> float:
             temp_tpms._update_offset(offset)
-            return polydata_func().volume
+            return abs(polydata_func().volume)
 
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
@@ -494,7 +494,6 @@ class Tpms(BasicGeometry):
         smoothing: int = 0,
         verbose: bool = True,
         algo_resolution: Optional[int] = None,
-        compute_density: bool = False,
         **kwargs,
     ) -> cq.Shape:
         """
@@ -535,12 +534,6 @@ class Tpms(BasicGeometry):
 
         shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
 
-        if compute_density:
-            density = shape.Volume() / (
-                np.prod(self.repeat_cell) * np.prod(self.cell_size)
-            )
-            logging.info("TPMS density = %g%%", round(density * 100, 2))
-
         shape = rotateEuler(
             obj=shape,
             center=(0, 0, 0),
@@ -556,7 +549,6 @@ class Tpms(BasicGeometry):
             "sheet", "lower skeletal", "upper skeletal", "surface"
         ] = "sheet",
         algo_resolution: Optional[int] = None,
-        compute_density: bool = False,
         **kwargs,
     ) -> pv.PolyData:
         """
@@ -580,9 +572,6 @@ class Tpms(BasicGeometry):
             )
         polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
         polydata = polydata.clean().triangulate()
-        if compute_density:
-            density = polydata.volume / self.grid.volume
-            logging.info("TPMS density = %g%%", round(density * 100, 2))
 
         polydata = rotatePvEuler(
             polydata,
