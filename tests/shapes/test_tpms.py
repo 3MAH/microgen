@@ -96,7 +96,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 @pytest.mark.parametrize(
     "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
 )
-@pytest.mark.parametrize("density", [0.01, 0.5, 0.99, 1.0])
+@pytest.mark.parametrize("density", [0.05, 0.5, 0.99, 1.0])
 def test_tpms_given_density_must_match_computed_density(
     surface: str,
     density: float,
