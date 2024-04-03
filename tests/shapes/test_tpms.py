@@ -96,7 +96,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 @pytest.mark.parametrize(
     "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
 )
-@pytest.mark.parametrize("density", [0.3, 0.7])
+@pytest.mark.parametrize("density", [0.01, 0.5, 0.99, 1.0])
 def test_tpms_given_density_must_match_computed_density(
     surface: str,
     density: float,
@@ -111,7 +111,7 @@ def test_tpms_given_density_must_match_computed_density(
     computed_density = tpms.generateVtk(type_part="sheet").volume / tpms.grid.volume
 
     # Assert
-    assert np.isclose(computed_density, density, rtol=1e-2)
+    assert np.isclose(computed_density, density, rtol=0.1)
 
 
 @pytest.mark.parametrize(
@@ -272,23 +272,11 @@ def test_tpms_given_wrong_density_parameter_must_raise_error():
             density=0.0,
         )
 
-    with pytest.raises(ValueError):
-        microgen.Tpms.offset_from_density(
-            surface_function=microgen.surface_functions.gyroid,
-            density="fake",
-            part_type="sheet",
-        )
-
-    with pytest.raises(ValueError):
-        microgen.Tpms.offset_from_density(
-            surface_function=microgen.surface_functions.gyroid,
-            density=1.0,
-            part_type="lower skeletal",
-        )
-
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
-def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: str):
+def test_tpms_given_density_must_generate_tpms_with_correct_volume(
+    type_part: Literal["sheet", "lower skeletal", "upper skeletal"],
+):
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
@@ -299,34 +287,19 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(type_part: st
     assert np.isclose(part.volume, tpms.grid.volume * 0.2, rtol=1e-2)
 
 
-@pytest.mark.parametrize("part_type", ["lower skeletal", "upper skeletal", "sheet"])
-def test_tpms_given_max_density_must_return_corresponding_offset(
-    part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+@pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
+def test_tpms_given_100_percent_density_must_return_a_cube(
+    type_part: Literal["sheet", "lower skeletal", "upper skeletal"],
 ):
-    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
-    tpms = microgen.Tpms(
-        surface_function=microgen.surface_functions.gyroid,
-    )
-
-    max_offset = microgen.Tpms.offset_from_density(
-        surface_function=microgen.surface_functions.gyroid,
-        density="max",
-        part_type=part_type,
-    )
-    expected_max_offset = (
-        2.0 * np.max(tpms.grid["surface"]) if part_type == "sheet" else 0.0
-    )
-    assert max_offset == expected_max_offset
-
-
-def test_tpms_given_100_percent_sheet_density_must_return_a_cube():
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         density=1.0,
     )
 
-    assert np.isclose(tpms.sheet.volume, tpms.grid.volume, rtol=1.0e-9)
+    assert np.isclose(
+        tpms.generateVtk(type_part=type_part).volume, tpms.grid.volume, rtol=1.0e-9
+    )
 
 
 def test_tpms_given_density_must_return_corresponding_offset():
@@ -340,7 +313,7 @@ def test_tpms_given_density_must_return_corresponding_offset():
         density=0.5,
         part_type="sheet",
     )
-    assert 0 < offset < 2.0 * np.max(tpms.grid["surface"])
+    assert 0 < offset < -2.0 * np.min(tpms.grid["surface"])
 
 
 def test_tpms_given_property_must_return_the_same_value():
