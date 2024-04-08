@@ -9,11 +9,15 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import pyvista as pv
+
 GREEN = "\033[32m"
 RED = "\033[31m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
+
+pv.OFF_SCREEN = True
 
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
@@ -91,7 +95,7 @@ def display_results(examples: List[str], failed: List[str]):
             Successful: {len(examples) - len(failed)}/ {len(examples)}\
                 {RESET}"
     )
-    if len(failed) > 0:
+    if failed:
         error_str = f"{UNDERLINE}{BOLD}{RED}Failed: {len(failed)}{RESET}\n"
         for example in failed:
             error_str += f"{RED}X\t{example}{RESET}\n"
