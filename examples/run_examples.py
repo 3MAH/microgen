@@ -9,15 +9,13 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import pyvista as pv
-
 GREEN = "\033[32m"
 RED = "\033[31m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
 
-pv.OFF_SCREEN = True
+os.environ["PYVISTA_OFF_SCREEN"] = "true"
 
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
