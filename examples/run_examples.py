@@ -15,7 +15,8 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
 
-os.environ["PYVISTA_OFF_SCREEN"] = "true"
+env = os.environ.copy()
+env["PYVISTA_OFF_SCREEN"] = "true"
 
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
@@ -52,7 +53,11 @@ def launch_test_examples(
     if n_procs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
-            process = subprocess.run([sys.executable, example], check=True)
+            process = subprocess.run(
+                [sys.executable, example],
+                check=True,
+                env=env,
+            )
             if process.returncode != 0:
                 failed.append(example)
 
@@ -65,7 +70,7 @@ def launch_test_examples(
                 result = pool.apply_async(
                     subprocess.run,
                     ([sys.executable, example],),
-                    {"check": True},
+                    {"check": True, "env": env},
                 )
                 results[example] = result
 
