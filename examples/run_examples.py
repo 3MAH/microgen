@@ -3,7 +3,6 @@
 import argparse
 import multiprocessing
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -15,9 +14,6 @@ RED = "\033[31m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
-
-env = os.environ.copy()
-env["PYVISTA_OFF_SCREEN"] = "true"
 
 
 def get_example_paths(exclude_dirs: List[str]) -> List[str]:
@@ -55,13 +51,7 @@ def launch_test_examples(
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
             cmd = [sys.executable, example]
-            if platform.system() == "Linux":
-                cmd.insert(0, "xvfb-run")
-            process = subprocess.run(
-                cmd,
-                check=True,
-                env=env,
-            )
+            process = subprocess.run(cmd, check=True)
             if process.returncode != 0:
                 failed.append(example)
 
@@ -72,13 +62,7 @@ def launch_test_examples(
         with multiprocessing.Pool(processes=n_procs) as pool:
             for example in examples:
                 cmd = [sys.executable, example]
-                if platform.system() == "Linux":
-                    cmd.insert(0, "xvfb-run")
-                result = pool.apply_async(
-                    subprocess.run,
-                    (cmd,),
-                    {"check": True, "env": env},
-                )
+                result = pool.apply_async(subprocess.run, (cmd,), {"check": True})
                 results[example] = result
 
             pool.close()

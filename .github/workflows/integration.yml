@@ -34,7 +34,7 @@ jobs:
 
       - name: Install libglu1-mesa for Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get install libglu1-mesa xvfb
+        run: sudo apt-get install libglu1-mesa
 
       - name: Install microgen for Linux and macOS
         if: runner.os != 'Windows'
