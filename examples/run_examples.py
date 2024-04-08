@@ -3,6 +3,7 @@
 import argparse
 import multiprocessing
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -53,8 +54,11 @@ def launch_test_examples(
     if n_procs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
+            cmd = [sys.executable, example]
+            if platform.system() == "Linux":
+                cmd.insert(0, "xvfb-run")
             process = subprocess.run(
-                [sys.executable, example],
+                cmd,
                 check=True,
                 env=env,
             )
@@ -67,9 +71,12 @@ def launch_test_examples(
         results: Dict[str, multiprocessing.pool.AsyncResult] = {}
         with multiprocessing.Pool(processes=n_procs) as pool:
             for example in examples:
+                cmd = [sys.executable, example]
+                if platform.system() == "Linux":
+                    cmd.insert(0, "xvfb-run")
                 result = pool.apply_async(
                     subprocess.run,
-                    ([sys.executable, example],),
+                    (cmd,),
                     {"check": True, "env": env},
                 )
                 results[example] = result
