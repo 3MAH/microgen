@@ -32,63 +32,6 @@ Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 _DIM = 3
 
 
-class DensityError(ValueError):
-    """Raised when the density is not between 0 and 1."""
-
-    def __init__(self, density: float | None) -> None:
-        """Initialize the error message."""
-        self.message = f"density must be between 0 and 1. Given: {density}"
-        super().__init__(self.message)
-
-
-class SequenceLengthError(ValueError):
-    """Raised when the length of the sequence is not 3."""
-
-    def __init__(self, sequence: Sequence, variable_type: type) -> None:
-        """Initialize the error message."""
-        self.message = (
-            f"Sequence must have a length of 3 {variable_type}. Given: {sequence}"
-        )
-        super().__init__(self.message)
-
-
-class CreateShellError(ValueError):
-    """Raised when the shell cannot be created."""
-
-    def __init__(self) -> None:
-        """Initialize the error message."""
-        self.message = "Cannot create shell, try to use a higher smoothing value."
-        super().__init__(self.message)
-
-
-class NegativeOffsetNotImplementedError(NotImplementedError):
-    """Raised when the offset is negative."""
-
-    def __init__(self) -> None:
-        """Initialize the error message."""
-        self.message = "generating part with a negative or zero offset value is not implemented yet"
-        super().__init__(self.message)
-
-
-class TypePartError(ValueError):
-    """Raised when the type_part is not valid."""
-
-    def __init__(self, type_part: str) -> None:
-        """Initialize the error message."""
-        self.message = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
-              'upper skeletal' or 'surface'"
-        super().__init__(self.message)
-
-
-class OffsetRangeError(ValueError):
-    """Raised when the offset is not valid for the sheet part."""
-
-    def __init__(self, part_type: str, offset_bounds: tuple[float, float]) -> None:
-        """Initialize the error message."""
-        self.message = f"offset must be greater than {offset_bounds[0]} to generate '{part_type}' part and lower than {offset_bounds[1]}"
-        super().__init__(self.message)
-
-
 class Tpms(BasicGeometry):
     """Triply Periodical Minimal Surfaces.
 
@@ -216,6 +159,20 @@ class Tpms(BasicGeometry):
             )
             self._update_offset(offset)
             return offset
+
+        min_field = np.min(self.grid["surface"])
+        max_field = np.max(self.grid["surface"])
+        if part_type == "sheet":
+            min_offset = 0.0
+            max_offset = 2.0 * max(abs(min_field), max_field)
+        else:
+            min_offset = 2.0 * min_field
+            max_offset = 2.0 * max_field
+
+        if self.density == 1.0:
+            offset = max_offset if part_type == "sheet" else min_offset
+            self._update_offset(offset)
+            return
 
         temp_tpms = Tpms(
             surface_function=self.surface_function,
@@ -819,3 +776,60 @@ class SphericalTpms(Tpms):
             rho * np.sin(theta) * np.sin(phi),
             rho * np.cos(theta),
         )
+      
+
+class DensityError(ValueError):
+    """Raised when the density is not between 0 and 1."""
+
+    def __init__(self, density: float | None) -> None:
+        """Initialize the error message."""
+        self.message = f"density must be between 0 and 1. Given: {density}"
+        super().__init__(self.message)
+
+
+class SequenceLengthError(ValueError):
+    """Raised when the length of the sequence is not 3."""
+
+    def __init__(self, sequence: Sequence, variable_type: type) -> None:
+        """Initialize the error message."""
+        self.message = (
+            f"Sequence must have a length of 3 {variable_type}. Given: {sequence}"
+        )
+        super().__init__(self.message)
+
+
+class CreateShellError(ValueError):
+    """Raised when the shell cannot be created."""
+
+    def __init__(self) -> None:
+        """Initialize the error message."""
+        self.message = "Cannot create shell, try to use a higher smoothing value."
+        super().__init__(self.message)
+
+
+class NegativeOffsetNotImplementedError(NotImplementedError):
+    """Raised when the offset is negative."""
+
+    def __init__(self) -> None:
+        """Initialize the error message."""
+        self.message = "generating part with a negative or zero offset value is not implemented yet"
+        super().__init__(self.message)
+
+
+class TypePartError(ValueError):
+    """Raised when the type_part is not valid."""
+
+    def __init__(self, type_part: str) -> None:
+        """Initialize the error message."""
+        self.message = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
+              'upper skeletal' or 'surface'"
+        super().__init__(self.message)
+
+
+class OffsetRangeError(ValueError):
+    """Raised when the offset is not valid for the sheet part."""
+
+    def __init__(self, part_type: str, offset_bounds: tuple[float, float]) -> None:
+        """Initialize the error message."""
+        self.message = f"offset must be greater than {offset_bounds[0]} to generate '{part_type}' part and lower than {offset_bounds[1]}"
+        super().__init__(self.message)

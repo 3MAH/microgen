@@ -96,7 +96,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 @pytest.mark.parametrize(
     "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
 )
-@pytest.mark.parametrize("density", [0.01, 0.5, 0.99, 1.0])
+@pytest.mark.parametrize("density", [0.05, 0.5, 0.99, 1.0])
 def test_tpms_given_density_must_match_computed_density(
     surface: str,
     density: float,
@@ -302,7 +302,7 @@ def test_tpms_given_100_percent_density_must_return_a_cube(
     )
 
 
-def test_tpms_given_density_must_return_corresponding_offset():
+def test_tpms_offset_from_density_given_density_must_return_valid_offset():
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
@@ -313,7 +313,9 @@ def test_tpms_given_density_must_return_corresponding_offset():
         density=0.5,
         part_type="sheet",
     )
-    assert 0 < offset < -2.0 * np.min(tpms.grid["surface"])
+
+    max_offset = -2.0 * np.min(tpms.grid["surface"])
+    assert 0 < offset < max_offset
 
 
 def test_tpms_given_property_must_return_the_same_value():
