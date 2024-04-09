@@ -1,22 +1,23 @@
-"""
+"""Ellipsoid.
+
 =============================================
 Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 =============================================
 """
 
-from typing import Tuple
+from __future__ import annotations
 
 import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from ..operations import rotateEuler, rotatePvEuler
-from .basicGeometry import BasicGeometry
+from microgen.operations import rotateEuler, rotatePvEuler
+
+from .basic_geometry import BasicGeometry
 
 
 class Ellipsoid(BasicGeometry):
-    """
-    Class to generate an ellipsoid
+    """Class to generate an ellipsoid.
 
     .. jupyter-execute::
        :hide-code:
@@ -29,53 +30,54 @@ class Ellipsoid(BasicGeometry):
 
     def __init__(
         self,
-        center: Tuple[float, float, float] = (0, 0, 0),
-        orientation: Tuple[float, float, float] = (0, 0, 0),
-        a_x: float = 1,
-        a_y: float = 0.5,
-        a_z: float = 0.25,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        radii: tuple[float, float, float] = (1, 0.5, 0.25),
     ) -> None:
+        """Initialize the ellipsoid."""
         super().__init__(shape="Ellipsoid", center=center, orientation=orientation)
-        self.a_x = a_x
-        self.a_y = a_y
-        self.a_z = a_z
+        self.radii = radii
 
-    def generate(self, **kwargs) -> cq.Shape:
+    def generate(self, **_) -> cq.Shape:
+        """Generate an ellipsoid CAD shape using the given parameters."""
         transform_mat = cq.Matrix(
             [
-                [self.a_x, 0, 0, self.center[0]],
-                [0, self.a_y, 0, self.center[1]],
-                [0, 0, self.a_z, self.center[2]],
-            ]
+                [self.radii[0], 0, 0, self.center[0]],
+                [0, self.radii[1], 0, self.center[1]],
+                [0, 0, self.radii[2], self.center[2]],
+            ],
         )
 
         sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
         ellipsoid = sphere.transformGeometry(transform_mat)
-        ellipsoid = rotateEuler(
+        return rotateEuler(
             ellipsoid,
             self.center,
             self.orientation[0],
             self.orientation[1],
             self.orientation[2],
         )
-        return ellipsoid
 
-    def generateVtk(self, **kwargs) -> pv.PolyData:
+    def generate_vtk(self, **_) -> pv.PolyData:
+        """Generate an ellipsoid VTK polydta using the given parameters."""
         transform_matrix = np.array(
             [
-                [self.a_x, 0, 0, self.center[0]],
-                [0, self.a_y, 0, self.center[1]],
-                [0, 0, self.a_z, self.center[2]],
+                [self.radii[0], 0, 0, self.center[0]],
+                [0, self.radii[1], 0, self.center[1]],
+                [0, 0, self.radii[2], self.center[2]],
                 [0, 0, 0, 1],
-            ]
+            ],
         )
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
-        ellipsoid = rotatePvEuler(
+        return rotatePvEuler(
             ellipsoid,
             self.center,
             self.orientation[0],
             self.orientation[1],
             self.orientation[2],
         )
-        return ellipsoid
+
+    def generateVtk(self, **kwargs) -> pv.PolyData:  # noqa: N802
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        return self.generate_vtk(**kwargs)

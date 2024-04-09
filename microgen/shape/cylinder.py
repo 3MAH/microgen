@@ -1,21 +1,22 @@
-"""
+"""Cylinder.
+
 =========================================
 Cylinder (:mod:`microgen.shape.cylinder`)
 =========================================
 """
 
-from typing import Tuple
+from __future__ import annotations
 
 import cadquery as cq
 import pyvista as pv
 
-from ..operations import rotateEuler, rotatePvEuler
-from .basicGeometry import BasicGeometry
+from microgen.operations import rotateEuler, rotatePvEuler
+
+from .basic_geometry import BasicGeometry
 
 
 class Cylinder(BasicGeometry):
-    """
-    Class to generate a cylinder
+    """Class to generate a cylinder.
 
     .. jupyter-execute::
        :hide-code:
@@ -28,22 +29,24 @@ class Cylinder(BasicGeometry):
 
     def __init__(
         self,
-        center: Tuple[float, float, float] = (0, 0, 0),
-        orientation: Tuple[float, float, float] = (0, 0, 0),
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
         height: float = 1,
         radius: float = 0.5,
     ) -> None:
+        """Initialize the cylinder."""
         super().__init__(shape="Cylinder", center=center, orientation=orientation)
         self.radius = radius
         self.height = height
 
-    def generate(self, **kwargs) -> cq.Shape:
+    def generate(self, **_) -> cq.Shape:
+        """Generate a cylinder CAD shape using the given parameters."""
         cylinder = (
             cq.Workplane("YZ")
             .circle(self.radius)
             .extrude(self.height)
             .translate(
-                (self.center[0] - self.height / 2.0, self.center[1], self.center[2])
+                (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
             )
         )
         cylinder = rotateEuler(
@@ -55,20 +58,35 @@ class Cylinder(BasicGeometry):
         )
         return cq.Shape(cylinder.val().wrapped)
 
-    def generateVtk(self, resolution=100, capping=True, **kwargs) -> pv.PolyData:
+    def generate_vtk(
+        self,
+        resolution: int = 100,
+        **_,
+    ) -> pv.PolyData:
+        """Generate a cylinder VTK shape using the given parameters."""
         cylinder = pv.Cylinder(
             center=tuple(self.center),
             direction=(1.0, 0.0, 0.0),
             radius=self.radius,
             height=self.height,
             resolution=resolution,
-            capping=capping,
+            capping=True,
         )
-        cylinder = rotatePvEuler(
+        return rotatePvEuler(
             cylinder,
             self.center,
             self.orientation[0],
             self.orientation[1],
             self.orientation[2],
         )
-        return cylinder
+
+    def generateVtk(  # noqa: N802
+        self,
+        resolution: int = 100,
+        **kwargs,
+    ) -> pv.PolyData:
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        return self.generate_vtk(
+            resolution=resolution,
+            **kwargs,
+        )

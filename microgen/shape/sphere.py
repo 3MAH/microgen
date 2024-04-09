@@ -1,21 +1,21 @@
-"""
-=============================================
+"""Sphere.
+
+=====================================
 Sphere (:mod:`microgen.shape.sphere`)
-=============================================
+=====================================
 """
 
-from typing import Tuple
+from __future__ import annotations
 
 import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from .basicGeometry import BasicGeometry
+from .basic_geometry import BasicGeometry
 
 
 class Sphere(BasicGeometry):
-    """
-    Class to generate a sphere
+    """Class to generate a sphere.
 
     .. jupyter-execute::
        :hide-code:
@@ -28,13 +28,15 @@ class Sphere(BasicGeometry):
 
     def __init__(
         self,
-        center: Tuple[float, float, float] = (0, 0, 0),
+        center: tuple[float, float, float] = (0, 0, 0),
         radius: float = 1,
     ) -> None:
+        """Initialize the sphere."""
         super().__init__(shape="Sphere", center=center)
         self.radius = radius
 
-    def generate(self, **kwargs) -> cq.Shape:
+    def generate(self, **_) -> cq.Shape:
+        """Generate a sphere CAD shape using the given parameters."""
         # Temporary workaround bug fix for OpenCascade bug using a random
         # direct parameter for cq.Workplane().sphere() method
         # Related to issue https://github.com/CadQuery/cadquery/issues/1461
@@ -47,12 +49,25 @@ class Sphere(BasicGeometry):
         )
         return cq.Shape(sphere.val().wrapped)
 
-    def generateVtk(
-        self, theta_resolution=50, phi_resolution=50, **kwargs
+    def generate_vtk(
+        self,
+        theta_resolution: int = 50,
+        phi_resolution: int = 50,
+        **_,
     ) -> pv.PolyData:
+        """Generate a sphere VTK shape using the given parameters."""
         return pv.Sphere(
             radius=self.radius,
             center=tuple(self.center),
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
         )
+
+    def generateVtk(  # noqa: N802
+        self,
+        theta_resolution: int = 50,
+        phi_resolution: int = 50,
+        **_,
+    ) -> pv.PolyData:
+        """Deprecated method. Use generateVtk instead."""  # noqa: D401
+        return self.generateVtk(theta_resolution, phi_resolution)

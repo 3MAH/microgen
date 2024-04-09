@@ -75,3 +75,11 @@ filterwarnings = [
 [[tool.mypy.overrides]]
 module = ["gmsh", "scipy.spatial"]
 ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
+# external = ["E131", "D102", "D105"]
+ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003", "PLR0913"]
+select = ["ALL"]

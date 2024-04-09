@@ -1,4 +1,5 @@
-"""
+"""TPMS.
+
 =============================================
 TPMS (:mod:`microgen.shape.tpms`)
 =============================================
@@ -14,23 +15,83 @@ TPMS (:mod:`microgen.shape.tpms`)
 from __future__ import annotations
 
 import logging
-from typing import Callable, List, Literal, Optional, Sequence, Tuple
+from typing import Callable, Literal, Sequence
 
 import cadquery as cq
 import numpy as np
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.shape import BasicGeometry
+from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 
-from ..operations import fuseShapes, rotateEuler, rotatePvEuler
+from .basic_geometry import BasicGeometry
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
 
+_DIM = 3
+
+
+class DensityError(ValueError):
+    """Raised when the density is not between 0 and 1."""
+
+    def __init__(self, density: float | None) -> None:
+        """Initialize the error message."""
+        self.message = f"density must be between 0 and 1. Given: {density}"
+        super().__init__(self.message)
+
+
+class SequenceLengthError(ValueError):
+    """Raised when the length of the sequence is not 3."""
+
+    def __init__(self, sequence: Sequence, variable_type: type) -> None:
+        """Initialize the error message."""
+        self.message = (
+            f"Sequence must have a length of 3 {variable_type}. Given: {sequence}"
+        )
+        super().__init__(self.message)
+
+
+class CreateShellError(ValueError):
+    """Raised when the shell cannot be created."""
+
+    def __init__(self) -> None:
+        """Initialize the error message."""
+        self.message = "Cannot create shell, try to use a higher smoothing value."
+        super().__init__(self.message)
+
+
+class NegativeOffsetNotImplementedError(NotImplementedError):
+    """Raised when the offset is negative."""
+
+    def __init__(self) -> None:
+        """Initialize the error message."""
+        self.message = "generating part with a negative or zero offset value is not implemented yet"
+        super().__init__(self.message)
+
+
+class TypePartError(ValueError):
+    """Raised when the type_part is not valid."""
+
+    def __init__(self, type_part: str) -> None:
+        """Initialize the error message."""
+        self.message = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
+              'upper skeletal' or 'surface'"
+        super().__init__(self.message)
+
+
+class OffsetRangeError(ValueError):
+    """Raised when the offset is not valid for the sheet part."""
+
+    def __init__(self, part_type: str, offset_bounds: tuple[float, float]) -> None:
+        """Initialize the error message."""
+        self.message = f"offset must be greater than {offset_bounds[0]} to generate '{part_type}' part and lower than {offset_bounds[1]}"
+        super().__init__(self.message)
+
 
 class Tpms(BasicGeometry):
-    """
+    """Triply Periodical Minimal Surfaces.
+
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
     geometry from a given mathematical function, with given offset
 
@@ -61,12 +122,12 @@ class Tpms(BasicGeometry):
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
         resolution: int = 20,
-        center: Tuple[float, float, float] = (0, 0, 0),
-        orientation: Tuple[float, float, float] = (0, 0, 0),
-        density: Optional[float] = None,
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
+        density: float | None = None,
     ) -> None:
-        """
-        Class used to generate TPMS geometries (sheet or skeletals parts).
+        r"""Class used to generate TPMS geometries (sheet or skeletals parts).
+
         TPMS are created by default in a cube.
         The geometry of the cube can be modified using 'cell_size' parameter.
         The number of repetitions in each direction of the created geometry \
@@ -102,8 +163,19 @@ class Tpms(BasicGeometry):
         self.resolution = resolution
         self._compute_tpms_field()
 
+        self.offset_lim = {
+            "sheet": (
+                0.0,
+                2.0 * max(-np.min(self.grid["surface"]), np.max(self.grid["surface"])),
+            ),
+            "skeletal": (
+                2.0 * np.min(self.grid["surface"]),
+                2.0 * np.max(self.grid["surface"]),
+            ),
+        }
+
         if density is not None and not 0.0 < density <= 1.0:
-            raise ValueError("density must be between 0 and 1")
+            raise DensityError(density)
         self.density = density
 
     @classmethod
@@ -114,9 +186,7 @@ class Tpms(BasicGeometry):
         density: float = 0.3,
         resolution: int = 20,
     ) -> float:
-        """
-        Returns the offset corresponding to the required density for the specified part
-        of the given surface_function.
+        """Return the offset corresponding to the required density.
 
         :param surface_function: tpms function
         :param part_type: type of the part (sheet, lower skeletal or upper skeletal)
@@ -125,34 +195,27 @@ class Tpms(BasicGeometry):
 
         :return: corresponding offset value
         """
-        tpms = Tpms(surface_function=surface_function, density=density)
-        tpms._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
-
-        if isinstance(tpms.offset, float):
-            return tpms.offset
-        raise ValueError("offset must be a float")
+        return Tpms(
+            surface_function=surface_function,
+            density=density,
+        )._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
 
     def _compute_offset_to_fit_density(
         self,
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        resolution: Optional[int] = None,
-    ) -> None:
+        resolution: int | None = None,
+    ) -> float:
         if self.density is None:
-            raise ValueError("density must be given to compute offset")
-
-        min_field = np.min(self.grid["surface"])
-        max_field = np.max(self.grid["surface"])
-        if part_type == "sheet":
-            min_offset = 0.0
-            max_offset = 2.0 * max(abs(min_field), max_field)
-        else:
-            min_offset = 2.0 * min_field
-            max_offset = 2.0 * max_field
+            raise DensityError(self.density)
 
         if self.density == 1.0:
-            offset = max_offset if part_type == "sheet" else min_offset
+            offset = (
+                self.offset_lim["sheet"][1]
+                if part_type == "sheet"
+                else self.offset_lim["skeletal"][0]
+            )
             self._update_offset(offset)
-            return
+            return offset
 
         temp_tpms = Tpms(
             surface_function=self.surface_function,
@@ -166,49 +229,48 @@ class Tpms(BasicGeometry):
 
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
-            bracket=[min_offset, max_offset],
+            bracket=self.offset_lim[part_type],
         ).root
         self._update_offset(computed_offset)
         logging.info("computed offset = %.3f", computed_offset)
+        return computed_offset
 
     def _init_cell_parameters(
         self,
         cell_size: float | Sequence[float],
         repeat_cell: int | Sequence[int],
-    ):
+    ) -> None:
         if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
-        elif len(cell_size) == 3:
+        elif len(cell_size) == _DIM:
             self.cell_size = np.array(cell_size)
         else:
-            raise ValueError("cell_size must be a float or a sequence of 3 floats")
+            raise SequenceLengthError(sequence="cell_size", variable_type=float)
 
         if isinstance(repeat_cell, int):
             self.repeat_cell = np.array([repeat_cell, repeat_cell, repeat_cell])
-        elif len(repeat_cell) == 3:
+        elif len(repeat_cell) == _DIM:
             self.repeat_cell = np.array(repeat_cell)
         else:
-            raise ValueError("repeat_cell must be an int or a sequence of 3 ints")
+            raise SequenceLengthError(sequence="repeat_cell", variable_type=int)
 
     def vtk_sheet(self) -> pv.PolyData:
-        """Returns sheet part"""
+        """Return sheet part."""
         return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
-            scalars="upper_surface"
+            scalars="upper_surface",
         )
 
     def vtk_upper_skeletal(self) -> pv.PolyData:
-        """Returns upper skeletal part"""
+        """Return upper skeletal part."""
         return self.grid.clip_scalar(scalars="upper_surface", invert=False)
 
     def vtk_lower_skeletal(self) -> pv.PolyData:
-        """Returns lower skeletal part"""
+        """Return lower skeletal part."""
         return self.grid.clip_scalar(scalars="lower_surface")
 
     @property
     def sheet(self) -> pv.PolyData:
-        """
-        Returns sheet part
-        """
+        """Returns sheet part."""
         if self._sheet is not None:
             return self._sheet
 
@@ -220,9 +282,7 @@ class Tpms(BasicGeometry):
 
     @property
     def upper_skeletal(self) -> pv.PolyData:
-        """
-        Returns upper skeletal part
-        """
+        """Returns upper skeletal part."""
         if self._upper_skeletal is not None:
             return self._upper_skeletal
 
@@ -234,9 +294,7 @@ class Tpms(BasicGeometry):
 
     @property
     def lower_skeletal(self) -> pv.PolyData:
-        """
-        Returns lower skeletal part
-        """
+        """Returns lower skeletal part."""
         if self._lower_skeletal is not None:
             return self._lower_skeletal
 
@@ -247,39 +305,40 @@ class Tpms(BasicGeometry):
         return self._lower_skeletal
 
     @property
-    def skeletals(self) -> Tuple[pv.PolyData, pv.PolyData]:
-        """
-        Returns both skeletal parts
-        """
+    def skeletals(self) -> tuple[pv.PolyData, pv.PolyData]:
+        """Returns both skeletal parts."""
         return (self.upper_skeletal, self.lower_skeletal)
 
     @property
     def surface(self) -> pv.PolyData:
-        """
-        Returns isosurface f(x, y, z) = 0
-        """
+        """Returns isosurface f(x, y, z) = 0."""
         if self._surface is not None:
             return self._surface
 
         self._surface = self.grid.contour(
-            isosurfaces=[0.0], scalars="surface"
+            isosurfaces=[0.0],
+            scalars="surface",
         ).triangulate()
         return self._surface
 
     def _create_grid(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
     ) -> pv.StructuredGrid:
         return pv.StructuredGrid(x, y, z)
 
-    def _compute_tpms_field(self):
-        linspaces: List[np.ndarray] = [
+    def _compute_tpms_field(self) -> None:
+        linspaces: list[np.ndarray] = [
             np.linspace(
                 -0.5 * cell_size_axis * repeat_cell_axis,
                 0.5 * cell_size_axis * repeat_cell_axis,
                 self.resolution * repeat_cell_axis,
             )
             for repeat_cell_axis, cell_size_axis in zip(
-                self.repeat_cell, self.cell_size
+                self.repeat_cell,
+                self.cell_size,
             )
         ]
 
@@ -306,7 +365,7 @@ class Tpms(BasicGeometry):
         self.grid["lower_surface"] = self.grid["surface"] + 0.5 * self.offset
         self.grid["upper_surface"] = self.grid["surface"] - 0.5 * self.offset
 
-    def _create_shell(self, mesh: pv.PolyData, verbose: bool) -> cq.Shell:
+    def _create_shell(self, mesh: pv.PolyData) -> cq.Shell:
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)  # useless ?
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
@@ -316,7 +375,8 @@ class Tpms(BasicGeometry):
         for tri in triangles:
             lines = [
                 cq.Edge.makeLine(
-                    cq.Vector(*mesh.points[start]), cq.Vector(*mesh.points[end])
+                    cq.Vector(*mesh.points[start]),
+                    cq.Vector(*mesh.points[end]),
                 )
                 for start, end in zip(tri[:], tri[1:])
             ]
@@ -324,15 +384,12 @@ class Tpms(BasicGeometry):
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
 
-        if verbose:
-            logging.info("\nGenerating shell surface\n")
         return cq.Shell.makeShell(faces)
 
     def _create_surface(
         self,
         isovalue: float | np.ndarray = 0.0,
         smoothing: int = 0,
-        verbose: bool = False,
     ) -> cq.Shell:
         if isinstance(isovalue, (int, float)):
             scalars = self.grid["surface"] - isovalue
@@ -344,18 +401,17 @@ class Tpms(BasicGeometry):
         mesh.clean(inplace=True)
 
         try:
-            shell = self._create_shell(mesh=mesh, verbose=verbose)
+            shell = self._create_shell(mesh=mesh)
         except ValueError as exc:
-            raise ValueError(
-                f"Cannot create shell, try to use a higher smoothing value: {exc}"
-            ) from exc
+            raise CreateShellError from exc
         return shell
 
     def _create_surfaces(
-        self, isovalues: List[float], smoothing: int = 0, verbose: bool = False
-    ) -> List[cq.Shell]:
-        """
-        Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell
+        self,
+        isovalues: list[float],
+        smoothing: int = 0,
+    ) -> list[cq.Shell]:
+        """Create TPMS surfaces for the corresponding isovalue, return a list of cq.Shell.
 
         :param isovalues: list of isovalues corresponding to the required surfaces
         :param smoothing: smoothing loop iterations
@@ -363,18 +419,20 @@ class Tpms(BasicGeometry):
         """
         shells = []
         for i, isovalue in enumerate(isovalues):
-            if verbose:
-                logging.info("\nGenerating surface (%d/%d)", i + 1, len(isovalues))
+            logging.info("\nGenerating surface (%d/%d)", i + 1, len(isovalues))
             shell = self._create_surface(
-                isovalue=isovalue, smoothing=smoothing, verbose=verbose
+                isovalue=isovalue,
+                smoothing=smoothing,
             )
             shells.append(shell)
 
         return shells
 
     def _generate_sheet_surfaces(
-        self, eps: float, smoothing: int, verbose: bool
-    ) -> Tuple[cq.Shape, cq.Shape]:
+        self,
+        eps: float,
+        smoothing: int,
+    ) -> tuple[cq.Shape, cq.Shape]:
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 + eps,
@@ -382,7 +440,7 @@ class Tpms(BasicGeometry):
             self.offset / 2.0,
         ]
 
-        shells = self._create_surfaces(isovalues, smoothing, verbose)
+        shells = self._create_surfaces(isovalues, smoothing)
 
         lower_surface = shells[0]
         lower_test_surface = shells[1]
@@ -394,28 +452,32 @@ class Tpms(BasicGeometry):
         return surface, test_surface
 
     def _generate_lower_skeletal_surfaces(
-        self, eps: float, smoothing: int, verbose: bool
-    ) -> Tuple[cq.Shape, cq.Shape]:
+        self,
+        eps: float,
+        smoothing: int,
+    ) -> tuple[cq.Shape, cq.Shape]:
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 - eps,
         ]
 
-        shells = self._create_surfaces(isovalues, smoothing, verbose)
+        shells = self._create_surfaces(isovalues, smoothing)
 
         surface = shells[0]
         test_surface = shells[1]
         return surface, test_surface
 
     def _generate_upper_skeletal_surfaces(
-        self, eps: float, smoothing: int, verbose: bool
-    ) -> Tuple[cq.Shape, cq.Shape]:
+        self,
+        eps: float,
+        smoothing: int,
+    ) -> tuple[cq.Shape, cq.Shape]:
         isovalues = [
             self.offset / 2.0,
             self.offset / 2.0 + eps,
         ]
 
-        shells = self._create_surfaces(isovalues, smoothing, verbose)
+        shells = self._create_surfaces(isovalues, smoothing)
 
         surface = shells[0]
         test_surface = shells[1]
@@ -426,13 +488,13 @@ class Tpms(BasicGeometry):
         type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
         eps: float,
         smoothing: int,
-        verbose: bool,
-    ):
+    ) -> cq.Shape:
         box = cq.Workplane("front").box(*(self.cell_size * self.repeat_cell))
 
         surface, test_surface = getattr(
-            self, f"_generate_{type_part.replace(' ', '_')}_surfaces"
-        )(eps, smoothing, verbose)
+            self,
+            f"_generate_{type_part.replace(' ', '_')}_surfaces",
+        )(eps, smoothing)
 
         splitted_box = box.split(surface)
         tpms_solids = splitted_box.solids().all()
@@ -448,56 +510,50 @@ class Tpms(BasicGeometry):
         part_solids = [solid for (number, solid) in list_solids if number > 1]
         part_shapes = [cq.Shape(solid.wrapped) for solid in part_solids]
         return fuseShapes(
-            cqShapeList=part_shapes, retain_edges=False
-        )  # True or False ?
+            cqShapeList=part_shapes,
+            retain_edges=False,  # True or False ?
+        )
 
     def _check_offset(
         self,
         type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
-    ):
+    ) -> None:
         if "skeletal" in type_part:
             if (
                 isinstance(self.offset, (int, float)) and self.offset < 0.0
             ):  # scalar offset = 0 is working
-                raise NotImplementedError(
-                    "generating 'skeletal' parts with a negative \
-                        offset value is not implemented yet"
-                )
+                raise NegativeOffsetNotImplementedError
             if isinstance(self.offset, np.ndarray) and np.any(self.offset <= 0.0):
-                raise NotImplementedError(
-                    "generating 'skeletal' parts with negative or zero \
-                        offset values is not implemented yet"
-                )
+                raise NegativeOffsetNotImplementedError
         elif type_part == "sheet":
             if np.any(self.offset <= 0.0):
                 if np.all(self.offset <= 0.0):
-                    raise ValueError(
-                        "offset must be greater than 0 to generate 'sheet' part"
+                    raise OffsetRangeError(
+                        part_type=type_part,
+                        offset_bounds=self.offset_lim[type_part],
                     )
-                raise NotImplementedError(
-                    "generating 'sheet' parts with negative or zero \
-                        offset values is not implemented yet"
-                )
+                raise NegativeOffsetNotImplementedError
 
-        offset_limit = 2.0 * np.max(self.grid["surface"])
-        if np.all(self.offset > offset_limit):
-            raise ValueError(
-                f"offset ({self.offset}) must be lower \
-                        than {offset_limit} for the given TPMS function"
+        if np.all(self.offset > self.offset_lim[type_part][1]):
+            raise OffsetRangeError(
+                part_type=type_part,
+                offset_bounds=self.offset_lim[type_part],
             )
 
     def generate(
         self,
         type_part: Literal[
-            "sheet", "lower skeletal", "upper skeletal", "surface"
+            "sheet",
+            "lower skeletal",
+            "upper skeletal",
+            "surface",
         ] = "sheet",
         smoothing: int = 0,
-        verbose: bool = True,
-        algo_resolution: Optional[int] = None,
-        compute_density: bool = False,
-        **kwargs,
+        algo_resolution: int | None = None,
+        **_,
     ) -> cq.Shape:
-        """
+        """Generate CadQuery Shape object of the required TPMS part.
+
         :param type_part: part of the TPMS desired \
             ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
         :param smoothing: smoothing loop iterations
@@ -508,10 +564,7 @@ class Tpms(BasicGeometry):
         :return: CadQuery Shape object of the required TPMS part
         """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
-            raise ValueError(
-                f"'type_part' ({type_part}) must be 'sheet', \
-                    'lower skeletal', 'upper skeletal' or 'surface'",
-            )
+            raise TypePartError(type_part)
 
         if type_part == "surface":
             if self.offset != 0.0:
@@ -519,12 +572,14 @@ class Tpms(BasicGeometry):
             if self.density is not None:
                 logging.warning("density is ignored for 'surface' part")
             return self._create_surface(
-                isovalue=0, smoothing=smoothing, verbose=verbose
+                isovalue=0,
+                smoothing=smoothing,
             )
 
         if self.density is not None:
             self._compute_offset_to_fit_density(
-                part_type=type_part, resolution=algo_resolution
+                part_type=type_part,
+                resolution=algo_resolution,
             )
 
         self._check_offset(type_part)
@@ -533,13 +588,7 @@ class Tpms(BasicGeometry):
         if isinstance(self.offset, float) and self.offset == 0.0:
             eps = 0.1 * np.min(self.cell_size)
 
-        shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
-
-        if compute_density:
-            density = shape.Volume() / (
-                np.prod(self.repeat_cell) * np.prod(self.cell_size)
-            )
-            logging.info("TPMS density = %g%%", round(density * 100, 2))
+        shape = self._extract_part_from_box(type_part, eps, smoothing)
 
         shape = rotateEuler(
             obj=shape,
@@ -550,16 +599,19 @@ class Tpms(BasicGeometry):
         )
         return shape.translate(self.center)
 
-    def generateVtk(
+    def generate_vtk(
         self,
         type_part: Literal[
-            "sheet", "lower skeletal", "upper skeletal", "surface"
+            "sheet",
+            "lower skeletal",
+            "upper skeletal",
+            "surface",
         ] = "sheet",
-        algo_resolution: Optional[int] = None,
-        compute_density: bool = False,
-        **kwargs,
+        algo_resolution: int | None = None,
+        **_,
     ) -> pv.PolyData:
-        """
+        """Generate VTK PolyData object of the required TPMS part.
+
         :param type_part: part of the TPMS desireds
         :param algo_resolution: if offset must be computed to fit density, \
             resolution of the temporary TPMS used to compute the offset
@@ -569,10 +621,7 @@ class Tpms(BasicGeometry):
         if type_part == "surface":
             return self.surface
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
-            raise ValueError(
-                f"type_part ({type_part}) must be 'sheet', \
-                    'lower skeletal', 'upper skeletal' or 'surface'"
-            )
+            raise TypePartError(type_part)
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
@@ -580,9 +629,6 @@ class Tpms(BasicGeometry):
             )
         polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
         polydata = polydata.clean().triangulate()
-        if compute_density:
-            density = polydata.volume / self.grid.volume
-            logging.info("TPMS density = %g%%", round(density * 100, 2))
 
         polydata = rotatePvEuler(
             polydata,
@@ -593,11 +639,26 @@ class Tpms(BasicGeometry):
         )
         return polydata.translate(xyz=self.center)
 
+    def generateVtk(  # noqa: N802
+        self,
+        type_part: Literal[
+            "sheet",
+            "lower skeletal",
+            "upper skeletal",
+            "surface",
+        ] = "sheet",
+        algo_resolution: int | None = None,
+        **_,
+    ) -> pv.PolyData:
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        return self.generateVtk(
+            type_part=type_part,
+            algo_resolution=algo_resolution,
+        )
+
 
 class CylindricalTpms(Tpms):
-    """
-    Class used to generate cylindrical TPMS geometries (sheet or skeletals parts).
-    """
+    """Class used to generate cylindrical TPMS geometries (sheet or skeletals parts)."""
 
     def __init__(
         self,
@@ -607,12 +668,13 @@ class CylindricalTpms(Tpms):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
-        center: Tuple[float, float, float] = (0, 0, 0),
-        orientation: Tuple[float, float, float] = (0, 0, 0),
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
-        density: Optional[float] = None,
-    ):
-        """
+        density: float | None = None,
+    ) -> None:
+        r"""Cylindrical TPMS geometry.
+
         Directions of cell_size and repeat_cell must be taken as the cylindrical \
             coordinate system $\\left(\\rho, \\theta, z\\right)$.
 
@@ -643,7 +705,8 @@ class CylindricalTpms(Tpms):
         self.cell_size[1] = self.unit_theta * radius
         if self.repeat_cell[1] == 0 or self.repeat_cell[1] > n_repeat_to_full_circle:
             logging.info(
-                "%d cells repeated in circular direction", n_repeat_to_full_circle
+                "%d cells repeated in circular direction",
+                n_repeat_to_full_circle,
             )
             self.repeat_cell[1] = n_repeat_to_full_circle
 
@@ -660,7 +723,10 @@ class CylindricalTpms(Tpms):
         )
 
     def _create_grid(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
     ) -> pv.StructuredGrid:
         rho = x + self.cylinder_radius
         theta = y * self.unit_theta
@@ -669,9 +735,7 @@ class CylindricalTpms(Tpms):
 
 
 class SphericalTpms(Tpms):
-    """
-    Class used to generate spherical TPMS geometries (sheet or skeletals parts).
-    """
+    """Class used to generate spherical TPMS geometries (sheet or skeletals parts)."""
 
     def __init__(
         self,
@@ -681,12 +745,13 @@ class SphericalTpms(Tpms):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
-        center: Tuple[float, float, float] = (0, 0, 0),
-        orientation: Tuple[float, float, float] = (0, 0, 0),
+        center: tuple[float, float, float] = (0, 0, 0),
+        orientation: tuple[float, float, float] = (0, 0, 0),
         resolution: int = 20,
-        density: Optional[float] = None,
-    ):
-        """
+        density: float | None = None,
+    ) -> None:
+        r"""Spherical TPMS geometry.
+
         Directions of cell_size and repeat_cell must be taken as the spherical \
             coordinate system $\\left(r, \\theta, \\phi\\right)$.
 
@@ -740,7 +805,10 @@ class SphericalTpms(Tpms):
         )
 
     def _create_grid(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
     ) -> pv.StructuredGrid:
         rho = x + self.sphere_radius
         theta = y * self.unit_theta + np.pi / 2.0

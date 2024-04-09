@@ -1,9 +1,12 @@
+"""TPMS surface functions."""
+
 import numpy as np
 from numpy import cos, sin
 
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+    """Gyroid.
+
     .. math::
        sin(x) cos(y) + sin(y) cos(z) + sin(z) cos(x) = 0
 
@@ -24,8 +27,9 @@ def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return sin(x) * cos(y) + sin(y) * cos(z) + sin(z) * cos(x)
 
 
-def schwarzP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+def schwarz_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """Schwarz P.
+
     .. math::
        cos(x) + cos(y) + cos(z) = 0
 
@@ -35,7 +39,7 @@ def schwarzP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schwarzP,
+           surface_function=microgen.surface_functions.schwarz_p,
            offset=0.3,
            resolution=30,
        )
@@ -46,8 +50,9 @@ def schwarzP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return cos(x) + cos(y) + cos(z)
 
 
-def schwarzD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+def schwarz_d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """Schwarz D.
+
     .. math::
        sin(x) sin(y) sin(z) + sin(x) cos(y) cos(z) + cos(x) sin(y) cos(z) + cos(x) cos(y) sin(z) = 0
 
@@ -57,7 +62,7 @@ def schwarzD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schwarzD,
+           surface_function=microgen.surface_functions.schwarz_d,
            offset=0.3,
            resolution=30,
        )
@@ -74,7 +79,8 @@ def schwarzD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+    """Neovius.
+
     .. math::
         3 cos(x) + cos(y) + cos(z) + 4 cos(x) cos(y) cos(z) = 0
 
@@ -95,8 +101,9 @@ def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return 3 * cos(x) + cos(y) + cos(z) + 4 * cos(x) * cos(y) * cos(z)
 
 
-def schoenIWP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+def schoen_iwp(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """Schoen IWP.
+
     .. math::
        2 (cos(x) cos(y) + cos(y) cos(z) + cos(z) cos(x)) - (cos(2 x) + cos(2 y) + cos(2 z)) = 0
 
@@ -106,7 +113,7 @@ def schoenIWP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schoenIWP,
+           surface_function=microgen.surface_functions.schoen_iwp,
            offset=0.3,
            resolution=30,
        )
@@ -119,8 +126,9 @@ def schoenIWP(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     )
 
 
-def schoenFRD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+def schoen_frd(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """Schoen FRD.
+
     .. math::
        4 cos(x) cos(y) cos(z) - (cos(2 x) cos(2 y) + cos(2 y) cos(2 z) + cos(2 z) cos(2 x)) = 0
 
@@ -130,7 +138,7 @@ def schoenFRD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schoenFRD,
+           surface_function=microgen.surface_functions.schoen_frd,
            offset=0.3,
            resolution=30,
        )
@@ -143,8 +151,9 @@ def schoenFRD(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     )
 
 
-def fischerKochS(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+def fischer_koch_s(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """Fischer-Koch S.
+
     .. math::
        cos(2 x) sin(y) cos(z) + cos(x) cos(2 y) sin(z) + sin(x) cos(y) cos(2 z) = 0
 
@@ -154,7 +163,7 @@ def fischerKochS(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.fischerKochS,
+           surface_function=microgen.surface_functions.fischer_koch_s,
            offset=0.3,
            resolution=30,
        )
@@ -170,7 +179,8 @@ def fischerKochS(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+    """PMY.
+
     .. math::
        2 cos(x) cos(y) cos(z) + sin(2 x) sin(y) + sin(x) sin(2 z) + sin(2 y) sin(z) = 0
 
@@ -197,7 +207,8 @@ def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def honeycomb(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+    """Honneycomb.
+
     .. math::
        sin(x) cos(y) + sin(y) + cos(z) = 0
 
@@ -219,7 +230,8 @@ def honeycomb(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def lidinoid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+    """Lidinoid.
+
     .. math::
        0.5 (sin(2 x) cos(y) sin(z) +
             sin(2 y) cos(z) sin(x) +
@@ -256,7 +268,8 @@ def lidinoid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
+    """Split P.
+
     .. math::
        1.1 (sin(2 x) cos(y) sin(z) +
             sin(2 y) cos(z) sin(x) +
@@ -293,8 +306,9 @@ def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     )
 
 
-def honeycomb_gyroid(x: float, y: float, z: float) -> float:
-    """
+def honeycomb_gyroid(x: float, y: float, _: float) -> float:
+    """Honeycomb Gyroid.
+
     .. math::
        sin(x) cos(y) + sin(y) + cos(x) = 0
 
@@ -315,8 +329,9 @@ def honeycomb_gyroid(x: float, y: float, z: float) -> float:
     return sin(x) * cos(y) + sin(y) + cos(x)
 
 
-def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
-    """
+def honeycomb_schwarz_p(x: float, y: float, _: float) -> float:
+    """Honeycomb Schwarz P.
+
     .. math::
        cos(x) + cos(y) = 0
 
@@ -326,7 +341,7 @@ def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_schwarzP,
+           surface_function=microgen.surface_functions.honeycomb_schwarz_p,
            offset=0.3,
            resolution=30,
        )
@@ -337,8 +352,9 @@ def honeycomb_schwarzP(x: float, y: float, z: float) -> float:
     return cos(x) + cos(y)
 
 
-def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
-    """
+def honeycomb_schwarz_d(x: float, y: float, _: float) -> float:
+    """Honneycomb Schwarz D.
+
     .. math::
        cos(x) cos(y) + sin(x) sin(y) + sin(x) cos(y) + cos(x) sin(y) = 0
 
@@ -348,7 +364,7 @@ def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_schwarzD,
+           surface_function=microgen.surface_functions.honeycomb_schwarz_d,
            offset=0.3,
            resolution=30,
        )
@@ -359,8 +375,9 @@ def honeycomb_schwarzD(x: float, y: float, z: float) -> float:
     return cos(x) * cos(y) + sin(x) * sin(y) + sin(x) * cos(y) + cos(x) * sin(y)
 
 
-def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
-    """
+def honeycomb_schoen_iwp(x: float, y: float, _: float) -> float:
+    """Honneycomb Schoen IWP.
+
     .. math::
        cos(x) cos(y) + cos(y) + cos(x) = 0
 
@@ -370,7 +387,7 @@ def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
        import microgen
 
        geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_schoenIWP,
+           surface_function=microgen.surface_functions.honeycomb_schoen_iwp,
            offset=0.3,
            resolution=30,
        )
@@ -381,8 +398,9 @@ def honeycomb_schoenIWP(x: float, y: float, z: float) -> float:
     return cos(x) * cos(y) + cos(y) + cos(x)
 
 
-def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
-    """
+def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
+    """Honeycomb Lidinoid.
+
     .. math::
        1.1 (sin(2 x) cos(y) + sin(2 y) sin(x) + cos(x) sin(y))
        - (cos(2 x) cos(2 y) + cos(2 y) + cos(2 x)) = 0
@@ -404,3 +422,14 @@ def honeycomb_lidinoid(x: float, y: float, z: float) -> float:
     return 1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y)) - (
         cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
+
+
+# Deprecated functions
+scharzP = schwarz_p  # noqa: N816
+scharzD = schwarz_d  # noqa: N816
+schoenIWP = schoen_iwp  # noqa: N816
+schoenFRD = schoen_frd  # noqa: N816
+fischerKochS = fischer_koch_s  # noqa: N816
+honeycomb_schwarzP = honeycomb_schwarz_p  # noqa: N816
+honeycomb_schoenIWP = honeycomb_schoen_iwp  # noqa: N816
+honeycomb_schwarzD = honeycomb_schwarz_d  # noqa: N816

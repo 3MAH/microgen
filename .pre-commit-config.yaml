@@ -15,10 +15,10 @@ repos:
   - id: detect-private-key
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.3.0
+  rev: v0.3.5
   hooks:
     - id: ruff
-      args: [--fix]
+      args: ["--fix", "--ignore=PLR0911,SLF001"]
     - id: ruff-format
 
 - repo: https://github.com/keewis/blackdoc

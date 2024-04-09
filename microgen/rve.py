@@ -1,11 +1,8 @@
-"""
-Representative Volume Element (RVE) or Representative Elementary Volume (REV)
-"""
+"""Representative Volume Element (RVE)."""
 
 from __future__ import annotations
 
 import warnings
-from typing import List, Optional, Tuple, Union
 
 import cadquery as cq
 import numpy as np
@@ -14,7 +11,8 @@ _DIM = 3
 
 
 class Rve:
-    """
+    """Representative Volume Element (RVE).
+
     :param dim_x: X dimension of the RVE
     :param dim_y: Y dimension of the RVE
     :param dim_z: Z dimension of the RVE
@@ -24,18 +22,20 @@ class Rve:
 
     def __init__(
         self,
-        dim_x: Optional[float] = None,
-        dim_y: Optional[float] = None,
-        dim_z: Optional[float] = None,
-        center: Union[np.ndarray, Tuple, List] = (0, 0, 0),
-        dim: Union[float, np.ndarray, Tuple, List] = 1,
+        dim_x: float | None = None,
+        dim_y: float | None = None,
+        dim_z: float | None = None,
+        center: np.ndarray | tuple[float, float, float] | list[float] = (0, 0, 0),
+        dim: float | np.ndarray | tuple[float, float, float] | list[float] = 1,
     ) -> None:
+        """Initialize the RVE."""
         if isinstance(center, (tuple, list)) and len(center) == _DIM:
             self.center = np.array(center)
         elif isinstance(center, np.ndarray) and center.shape == (_DIM,):
             self.center = center
         else:
-            raise ValueError(f"center must be an array or Sequence of length {_DIM}")
+            variable = "center"
+            raise SequenceLengthError(variable, _DIM)
 
         if isinstance(dim, (int, float)):
             self.dim = np.array([dim for _ in range(_DIM)])
@@ -44,7 +44,8 @@ class Rve:
         elif isinstance(dim, np.ndarray) and dim.shape == (_DIM,):
             self.dim = dim
         else:
-            raise ValueError(f"dim must be an array or Sequence of length {_DIM}")
+            variable = "dim"
+            raise SequenceLengthError(variable, _DIM)
 
         if dim_x is not None or dim_y is not None or dim_z is not None:
             self.dim = np.array(
@@ -52,7 +53,7 @@ class Rve:
                     dim_x if dim_x is not None else self.dim[0],
                     dim_y if dim_y is not None else self.dim[1],
                     dim_z if dim_z is not None else self.dim[2],
-                ]
+                ],
             )
             warnings.warn(
                 f"dim_x, dim_y, dim_z are deprecated, use 'dim' instead. \
@@ -62,7 +63,7 @@ class Rve:
             )
 
         if np.any(self.dim <= 0):
-            raise ValueError("Dimensions of the RVE must be greater than 0")
+            raise DimensionsError(self.dim)
 
         self.min_point = self.center - 0.5 * self.dim
         self.max_point = self.center + 0.5 * self.dim
@@ -103,18 +104,33 @@ class Rve:
         z_min: float = -0.5,
         z_max: float = 0.5,
     ) -> Rve:
-        """
+        """Generate a Rve from the min - max values.
+
         :param x_min: min X dimension of the RVE
         :param x_max: max X dimension of the RVE
         :param x_min: min Y dimension of the RVE
         :param x_max: max Y dimension of the RVE
         :param x_min: min Z dimension of the RVE
         :param x_max: max Z dimension of the RVE
-        Generate a Rve from the min - max values
         """
-
         center = (0.5 * (x_min + x_max), 0.5 * (y_min + y_max), 0.5 * (z_min + z_max))
         dim_x = abs(x_max - x_min)
         dim_y = abs(y_max - y_min)
         dim_z = abs(z_max - z_min)
         return Rve(dim=(dim_x, dim_y, dim_z), center=center)
+
+
+class SequenceLengthError(Exception):
+    """Exception raised for errors in the input length."""
+
+    def __init__(self, variable: str, dim: int) -> None:
+        """Initialize the exception."""
+        super().__init__(f"{variable} must be an array or Sequence of length {dim}")
+
+
+class DimensionsError(Exception):
+    """Exception raised for errors in the input dimensions."""
+
+    def __init__(self, value: np.ndarray) -> None:
+        """Initialize the exception."""
+        super().__init__(f"dimensions of the RVE must be greater than 0, got {value}")

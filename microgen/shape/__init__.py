@@ -1,4 +1,5 @@
-"""
+"""Shape.
+
 ========================================
 Shape (:mod:`microgen.shape`)
 ========================================
@@ -16,47 +17,31 @@ Shape (:mod:`microgen.shape`)
 
 """
 
-from typing import Any, Dict, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from . import surface_functions
-from .basicGeometry import BasicGeometry
 from .box import Box
 from .capsule import Capsule
 from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
-from .extrudedPolygon import ExtrudedPolygon
+from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
 from .sphere import Sphere
-
-# from .surface_functions import (
-#     fischerKochS,
-#     gyroid,
-#     honeycomb,
-#     honeycomb_gyroid,
-#     honeycomb_lidinoid,
-#     honeycomb_schoenIWP,
-#     honeycomb_schwarzD,
-#     honeycomb_schwarzP,
-#     lidinoid,
-#     neovius,
-#     pmy,
-#     schoenFRD,
-#     schoenIWP,
-#     schwarzD,
-#     schwarzP,
-#     split_p,
-# )
 from .tpms import CylindricalTpms, SphericalTpms, Tpms
 
+if TYPE_CHECKING:
+    from .basic_geometry import BasicGeometry
 
-def newGeometry(
+
+def new_geometry(
     shape: str,
-    param_geom: Dict[str, Any],
-    center: Tuple[float, float, float] = (0, 0, 0),
-    orientation: Tuple[float, float, float] = (0, 0, 0),
+    param_geom: dict[str, Any],
+    center: tuple[float, float, float] = (0, 0, 0),
+    orientation: tuple[float, float, float] = (0, 0, 0),
 ) -> BasicGeometry:
-    """
-    Creates a new basic geometry with given shape and geometrical parameters
+    """Create a new basic geometry with given shape and geometrical parameters.
 
     :param shape: name of the geometry
     :param param_geom: dictionary with required geometrical parameters
@@ -69,42 +54,38 @@ def newGeometry(
         return Box(
             center=center,
             orientation=orientation,
-            dim_x=param_geom["dim_x"],
-            dim_y=param_geom["dim_y"],
-            dim_z=param_geom["dim_z"],
+            dim=param_geom["dim"],
         )
-    elif shape.lower() == "cylinder":
+    if shape.lower() == "cylinder":
         return Cylinder(
             center=center,
             orientation=orientation,
             height=param_geom["height"],
             radius=param_geom["radius"],
         )
-    elif shape.lower() == "extrudedpolygon":
+    if shape.lower() == "extrudedpolygon":
         return ExtrudedPolygon(
             center=center,
             orientation=orientation,
             listCorners=param_geom["listCorners"],
             height=param_geom["height"],
         )
-    elif shape.lower() == "capsule":
+    if shape.lower() == "capsule":
         return Capsule(
             center=center,
             orientation=orientation,
             height=param_geom["height"],
             radius=param_geom["radius"],
         )
-    elif shape.lower() == "sphere":
+    if shape.lower() == "sphere":
         return Sphere(center=center, radius=param_geom["radius"])
-    elif shape.lower() == "ellipsoid":
+    if shape.lower() == "ellipsoid":
         return Ellipsoid(
             center=center,
             orientation=orientation,
-            a_x=param_geom["a_x"],
-            a_y=param_geom["a_y"],
-            a_z=param_geom["a_z"],
+            radii=param_geom["radii"],
         )
-    elif shape.lower() == "tpms":
+    if shape.lower() == "tpms":
         return Tpms(
             center=center,
             orientation=orientation,
@@ -114,11 +95,26 @@ def newGeometry(
             repeat_cell=param_geom["repeat_cell"],
             resolution=param_geom["resolution"],
         )
-    elif shape.lower() == "polyhedron":
+    if shape.lower() == "polyhedron":
         return Polyhedron(dic=param_geom["dic"])
-    else:
-        raise ValueError(f"{shape} name not recognised")
 
+    raise ShapeError(shape)
+
+
+class ShapeError(Exception):
+    """Exception raised for errors in the shape module.
+
+    :param message: explanation of the error
+    """
+
+    def __init__(self, shape: str) -> None:
+        """Initialize the exception."""
+        message = f"{shape} name not implemented"
+        super().__init__(message)
+
+
+# Deprecated
+newGeometry = new_geometry  # noqa: N816
 
 __all__ = [
     "Box",
@@ -131,6 +127,7 @@ __all__ = [
     "SphericalTpms",
     "Sphere",
     "Tpms",
+    "new_geometry",
     "newGeometry",
     "surface_functions",
 ]
