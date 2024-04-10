@@ -28,7 +28,7 @@ class ExtrudedPolygon(BasicGeometry):
 
        import microgen
 
-       shape = microgen.ExtrudedPolygon().generateVtk()
+       shape = microgen.ExtrudedPolygon().generate_vtk()
        shape.plot(color='white')
     """
 

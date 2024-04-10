@@ -23,7 +23,7 @@ class Cylinder(BasicGeometry):
 
        import microgen
 
-       shape = microgen.Cylinder().generateVtk()
+       shape = microgen.Cylinder().generate_vtk()
        shape.plot(color='white')
     """
 

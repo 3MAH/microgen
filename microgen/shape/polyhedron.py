@@ -29,7 +29,7 @@ class Polyhedron(BasicGeometry):
 
        import microgen
 
-       shape = microgen.Polyhedron().generateVtk()
+       shape = microgen.Polyhedron().generate_vtk()
        shape.plot(color='white')
     """
 

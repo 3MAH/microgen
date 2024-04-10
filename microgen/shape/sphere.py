@@ -22,7 +22,7 @@ class Sphere(BasicGeometry):
 
        import microgen
 
-       shape = microgen.Sphere().generateVtk()
+       shape = microgen.Sphere().generate_vtk()
        shape.plot(color='white')
     """
 
@@ -69,5 +69,5 @@ class Sphere(BasicGeometry):
         phi_resolution: int = 50,
         **_,
     ) -> pv.PolyData:
-        """Deprecated method. Use generateVtk instead."""  # noqa: D401
-        return self.generateVtk(theta_resolution, phi_resolution)
+        """Deprecated method. Use generate_vtk instead."""  # noqa: D401
+        return self.generate_vtk(theta_resolution, phi_resolution)

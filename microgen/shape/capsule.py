@@ -23,7 +23,7 @@ class Capsule(BasicGeometry):
 
        import microgen
 
-       shape = microgen.Capsule().generateVtk()
+       shape = microgen.Capsule().generate_vtk()
        shape.plot(color='white')
     """
 
@@ -121,12 +121,11 @@ class Capsule(BasicGeometry):
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **kwargs,
+        **_,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return super().generateVtk(
+        return self.generate_vtk(
             resolution=resolution,
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
-            **kwargs,
         )

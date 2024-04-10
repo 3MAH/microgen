@@ -597,7 +597,7 @@ class Tpms(BasicGeometry):
         **_,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generateVtk(
+        return self.generate_vtk(
             type_part=type_part,
             algo_resolution=algo_resolution,
         )

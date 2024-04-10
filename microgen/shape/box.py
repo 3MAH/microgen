@@ -23,7 +23,7 @@ class Box(BasicGeometry):
 
        import microgen
 
-       shape = microgen.Box().generateVtk()
+       shape = microgen.Box().generate_vtk()
        shape.plot(color='white')
     """
 

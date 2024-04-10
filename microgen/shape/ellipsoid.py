@@ -24,7 +24,7 @@ class Ellipsoid(BasicGeometry):
 
        import microgen
 
-       shape = microgen.Ellipsoid().generateVtk()
+       shape = microgen.Ellipsoid().generate_vtk()
        shape.plot(color='white')
     """
 
