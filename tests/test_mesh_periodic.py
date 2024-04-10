@@ -103,9 +103,9 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
-        center=tuple(*rve_double.center),
+        center=tuple(rve_double.center),
         orientation=(0.0, 0.0, 0.0),
-        dim=tuple(*rve_double.dim),
+        dim=tuple(rve_double.dim),
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double)
@@ -116,9 +116,9 @@ def box_homogeneous_double_centered(
     rve_double_centered: Rve,
 ) -> (cq.Shape, List[Phase]):
     shape = Box(
-        center=tuple(*rve_double_centered.center),
+        center=tuple(rve_double_centered.center),
         orientation=(0.0, 0.0, 0.0),
-        dim=tuple(*rve_double_centered.dim),
+        dim=tuple(rve_double_centered.dim),
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double_centered)
