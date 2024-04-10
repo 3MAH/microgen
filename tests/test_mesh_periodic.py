@@ -92,9 +92,9 @@ def _generate_cqcompound_octettruss(rve: Rve):
 @pytest.fixture(scope="function")
 def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
-        center=rve_unit.center,
+        center=(rve_unit.center[0], rve_unit.center[1], rve_unit.center[2]),
         orientation=(0.0, 0.0, 0.0),
-        dim=rve_unit.dim,
+        dim=(rve_unit.dim[0], rve_unit.dim[1], rve_unit.dim[2]),
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_unit)
@@ -103,7 +103,9 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
     shape = Box(
-        center=rve_double.center, orientation=(0.0, 0.0, 0.0), dim=rve_double.dim
+        center=tuple(*rve_double.center),
+        orientation=(0.0, 0.0, 0.0),
+        dim=tuple(*rve_double.dim),
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double)
@@ -114,9 +116,9 @@ def box_homogeneous_double_centered(
     rve_double_centered: Rve,
 ) -> (cq.Shape, List[Phase]):
     shape = Box(
-        center=rve_double_centered.center,
+        center=tuple(*rve_double_centered.center),
         orientation=(0.0, 0.0, 0.0),
-        dim=rve_double_centered.dim,
+        dim=tuple(*rve_double_centered.dim),
     ).generate()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double_centered)
