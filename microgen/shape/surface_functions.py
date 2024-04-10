@@ -425,8 +425,8 @@ def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
 
 
 # Deprecated functions
-scharzP = schwarz_p  # noqa: N816
-scharzD = schwarz_d  # noqa: N816
+schwarzP = schwarz_p  # noqa: N816
+schwarzD = schwarz_d  # noqa: N816
 schoenIWP = schoen_iwp  # noqa: N816
 schoenFRD = schoen_frd  # noqa: N816
 fischerKochS = fischer_koch_s  # noqa: N816

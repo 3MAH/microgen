@@ -1,7 +1,7 @@
 """Extruded Polygon.
 
 ========================================================
-Extruded Polygon (:mod:`microgen.shape.extrudedPolygon`)
+Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
 ========================================================
 """
 

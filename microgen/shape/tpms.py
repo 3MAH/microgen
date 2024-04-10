@@ -106,14 +106,16 @@ class Tpms(BasicGeometry):
         self.resolution = resolution
         self._compute_tpms_field()
 
+        min_field = np.min(self.grid["surface"])
+        max_field = np.max(self.grid["surface"])
         self.offset_lim = {
             "sheet": (
                 0.0,
-                2.0 * max(-np.min(self.grid["surface"]), np.max(self.grid["surface"])),
+                2.0 * max(-min_field, max_field),
             ),
             "skeletal": (
-                2.0 * np.min(self.grid["surface"]),
-                2.0 * np.max(self.grid["surface"]),
+                2.0 * min_field,
+                2.0 * max_field,
             ),
         }
 
@@ -126,7 +128,7 @@ class Tpms(BasicGeometry):
         cls,
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
-        density: float = 0.3,
+        density: float,
         resolution: int = 20,
     ) -> float:
         """Return the offset corresponding to the required density.
@@ -160,20 +162,6 @@ class Tpms(BasicGeometry):
             self._update_offset(offset)
             return offset
 
-        min_field = np.min(self.grid["surface"])
-        max_field = np.max(self.grid["surface"])
-        if part_type == "sheet":
-            min_offset = 0.0
-            max_offset = 2.0 * max(abs(min_field), max_field)
-        else:
-            min_offset = 2.0 * min_field
-            max_offset = 2.0 * max_field
-
-        if self.density == 1.0:
-            offset = max_offset if part_type == "sheet" else min_offset
-            self._update_offset(offset)
-            return
-
         temp_tpms = Tpms(
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
@@ -182,14 +170,14 @@ class Tpms(BasicGeometry):
 
         def density(offset: float) -> float:
             temp_tpms._update_offset(offset)
-            return polydata_func().volume
+            return abs(polydata_func().volume)
 
+        part = "skeletal" if "skeletal" in part_type else part_type
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
-            bracket=self.offset_lim[part_type],
+            bracket=self.offset_lim[part],
         ).root
         self._update_offset(computed_offset)
-        logging.info("computed offset = %.3f", computed_offset)
         return computed_offset
 
     def _init_cell_parameters(
@@ -487,14 +475,15 @@ class Tpms(BasicGeometry):
                 if np.all(self.offset <= 0.0):
                     raise OffsetRangeError(
                         part_type=type_part,
-                        offset_bounds=self.offset_lim[type_part],
+                        offset_bounds=self.offset_lim["sheet"],
                     )
                 raise NegativeOffsetNotImplementedError
 
-        if np.all(self.offset > self.offset_lim[type_part][1]):
+        part = "skeletal" if "skeletal" in type_part else type_part
+        if np.all(self.offset > self.offset_lim[part][1]):
             raise OffsetRangeError(
                 part_type=type_part,
-                offset_bounds=self.offset_lim[type_part],
+                offset_bounds=self.offset_lim[part],
             )
 
     def generate(
@@ -776,7 +765,7 @@ class SphericalTpms(Tpms):
             rho * np.sin(theta) * np.sin(phi),
             rho * np.cos(theta),
         )
-      
+
 
 class DensityError(ValueError):
     """Raised when the density is not between 0 and 1."""

@@ -1,7 +1,7 @@
 """Basic Geometry.
 
 ====================================================
-Basic Geometry (:mod:`microgen.shape.basicGeometry`)
+Basic Geometry (:mod:`microgen.shape.basic_geometry`)
 ====================================================
 """
 
