@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from microgen import Rve
+from microgen.rve import DimensionsError, SequenceLengthError
 
 
 def test_rve_center_must_have_expected_value() -> None:
@@ -23,16 +24,16 @@ def test_rve_center_must_have_expected_value() -> None:
 
 def test_rve_invalid_center_value() -> None:
     """Test Rve center with invalid inputs, center must be an array or Sequence of length 3."""
-    with pytest.raises(ValueError):
+    with pytest.raises(SequenceLengthError):
         Rve(center=(1, 2))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SequenceLengthError):
         Rve(center=[1, 2, 3, 4])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SequenceLengthError):
         Rve(center=np.array([1, 2]))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SequenceLengthError):
         Rve(center=1)  # type: ignore
 
 
@@ -71,13 +72,13 @@ def test_rve_deprecated_dim() -> None:
 
 def test_rve_given_negative_or_zero_dim_must_raise_error() -> None:
     """Test Rve dim with negative values must raise error."""
-    with pytest.raises(ValueError):
+    with pytest.raises(DimensionsError):
         Rve(dim=-1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(DimensionsError):
         Rve(dim=0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(DimensionsError):
         Rve(dim=(1, -1, 0))
 
 
