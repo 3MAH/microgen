@@ -35,7 +35,7 @@ class BasicGeometry:
         self.shape = shape
         self.center = center
         self.orientation = orientation
-        self.name = self.shape + "_" + str(self.number)
+        self.name = f"{self.shape}_{self.number}"
 
         self.geometry: cq.Shape | None = None
         BasicGeometry.num_instances += 1

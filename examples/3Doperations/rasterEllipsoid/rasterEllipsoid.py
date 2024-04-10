@@ -6,7 +6,7 @@ from microgen import Ellipsoid, Phase, Rve, mesh, rasterPhase
 
 rve = Rve(dim=1)
 
-elem = Ellipsoid(a_x=0.15, a_y=0.31, a_z=0.4)
+elem = Ellipsoid(radii=(0.15, 0.31, 0.4))
 elli = elem.generate()
 
 raster = rasterPhase(phase=Phase(shape=elli), rve=rve, grid=[5, 5, 5])

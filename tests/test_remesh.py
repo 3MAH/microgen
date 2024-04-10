@@ -40,7 +40,7 @@ def fixture_box_mesh() -> BoxMesh:
             [-0.5, 0.0, 0.0],
             [0.0, 0.0, 0.5],
             [0.0, 0.0, -0.5],
-        ]
+        ],
     )
 
     elements_dict = {
@@ -82,8 +82,8 @@ def fixture_box_mesh() -> BoxMesh:
                 [8, 9, 0, 14],
                 [0, 9, 4, 14],
                 [9, 8, 4, 14],
-            ]
-        )
+            ],
+        ),
     }
 
     mesh = BoxMesh(nodes_array, elements_dict)
@@ -94,7 +94,7 @@ def fixture_box_mesh() -> BoxMesh:
 @pytest.fixture(name="gyroid_mesh", scope="function")
 def fixture_gyroid_mesh() -> pv.UnstructuredGrid:
     gyroid_vtk = pv.UnstructuredGrid(
-        Tpms(surface_function=gyroid, offset=1.0).generateVtk(type_part="sheet")
+        Tpms(surface_function=gyroid, offset=1.0).generate_vtk(type_part="sheet"),
     )
     return gyroid_vtk
 
@@ -118,7 +118,7 @@ def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
             [-0.5, 0.0, 0.0],
             [0.0, 0.0, 0.5],
             [0.0, 0.0, -0.5],
-        ]
+        ],
     )
     elements = np.array(
         [
@@ -158,7 +158,7 @@ def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
             [4, 8, 9, 0, 14],
             [4, 0, 9, 4, 14],
             [4, 9, 8, 4, 14],
-        ]
+        ],
     )
     cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
     mesh = pv.UnstructuredGrid(elements, cell_types, nodes)
@@ -183,7 +183,8 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
     # Act
     if USE_MMG:
         remeshed_shape = remesh_keeping_periodicity_for_fem(
-            input_mesh, hgrad=edge_length_gradient
+            input_mesh,
+            hgrad=edge_length_gradient,
         )
 
         if isinstance(input_mesh, BoxMesh):
@@ -199,8 +200,10 @@ def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
     edge_length_gradient = 1.05
     if USE_MMG:
         with pytest.raises(
-            InputMeshNotPeriodicError, match="Input mesh is not periodic"
+            InputMeshNotPeriodicError,
+            match="Input mesh is not periodic",
         ):
             remesh_keeping_periodicity_for_fem(
-                non_periodic_mesh, hgrad=edge_length_gradient
+                non_periodic_mesh,
+                hgrad=edge_length_gradient,
             )

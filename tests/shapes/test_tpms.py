@@ -24,7 +24,7 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
 
     # Act
     shape_cadquery = tpms.generate(type_part=type_part)
-    shape_vtk = tpms.generateVtk(type_part=type_part)
+    shape_vtk = tpms.generate_vtk(type_part=type_part)
 
     # Assert
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
@@ -43,7 +43,7 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
 
     # Act
     shape_cadquery = tpms.generate(type_part=type_part)
-    shape_vtk = tpms.generateVtk(type_part=type_part)
+    shape_vtk = tpms.generate_vtk(type_part=type_part)
 
     # Assert
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
@@ -59,13 +59,14 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
     )
 
     shape_cadquery = tpms.generate(type_part="sheet")
-    shape_vtk = tpms.generateVtk(type_part="sheet")
+    shape_vtk = tpms.generate_vtk(type_part="sheet")
 
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize(
-    "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
+    "surface",
+    [func[0] for func in getmembers(microgen.surface_functions, isfunction)],
 )
 @pytest.mark.parametrize("repeat_cell", [2, (2, 1, 3)])
 @pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
@@ -85,7 +86,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 
     # Act
     volume = np.abs(
-        tpms.sheet.volume + tpms.lower_skeletal.volume + tpms.upper_skeletal.volume
+        tpms.sheet.volume + tpms.lower_skeletal.volume + tpms.upper_skeletal.volume,
     )
     cube_volume = np.prod(tpms.repeat_cell) * np.prod(tpms.cell_size)
 
@@ -94,7 +95,8 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 
 
 @pytest.mark.parametrize(
-    "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
+    "surface",
+    [func[0] for func in getmembers(microgen.surface_functions, isfunction)],
 )
 @pytest.mark.parametrize("density", [0.05, 0.5, 0.99, 1.0])
 def test_tpms_given_density_must_match_computed_density(
@@ -104,18 +106,20 @@ def test_tpms_given_density_must_match_computed_density(
     """Test for the density of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=getattr(microgen.surface_functions, surface), density=density
+        surface_function=getattr(microgen.surface_functions, surface),
+        density=density,
     )
 
     # Act
-    computed_density = tpms.generateVtk(type_part="sheet").volume / tpms.grid.volume
+    computed_density = tpms.generate_vtk(type_part="sheet").volume / tpms.grid.volume
 
     # Assert
     assert np.isclose(computed_density, density, rtol=0.1)
 
 
 @pytest.mark.parametrize(
-    "coord_sys_tpms", [microgen.CylindricalTpms, microgen.SphericalTpms]
+    "coord_sys_tpms",
+    [microgen.CylindricalTpms, microgen.SphericalTpms],
 )
 def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(
     coord_sys_tpms: Type[microgen.Tpms],
@@ -210,7 +214,7 @@ def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond():
     )
 
     shape_cadquery = tpms.generate(type_part="sheet", smoothing=0, verbose=True)
-    shape_vtk = tpms.generateVtk(type_part="sheet")
+    shape_vtk = tpms.generate_vtk(type_part="sheet")
 
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
@@ -241,7 +245,7 @@ def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error():
         offset=0.5,
     )
     with pytest.raises(ValueError):
-        tpms.generateVtk(type_part="fake")
+        tpms.generate_vtk(type_part="fake")
     with pytest.raises(ValueError):
         tpms.generate(type_part="fake")
 
@@ -283,7 +287,7 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(
         density=0.2,
     )
 
-    part = tpms.generateVtk(type_part=type_part)
+    part = tpms.generate_vtk(type_part=type_part)
     assert np.isclose(part.volume, tpms.grid.volume * 0.2, rtol=1e-2)
 
 
@@ -298,7 +302,9 @@ def test_tpms_given_100_percent_density_must_return_a_cube(
     )
 
     assert np.isclose(
-        tpms.generateVtk(type_part=type_part).volume, tpms.grid.volume, rtol=1.0e-9
+        tpms.generate_vtk(type_part=type_part).volume,
+        tpms.grid.volume,
+        rtol=1.0e-9,
     )
 
 
@@ -329,7 +335,7 @@ def test_tpms_given_property_must_return_the_same_value():
     assert tpms.upper_skeletal == skeletals[0]
     assert tpms.lower_skeletal == skeletals[1]
     assert tpms.sheet == tpms.sheet
-    assert tpms.generateVtk(type_part="surface") == tpms.surface
+    assert tpms.generate_vtk(type_part="surface") == tpms.surface
 
 
 def test_tpms_given_surface_must_not_be_empty():
@@ -351,7 +357,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
     with pytest.raises(NotImplementedError):
         tpms.generate(type_part="lower skeletal")
 
-    sheet = tpms.generateVtk(type_part="lower skeletal").extract_surface()
+    sheet = tpms.generate_vtk(type_part="lower skeletal").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
     def including_negative_values(x: np.ndarray, _: np.ndarray, __: np.ndarray):
@@ -364,7 +370,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
     with pytest.raises(NotImplementedError):
         tpms.generate(type_part="lower skeletal")
 
-    sheet = tpms.generateVtk(type_part="lower skeletal").extract_surface()
+    sheet = tpms.generate_vtk(type_part="lower skeletal").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
 
@@ -381,7 +387,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
     with pytest.raises(ValueError):
         tpms.generate(type_part="sheet")
 
-    assert tpms.generateVtk(type_part="sheet").volume == 0.0
+    assert tpms.generate_vtk(type_part="sheet").volume == 0.0
 
     def including_negative_values(x: np.ndarray, _: np.ndarray, __: np.ndarray):
         return x
@@ -393,7 +399,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
     with pytest.raises(NotImplementedError):
         tpms.generate(type_part="sheet")
 
-    sheet = tpms.generateVtk(type_part="sheet").extract_surface()
+    sheet = tpms.generate_vtk(type_part="sheet").extract_surface()
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
 
@@ -408,7 +414,7 @@ def test_tpms_center_and_orientation_must_correspond():
         center=center,
         orientation=orientation,
     )
-    vtk_sheet = tpms.generateVtk(type_part="sheet")
+    vtk_sheet = tpms.generate_vtk(type_part="sheet")
     cad_sheet = tpms.generate(type_part="sheet")
 
     no_orientation = microgen.Tpms(
@@ -426,5 +432,5 @@ def test_tpms_center_and_orientation_must_correspond():
 
     assert not np.allclose(
         vtk_sheet.bounds,
-        no_orientation.generateVtk(type_part="sheet").bounds,
+        no_orientation.generate_vtk(type_part="sheet").bounds,
     )
