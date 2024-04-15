@@ -4,13 +4,18 @@
 """
 
 import numpy as np
+import numpy.typing as npt
 import pyvista as pv
 
 from microgen import Tpms
 from microgen.shape.surface_functions import gyroid
 
 
-def linear_graded_offset(x: np.ndarray, _: np.ndarray, __: np.ndarray) -> np.ndarray:
+def linear_graded_offset(
+    x: npt.NDArray[np.float64],
+    _: npt.NDArray[np.float64],
+    __: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """Linearly graded offset."""
     min_offset = 0.0
     max_offset = 3.0
@@ -18,7 +23,11 @@ def linear_graded_offset(x: np.ndarray, _: np.ndarray, __: np.ndarray) -> np.nda
     return (max_offset - min_offset) * x / length + 0.5 * (min_offset + max_offset)
 
 
-def circular_graded_offset(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarray:
+def circular_graded_offset(
+    x: npt.NDArray[np.float64],
+    y: npt.NDArray[np.float64],
+    _: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """Circularly graded offset."""
     min_offset = 0.0
     max_offset = 3.0
