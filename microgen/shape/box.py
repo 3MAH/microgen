@@ -7,6 +7,9 @@ Box (:mod:`microgen.shape.box`)
 
 from __future__ import annotations
 
+import warnings
+from typing import Any
+
 import cadquery as cq
 import pyvista as pv
 
@@ -27,17 +30,34 @@ class Box(BasicGeometry):
        shape.plot(color='white')
     """
 
-    def __init__(
-        self,
+    def __init__(  # noqa: PLR0913
+        self: Box,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         dim: tuple[float, float, float] = (1, 1, 1),
+        dim_x: float | None = None,
+        dim_y: float | None = None,
+        dim_z: float | None = None,
     ) -> None:
         """Initialize the box."""
         super().__init__(shape="Box", center=center, orientation=orientation)
+        if dim_x is not None or dim_y is not None or dim_z is not None:
+            warnings.warn(
+                "The 'dim_x', 'dim_y', and 'dim_z' parameters are deprecated. \
+                    Use 'dim' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if dim_x is None:
+                dim_x = dim[0]
+            if dim_y is None:
+                dim_y = dim[1]
+            if dim_z is None:
+                dim_z = dim[2]
+            self.dim = (dim_x, dim_y, dim_z)
         self.dim = dim
 
-    def generate(self, **_) -> cq.Shape:
+    def generate(self: Box, **_: dict[str, Any]) -> cq.Shape:
         """Generate a box CAD shape using the given parameters."""
         box = cq.Workplane().box(*self.dim).translate(self.center)
         box = rotateEuler(
@@ -50,9 +70,9 @@ class Box(BasicGeometry):
         return cq.Shape(box.val().wrapped)
 
     def generate_vtk(
-        self,
+        self: Box,
         level: int = 0,
-        **_,
+        **_: dict[str, Any],
     ) -> pv.PolyData:
         """Generate a box VTK shape using the given parameters."""
         box = pv.Box(
@@ -75,6 +95,6 @@ class Box(BasicGeometry):
             self.orientation[2],
         )
 
-    def generateVtk(self, **kwargs) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: Box, **kwargs: dict[str, Any]) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(**kwargs)

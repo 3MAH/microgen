@@ -7,6 +7,9 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 
 from __future__ import annotations
 
+import warnings
+from typing import Any
+
 import cadquery as cq
 import numpy as np
 import pyvista as pv
@@ -28,17 +31,39 @@ class Ellipsoid(BasicGeometry):
        shape.plot(color='white')
     """
 
-    def __init__(
-        self,
+    def __init__(  # noqa: PLR0913
+        self: Ellipsoid,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         radii: tuple[float, float, float] = (1, 0.5, 0.25),
+        a_x: float | None = None,
+        a_y: float | None = None,
+        a_z: float | None = None,
     ) -> None:
         """Initialize the ellipsoid."""
-        super().__init__(shape="Ellipsoid", center=center, orientation=orientation)
+        super().__init__(
+            shape="Ellipsoid",
+            center=center,
+            orientation=orientation,
+        )
+        if a_x is not None or a_y is not None or a_z is not None:
+            warnings.warn(
+                "The 'a_x', 'a_y', and 'a_z' parameters are deprecated. \
+                    Use 'radii' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if a_x is None:
+                a_x = radii[0]
+            if a_y is None:
+                a_y = radii[1]
+            if a_z is None:
+                a_z = radii[2]
+            radii = (a_x, a_y, a_z)
+
         self.radii = radii
 
-    def generate(self, **_) -> cq.Shape:
+    def generate(self: Ellipsoid, **_: dict[str, Any]) -> cq.Shape:
         """Generate an ellipsoid CAD shape using the given parameters."""
         transform_mat = cq.Matrix(
             [
@@ -58,7 +83,7 @@ class Ellipsoid(BasicGeometry):
             self.orientation[2],
         )
 
-    def generate_vtk(self, **_) -> pv.PolyData:
+    def generate_vtk(self: Ellipsoid, **_: dict[str, Any]) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""
         transform_matrix = np.array(
             [
@@ -78,6 +103,6 @@ class Ellipsoid(BasicGeometry):
             self.orientation[2],
         )
 
-    def generateVtk(self, **kwargs) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: Ellipsoid, **kwargs: dict[str, Any]) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(**kwargs)
