@@ -7,6 +7,8 @@ Cylinder (:mod:`microgen.shape.cylinder`)
 
 from __future__ import annotations
 
+from typing import Any
+
 import cadquery as cq
 import pyvista as pv
 
@@ -28,7 +30,7 @@ class Cylinder(BasicGeometry):
     """
 
     def __init__(
-        self,
+        self: Cylinder,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         height: float = 1,
@@ -39,7 +41,7 @@ class Cylinder(BasicGeometry):
         self.radius = radius
         self.height = height
 
-    def generate(self, **_) -> cq.Shape:
+    def generate(self: Cylinder, **_: dict[str, Any]) -> cq.Shape:
         """Generate a cylinder CAD shape using the given parameters."""
         cylinder = (
             cq.Workplane("YZ")
@@ -59,9 +61,9 @@ class Cylinder(BasicGeometry):
         return cq.Shape(cylinder.val().wrapped)
 
     def generate_vtk(
-        self,
+        self: Cylinder,
         resolution: int = 100,
-        **_,
+        **_: dict[str, Any],
     ) -> pv.PolyData:
         """Generate a cylinder VTK shape using the given parameters."""
         cylinder = pv.Cylinder(
@@ -81,9 +83,9 @@ class Cylinder(BasicGeometry):
         )
 
     def generateVtk(  # noqa: N802
-        self,
+        self: Cylinder,
         resolution: int = 100,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(

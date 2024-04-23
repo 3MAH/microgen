@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -34,7 +34,7 @@ class Polyhedron(BasicGeometry):
     """
 
     def __init__(
-        self,
+        self: Polyhedron,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         dic: dict[str, list[Vertex | Face]] | None = None,
@@ -68,7 +68,7 @@ class Polyhedron(BasicGeometry):
         for ixs in self.faces_ixs:
             ixs.append(ixs[0])
 
-    def generate(self, **_) -> cq.Shape:
+    def generate(self: Polyhedron, **_: dict[str, Any]) -> cq.Shape:
         """Generate a polyhedron CAD shape using the given parameters."""
         faces = []
         for ixs in self.faces_ixs:
@@ -93,7 +93,7 @@ class Polyhedron(BasicGeometry):
         solid = cq.Solid.makeSolid(shell)
         return cq.Shape(solid.wrapped)
 
-    def generate_vtk(self, **_) -> pv.PolyData:
+    def generate_vtk(self: Polyhedron, **_: dict[str, Any]) -> pv.PolyData:
         """Generate a polyhedron VTK shape using the given parameters."""
         faces_pv = copy.deepcopy(self.faces_ixs)
         for vertices_in_face in faces_pv:
@@ -105,7 +105,7 @@ class Polyhedron(BasicGeometry):
 
         return pv.PolyData(vertices, faces).compute_normals()
 
-    def generateVtk(self, **_) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: Polyhedron, **_: dict[str, Any]) -> pv.PolyData:  # noqa: N802
         """Deprecated method. Use generate_vtk instead."""  # noqa: D401
         return self.generate_vtk()
 

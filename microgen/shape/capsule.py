@@ -7,6 +7,8 @@ Capsule (:mod:`microgen.shape.capsule`)
 
 from __future__ import annotations
 
+from typing import Any
+
 import cadquery as cq
 import pyvista as pv
 
@@ -28,7 +30,7 @@ class Capsule(BasicGeometry):
     """
 
     def __init__(
-        self,
+        self: Capsule,
         center: tuple[float, float, float] = (0, 0, 0),
         orientation: tuple[float, float, float] = (0, 0, 0),
         height: float = 1,
@@ -39,7 +41,7 @@ class Capsule(BasicGeometry):
         self.height = height
         self.radius = radius
 
-    def generate(self, **_) -> cq.Shape:
+    def generate(self: Capsule, **_: dict[str, Any]) -> cq.Shape:
         """Generate a capsule CAD shape using the given parameters."""
         cylinder = cq.Solid.makeCylinder(
             self.radius,
@@ -81,11 +83,11 @@ class Capsule(BasicGeometry):
         )
 
     def generate_vtk(
-        self,
+        self: Capsule,
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_,
+        **_: dict[str, Any],
     ) -> pv.PolyData:
         """Generate a capsule VTK shape using the given parameters."""
         cylinder = pv.Cylinder(
@@ -117,11 +119,11 @@ class Capsule(BasicGeometry):
         )
 
     def generateVtk(  # noqa: N802
-        self,
+        self: Capsule,
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_,
+        **_: dict[str, Any],
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(

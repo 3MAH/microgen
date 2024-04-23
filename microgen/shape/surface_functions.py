@@ -54,7 +54,8 @@ def schwarz_d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """Schwarz D.
 
     .. math::
-       sin(x) sin(y) sin(z) + sin(x) cos(y) cos(z) + cos(x) sin(y) cos(z) + cos(x) cos(y) sin(z) = 0
+       sin(x) sin(y) sin(z) + sin(x) cos(y) cos(z) +\
+          cos(x) sin(y) cos(z) + cos(x) cos(y) sin(z) = 0
 
     .. jupyter-execute::
        :hide-code:
@@ -105,7 +106,8 @@ def schoen_iwp(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """Schoen IWP.
 
     .. math::
-       2 (cos(x) cos(y) + cos(y) cos(z) + cos(z) cos(x)) - (cos(2 x) + cos(2 y) + cos(2 z)) = 0
+       2 (cos(x) cos(y) + cos(y) cos(z) + cos(z) cos(x)) \
+        - (cos(2 x) + cos(2 y) + cos(2 z)) = 0
 
     .. jupyter-execute::
        :hide-code:
@@ -130,7 +132,8 @@ def schoen_frd(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """Schoen FRD.
 
     .. math::
-       4 cos(x) cos(y) cos(z) - (cos(2 x) cos(2 y) + cos(2 y) cos(2 z) + cos(2 z) cos(2 x)) = 0
+       4 cos(x) cos(y) cos(z) \
+        - (cos(2 x) cos(2 y) + cos(2 y) cos(2 z) + cos(2 z) cos(2 x)) = 0
 
     .. jupyter-execute::
        :hide-code:

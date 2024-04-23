@@ -107,7 +107,7 @@ class ShapeError(Exception):
     :param message: explanation of the error
     """
 
-    def __init__(self, shape: str) -> None:
+    def __init__(self: ShapeError, shape: str) -> None:
         """Initialize the exception."""
         message = f"{shape} name not implemented"
         super().__init__(message)
