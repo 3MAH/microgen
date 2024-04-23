@@ -18,7 +18,7 @@ repos:
   rev: v0.4.1
   hooks:
     - id: ruff
-      args: ["--ignore=PLR0911,SLF001"]
+      args: ["--fix", "--ignore=PLR0911,SLF001,RUF100"]
     - id: ruff-format
 
 - repo: https://github.com/keewis/blackdoc
