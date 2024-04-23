@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from .basic_geometry import BasicGeometry
 
 
-def new_geometry(
+def new_geometry(  # noqa: PLR0911
     shape: str,
     param_geom: dict[str, Any],
     center: tuple[float, float, float] = (0, 0, 0),

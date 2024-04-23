@@ -143,7 +143,7 @@ class Tpms(BasicGeometry):
 
         :return: corresponding offset value
         """
-        return Tpms(
+        return Tpms(  # noqa: SLF001
             surface_function=surface_function,
             density=density,
         )._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
@@ -172,7 +172,7 @@ class Tpms(BasicGeometry):
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
-            temp_tpms._update_offset(offset)
+            temp_tpms._update_offset(offset)  # noqa: SLF001
             return abs(polydata_func().volume)
 
         part = "skeletal" if "skeletal" in part_type else part_type
