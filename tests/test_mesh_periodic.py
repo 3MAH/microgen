@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -90,7 +90,7 @@ def _generate_cqcompound_octettruss(rve: Rve):
 
 
 @pytest.fixture(scope="function")
-def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
+def box_homogeneous_unit(rve_unit: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
     shape = Box(
         center=rve_unit.center,
         orientation=(0.0, 0.0, 0.0),
@@ -103,7 +103,7 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 
 
 @pytest.fixture(scope="function")
-def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
+def box_homogeneous_double(rve_double: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
     shape = Box(
         center=rve_double.center,
         orientation=(0.0, 0.0, 0.0),
@@ -118,7 +118,7 @@ def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def box_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, List[Phase]):
+) -> (cq.Shape, List[Phase], Rve):
     shape = Box(
         center=rve_double_centered.center,
         orientation=(0.0, 0.0, 0.0),
@@ -131,7 +131,7 @@ def box_homogeneous_double_centered(
 
 
 @pytest.fixture(scope="function")
-def octet_truss_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
+def octet_truss_homogeneous_unit(rve_unit: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
     listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
     merged = fuseShapes(
         [phase.shape for phase in listPeriodicPhases], retain_edges=False
@@ -143,7 +143,7 @@ def octet_truss_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def octet_truss_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, List[Phase]):
+) -> Tuple[cq.Shape, List[Phase], Rve]:
     listPeriodicPhases = _generate_cqcompound_octettruss(rve_double_centered)
     merged = fuseShapes(
         [phase.shape for phase in listPeriodicPhases], retain_edges=False
@@ -153,7 +153,7 @@ def octet_truss_homogeneous_double_centered(
 
 
 @pytest.fixture(scope="function")
-def octet_truss_heterogeneous(rve_unit: Rve) -> (cq.Compound, List[Phase]):
+def octet_truss_heterogeneous(rve_unit: Rve) -> Tuple[cq.Compound, List[Phase], Rve]:
     listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
     listcqphases = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
     return (
@@ -175,7 +175,7 @@ def octet_truss_heterogeneous(rve_unit: Rve) -> (cq.Compound, List[Phase]):
     ],
 )
 def test_octettruss_mesh_must_be_periodic(
-    shape: Union[cq.Compound, cq.Shape],
+    shape: tuple[Union[cq.Compound, cq.Shape], List[Phase], Rve],
     request,
     tmp_output_compound_filename: str,
     tmp_output_vtk_filename: str,
