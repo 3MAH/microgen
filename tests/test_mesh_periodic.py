@@ -175,7 +175,7 @@ def octet_truss_heterogeneous(rve_unit: Rve) -> Tuple[cq.Compound, List[Phase], 
     ],
 )
 def test_octettruss_mesh_must_be_periodic(
-    shape: tuple[Union[cq.Compound, cq.Shape], List[Phase], Rve],
+    shape: Tuple[Union[cq.Compound, cq.Shape], List[Phase], Rve],
     request,
     tmp_output_compound_filename: str,
     tmp_output_vtk_filename: str,
