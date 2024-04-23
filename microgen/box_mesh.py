@@ -662,7 +662,7 @@ class BoxMesh(SingleMesh):
         ]
         size_planes = [
             2.0 * np.max([rve.dim[1], rve.dim[2]]),
-            2.0 * np.max([rve.dim[1], rve.dim[1]]),
+            2.0 * np.max([rve.dim[1], rve.dim[2]]),
             2.0 * np.max([rve.dim[0], rve.dim[2]]),
             2.0 * np.max([rve.dim[0], rve.dim[2]]),
             2.0 * np.max([rve.dim[0], rve.dim[1]]),
