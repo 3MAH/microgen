@@ -98,4 +98,4 @@ exclude = [
     "examples/*",
 ] # external = ["E131", "D102", "D105"]
 select = ["ALL"]
-ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003", "PLR0913"]
+ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003"]
