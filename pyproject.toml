@@ -84,7 +84,6 @@ exclude = [
     "setup.py",
     "docs/*",
     "tests/*",
-    "microgen/__init__.py",
     "microgen/box_mesh.py",
     "microgen/external.py",
     "microgen/mesh.py",
