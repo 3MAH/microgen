@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Tuple, Union
 
 import cadquery as cq
 import numpy as np
