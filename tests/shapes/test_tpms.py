@@ -427,3 +427,50 @@ def test_tpms_center_and_orientation_must_correspond():
         vtk_sheet.bounds,
         no_orientation.generateVtk(type_part="sheet").bounds,
     )
+
+
+def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
+    """Test if the repeat cell is computed correctly."""
+    tpms = microgen.Infill(
+        obj=microgen.Box().generateVtk(),
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        cell_size=(0.5, 1.0, 0.5),
+    )
+
+    assert np.allclose(tpms.repeat_cell, (2, 1, 2))
+
+
+def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
+    """Test if the cell size is computed correctly."""
+    tpms = microgen.Infill(
+        obj=microgen.Box().generateVtk(),
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        repeat_cell=(2, 1, 2),
+    )
+
+    assert np.allclose(tpms.cell_size, (0.5, 1.0, 0.5))
+
+
+def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
+    """Test if the cell size is computed correctly."""
+    with pytest.raises(ValueError):
+        microgen.Infill(
+            obj=microgen.Box().generateVtk(),
+            surface_function=microgen.surface_functions.gyroid,
+            offset=0.5,
+            repeat_cell=(2, 1, 2),
+            cell_size=(0.5, 1.0, 0.5),
+        )
+
+
+def test_infill_raises_error_when_cell_size_is_too_large() -> None:
+    """Test if the cell size is too large compared to the given object size."""
+    with pytest.raises(ValueError):
+        microgen.Infill(
+            obj=microgen.Box().generateVtk(),
+            surface_function=microgen.surface_functions.gyroid,
+            offset=0.5,
+            cell_size=(1.0, 2.0, 1.0),
+        )
