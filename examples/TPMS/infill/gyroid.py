@@ -22,4 +22,4 @@ infill = Infill(
 pl = pv.Plotter()
 pl.add_mesh(infill.sheet, color="w")
 pl.add_axes()
-pl.show()
+# pl.show()
