@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
+from pytest import FixtureRequest
 
 from microgen import BoxMesh, Rve
 
@@ -168,7 +169,7 @@ def _check_triangle_on_boundary(
     ],
 )
 def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(
-    box_mesh: BoxMesh, request
+    box_mesh: BoxMesh, request: FixtureRequest
 ) -> None:
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
     target_center: npt.NDArray[np.float_] = rve.center
@@ -198,7 +199,7 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
     ],
 )
 def test_given_box_mesh_rve_property_must_build_correct_rve(
-    box_mesh: BoxMesh, request
+    box_mesh: BoxMesh, request: FixtureRequest
 ) -> None:
     box_mesh_to_test, target_rve = request.getfixturevalue(box_mesh)
     test_rve = box_mesh_to_test.rve
@@ -218,7 +219,7 @@ def test_given_box_mesh_rve_property_must_build_correct_rve(
     ],
 )
 def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_elements(
-    box_mesh: BoxMesh, request
+    box_mesh: BoxMesh, request: FixtureRequest
 ) -> None:
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
     expected_number_of_cells = 48
