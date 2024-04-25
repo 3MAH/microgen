@@ -435,10 +435,10 @@ def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
         obj=microgen.Box().generateVtk(),
         surface_function=microgen.surface_functions.gyroid,
         offset=0.5,
-        cell_size=(0.5, 1.0, 0.5),
+        cell_size=(0.5, 1.0, 1.0),
     )
 
-    assert np.allclose(tpms.repeat_cell, (2, 1, 2))
+    assert np.allclose(tpms.repeat_cell, (2, 1, 1))
 
 
 def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
@@ -447,10 +447,31 @@ def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
         obj=microgen.Box().generateVtk(),
         surface_function=microgen.surface_functions.gyroid,
         offset=0.5,
-        repeat_cell=(2, 1, 2),
+        repeat_cell=(1, 1, 2),
     )
 
-    assert np.allclose(tpms.cell_size, (0.5, 1.0, 0.5))
+    assert np.allclose(tpms.cell_size, (1.0, 1.0, 0.5))
+
+
+@pytest.mark.parametrize("kwarg", [{"cell_size": 0.5}, {"repeat_cell": 2}])
+def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
+    """Test if the grid bounds match the object bounds."""
+    obj = microgen.Ellipsoid(a_x=1.0, a_y=2.0 / 3.0, a_z=0.5).generateVtk()
+    tpms = microgen.Infill(
+        obj=obj,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        **kwarg,
+    )
+
+    grid_bounds = np.array(tpms.grid.bounds)
+    grid_dim = grid_bounds[1::2] - grid_bounds[::2]
+
+    obj_bounds = np.array(obj.bounds)
+    obj_dim = obj_bounds[1::2] - obj_bounds[::2]
+
+    assert np.all(obj_dim <= grid_dim)
+    assert np.all(grid_dim < obj_dim + tpms.cell_size)
 
 
 def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:

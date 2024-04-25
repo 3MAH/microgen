@@ -781,7 +781,7 @@ class Infill(Tpms):
                 "cell_size and repeat_cell cannot be given at the same time, one is computed from the other."
             )
         if cell_size is not None:
-            repeat_cell = (dim / cell_size).astype(int)
+            repeat_cell = np.ceil(dim / cell_size).astype(int)
         elif repeat_cell is not None:
             cell_size = dim / repeat_cell
 
@@ -810,4 +810,6 @@ class Infill(Tpms):
             y + self.obj.center[1],
             z + self.obj.center[2],
         )
-        return grid.clip_surface(self.obj, invert=False)
+        grid = grid.clip_surface(self.obj, invert=False)
+        logging.info("Grid resolution: %s", grid.n_points)
+        return grid
