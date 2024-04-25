@@ -443,14 +443,16 @@ def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
 
 def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
     """Test if the cell size is computed correctly."""
+    dummy_offset = 0.5
     tpms = microgen.Infill(
         obj=microgen.Box().generateVtk(),
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=dummy_offset,
         repeat_cell=(1, 1, 2),
     )
 
-    assert np.allclose(tpms.cell_size, (1.0, 1.0, 0.5))
+    expected_cell_size = (1.0, 1.0, 0.5)
+    assert np.allclose(tpms.cell_size, expected_cell_size)
 
 
 @pytest.mark.parametrize("kwarg", [{"cell_size": 0.5}, {"repeat_cell": 2}])

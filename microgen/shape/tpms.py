@@ -774,18 +774,18 @@ class Infill(Tpms):
         """
         self.obj = obj
         bounds = np.array(obj.bounds)
-        dim = bounds[1::2] - bounds[::2]
+        obj_dim = bounds[1::2] - bounds[::2]  # [dim_x, dim_y, dim_z]
 
         if cell_size is not None and repeat_cell is not None:
             raise ValueError(
                 "cell_size and repeat_cell cannot be given at the same time, one is computed from the other."
             )
         if cell_size is not None:
-            repeat_cell = np.ceil(dim / cell_size).astype(int)
+            repeat_cell = np.ceil(obj_dim / cell_size).astype(int)
         elif repeat_cell is not None:
-            cell_size = dim / repeat_cell
+            cell_size = obj_dim / repeat_cell
 
-        if np.any(cell_size > dim):
+        if np.any(cell_size > obj_dim):
             raise ValueError("cell_size must be lower than the object dimensions")
 
         self._init_cell_parameters(cell_size, repeat_cell)
