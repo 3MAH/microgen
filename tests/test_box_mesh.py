@@ -135,7 +135,6 @@ def expanded_box_mesh_z() -> Tuple[BoxMesh, Rve]:
     expanded_mesh[:, 2] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
     rve = Rve(dim=(1, 1, 3), center=(0.5, 0.5, 1.5))
-    print(expanded_mesh)
     return (mesh, rve)
 
 
@@ -224,8 +223,6 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
     expected_number_of_cells = 48
     boundary, boundary_cells_index = box_mesh_to_test.boundary_elements(rve)
-    print(boundary)
-    print(boundary_cells_index)
     bool_check_triangle_on_boundary_list = []
     for triangle_index in boundary_cells_index:
         bool_check_triangle_on_boundary_list.append(
