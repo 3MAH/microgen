@@ -7,7 +7,7 @@ Capsule (:mod:`microgen.shape.capsule`)
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import pyvista as pv
@@ -15,6 +15,9 @@ import pyvista as pv
 from microgen.operations import rotateEuler, rotatePvEuler
 
 from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerate
 
 
 class Capsule(BasicGeometry):
@@ -41,7 +44,7 @@ class Capsule(BasicGeometry):
         self.height = height
         self.radius = radius
 
-    def generate(self: Capsule, **_: dict[str, Any]) -> cq.Shape:
+    def generate(self: Capsule, **_: KwargsGenerate) -> cq.Shape:
         """Generate a capsule CAD shape using the given parameters."""
         cylinder = cq.Solid.makeCylinder(
             self.radius,
@@ -87,7 +90,7 @@ class Capsule(BasicGeometry):
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Generate a capsule VTK shape using the given parameters."""
         cylinder = pv.Cylinder(
@@ -123,7 +126,7 @@ class Capsule(BasicGeometry):
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(

@@ -7,13 +7,16 @@ Sphere (:mod:`microgen.shape.sphere`)
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
 import pyvista as pv
 
 from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerate
 
 
 class Sphere(BasicGeometry):
@@ -37,7 +40,7 @@ class Sphere(BasicGeometry):
         super().__init__(shape="Sphere", center=center)
         self.radius = radius
 
-    def generate(self: Sphere, **_: dict[str, Any]) -> cq.Shape:
+    def generate(self: Sphere, **_: KwargsGenerate) -> cq.Shape:
         """Generate a sphere CAD shape using the given parameters."""
         # Temporary workaround bug fix for OpenCascade bug using a random
         # direct parameter for cq.Workplane().sphere() method
@@ -55,7 +58,7 @@ class Sphere(BasicGeometry):
         self: Sphere,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Generate a sphere VTK shape using the given parameters."""
         return pv.Sphere(
@@ -69,7 +72,7 @@ class Sphere(BasicGeometry):
         self: Sphere,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Deprecated method. Use generate_vtk instead."""  # noqa: D401
         return self.generate_vtk(theta_resolution, phi_resolution)

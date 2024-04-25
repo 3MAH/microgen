@@ -7,7 +7,7 @@ Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import cadquery as cq
 import numpy as np
@@ -16,6 +16,9 @@ import pyvista as pv
 from microgen.operations import rotateEuler, rotatePvEuler
 
 from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerate
 
 
 class ExtrudedPolygon(BasicGeometry):
@@ -64,7 +67,7 @@ class ExtrudedPolygon(BasicGeometry):
             self.list_corners = list_corners
         self.height = height
 
-    def generate(self: ExtrudedPolygon, **_: dict[str, Any]) -> cq.Shape:
+    def generate(self: ExtrudedPolygon, **_: KwargsGenerate) -> cq.Shape:
         """Generate an extruded polygon CAD shape using the given parameters."""
         poly = (
             cq.Workplane("YZ")
@@ -84,7 +87,7 @@ class ExtrudedPolygon(BasicGeometry):
         )
         return cq.Shape(poly.val().wrapped)
 
-    def generate_vtk(self: ExtrudedPolygon, **_: dict[str, Any]) -> pv.PolyData:
+    def generate_vtk(self: ExtrudedPolygon, **_: KwargsGenerate) -> pv.PolyData:
         """Generate an extruded polygon VTK shape using the given parameters."""
         vertices = [
             [
@@ -111,6 +114,6 @@ class ExtrudedPolygon(BasicGeometry):
             self.orientation[2],
         )
 
-    def generateVtk(self: ExtrudedPolygon, **_: dict[str, Any]) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: ExtrudedPolygon, **_: KwargsGenerate) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk()

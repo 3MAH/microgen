@@ -19,7 +19,7 @@ Shape (:mod:`microgen.shape`)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
 from . import surface_functions
 from .box import Box
@@ -34,10 +34,22 @@ from .tpms import CylindricalTpms, SphericalTpms, Tpms
 if TYPE_CHECKING:
     from .basic_geometry import BasicGeometry
 
+    TpmsPart = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
+
+    KwargsGenerate = int | TpmsPart
+
+    GeometryParameter = (
+        float
+        | Sequence[float]
+        | tuple[float, float, float]
+        | Sequence[tuple[float, float]]
+        | Callable
+    )
+
 
 def new_geometry(  # noqa: PLR0911
     shape: str,
-    param_geom: dict[str, Any],
+    param_geom: dict[str, GeometryParameter],
     center: tuple[float, float, float] = (0, 0, 0),
     orientation: tuple[float, float, float] = (0, 0, 0),
 ) -> BasicGeometry:

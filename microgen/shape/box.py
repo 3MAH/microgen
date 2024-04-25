@@ -8,7 +8,7 @@ Box (:mod:`microgen.shape.box`)
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import pyvista as pv
@@ -16,6 +16,9 @@ import pyvista as pv
 from microgen.operations import rotateEuler, rotatePvEuler
 
 from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerate
 
 
 class Box(BasicGeometry):
@@ -57,7 +60,7 @@ class Box(BasicGeometry):
             self.dim = (dim_x, dim_y, dim_z)
         self.dim = dim
 
-    def generate(self: Box, **_: dict[str, Any]) -> cq.Shape:
+    def generate(self: Box, **_: KwargsGenerate) -> cq.Shape:
         """Generate a box CAD shape using the given parameters."""
         box = cq.Workplane().box(*self.dim).translate(self.center)
         box = rotateEuler(
@@ -72,7 +75,7 @@ class Box(BasicGeometry):
     def generate_vtk(
         self: Box,
         level: int = 0,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Generate a box VTK shape using the given parameters."""
         box = pv.Box(
@@ -95,6 +98,6 @@ class Box(BasicGeometry):
             self.orientation[2],
         )
 
-    def generateVtk(self: Box, **kwargs: dict[str, Any]) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: Box, **kwargs: KwargsGenerate) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(**kwargs)

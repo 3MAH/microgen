@@ -15,7 +15,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Literal, Sequence
+from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
 import cadquery as cq
 import numpy as np
@@ -25,6 +25,9 @@ from scipy.optimize import root_scalar
 from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 
 from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerate, TpmsPart
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
@@ -130,7 +133,7 @@ class Tpms(BasicGeometry):
     def offset_from_density(
         cls: type[Tpms],
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
-        part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+        part_type: TpmsPart,
         density: float,
         resolution: int = 20,
     ) -> float:
@@ -435,7 +438,7 @@ class Tpms(BasicGeometry):
 
     def _extract_part_from_box(
         self: Tpms,
-        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
+        type_part: TpmsPart,
         eps: float,
         smoothing: int,
     ) -> cq.Shape:
@@ -467,7 +470,7 @@ class Tpms(BasicGeometry):
 
     def _check_offset(
         self: Tpms,
-        type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
+        type_part: TpmsPart,
     ) -> None:
         if "skeletal" in type_part:
             if (
@@ -494,15 +497,10 @@ class Tpms(BasicGeometry):
 
     def generate(
         self: Tpms,
-        type_part: Literal[
-            "sheet",
-            "lower skeletal",
-            "upper skeletal",
-            "surface",
-        ] = "sheet",
+        type_part: TpmsPart = "sheet",
         smoothing: int = 0,
         algo_resolution: int | None = None,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> cq.Shape:
         """Generate CadQuery Shape object of the required TPMS part.
 
@@ -553,14 +551,9 @@ class Tpms(BasicGeometry):
 
     def generate_vtk(
         self: Tpms,
-        type_part: Literal[
-            "sheet",
-            "lower skeletal",
-            "upper skeletal",
-            "surface",
-        ] = "sheet",
+        type_part: TpmsPart = "sheet",
         algo_resolution: int | None = None,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Generate VTK PolyData object of the required TPMS part.
 
@@ -593,14 +586,9 @@ class Tpms(BasicGeometry):
 
     def generateVtk(  # noqa: N802
         self: Tpms,
-        type_part: Literal[
-            "sheet",
-            "lower skeletal",
-            "upper skeletal",
-            "surface",
-        ] = "sheet",
+        type_part: TpmsPart = "sheet",
         algo_resolution: int | None = None,
-        **_: dict[str, Any],
+        **_: KwargsGenerate,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(

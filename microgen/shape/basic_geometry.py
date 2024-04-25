@@ -7,11 +7,13 @@ Basic Geometry (:mod:`microgen.shape.basic_geometry`)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import cadquery as cq
     import pyvista as pv
+
+    from microgen.shape import KwargsGenerate
 
 
 class BasicGeometry:
@@ -40,20 +42,20 @@ class BasicGeometry:
         self.geometry: cq.Shape | None = None
         BasicGeometry.num_instances += 1
 
-    def generate(self: BasicGeometry, **_: dict[str, Any]) -> cq.Shape:
+    def generate(self: BasicGeometry, **_: KwargsGenerate) -> cq.Shape:
         """Generate the CAD shape.
 
         :return: cq.Shape
         """
         raise NotImplementedError
 
-    def generate_vtk(self: BasicGeometry, **_: dict[str, Any]) -> pv.PolyData:
+    def generate_vtk(self: BasicGeometry, **_: KwargsGenerate) -> pv.PolyData:
         """Generate the vtk mesh of the shape.
 
         :return: pv.PolyData
         """
         raise NotImplementedError
 
-    def generateVtk(self: BasicGeometry, **kwargs: dict[str, Any]) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: BasicGeometry, **_: KwargsGenerate) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use generate_vtk instead."""  # noqa: D401
-        return self.generate_vtk(**kwargs)
+        return self.generate_vtk()

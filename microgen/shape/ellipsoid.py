@@ -8,7 +8,7 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
@@ -17,6 +17,9 @@ import pyvista as pv
 from microgen.operations import rotateEuler, rotatePvEuler
 
 from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerate
 
 
 class Ellipsoid(BasicGeometry):
@@ -63,7 +66,7 @@ class Ellipsoid(BasicGeometry):
 
         self.radii = radii
 
-    def generate(self: Ellipsoid, **_: dict[str, Any]) -> cq.Shape:
+    def generate(self: Ellipsoid, **_: KwargsGenerate) -> cq.Shape:
         """Generate an ellipsoid CAD shape using the given parameters."""
         transform_mat = cq.Matrix(
             [
@@ -83,7 +86,7 @@ class Ellipsoid(BasicGeometry):
             self.orientation[2],
         )
 
-    def generate_vtk(self: Ellipsoid, **_: dict[str, Any]) -> pv.PolyData:
+    def generate_vtk(self: Ellipsoid, **_: KwargsGenerate) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""
         transform_matrix = np.array(
             [
@@ -103,6 +106,6 @@ class Ellipsoid(BasicGeometry):
             self.orientation[2],
         )
 
-    def generateVtk(self: Ellipsoid, **kwargs: dict[str, Any]) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: Ellipsoid, **_: KwargsGenerate) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk(**kwargs)
+        return self.generate_vtk()
