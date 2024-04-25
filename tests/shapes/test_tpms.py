@@ -10,6 +10,8 @@ import pytest
 
 import microgen
 
+TEST_DUMMY_OFFSET = 0.5
+
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
 def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
@@ -238,7 +240,7 @@ def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error():
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DUMMY_OFFSET,
     )
     with pytest.raises(ValueError):
         tpms.generateVtk(type_part="fake")
@@ -403,7 +405,7 @@ def test_tpms_center_and_orientation_must_correspond():
 
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DUMMY_OFFSET,
         center=center,
         orientation=orientation,
     )
@@ -412,7 +414,7 @@ def test_tpms_center_and_orientation_must_correspond():
 
     no_orientation = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DUMMY_OFFSET,
         center=center,
     )
 
@@ -432,9 +434,9 @@ def test_tpms_center_and_orientation_must_correspond():
 def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
     """Test if the repeat cell is computed correctly."""
     tpms = microgen.Infill(
-        obj=microgen.Box().generateVtk(),
+        obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DUMMY_OFFSET,
         cell_size=(0.5, 1.0, 1.0),
     )
 
@@ -443,11 +445,10 @@ def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
 
 def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
     """Test if the cell size is computed correctly."""
-    dummy_offset = 0.5
     tpms = microgen.Infill(
-        obj=microgen.Box().generateVtk(),
+        obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
         surface_function=microgen.surface_functions.gyroid,
-        offset=dummy_offset,
+        offset=TEST_DUMMY_OFFSET,
         repeat_cell=(1, 1, 2),
     )
 
@@ -462,7 +463,7 @@ def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
     tpms = microgen.Infill(
         obj=obj,
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DUMMY_OFFSET,
         **kwarg,
     )
 
@@ -480,9 +481,9 @@ def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
     """Test if the cell size is computed correctly."""
     with pytest.raises(ValueError):
         microgen.Infill(
-            obj=microgen.Box().generateVtk(),
+            obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
             surface_function=microgen.surface_functions.gyroid,
-            offset=0.5,
+            offset=TEST_DUMMY_OFFSET,
             repeat_cell=(2, 1, 2),
             cell_size=(0.5, 1.0, 0.5),
         )
@@ -490,10 +491,11 @@ def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
 
 def test_infill_raises_error_when_cell_size_is_too_large() -> None:
     """Test if the cell size is too large compared to the given object size."""
+    too_large_cell_size = (1.0, 2.0, 1.0)
     with pytest.raises(ValueError):
         microgen.Infill(
-            obj=microgen.Box().generateVtk(),
+            obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
             surface_function=microgen.surface_functions.gyroid,
-            offset=0.5,
-            cell_size=(1.0, 2.0, 1.0),
+            offset=TEST_DUMMY_OFFSET,
+            cell_size=too_large_cell_size,
         )
