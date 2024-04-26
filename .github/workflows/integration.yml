@@ -29,6 +29,7 @@ jobs:
           condarc: |
             channels:
               - set3mah
+              - conda-forge
           create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery mmg
           init-shell: powershell bash
           download-micromamba: true
