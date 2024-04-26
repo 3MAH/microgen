@@ -34,7 +34,7 @@ jobs:
         run: |
           pip install --upgrade pip 
           # pip install uv
-          pip install --system microgen@. pytest pytest-xdist
+          pip install microgen@. pytest pytest-xdist
 
       - name: Test
         run: pytest tests --numprocesses=auto
