@@ -25,7 +25,6 @@ from scipy.optimize import root_scalar
 from microgen.shape import BasicGeometry
 
 from ..operations import fuseShapes, rotateEuler, rotatePvEuler
-from .tpms_grading import OffsetGrading
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
@@ -58,7 +57,7 @@ class Tpms(BasicGeometry):
     def __init__(
         self,
         surface_function: Field,
-        offset: float | OffsetGrading | Field = 0.0,
+        offset: float | Field = 0.0,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -303,8 +302,6 @@ class Tpms(BasicGeometry):
     def _update_offset(self, offset: float | Callable) -> None:
         if isinstance(offset, float):
             self.offset = offset
-        elif isinstance(offset, OffsetGrading):
-            self.offset = offset.compute_offset(self.grid)
         elif isinstance(offset, Callable):
             self.offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
 
@@ -754,7 +751,7 @@ class Infill(Tpms):
         self: Infill,
         obj: pv.PolyData,
         surface_function: Field,
-        offset: float | OffsetGrading | Field = 0.0,
+        offset: float | Field = 0.0,
         cell_size: float | Sequence[float] | npt.NDArray[np.float64] | None = None,
         repeat_cell: int | Sequence[int] | npt.NDArray[np.int8] | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
