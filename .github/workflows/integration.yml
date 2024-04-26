@@ -46,7 +46,7 @@ jobs:
       - name: Examples on Linux and macOS with MMG
         if: runner.os != 'Windows'
         run: |
-          conda install -c set3mah mmg
+          mamba install -c set3mah mmg
           python examples/run_examples.py -n auto
         shell: micromamba-shell {0}
 
