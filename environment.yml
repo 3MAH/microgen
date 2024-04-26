@@ -8,7 +8,6 @@ dependencies:
   - scipy
   - python-gmsh
   - meshio
-  # - occt
   - cadquery
-  # - mmg
+  - mmg
 #  - neper
