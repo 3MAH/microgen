@@ -35,7 +35,7 @@ jobs:
           pip install --upgrade pip
           # pip install uv
           # uv pip install --system microgen@. pytest pytest-xdist
-          pip install . pytest pytest-xdist cadquery-ocp
+          pip install . pytest pytest-xdist
 
       - name: Test
         run: pytest tests --numprocesses=auto
