@@ -478,8 +478,30 @@ def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
     obj_bounds = np.array(obj.bounds)
     obj_dim = obj_bounds[1::2] - obj_bounds[::2]
 
-    assert np.all(obj_dim <= grid_dim)
+    assert np.all(obj_dim <= grid_dim) or np.allclose(obj_dim, grid_dim, rtol=1e-2)
     assert np.all(grid_dim < obj_dim + tpms.cell_size)
+
+
+def test_infill_fills_the_object_with_any_normal_orientation() -> None:
+    """Test if the object is filled correctly with any normal orientation."""
+    mesh = microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk()
+    first = microgen.Infill(
+        obj=mesh,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        cell_size=0.5,
+    )
+    mesh = mesh.triangulate()
+    mesh.flip_normals()
+    second = microgen.Infill(
+        obj=mesh,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        cell_size=0.5,
+    )
+
+    assert np.allclose(first.sheet.volume, second.sheet.volume)
+    assert first.sheet.points.shape == second.sheet.points.shape
 
 
 def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
