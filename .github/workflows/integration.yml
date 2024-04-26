@@ -23,14 +23,9 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           generate-run-shell: true
-          micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
+          micromamba-version: "1.5.8-0" # any version from https://github.com/mamba-org/micromamba-releases
           environment-file: environment.yml
-          # environment-name: microgen
-          # condarc: |
-          #   channels:
-          #     - set3mah
-          #     - conda-forge
-          create-args: python=${{ matrix.python-version }} # pyvista scipy python-gmsh meshio occt cadquery mmg
+          create-args: python=${{ matrix.python-version }}
           init-shell: powershell bash
           download-micromamba: true
           cache-environment: false
