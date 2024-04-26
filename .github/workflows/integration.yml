@@ -26,7 +26,10 @@ jobs:
           micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
           # environment-file: environment.yml
           environment-name: microgen
-          create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery
+          condarc: |
+            channels:
+              - set3mah
+          create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery mmg
           init-shell: powershell bash
           download-micromamba: true
           cache-environment: false
@@ -45,9 +48,7 @@ jobs:
 
       - name: Examples on Linux and macOS with MMG
         if: runner.os != 'Windows'
-        run: |
-          mamba install -c set3mah mmg
-          python examples/run_examples.py -n auto
+        run: python examples/run_examples.py -n auto
         shell: micromamba-shell {0}
 
       - name: Install microgen for Windows
