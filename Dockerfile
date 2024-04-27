@@ -20,7 +20,7 @@ COPY . ${HOME}
 WORKDIR $HOME
 
 RUN pip install uv
-RUN uv pip install --system microgen[jupyer]@.
+RUN uv pip install --system microgen[jupyter]@.
 RUN uv pip uninstall --system vtk -y
 RUN uv pip install --system --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
