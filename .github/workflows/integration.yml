@@ -23,10 +23,9 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           generate-run-shell: true
-          micromamba-version: "1.5.7-0" # any version from https://github.com/mamba-org/micromamba-releases
-          # environment-file: environment.yml
-          environment-name: microgen
-          create-args: python=${{ matrix.python-version }} pyvista scipy python-gmsh meshio occt cadquery
+          micromamba-version: "1.5.8-0" # any version from https://github.com/mamba-org/micromamba-releases
+          environment-file: environment.yml
+          create-args: python=${{ matrix.python-version }}
           init-shell: powershell bash
           download-micromamba: true
           cache-environment: false
@@ -43,6 +42,11 @@ jobs:
           uv pip install --system microgen@. --no-deps
         shell: micromamba-shell {0}
 
+      - name: Examples on Linux and macOS with MMG
+        if: runner.os != 'Windows'
+        run: python examples/run_examples.py -n auto
+        shell: micromamba-shell {0}
+
       - name: Install microgen for Windows
         if: runner.os == 'Windows'
         run: |
@@ -50,19 +54,7 @@ jobs:
           uv pip install --system microgen@. --no-deps
         shell: pwsh
 
-      - name: Examples on Linux
-        if: runner.os == 'Linux'
-        run: python examples/run_examples.py --no-mmg -n auto
-        shell: micromamba-shell {0}
-
-      - name: Examples on macOS
-        if: runner.os == 'macOS'
-        run: |
-          conda install -c set3mah mmg
-          python examples/run_examples.py -n auto
-        shell: micromamba-shell {0}
-
-      - name: Examples on Windows
+      - name: Examples on Windows without MMG
         if: runner.os == 'Windows'
         run: python examples/run_examples.py --no-mmg -n auto
         shell: pwsh

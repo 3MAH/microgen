@@ -50,7 +50,8 @@ def launch_test_examples(
     if n_procs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
-            process = subprocess.run([sys.executable, example], check=True)
+            cmd = [sys.executable, example]
+            process = subprocess.run(cmd, check=True)
             if process.returncode != 0:
                 failed.append(example)
 
@@ -60,11 +61,8 @@ def launch_test_examples(
         results: Dict[str, multiprocessing.pool.AsyncResult] = {}
         with multiprocessing.Pool(processes=n_procs) as pool:
             for example in examples:
-                result = pool.apply_async(
-                    subprocess.run,
-                    ([sys.executable, example],),
-                    {"check": True},
-                )
+                cmd = [sys.executable, example]
+                result = pool.apply_async(subprocess.run, (cmd,), {"check": True})
                 results[example] = result
 
             pool.close()
@@ -91,7 +89,7 @@ def display_results(examples: List[str], failed: List[str]):
             Successful: {len(examples) - len(failed)}/ {len(examples)}\
                 {RESET}"
     )
-    if len(failed) > 0:
+    if failed:
         error_str = f"{UNDERLINE}{BOLD}{RED}Failed: {len(failed)}{RESET}\n"
         for example in failed:
             error_str += f"{RED}X\t{example}{RESET}\n"

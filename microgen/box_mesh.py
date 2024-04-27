@@ -661,12 +661,12 @@ class BoxMesh(SingleMesh):
             np.array([rve.center[0], rve.center[1], rve.z_max]),
         ]
         size_planes = [
-            2.0 * rve.dx,
-            2.0 * rve.dx,
-            2.0 * rve.dy,
-            2.0 * rve.dy,
-            2.0 * rve.dz,
-            2.0 * rve.dz,
+            2.0 * np.max([rve.dim[1], rve.dim[2]]),
+            2.0 * np.max([rve.dim[1], rve.dim[2]]),
+            2.0 * np.max([rve.dim[0], rve.dim[2]]),
+            2.0 * np.max([rve.dim[0], rve.dim[2]]),
+            2.0 * np.max([rve.dim[0], rve.dim[1]]),
+            2.0 * np.max([rve.dim[0], rve.dim[1]]),
         ]
 
         surface = self.surface
