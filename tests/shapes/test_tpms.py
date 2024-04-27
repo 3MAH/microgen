@@ -10,6 +10,8 @@ import pytest
 
 import microgen
 
+TEST_DEFAULT_OFFSET = 0.5
+
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
 def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
@@ -53,7 +55,7 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
     """Test for non-default cell size and repeat cell values."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.3,
+        offset=TEST_DEFAULT_OFFSET,
         cell_size=(0.5, 2.0, 1.25),
         repeat_cell=(2, 1, 2),
     )
@@ -65,7 +67,8 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
 
 
 @pytest.mark.parametrize(
-    "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
+    "surface",
+    [func[0] for func in getmembers(microgen.surface_functions, isfunction)],
 )
 @pytest.mark.parametrize("repeat_cell", [2, (2, 1, 3)])
 @pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
@@ -78,7 +81,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
     # Arrange
     tpms = microgen.Tpms(
         surface_function=getattr(microgen.surface_functions, surface),
-        offset=1.0,
+        offset=TEST_DEFAULT_OFFSET,
         repeat_cell=repeat_cell,
         cell_size=cell_size,
     )
@@ -94,7 +97,8 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 
 
 @pytest.mark.parametrize(
-    "surface", [func[0] for func in getmembers(microgen.surface_functions, isfunction)]
+    "surface",
+    [func[0] for func in getmembers(microgen.surface_functions, isfunction)],
 )
 @pytest.mark.parametrize("density", [0.05, 0.5, 0.99, 1.0])
 def test_tpms_given_density_must_match_computed_density(
@@ -104,7 +108,8 @@ def test_tpms_given_density_must_match_computed_density(
     """Test for the density of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=getattr(microgen.surface_functions, surface), density=density
+        surface_function=getattr(microgen.surface_functions, surface),
+        density=density,
     )
 
     # Act
@@ -151,14 +156,14 @@ def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond(
     tpms_repeat_zero = coord_sys_tpms(
         radius=1.0,
         surface_function=microgen.surface_functions.gyroid,
-        offset=1.0,
+        offset=TEST_DEFAULT_OFFSET,
         repeat_cell=repeat_cell_zero,
     )
 
     tpms_repeat_max = coord_sys_tpms(
         radius=1.0,
         surface_function=microgen.surface_functions.gyroid,
-        offset=1.0,
+        offset=TEST_DEFAULT_OFFSET,
         repeat_cell=repeat_cell_max,
     )
 
@@ -188,7 +193,7 @@ def test_tpms_given_generate_surface_must_not_be_empty():
     """Test for the surface of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=1.0,
+        offset=TEST_DEFAULT_OFFSET,
         density=0.2,
     )
 
@@ -238,7 +243,7 @@ def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error():
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DEFAULT_OFFSET,
     )
     with pytest.raises(ValueError):
         tpms.generateVtk(type_part="fake")
@@ -298,7 +303,9 @@ def test_tpms_given_100_percent_density_must_return_a_cube(
     )
 
     assert np.isclose(
-        tpms.generateVtk(type_part=type_part).volume, tpms.grid.volume, rtol=1.0e-9
+        tpms.generateVtk(type_part=type_part).volume,
+        tpms.grid.volume,
+        rtol=1.0e-9,
     )
 
 
@@ -403,7 +410,7 @@ def test_tpms_center_and_orientation_must_correspond():
 
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DEFAULT_OFFSET,
         center=center,
         orientation=orientation,
     )
@@ -412,7 +419,7 @@ def test_tpms_center_and_orientation_must_correspond():
 
     no_orientation = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
-        offset=0.5,
+        offset=TEST_DEFAULT_OFFSET,
         center=center,
     )
 
@@ -427,3 +434,95 @@ def test_tpms_center_and_orientation_must_correspond():
         vtk_sheet.bounds,
         no_orientation.generateVtk(type_part="sheet").bounds,
     )
+
+
+def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
+    """Test if the repeat cell is computed correctly."""
+    tpms = microgen.Infill(
+        obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        cell_size=(0.5, 1.0, 1.0),
+    )
+    expected_repeat_cell = (2, 1, 1)
+    assert np.allclose(tpms.repeat_cell, expected_repeat_cell)
+
+
+def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
+    """Test if the cell size is computed correctly."""
+    tpms = microgen.Infill(
+        obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        repeat_cell=(1, 1, 2),
+    )
+
+    expected_cell_size = (1.0, 1.0, 0.5)
+    assert np.allclose(tpms.cell_size, expected_cell_size)
+
+
+@pytest.mark.parametrize("kwarg", [{"cell_size": 0.5}, {"repeat_cell": 2}])
+def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
+    """Test if the grid bounds match the object bounds."""
+    obj = microgen.Ellipsoid(a_x=1.0, a_y=2.0 / 3.0, a_z=0.5).generateVtk()
+    tpms = microgen.Infill(
+        obj=obj,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        **kwarg,
+    )
+
+    grid_bounds = np.array(tpms.grid.bounds)
+    grid_dim = grid_bounds[1::2] - grid_bounds[::2]
+
+    obj_bounds = np.array(obj.bounds)
+    obj_dim = obj_bounds[1::2] - obj_bounds[::2]
+
+    assert np.all(obj_dim <= grid_dim) or np.allclose(obj_dim, grid_dim, rtol=1e-2)
+    assert np.all(grid_dim < obj_dim + tpms.cell_size)
+
+
+def test_infill_fills_the_object_with_any_normal_orientation() -> None:
+    """Test if the object is filled correctly with any normal orientation."""
+    mesh = microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk()
+    first = microgen.Infill(
+        obj=mesh,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        cell_size=0.5,
+    )
+    mesh = mesh.triangulate()
+    mesh.flip_normals()
+    second = microgen.Infill(
+        obj=mesh,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        cell_size=0.5,
+    )
+
+    assert np.allclose(first.sheet.volume, second.sheet.volume)
+    assert first.sheet.points.shape == second.sheet.points.shape
+
+
+def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
+    """Test if the cell size is computed correctly."""
+    with pytest.raises(ValueError):
+        microgen.Infill(
+            obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
+            surface_function=microgen.surface_functions.gyroid,
+            offset=TEST_DEFAULT_OFFSET,
+            repeat_cell=(2, 1, 2),
+            cell_size=(0.5, 1.0, 0.5),
+        )
+
+
+def test_infill_raises_error_when_cell_size_is_too_large() -> None:
+    """Test if the cell size is too large compared to the given object size."""
+    too_large_cell_size = (1.0, 2.0, 1.0)
+    with pytest.raises(ValueError):
+        microgen.Infill(
+            obj=microgen.Box(dim_x=1.0, dim_y=1.0, dim_z=1.0).generateVtk(),
+            surface_function=microgen.surface_functions.gyroid,
+            offset=TEST_DEFAULT_OFFSET,
+            cell_size=too_large_cell_size,
+        )

@@ -46,7 +46,7 @@ from .sphere import Sphere
 #     schwarzP,
 #     split_p,
 # )
-from .tpms import CylindricalTpms, SphericalTpms, Tpms
+from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 
 
 def newGeometry(
@@ -127,6 +127,7 @@ __all__ = [
     "Cylinder",
     "Ellipsoid",
     "ExtrudedPolygon",
+    "Infill",
     "Polyhedron",
     "SphericalTpms",
     "Sphere",
