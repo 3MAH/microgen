@@ -12,7 +12,7 @@ tpms = Tpms(
 )
 
 infill = Infill(
-    obj=tpms.generateVtk(),
+    obj=tpms.sheet.extract_surface(),
     surface_function=gyroid,
     cell_size=0.1,
     offset=0.5,
