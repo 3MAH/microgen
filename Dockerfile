@@ -20,9 +20,9 @@ COPY . ${HOME}
 WORKDIR $HOME
 
 RUN pip install uv
-RUN uv pip install .[jupyter]
-RUN uv pip uninstall vtk -y
-RUN uv pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
+RUN uv pip install --system microgen[jupyer]@.
+RUN uv pip uninstall --system vtk -y
+RUN uv pip install --system --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
 # RUN mamba install -c set3mah mmg -y
 
