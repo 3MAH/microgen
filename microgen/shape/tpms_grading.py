@@ -77,11 +77,7 @@ class NormedDistance(OffsetGrading):
             The offset computed based on the implicit distance.
 
         """
-        obj = self.obj.compute_normals(
-            cell_normals=False,
-            auto_orient_normals=True,
-        )
-        distance = grid.compute_implicit_distance(obj)["implicit_distance"]
+        distance = grid.compute_implicit_distance(self.obj)["implicit_distance"]
 
         normed_distance = distance / distance.max()
         normed_distance[normed_distance < 0] = 0
