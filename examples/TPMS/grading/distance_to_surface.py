@@ -28,4 +28,4 @@ pl.add_mesh(
 )
 pl.add_axes()
 pl.view_xy()
-pl.show()
+# pl.show()
