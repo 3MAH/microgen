@@ -47,6 +47,7 @@ from .sphere import Sphere
 #     split_p,
 # )
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
+from .tpms_grading import NormedDistance
 
 
 def newGeometry(
@@ -128,6 +129,7 @@ __all__ = [
     "Ellipsoid",
     "ExtrudedPolygon",
     "Infill",
+    "NormedDistance",
     "Polyhedron",
     "SphericalTpms",
     "Sphere",
