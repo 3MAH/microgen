@@ -44,7 +44,7 @@ class NormedDistance(OffsetGrading):
         obj : pv.PolyData
             The object to compute the implicit distance to.
         boundary_offset : float
-            The offset apllied on the boundary of the object.
+            The offset applied on the boundary of the object.
         furthest_offset : float
             The offset applied at the furthest point from the object.
         boundary_weight : float, optional
