@@ -683,7 +683,7 @@ class BoxMesh(SingleMesh):
                 [-tol, tol],
                 all_scalars=True,
                 scalars="implicit_distance",
-            )
+            ).extract_surface()
             boundary_elements = boundary_elements.append_polydata(surface_p)
 
         return boundary_elements, boundary_elements["CellIDs"]

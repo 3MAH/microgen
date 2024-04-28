@@ -10,7 +10,7 @@ data_dir = Path(__file__).parent / "data"
 Path.mkdir(data_dir, exist_ok=True)
 
 tpms = Tpms(surface_function=gyroid, offset=1.0, resolution=50)
-initial_gyroid = tpms.generateVtk(type_part="sheet")
+initial_gyroid = tpms.grid_sheet().triangulate()  # generateVtk(type_part="sheet")
 initial_gyroid.save(data_dir / "initial_gyroid_mesh.vtk")
 
 max_element_edge_length = 0.02
