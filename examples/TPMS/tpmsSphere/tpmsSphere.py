@@ -10,7 +10,7 @@ geometry = Tpms(
     repeat_cell=3,
     resolution=30,
 )
-shape = geometry.generateVtk(type_part="sheet").extract_surface()
+shape = geometry.generateVtk(type_part="sheet")
 shape.triangulate(inplace=True)
 shape.flip_normals()
 

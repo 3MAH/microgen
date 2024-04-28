@@ -168,11 +168,11 @@ class Tpms(BasicGeometry):
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
+        grid_part = getattr(temp_tpms, f"grid_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
             temp_tpms.offset = offset
-            return abs(polydata_func().volume)
+            return abs(grid_part().volume)
 
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
