@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import cadquery as cq
 import numpy as np
@@ -69,7 +69,7 @@ def _generate_cqcompound_octettruss(rve: Rve):
     radius = np.full_like(xc, 0.05)
 
     listPhases: List[Phase] = []
-    listPeriodicPhases: List[Phase] = []
+    list_periodic_phases: List[Phase] = []
     n = len(xc)
 
     for i in range(0, n):
@@ -84,13 +84,13 @@ def _generate_cqcompound_octettruss(rve: Rve):
 
     for phase_elem in listPhases:
         periodicPhase = periodic(phase=phase_elem, rve=rve)
-        listPeriodicPhases.append(periodicPhase)
+        list_periodic_phases.append(periodicPhase)
 
-    return listPeriodicPhases
+    return list_periodic_phases
 
 
 @pytest.fixture(scope="function")
-def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
+def box_homogeneous_unit(rve_unit: Rve) -> Tuple[cq.Shape, List[Phase], Rve]:
     shape = Box(
         center=rve_unit.center,
         orientation=(0.0, 0.0, 0.0),
@@ -103,7 +103,9 @@ def box_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 
 
 @pytest.fixture(scope="function")
-def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
+def box_homogeneous_double(
+    rve_double: Rve,
+) -> Tuple[cq.Shape, List[Phase], Rve]:
     shape = Box(
         center=rve_double.center,
         orientation=(0.0, 0.0, 0.0),
@@ -118,7 +120,7 @@ def box_homogeneous_double(rve_double: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def box_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, List[Phase]):
+) -> (cq.Shape, List[Phase], Rve):
     shape = Box(
         center=rve_double_centered.center,
         orientation=(0.0, 0.0, 0.0),
@@ -131,10 +133,12 @@ def box_homogeneous_double_centered(
 
 
 @pytest.fixture(scope="function")
-def octet_truss_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
-    listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
+def octet_truss_homogeneous_unit(
+    rve_unit: Rve,
+) -> Tuple[cq.Shape, List[Phase], Rve]:
+    list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
     merged = fuseShapes(
-        [phase.shape for phase in listPeriodicPhases], retain_edges=False
+        [phase.shape for phase in list_periodic_phases], retain_edges=False
     )
     listcqphases = [Phase(shape=merged)]
     return (merged, listcqphases, rve_unit)
@@ -143,19 +147,21 @@ def octet_truss_homogeneous_unit(rve_unit: Rve) -> (cq.Shape, List[Phase]):
 @pytest.fixture(scope="function")
 def octet_truss_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, List[Phase]):
-    listPeriodicPhases = _generate_cqcompound_octettruss(rve_double_centered)
+) -> Tuple[cq.Shape, List[Phase], Rve]:
+    list_periodic_phases = _generate_cqcompound_octettruss(rve_double_centered)
     merged = fuseShapes(
-        [phase.shape for phase in listPeriodicPhases], retain_edges=False
+        [phase.shape for phase in list_periodic_phases], retain_edges=False
     )
     listcqphases = [Phase(shape=merged)]
     return (merged, listcqphases, rve_double_centered)
 
 
 @pytest.fixture(scope="function")
-def octet_truss_heterogeneous(rve_unit: Rve) -> (cq.Compound, List[Phase]):
-    listPeriodicPhases = _generate_cqcompound_octettruss(rve_unit)
-    listcqphases = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
+def octet_truss_heterogeneous(
+    rve_unit: Rve,
+) -> Tuple[cq.Compound, List[Phase], Rve]:
+    list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
+    listcqphases = cutPhases(phaseList=list_periodic_phases, reverseOrder=False)
     return (
         cq.Compound.makeCompound([phase.shape for phase in listcqphases]),
         listcqphases,
@@ -175,7 +181,7 @@ def octet_truss_heterogeneous(rve_unit: Rve) -> (cq.Compound, List[Phase]):
     ],
 )
 def test_octettruss_mesh_must_be_periodic(
-    shape: Union[cq.Compound, cq.Shape],
+    shape: Tuple[Union[cq.Compound, cq.Shape], List[Phase], Rve],
     request,
     tmp_output_compound_filename: str,
     tmp_output_vtk_filename: str,

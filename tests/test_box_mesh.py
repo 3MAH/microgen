@@ -1,10 +1,11 @@
 import math as m
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
+from pytest import FixtureRequest
 
 from microgen import BoxMesh, Rve
 
@@ -103,15 +104,38 @@ def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
     return elements_dict
 
 
-@pytest.fixture(name="default_box_mesh", scope="function")
-def fixture_default_box_mesh() -> BoxMesh:
+@pytest.fixture(scope="function")
+def default_box_mesh() -> Tuple[BoxMesh, Rve]:
     mesh = BoxMesh(_box_mesh_points(), _box_mesh_elements())
+    rve = Rve(dim=(1, 1, 1), center=(0.5, 0.5, 0.5))
+    return (mesh, rve)
 
-    return mesh
+
+@pytest.fixture(scope="function")
+def expanded_box_mesh_x() -> Tuple[BoxMesh, Rve]:
+    expanded_mesh = _box_mesh_points()
+    expanded_mesh[:, 0] *= 3.0
+    mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
+    rve = Rve(dim=(3, 1, 1), center=(1.5, 0.5, 0.5))
+    return (mesh, rve)
 
 
-def _default_rve() -> Rve:
-    return Rve(center=(0.5, 0.5, 0.5))
+@pytest.fixture(scope="function")
+def expanded_box_mesh_y() -> Tuple[BoxMesh, Rve]:
+    expanded_mesh = _box_mesh_points()
+    expanded_mesh[:, 1] *= 3.0
+    mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
+    rve = Rve(dim=(1, 3, 1), center=(0.5, 1.5, 0.5))
+    return (mesh, rve)
+
+
+@pytest.fixture(scope="function")
+def expanded_box_mesh_z() -> Tuple[BoxMesh, Rve]:
+    expanded_mesh = _box_mesh_points()
+    expanded_mesh[:, 2] *= 3.0
+    mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
+    rve = Rve(dim=(1, 1, 3), center=(0.5, 0.5, 1.5))
+    return (mesh, rve)
 
 
 def _check_triangle_on_boundary(
@@ -134,41 +158,71 @@ def _check_triangle_on_boundary(
     return False
 
 
-def test_given_box_mesh__construct_must_find_center_corners_edges_faces_node_sets(
-    default_box_mesh,
+@pytest.mark.parametrize(
+    "box_mesh",
+    [
+        "default_box_mesh",
+        "expanded_box_mesh_x",
+        "expanded_box_mesh_y",
+        "expanded_box_mesh_z",
+    ],
+)
+def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(
+    box_mesh: BoxMesh, request: FixtureRequest
 ) -> None:
-    target_center: npt.NDArray[np.float_] = np.array([0.5, 0.5, 0.5])
+    box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
+    target_center: npt.NDArray[np.float_] = rve.center
     target_corners: List[int] = [0, 2, 6, 8, 18, 20, 24, 26]
     target_edges: List[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
     target_faces: List[int] = [4, 10, 12, 14, 16, 22]
 
-    box_mesh_corners = sorted(np.concatenate(list(default_box_mesh.corners.values())))
-    box_mesh_edges = sorted(np.concatenate(list(default_box_mesh.edges.values())))
-    box_mesh_faces = sorted(np.concatenate(list(default_box_mesh.faces.values())))
+    box_mesh_corners = sorted(np.concatenate(list(box_mesh_to_test.corners.values())))
+    box_mesh_edges = sorted(np.concatenate(list(box_mesh_to_test.edges.values())))
+    box_mesh_faces = sorted(np.concatenate(list(box_mesh_to_test.faces.values())))
 
     assert (
-        (default_box_mesh.center == target_center).all()
+        (box_mesh_to_test.center == target_center).all()
         and box_mesh_corners == target_corners
         and box_mesh_edges == target_edges
         and box_mesh_faces == target_faces
     )
 
 
-def test_given_box_mesh_rve_property_must_build_correct_rve(default_box_mesh) -> None:
-    target_rve = _default_rve()
-    test_rve = default_box_mesh.rve
+@pytest.mark.parametrize(
+    "box_mesh",
+    [
+        "default_box_mesh",
+        "expanded_box_mesh_x",
+        "expanded_box_mesh_y",
+        "expanded_box_mesh_z",
+    ],
+)
+def test_given_box_mesh_rve_property_must_build_correct_rve(
+    box_mesh: BoxMesh, request: FixtureRequest
+) -> None:
+    box_mesh_to_test, target_rve = request.getfixturevalue(box_mesh)
+    test_rve = box_mesh_to_test.rve
 
     assert np.all(test_rve.center == target_rve.center) and np.all(
         test_rve.dim == target_rve.dim
     )
 
 
+@pytest.mark.parametrize(
+    "box_mesh",
+    [
+        "default_box_mesh",
+        "expanded_box_mesh_x",
+        "expanded_box_mesh_y",
+        "expanded_box_mesh_z",
+    ],
+)
 def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_elements(
-    default_box_mesh,
+    box_mesh: BoxMesh, request: FixtureRequest
 ) -> None:
+    box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
     expected_number_of_cells = 48
-    rve = _default_rve()
-    boundary, boundary_cells_index = default_box_mesh.boundary_elements(rve)
+    boundary, boundary_cells_index = box_mesh_to_test.boundary_elements(rve)
     bool_check_triangle_on_boundary_list = []
     for triangle_index in boundary_cells_index:
         bool_check_triangle_on_boundary_list.append(
