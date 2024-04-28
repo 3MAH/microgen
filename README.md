@@ -39,7 +39,7 @@ pip install microgen
 With conda:
 
 ```bash
-conda install -c conda-forge -c set3mah microgen
+conda install -c conda-forge microgen
 ```
 
 -------------------------------------------------------------------------------------------------------
