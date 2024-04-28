@@ -31,7 +31,7 @@ def remesh_keeping_periodicity_for_fem(
 
 @overload
 def remesh_keeping_periodicity_for_fem(
-    input_mesh: pv.UnstructuredGrid,
+    input_mesh: pv.PolyData,
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
@@ -40,11 +40,11 @@ def remesh_keeping_periodicity_for_fem(
     hmax: Optional[float] = None,
     hmin: Optional[float] = None,
     hsiz: Optional[float] = None,
-) -> pv.UnstructuredGrid: ...
+) -> pv.PolyData: ...
 
 
 def remesh_keeping_periodicity_for_fem(
-    input_mesh: Union[BoxMesh, pv.UnstructuredGrid],
+    input_mesh: Union[BoxMesh, pv.PolyData],
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
@@ -53,11 +53,11 @@ def remesh_keeping_periodicity_for_fem(
     hmax: Optional[float] = None,
     hmin: Optional[float] = None,
     hsiz: Optional[float] = None,
-) -> Union[BoxMesh, pv.UnstructuredGrid]:
+) -> Union[BoxMesh, pv.PolyData]:
     """
     Remeshes a mesh using mmg while keeping periodicity
 
-    :param input_mesh: BoxMesh or pv.UnstructuredGrid mesh to be remeshed
+    :param input_mesh: BoxMesh or pv.PolyData mesh to be remeshed
     :param mesh_version: mesh file version (default: 2)
     :param dimension: mesh dimension (default: 3)
     :param tol: tolerance for periodicity check
@@ -71,14 +71,14 @@ def remesh_keeping_periodicity_for_fem(
     :param hmin: Minimal edge size
     :param hsiz: Build a constant size map of size hsiz
     """
-    if isinstance(input_mesh, pv.UnstructuredGrid):
+    if isinstance(input_mesh, pv.PolyData):
         nodes_coords = input_mesh.points
         input_box_mesh = BoxMesh.from_pyvista(input_mesh)
     elif isinstance(input_mesh, BoxMesh):
         nodes_coords = input_mesh.to_pyvista().points
         input_box_mesh = input_mesh
     else:
-        raise TypeError("Input mesh is neither a BoxMesh nor a pv.UnstructuredGrid")
+        raise TypeError("Input mesh is neither a BoxMesh nor a pv.PolyData")
 
     if not is_periodic(nodes_coords, tol, dimension):
         raise InputMeshNotPeriodicError("Input mesh is not periodic")
@@ -116,7 +116,7 @@ def remesh_keeping_periodicity_for_fem(
         raw_output_mesh_file.name, output_mesh_file.name, mesh_version, dimension
     )
 
-    output_mesh = pv.UnstructuredGrid(output_mesh_file.name)
+    output_mesh = pv.PolyData(output_mesh_file.name)
 
     if not is_periodic(output_mesh.points, tol, dimension):
         raise OutputMeshNotPeriodicError(
