@@ -427,3 +427,19 @@ def test_tpms_center_and_orientation_must_correspond():
         vtk_sheet.bounds,
         no_orientation.generateVtk(type_part="sheet").bounds,
     )
+
+
+@pytest.mark.parametrize("part_type", ["sheet", "lower skeletal", "upper skeletal"])
+def test_tpms_check_that_volume_has_changed_when_the_offset_is_updated(
+    part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+) -> None:
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+    )
+    first_part = tpms.generateVtk(type_part=part_type)
+
+    tpms.offset = 1.0
+    second_part = tpms.generateVtk(type_part=part_type)
+    assert not np.isclose(first_part.volume, second_part.volume)
