@@ -11,7 +11,6 @@ geometry = Tpms(
     resolution=30,
 )
 shape = geometry.generateVtk(type_part="sheet")
-shape.triangulate(inplace=True)
 shape.flip_normals()
 
 sphere = pv.Sphere(radius=1.45)

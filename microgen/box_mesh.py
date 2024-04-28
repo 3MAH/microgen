@@ -680,8 +680,10 @@ class BoxMesh(SingleMesh):
             )
             surface.compute_implicit_distance(plane, inplace=True)
             surface_p = surface.threshold(
-                [-tol, tol], all_scalars=True, scalars="implicit_distance"
-            ).extract_surface()
+                [-tol, tol],
+                all_scalars=True,
+                scalars="implicit_distance",
+            )
             boundary_elements = boundary_elements.append_polydata(surface_p)
 
         return boundary_elements, boundary_elements["CellIDs"]
@@ -735,8 +737,10 @@ class BoxMesh(SingleMesh):
             surface.compute_implicit_distance(plane, inplace=True)
 
             surface_p = surface.threshold(
-                [-tol, tol], all_scalars=True, scalars="implicit_distance"
-            ).extract_surface()
+                [-tol, tol],
+                all_scalars=True,
+                scalars="implicit_distance",
+            )
             list_cells_for_each_face.append(surface_p["CellIDs"])
 
             directions = np.tile(normals[i], (np.shape(face)[0], 1))
