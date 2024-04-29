@@ -8,7 +8,7 @@ version = "1.1.0"
 authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation and meshing"
 readme = "README.md"
-requires-python = ">=3.8, <3.12"
+requires-python = ">=3.8"
 keywords = ["microstructure", "lattice", "periodic", "TPMS", "mesh"]
 license = { text = "GPLv3" }
 classifiers = [
@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
@@ -30,7 +31,6 @@ dev = [
     'ruff',
     'black',
     'isort',
-    # "OCP-stubs@git+https://github.com/CadQuery/OCP-stubs.git",
     'pytest',
     'pytest-cov',
     'pytest-xdist',
