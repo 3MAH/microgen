@@ -784,10 +784,11 @@ class SphericalTpms(Tpms):
             rho * np.cos(theta),
         )
 
-      class Infill(Tpms):
+
+class Infill(Tpms):
     """Generate a TPMS infill inside a given object."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self: Infill,
         obj: pv.PolyData,
         surface_function: Field,
@@ -803,30 +804,32 @@ class SphericalTpms(Tpms):
         :param obj: object in which the infill is generated
         :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
-        :param cell_size: float or list of float for each dimension to set unit cell dimensions
-        :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
+        :param cell_size: float or list of float for each dimension to set\
+              unit cell dimensions
+        :param repeat_cell: integer or list of integers to repeat the geometry\
+              in each dimension
         :param phase_shift: phase shift of the tpms function \
             $f(x + \\phi_x, y + \\phi_y, z + \\phi_z) = 0$
-        :param resolution: unit cell resolution of the grid to compute tpms scalar fields
+        :param resolution: unit cell resolution of the grid to compute tpms scalar\
+              fields
         :param density: density percentage of the generated geometry (0 < density < 1) \
-            If density is given, the offset is automatically computed to fit the density \
-                (performance is slower than when using the offset)
+            If density is given, the offset is automatically computed to fit the\
+                  density (performance is slower than when using the offset)
         """
         self.obj = obj
         bounds = np.array(obj.bounds)
         obj_dim = bounds[1::2] - bounds[::2]  # [dim_x, dim_y, dim_z]
 
         if cell_size is not None and repeat_cell is not None:
-            raise ValueError(
-                "cell_size and repeat_cell cannot be given at the same time, one is computed from the other."
-            )
+            raise InfillCellSizeAndRepeatCellError
+
         if cell_size is not None:
             repeat_cell = np.ceil(obj_dim / cell_size).astype(int)
         elif repeat_cell is not None:
             cell_size = obj_dim / repeat_cell
 
         if np.any(cell_size > obj_dim):
-            raise ValueError("cell_size must be lower than the object dimensions")
+            raise CellSizeBiggerThanObjectError(cell_size, obj_dim)
 
         self._init_cell_parameters(cell_size, repeat_cell)
         super().__init__(
@@ -920,4 +923,28 @@ class OffsetRangeError(ValueError):
         """Initialize the error message."""
         self.message = f"offset must be greater than {offset_bounds[0]} to \
             generate '{part_type}' part and lower than {offset_bounds[1]}"
+        super().__init__(self.message)
+
+
+class InfillCellSizeAndRepeatCellError(ValueError):
+    """Raised when cell_size and repeat_cell are given at the same time."""
+
+    def __init__(self: InfillCellSizeAndRepeatCellError) -> None:
+        """Initialize the error message."""
+        self.message = "cell_size and repeat_cell cannot be given at the same time, \
+            one is computed from the other."
+        super().__init__(self.message)
+
+
+class CellSizeBiggerThanObjectError(ValueError):
+    """Raised when the cell size is bigger than the object dimensions."""
+
+    def __init__(
+        self: CellSizeBiggerThanObjectError,
+        cell_size: float | Sequence[float] | npt.NDArray[np.float64],
+        obj_dim: npt.NDArray[np.float64],
+    ) -> None:
+        """Initialize the error message."""
+        self.message = f"cell_size must be lower than the object dimensions.\
+            Given: {cell_size}, Object dimensions: {obj_dim}"
         super().__init__(self.message)

@@ -29,7 +29,7 @@ from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
 from .sphere import Sphere
-from .tpms import CylindricalTpms, SphericalTpms, Tpms
+from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 
 if TYPE_CHECKING:
     from .basic_geometry import BasicGeometry
