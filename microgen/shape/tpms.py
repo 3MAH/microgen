@@ -27,7 +27,7 @@ from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerate, TpmsPart
+    from microgen.shape import KwargsGenerateType, TpmsPartType
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
@@ -133,7 +133,7 @@ class Tpms(BasicGeometry):
     def offset_from_density(
         cls: type[Tpms],
         surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
-        part_type: TpmsPart,
+        part_type: TpmsPartType,
         density: float,
         resolution: int = 20,
     ) -> float:
@@ -156,6 +156,7 @@ class Tpms(BasicGeometry):
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
         resolution: int | None = None,
     ) -> float:
+        """Compute the offset to fit the required density."""
         if self.density is None:
             raise DensityError(self.density)
 
@@ -175,6 +176,7 @@ class Tpms(BasicGeometry):
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
+            """Compute the density of the TPMS with the given offset."""
             temp_tpms._update_offset(offset)  # noqa: SLF001
             return abs(polydata_func().volume)
 
@@ -191,6 +193,7 @@ class Tpms(BasicGeometry):
         cell_size: float | Sequence[float],
         repeat_cell: int | Sequence[int],
     ) -> None:
+        """Initialize cell_size and repeat_cell so that they are arrays of length 3."""
         if isinstance(cell_size, (float, int)):
             self.cell_size = np.array([cell_size, cell_size, cell_size])
         elif len(cell_size) == _DIM:
@@ -278,9 +281,11 @@ class Tpms(BasicGeometry):
         y: np.ndarray,
         z: np.ndarray,
     ) -> pv.StructuredGrid:
+        """Return the structured cartesian grid of the TPMS."""
         return pv.StructuredGrid(x, y, z)
 
     def _compute_tpms_field(self: Tpms) -> None:
+        """Compute the TPMS scalar field on the grid."""
         linspaces: list[np.ndarray] = [
             np.linspace(
                 -0.5 * cell_size_axis * repeat_cell_axis,
@@ -308,6 +313,7 @@ class Tpms(BasicGeometry):
         self._update_offset(self.offset)
 
     def _update_offset(self: Tpms, offset: float | Callable) -> None:
+        """Update the offset of the TPMS."""
         if isinstance(offset, float):
             self.offset = offset
         elif isinstance(offset, Callable):
@@ -317,6 +323,7 @@ class Tpms(BasicGeometry):
         self.grid["upper_surface"] = self.grid["surface"] - 0.5 * self.offset
 
     def _create_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shell:
+        """Create a CadQuery Shell object from a VTK PolyData object."""
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)  # useless ?
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
@@ -342,6 +349,7 @@ class Tpms(BasicGeometry):
         isovalue: float | np.ndarray = 0.0,
         smoothing: int = 0,
     ) -> cq.Shell:
+        """Create a TPMS surface for the given isovalue."""
         if isinstance(isovalue, (int, float)):
             scalars = self.grid["surface"] - isovalue
         elif isinstance(isovalue, np.ndarray):
@@ -386,6 +394,7 @@ class Tpms(BasicGeometry):
         eps: float,
         smoothing: int,
     ) -> tuple[cq.Shape, cq.Shape]:
+        """Generate the surfaces to create the sheet part of the TPMS."""
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 + eps,
@@ -409,6 +418,7 @@ class Tpms(BasicGeometry):
         eps: float,
         smoothing: int,
     ) -> tuple[cq.Shape, cq.Shape]:
+        """Generate the surfaces to create the lower skeletal part of the TPMS."""
         isovalues = [
             -self.offset / 2.0,
             -self.offset / 2.0 - eps,
@@ -425,6 +435,7 @@ class Tpms(BasicGeometry):
         eps: float,
         smoothing: int,
     ) -> tuple[cq.Shape, cq.Shape]:
+        """Generate the surfaces to create the upper skeletal part of the TPMS."""
         isovalues = [
             self.offset / 2.0,
             self.offset / 2.0 + eps,
@@ -438,10 +449,11 @@ class Tpms(BasicGeometry):
 
     def _extract_part_from_box(
         self: Tpms,
-        type_part: TpmsPart,
+        type_part: TpmsPartType,
         eps: float,
         smoothing: int,
     ) -> cq.Shape:
+        """Extract the required part from the box."""
         box = cq.Workplane("front").box(*(self.cell_size * self.repeat_cell))
 
         surface, test_surface = getattr(
@@ -470,8 +482,9 @@ class Tpms(BasicGeometry):
 
     def _check_offset(
         self: Tpms,
-        type_part: TpmsPart,
+        type_part: TpmsPartType,
     ) -> None:
+        """Check if the offset is valid for the required part."""
         if "skeletal" in type_part:
             if (
                 isinstance(self.offset, (int, float)) and self.offset < 0.0
@@ -497,10 +510,10 @@ class Tpms(BasicGeometry):
 
     def generate(
         self: Tpms,
-        type_part: TpmsPart = "sheet",
+        type_part: TpmsPartType = "sheet",
         smoothing: int = 0,
         algo_resolution: int | None = None,
-        **_: KwargsGenerate,
+        **_: KwargsGenerateType,
     ) -> cq.Shape:
         """Generate CadQuery Shape object of the required TPMS part.
 
@@ -551,9 +564,9 @@ class Tpms(BasicGeometry):
 
     def generate_vtk(
         self: Tpms,
-        type_part: TpmsPart = "sheet",
+        type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
-        **_: KwargsGenerate,
+        **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate VTK PolyData object of the required TPMS part.
 
@@ -586,9 +599,9 @@ class Tpms(BasicGeometry):
 
     def generateVtk(  # noqa: N802
         self: Tpms,
-        type_part: TpmsPart = "sheet",
+        type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
-        **_: KwargsGenerate,
+        **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
@@ -671,6 +684,7 @@ class CylindricalTpms(Tpms):
         y: np.ndarray,
         z: np.ndarray,
     ) -> pv.StructuredGrid:
+        """Return the structured cylindrical grid of the TPMS."""
         rho = x + self.cylinder_radius
         theta = y * self.unit_theta
 
@@ -757,6 +771,7 @@ class SphericalTpms(Tpms):
         y: np.ndarray,
         z: np.ndarray,
     ) -> pv.StructuredGrid:
+        """Return the structured spherical grid of the TPMS."""
         rho = x + self.sphere_radius
         theta = y * self.unit_theta + np.pi / 2.0
         phi = z * self.unit_phi

@@ -21,6 +21,12 @@ repos:
       # args: ["--fix"]
     - id: ruff-format
 
+# - repo: https://github.com/econchick/interrogate
+#   rev: 1.7.0
+#   hooks:
+#     - id: interrogate
+#       args: [-vv, --fail-under=100, --omit-covered-files]
+
 - repo: https://github.com/keewis/blackdoc
   rev: v0.3.9
   hooks:

@@ -18,7 +18,7 @@ import pyvista as pv
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerate
+    from microgen.shape import KwargsGenerateType
 
 Vertex = Tuple[float, float, float]
 Face = Dict[str, List[int]]
@@ -71,7 +71,7 @@ class Polyhedron(BasicGeometry):
         for ixs in self.faces_ixs:
             ixs.append(ixs[0])
 
-    def generate(self: Polyhedron, **_: KwargsGenerate) -> cq.Shape:
+    def generate(self: Polyhedron, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a polyhedron CAD shape using the given parameters."""
         faces = []
         for ixs in self.faces_ixs:
@@ -96,7 +96,7 @@ class Polyhedron(BasicGeometry):
         solid = cq.Solid.makeSolid(shell)
         return cq.Shape(solid.wrapped)
 
-    def generate_vtk(self: Polyhedron, **_: KwargsGenerate) -> pv.PolyData:
+    def generate_vtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate a polyhedron VTK shape using the given parameters."""
         faces_pv = copy.deepcopy(self.faces_ixs)
         for vertices_in_face in faces_pv:
@@ -108,7 +108,7 @@ class Polyhedron(BasicGeometry):
 
         return pv.PolyData(vertices, faces).compute_normals()
 
-    def generateVtk(self: Polyhedron, **_: KwargsGenerate) -> pv.PolyData:  # noqa: N802
+    def generateVtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated method. Use generate_vtk instead."""  # noqa: D401
         return self.generate_vtk()
 

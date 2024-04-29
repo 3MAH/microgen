@@ -17,7 +17,7 @@ from microgen.operations import rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerate
+    from microgen.shape import KwargsGenerateType
 
 
 class Capsule(BasicGeometry):
@@ -44,7 +44,7 @@ class Capsule(BasicGeometry):
         self.height = height
         self.radius = radius
 
-    def generate(self: Capsule, **_: KwargsGenerate) -> cq.Shape:
+    def generate(self: Capsule, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a capsule CAD shape using the given parameters."""
         cylinder = cq.Solid.makeCylinder(
             self.radius,
@@ -90,7 +90,7 @@ class Capsule(BasicGeometry):
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_: KwargsGenerate,
+        **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate a capsule VTK shape using the given parameters."""
         cylinder = pv.Cylinder(
@@ -126,7 +126,7 @@ class Capsule(BasicGeometry):
         resolution: int = 100,
         theta_resolution: int = 50,
         phi_resolution: int = 50,
-        **_: KwargsGenerate,
+        **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(

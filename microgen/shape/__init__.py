@@ -34,11 +34,11 @@ from .tpms import CylindricalTpms, SphericalTpms, Tpms
 if TYPE_CHECKING:
     from .basic_geometry import BasicGeometry
 
-    TpmsPart = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
+    TpmsPartType = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
 
-    KwargsGenerate = int | TpmsPart
+    KwargsGenerateType = int | TpmsPartType
 
-    GeometryParameter = (
+    GeometryParameterType = (
         float
         | Sequence[float]
         | tuple[float, float, float]
@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
 def new_geometry(  # noqa: PLR0911
     shape: str,
-    param_geom: dict[str, GeometryParameter],
+    param_geom: dict[str, GeometryParameterType],
     center: tuple[float, float, float] = (0, 0, 0),
     orientation: tuple[float, float, float] = (0, 0, 0),
 ) -> BasicGeometry:

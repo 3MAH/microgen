@@ -17,7 +17,7 @@ from microgen.operations import rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerate
+    from microgen.shape import KwargsGenerateType
 
 
 class Cylinder(BasicGeometry):
@@ -44,7 +44,7 @@ class Cylinder(BasicGeometry):
         self.radius = radius
         self.height = height
 
-    def generate(self: Cylinder, **_: KwargsGenerate) -> cq.Shape:
+    def generate(self: Cylinder, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a cylinder CAD shape using the given parameters."""
         cylinder = (
             cq.Workplane("YZ")
@@ -66,7 +66,7 @@ class Cylinder(BasicGeometry):
     def generate_vtk(
         self: Cylinder,
         resolution: int = 100,
-        **_: KwargsGenerate,
+        **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate a cylinder VTK shape using the given parameters."""
         cylinder = pv.Cylinder(
@@ -88,7 +88,7 @@ class Cylinder(BasicGeometry):
     def generateVtk(  # noqa: N802
         self: Cylinder,
         resolution: int = 100,
-        **kwargs: KwargsGenerate,
+        **kwargs: KwargsGenerateType,
     ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
