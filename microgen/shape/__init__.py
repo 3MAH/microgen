@@ -135,6 +135,7 @@ __all__ = [
     "Cylinder",
     "Ellipsoid",
     "ExtrudedPolygon",
+    "Infill",
     "Polyhedron",
     "SphericalTpms",
     "Sphere",

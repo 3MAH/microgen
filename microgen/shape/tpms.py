@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
 import cadquery as cq
 import numpy as np
+import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
@@ -303,6 +304,7 @@ class Tpms(BasicGeometry):
         self.grid = self._create_grid(x, y, z)
 
         k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        x, y, z = self.grid.points.T
         tpms_field = self.surface_function(
             k_x * (x + self.phase_shift[0]),
             k_y * (y + self.phase_shift[1]),
@@ -781,6 +783,77 @@ class SphericalTpms(Tpms):
             rho * np.sin(theta) * np.sin(phi),
             rho * np.cos(theta),
         )
+
+      class Infill(Tpms):
+    """Generate a TPMS infill inside a given object."""
+
+    def __init__(
+        self: Infill,
+        obj: pv.PolyData,
+        surface_function: Field,
+        offset: float | Field = 0.0,
+        cell_size: float | Sequence[float] | npt.NDArray[np.float64] | None = None,
+        repeat_cell: int | Sequence[int] | npt.NDArray[np.int8] | None = None,
+        phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
+        resolution: int = 20,
+        density: float | None = None,
+    ) -> None:
+        r"""Initialize the Infill object.
+
+        :param obj: object in which the infill is generated
+        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
+        :param offset: offset of the isosurface to generate thickness
+        :param cell_size: float or list of float for each dimension to set unit cell dimensions
+        :param repeat_cell: integer or list of integers to repeat the geometry in each dimension
+        :param phase_shift: phase shift of the tpms function \
+            $f(x + \\phi_x, y + \\phi_y, z + \\phi_z) = 0$
+        :param resolution: unit cell resolution of the grid to compute tpms scalar fields
+        :param density: density percentage of the generated geometry (0 < density < 1) \
+            If density is given, the offset is automatically computed to fit the density \
+                (performance is slower than when using the offset)
+        """
+        self.obj = obj
+        bounds = np.array(obj.bounds)
+        obj_dim = bounds[1::2] - bounds[::2]  # [dim_x, dim_y, dim_z]
+
+        if cell_size is not None and repeat_cell is not None:
+            raise ValueError(
+                "cell_size and repeat_cell cannot be given at the same time, one is computed from the other."
+            )
+        if cell_size is not None:
+            repeat_cell = np.ceil(obj_dim / cell_size).astype(int)
+        elif repeat_cell is not None:
+            cell_size = obj_dim / repeat_cell
+
+        if np.any(cell_size > obj_dim):
+            raise ValueError("cell_size must be lower than the object dimensions")
+
+        self._init_cell_parameters(cell_size, repeat_cell)
+        super().__init__(
+            surface_function=surface_function,
+            offset=offset,
+            phase_shift=phase_shift,
+            cell_size=self.cell_size,
+            repeat_cell=self.repeat_cell,
+            resolution=resolution,
+            density=density,
+        )
+
+    def _create_grid(
+        self: Infill,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
+    ) -> pv.StructuredGrid:
+        grid = super()._create_grid(
+            x + self.obj.center[0],
+            y + self.obj.center[1],
+            z + self.obj.center[2],
+        )
+        obj = self.obj.compute_normals(cell_normals=False, auto_orient_normals=True)
+        grid = grid.clip_surface(obj)
+        logging.info("Grid resolution: %s points", grid.n_points)
+        return grid
 
 
 class DensityError(ValueError):
