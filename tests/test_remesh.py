@@ -1,5 +1,5 @@
+import shutil
 import warnings
-from distutils.spawn import find_executable
 
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ from microgen.shape.surface_functions import gyroid
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
-USE_MMG = find_executable("mmg3d_O3") is not None
+USE_MMG = shutil.which("mmg3d_O3") is not None
 if not USE_MMG:
     warnings.warn("MMG will not be used in these tests")
 
