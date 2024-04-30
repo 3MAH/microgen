@@ -10,7 +10,7 @@ import pytest
 
 import microgen
 
-TEST_DEFAULT_OFFSET = 0.5
+TEST_DEFAULT_OFFSET = 1.5
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
@@ -56,7 +56,7 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=TEST_DEFAULT_OFFSET,
-        cell_size=(0.5, 2.0, 1.25),
+        cell_size=(0.75, 2.0, 1.25),
         repeat_cell=(2, 1, 2),
     )
 
@@ -88,7 +88,7 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
 
     # Act
     volume = np.abs(
-        tpms.sheet.volume + tpms.lower_skeletal.volume + tpms.upper_skeletal.volume
+        tpms.sheet.volume + tpms.lower_skeletal.volume + tpms.upper_skeletal.volume,
     )
     cube_volume = np.prod(tpms.repeat_cell) * np.prod(tpms.cell_size)
 
@@ -120,7 +120,8 @@ def test_tpms_given_density_must_match_computed_density(
 
 
 @pytest.mark.parametrize(
-    "coord_sys_tpms", [microgen.CylindricalTpms, microgen.SphericalTpms]
+    "coord_sys_tpms",
+    [microgen.CylindricalTpms, microgen.SphericalTpms],
 )
 def test_tpms_given_coord_system_tpms_volumes_must_be_greater_than_zero_and_lower_than_grid_volume(
     coord_sys_tpms: Type[microgen.Tpms],
