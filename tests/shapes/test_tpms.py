@@ -10,7 +10,7 @@ import pytest
 
 import microgen
 
-TEST_DEFAULT_OFFSET = 1.5
+TEST_DEFAULT_OFFSET = 0.5
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
@@ -56,7 +56,7 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
     tpms = microgen.Tpms(
         surface_function=microgen.surface_functions.gyroid,
         offset=TEST_DEFAULT_OFFSET,
-        cell_size=(0.75, 2.0, 1.25),
+        cell_size=(0.5, 2.0, 1.25),
         repeat_cell=(2, 1, 2),
     )
 

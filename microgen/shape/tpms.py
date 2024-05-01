@@ -330,26 +330,19 @@ class Tpms(BasicGeometry):
         verbose: bool = False,
     ) -> cq.Shell:
         if isinstance(isovalue, (int, float)):
-            if isovalue > self.grid["surface"].max():
-                raise ValueError(
-                    f"Isosurface value ({isovalue}) must be lower than {self.grid['surface'].max()}.\
-                        Try to use a lower `eps`.",
-                )
             scalars = self.grid["surface"] - isovalue
         elif isinstance(isovalue, np.ndarray):
-            # np.clip
             scalars = self.grid["surface"] - isovalue.ravel(order="F")
 
-        mesh = self.grid.contour(isosurfaces=[0.0], scalars=scalars)
+        mesh: pv.PolyData = self.grid.contour(isosurfaces=[0.0], scalars=scalars)
         mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
         mesh.clean(inplace=True)
 
         try:
             shell = self._create_shell(mesh=mesh, verbose=verbose)
         except ValueError as exc:
-            raise ValueError(
-                f"Cannot create shell, try to use a higher smoothing value: {exc}",
-            ) from exc
+            err_msg = f"Cannot create shell, try to use a higher smoothing value: {exc}"
+            raise ValueError(err_msg) from exc
         return shell
 
     def _create_surfaces(
@@ -379,23 +372,22 @@ class Tpms(BasicGeometry):
 
     def _generate_sheet_surfaces(
         self,
-        eps: float,
         smoothing: int,
         verbose: bool,
     ) -> Tuple[cq.Shape, cq.Shape]:
         isovalues = [
-            -self.offset / 2.0,
-            -self.offset / 2.0 + eps,
-            self.offset / 2.0 - eps,
-            self.offset / 2.0,
+            -0.5 * self.offset,
+            -0.25 * self.offset,
+            0.25 * self.offset,
+            0.5 * self.offset,
         ]
 
-        shells = self._create_surfaces(isovalues, smoothing, verbose)
-
-        lower_surface = shells[0]
-        lower_test_surface = shells[1]
-        upper_test_surface = shells[2]
-        upper_surface = shells[3]
+        (
+            lower_surface,
+            lower_test_surface,
+            upper_test_surface,
+            upper_surface,
+        ) = self._create_surfaces(isovalues, smoothing, verbose)
 
         surface = lower_surface.fuse(upper_surface)
         test_surface = lower_test_surface.fuse(upper_test_surface)
@@ -403,13 +395,13 @@ class Tpms(BasicGeometry):
 
     def _generate_lower_skeletal_surfaces(
         self,
-        eps: float,
         smoothing: int,
         verbose: bool,
     ) -> Tuple[cq.Shape, cq.Shape]:
+        min_offset = 2.0 * np.min(self.grid["surface"])
         isovalues = [
-            -self.offset / 2.0,
-            -self.offset / 2.0 - eps,
+            -0.5 * self.offset,
+            -0.5 * (self.offset - min_offset) / 2.0,
         ]
 
         shells = self._create_surfaces(isovalues, smoothing, verbose)
@@ -419,25 +411,23 @@ class Tpms(BasicGeometry):
 
     def _generate_upper_skeletal_surfaces(
         self,
-        eps: float,
         smoothing: int,
         verbose: bool,
     ) -> Tuple[cq.Shape, cq.Shape]:
+        min_offset = 2.0 * np.min(self.grid["surface"])
         isovalues = [
-            self.offset / 2.0,
-            self.offset / 2.0 + eps,
+            0.5 * self.offset,
+            0.5 * (self.offset - min_offset) / 2.0,
         ]
 
         shells = self._create_surfaces(isovalues, smoothing, verbose)
 
-        surface = shells[0]
-        test_surface = shells[1]
+        surface, test_surface = shells
         return surface, test_surface
 
     def _extract_part_from_box(
         self,
         type_part: Literal["sheet", "lower skeletal", "upper skeletal", "surface"],
-        eps: float,
         smoothing: int,
         verbose: bool,
     ):
@@ -446,7 +436,7 @@ class Tpms(BasicGeometry):
         surface, test_surface = getattr(
             self,
             f"_generate_{type_part.replace(' ', '_')}_surfaces",
-        )(eps, smoothing, verbose)
+        )(smoothing, verbose)
 
         splitted_box = box.split(surface)
         tpms_solids = splitted_box.solids().all()
@@ -512,7 +502,6 @@ class Tpms(BasicGeometry):
         smoothing: int = 0,
         verbose: bool = True,
         algo_resolution: Optional[int] = None,
-        eps: float | None = None,
         **kwargs,
     ) -> cq.Shape:
         """:param type_part: part of the TPMS desired \
@@ -549,10 +538,7 @@ class Tpms(BasicGeometry):
 
         self._check_offset(type_part)
 
-        if eps is None:
-            eps = 0.1 * np.min(self.cell_size)
-
-        shape = self._extract_part_from_box(type_part, eps, smoothing, verbose)
+        shape = self._extract_part_from_box(type_part, smoothing, verbose)
 
         shape = rotateEuler(
             obj=shape,
