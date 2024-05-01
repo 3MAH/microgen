@@ -99,7 +99,7 @@ class Rve:
 
     @classmethod
     def from_min_max(
-        cls: Rve,
+        cls: type[Rve],
         x_min: float = -0.5,
         x_max: float = 0.5,
         y_min: float = -0.5,
