@@ -10,6 +10,10 @@ import numpy.typing as npt
 
 _DIM = 3
 
+Vector3DType = (
+    float | tuple[float, float, float] | list[float] | npt.NDArray[np.float64]
+)
+
 
 class Rve:
     """Representative Volume Element (RVE).
@@ -26,18 +30,13 @@ class Rve:
         dim_x: float | None = None,
         dim_y: float | None = None,
         dim_z: float | None = None,
-        center: npt.NDArray[np.float64] | tuple[float, float, float] | list[float] = (
-            0,
-            0,
-            0,
-        ),
-        dim: float
-        | npt.NDArray[np.float64]
-        | tuple[float, float, float]
-        | list[float] = 1,
+        center: Vector3DType = (0, 0, 0),
+        dim: Vector3DType = 1,
     ) -> None:
         """Initialize the RVE."""
-        if isinstance(center, (tuple, list)) and len(center) == _DIM:
+        if isinstance(center, (int, float)):
+            self.center = np.array([center for _ in range(_DIM)])
+        elif isinstance(center, (tuple, list)) and len(center) == _DIM:
             self.center = np.array(center)
         elif isinstance(center, np.ndarray) and center.shape == (_DIM,):
             self.center = center
@@ -86,12 +85,8 @@ class Rve:
             self.dim_x = dim_x
             self.dim_y = dim_y
             self.dim_z = dim_z
-        self.x_min = center[0] - 0.5 * self.dim[0]
-        self.x_max = center[0] + 0.5 * self.dim[0]
-        self.y_min = center[1] - 0.5 * self.dim[1]
-        self.y_max = center[1] + 0.5 * self.dim[1]
-        self.z_min = center[2] - 0.5 * self.dim[2]
-        self.z_max = center[2] + 0.5 * self.dim[2]
+        self.x_min, self.y_min, self.z_min = self.center - 0.5 * self.dim
+        self.x_max, self.y_max, self.z_max = self.center + 0.5 * self.dim
         self.dx = abs(self.x_max - self.x_min)
         self.dy = abs(self.y_max - self.y_min)
         self.dz = abs(self.z_max - self.z_min)
