@@ -31,7 +31,10 @@ if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, TpmsPartType
 
 logging.basicConfig(level=logging.INFO)
-Field = Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
+Field = Callable[
+    [npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]],
+    npt.NDArray[np.float64],
+]
 
 _DIM = 3
 
@@ -134,7 +137,7 @@ class Tpms(BasicGeometry):
     @classmethod
     def offset_from_density(
         cls: type[Tpms],
-        surface_function: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray],
+        surface_function: Field,
         part_type: TpmsPartType,
         density: float,
         resolution: int = 20,
@@ -283,16 +286,16 @@ class Tpms(BasicGeometry):
 
     def _create_grid(
         self: Tpms,
-        x: np.ndarray,
-        y: np.ndarray,
-        z: np.ndarray,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
         """Return the structured cartesian grid of the TPMS."""
         return pv.StructuredGrid(x, y, z)
 
     def _compute_tpms_field(self: Tpms) -> None:
         """Compute the TPMS scalar field on the grid."""
-        linspaces: list[np.ndarray] = [
+        linspaces: list[npt.NDArray[np.float64]] = [
             np.linspace(
                 -0.5 * cell_size_axis * repeat_cell_axis,
                 0.5 * cell_size_axis * repeat_cell_axis,
@@ -353,7 +356,7 @@ class Tpms(BasicGeometry):
 
     def _create_surface(
         self: Tpms,
-        isovalue: float | np.ndarray = 0.0,
+        isovalue: float | npt.NDArray[np.float64] = 0.0,
         smoothing: int = 0,
     ) -> cq.Shell:
         """Create a TPMS surface for the given isovalue."""
@@ -697,9 +700,9 @@ class CylindricalTpms(Tpms):
 
     def _create_grid(
         self: CylindricalTpms,
-        x: np.ndarray,
-        y: np.ndarray,
-        z: np.ndarray,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
         """Return the structured cylindrical grid of the TPMS."""
         rho = x + self.cylinder_radius
@@ -784,9 +787,9 @@ class SphericalTpms(Tpms):
 
     def _create_grid(
         self: SphericalTpms,
-        x: np.ndarray,
-        y: np.ndarray,
-        z: np.ndarray,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
         """Return the structured spherical grid of the TPMS."""
         rho = x + self.sphere_radius
@@ -863,9 +866,9 @@ class Infill(Tpms):
 
     def _create_grid(
         self: Infill,
-        x: np.ndarray,
-        y: np.ndarray,
-        z: np.ndarray,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
         grid = super()._create_grid(
             x + self.obj.center[0],

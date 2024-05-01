@@ -6,6 +6,7 @@ import warnings
 
 import cadquery as cq
 import numpy as np
+import numpy.typing as npt
 
 _DIM = 3
 
@@ -25,8 +26,15 @@ class Rve:
         dim_x: float | None = None,
         dim_y: float | None = None,
         dim_z: float | None = None,
-        center: np.ndarray | tuple[float, float, float] | list[float] = (0, 0, 0),
-        dim: float | np.ndarray | tuple[float, float, float] | list[float] = 1,
+        center: npt.NDArray[np.float64] | tuple[float, float, float] | list[float] = (
+            0,
+            0,
+            0,
+        ),
+        dim: float
+        | npt.NDArray[np.float64]
+        | tuple[float, float, float]
+        | list[float] = 1,
     ) -> None:
         """Initialize the RVE."""
         if isinstance(center, (tuple, list)) and len(center) == _DIM:
@@ -34,8 +42,8 @@ class Rve:
         elif isinstance(center, np.ndarray) and center.shape == (_DIM,):
             self.center = center
         else:
-            variable = "center"
-            raise SequenceLengthError(variable, _DIM)
+            err_msg = f"center must be an array or Sequence of length {dim}"
+            raise ValueError(err_msg)
 
         if isinstance(dim, (int, float)):
             self.dim = np.array([dim for _ in range(_DIM)])
@@ -44,8 +52,8 @@ class Rve:
         elif isinstance(dim, np.ndarray) and dim.shape == (_DIM,):
             self.dim = dim
         else:
-            variable = "dim"
-            raise SequenceLengthError(variable, _DIM)
+            err_msg = f"dim must be an array or Sequence of length {dim}"
+            raise ValueError(err_msg)
 
         if dim_x is not None or dim_y is not None or dim_z is not None:
             self.dim = np.array(
@@ -63,7 +71,8 @@ class Rve:
             )
 
         if np.any(self.dim <= 0):
-            raise DimensionsError(self.dim)
+            err_msg = f"dimensions of the RVE must be greater than 0, got {self.dim}"
+            raise ValueError(err_msg)
 
         self.min_point = self.center - 0.5 * self.dim
         self.max_point = self.center + 0.5 * self.dim
@@ -118,19 +127,3 @@ class Rve:
         dim_y = abs(y_max - y_min)
         dim_z = abs(z_max - z_min)
         return Rve(dim=(dim_x, dim_y, dim_z), center=center)
-
-
-class SequenceLengthError(Exception):
-    """Exception raised for errors in the input length."""
-
-    def __init__(self, variable: str, dim: int) -> None:
-        """Initialize the exception."""
-        super().__init__(f"{variable} must be an array or Sequence of length {dim}")
-
-
-class DimensionsError(Exception):
-    """Exception raised for errors in the input dimensions."""
-
-    def __init__(self, value: np.ndarray) -> None:
-        """Initialize the exception."""
-        super().__init__(f"dimensions of the RVE must be greater than 0, got {value}")
