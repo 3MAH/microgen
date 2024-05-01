@@ -40,7 +40,7 @@ class Rve:
         elif isinstance(center, np.ndarray) and center.shape == (_DIM,):
             self.center = center
         else:
-            err_msg = f"center must be an array or Sequence of length {dim}"
+            err_msg = f"center must be an array or Sequence of length {_DIM}"
             raise ValueError(err_msg)
 
         if isinstance(dim, (int, float)):
@@ -50,7 +50,7 @@ class Rve:
         elif isinstance(dim, np.ndarray) and dim.shape == (_DIM,):
             self.dim = dim
         else:
-            err_msg = f"dim must be an array or Sequence of length {dim}"
+            err_msg = f"dim must be an array or Sequence of length {_DIM}"
             raise ValueError(err_msg)
 
         if dim_x is not None or dim_y is not None or dim_z is not None:
