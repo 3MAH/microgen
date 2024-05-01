@@ -127,7 +127,8 @@ class Tpms(BasicGeometry):
         }
 
         if density is not None and not 0.0 < density <= 1.0:
-            raise DensityError(density)
+            err_msg = f"density must be between 0 and 1. Given: {density}"
+            raise ValueError(err_msg)
         self.density = density
 
     @classmethod
@@ -159,7 +160,8 @@ class Tpms(BasicGeometry):
     ) -> float:
         """Compute the offset to fit the required density."""
         if self.density is None:
-            raise DensityError(self.density)
+            err_msg = f"density must be between 0 and 1. Given: {self.density}"
+            raise ValueError(err_msg)
 
         if self.density == 1.0:
             offset = (
@@ -200,14 +202,17 @@ class Tpms(BasicGeometry):
         elif len(cell_size) == _DIM:
             self.cell_size = np.array(cell_size)
         else:
-            raise SequenceLengthError(sequence="cell_size", variable_type=float)
+            err_msg = f"`cell_size` must have a length of 3 floats. Given: {cell_size}"
+            raise ValueError(err_msg)
 
         if isinstance(repeat_cell, int):
             self.repeat_cell = np.array([repeat_cell, repeat_cell, repeat_cell])
         elif len(repeat_cell) == _DIM:
             self.repeat_cell = np.array(repeat_cell)
         else:
-            raise SequenceLengthError(sequence="repeat_cell", variable_type=int)
+            err_msg = f"`repeat_cell` must have a length of 3 integers. \
+                Given: {repeat_cell}"
+            raise ValueError(err_msg)
 
     def vtk_sheet(self: Tpms) -> pv.PolyData:
         """Return sheet part."""
@@ -364,7 +369,8 @@ class Tpms(BasicGeometry):
         try:
             shell = self._create_shell(mesh=mesh)
         except ValueError as exc:
-            raise CreateShellError from exc
+            err_msg = "Cannot create shell, try to use a higher smoothing value."
+            raise ValueError(err_msg) from exc
         return shell
 
     def _create_surfaces(
@@ -491,24 +497,29 @@ class Tpms(BasicGeometry):
             if (
                 isinstance(self.offset, (int, float)) and self.offset < 0.0
             ):  # scalar offset = 0 is working
-                raise NegativeOffsetNotImplementedError
+                err_msg = "generating part with a negative or zero offset\
+                    value is not implemented yet"
+                raise NotImplementedError(err_msg)
             if isinstance(self.offset, np.ndarray) and np.any(self.offset <= 0.0):
-                raise NegativeOffsetNotImplementedError
+                err_msg = "generating part with a negative or zero offset\
+                    value is not implemented yet"
+                raise NotImplementedError(err_msg)
         elif type_part == "sheet":
             if np.any(self.offset <= 0.0):
                 if np.all(self.offset <= 0.0):
-                    raise OffsetRangeError(
-                        part_type=type_part,
-                        offset_bounds=self.offset_lim["sheet"],
-                    )
-                raise NegativeOffsetNotImplementedError
+                    err_msg = f"offset must be greater than \
+                        {self.offset_lim[type_part][0]} to generate '{type_part}' part\
+                              and lower than {self.offset_lim[type_part][1]}"
+                    raise ValueError(err_msg)
+                err_msg = "generating part with a negative or zero offset\
+                    value is not implemented yet"
+                raise NotImplementedError(err_msg)
 
         part = "skeletal" if "skeletal" in type_part else type_part
         if np.all(self.offset > self.offset_lim[part][1]):
-            raise OffsetRangeError(
-                part_type=type_part,
-                offset_bounds=self.offset_lim[part],
-            )
+            err_msg = f"offset must be greater than {self.offset_lim[part][0]} to \
+                generate '{type_part}' part and lower than {self.offset_lim[part][1]}"
+            raise ValueError(err_msg)
 
     def generate(
         self: Tpms,
@@ -529,7 +540,9 @@ class Tpms(BasicGeometry):
         :return: CadQuery Shape object of the required TPMS part
         """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
-            raise TypePartError(type_part)
+            err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
+              'upper skeletal' or 'surface'"
+            raise ValueError(err_msg)
 
         if type_part == "surface":
             if self.offset != 0.0:
@@ -581,7 +594,9 @@ class Tpms(BasicGeometry):
         if type_part == "surface":
             return self.surface
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
-            raise TypePartError(type_part)
+            err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
+              'upper skeletal' or 'surface'"
+            raise ValueError(err_msg)
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
@@ -821,7 +836,9 @@ class Infill(Tpms):
         obj_dim = bounds[1::2] - bounds[::2]  # [dim_x, dim_y, dim_z]
 
         if cell_size is not None and repeat_cell is not None:
-            raise InfillCellSizeAndRepeatCellError
+            err_msg = "cell_size and repeat_cell cannot be given at the same time, \
+            one is computed from the other."
+            raise ValueError(err_msg)
 
         if cell_size is not None:
             repeat_cell = np.ceil(obj_dim / cell_size).astype(int)
@@ -829,7 +846,9 @@ class Infill(Tpms):
             cell_size = obj_dim / repeat_cell
 
         if np.any(cell_size > obj_dim):
-            raise CellSizeBiggerThanObjectError(cell_size, obj_dim)
+            err_msg = f"cell_size must be lower than the object dimensions.\
+            Given: {cell_size}, Object dimensions: {obj_dim}"
+            raise ValueError(err_msg)
 
         self._init_cell_parameters(cell_size, repeat_cell)
         super().__init__(
@@ -857,94 +876,3 @@ class Infill(Tpms):
         grid = grid.clip_surface(obj)
         logging.info("Grid resolution: %s points", grid.n_points)
         return grid
-
-
-class DensityError(ValueError):
-    """Raised when the density is not between 0 and 1."""
-
-    def __init__(self: DensityError, density: float | None) -> None:
-        """Initialize the error message."""
-        self.message = f"density must be between 0 and 1. Given: {density}"
-        super().__init__(self.message)
-
-
-class SequenceLengthError(ValueError):
-    """Raised when the length of the sequence is not 3."""
-
-    def __init__(
-        self: SequenceLengthError,
-        sequence: Sequence,
-        variable_type: type,
-    ) -> None:
-        """Initialize the error message."""
-        self.message = (
-            f"Sequence must have a length of 3 {variable_type}. Given: {sequence}"
-        )
-        super().__init__(self.message)
-
-
-class CreateShellError(ValueError):
-    """Raised when the shell cannot be created."""
-
-    def __init__(self: CreateShellError) -> None:
-        """Initialize the error message."""
-        self.message = "Cannot create shell, try to use a higher smoothing value."
-        super().__init__(self.message)
-
-
-class NegativeOffsetNotImplementedError(NotImplementedError):
-    """Raised when the offset is negative."""
-
-    def __init__(self: NegativeOffsetNotImplementedError) -> None:
-        """Initialize the error message."""
-        self.message = "generating part with a negative or zero offset\
-              value is not implemented yet"
-        super().__init__(self.message)
-
-
-class TypePartError(ValueError):
-    """Raised when the type_part is not valid."""
-
-    def __init__(self: TypePartError, type_part: str) -> None:
-        """Initialize the error message."""
-        self.message = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
-              'upper skeletal' or 'surface'"
-        super().__init__(self.message)
-
-
-class OffsetRangeError(ValueError):
-    """Raised when the offset is not valid for the sheet part."""
-
-    def __init__(
-        self: OffsetRangeError,
-        part_type: str,
-        offset_bounds: tuple[float, float],
-    ) -> None:
-        """Initialize the error message."""
-        self.message = f"offset must be greater than {offset_bounds[0]} to \
-            generate '{part_type}' part and lower than {offset_bounds[1]}"
-        super().__init__(self.message)
-
-
-class InfillCellSizeAndRepeatCellError(ValueError):
-    """Raised when cell_size and repeat_cell are given at the same time."""
-
-    def __init__(self: InfillCellSizeAndRepeatCellError) -> None:
-        """Initialize the error message."""
-        self.message = "cell_size and repeat_cell cannot be given at the same time, \
-            one is computed from the other."
-        super().__init__(self.message)
-
-
-class CellSizeBiggerThanObjectError(ValueError):
-    """Raised when the cell size is bigger than the object dimensions."""
-
-    def __init__(
-        self: CellSizeBiggerThanObjectError,
-        cell_size: float | Sequence[float] | npt.NDArray[np.float64],
-        obj_dim: npt.NDArray[np.float64],
-    ) -> None:
-        """Initialize the error message."""
-        self.message = f"cell_size must be lower than the object dimensions.\
-            Given: {cell_size}, Object dimensions: {obj_dim}"
-        super().__init__(self.message)
