@@ -10,9 +10,7 @@ import numpy.typing as npt
 
 _DIM = 3
 
-Vector3DType = (
-    float | tuple[float, float, float] | list[float] | npt.NDArray[np.float64]
-)
+Vector3DType = tuple[float, float, float] | list[float] | npt.NDArray[np.float64]
 
 
 class Rve:
@@ -31,12 +29,10 @@ class Rve:
         dim_y: float | None = None,
         dim_z: float | None = None,
         center: Vector3DType = (0, 0, 0),
-        dim: Vector3DType = 1,
+        dim: float | Vector3DType = 1,
     ) -> None:
         """Initialize the RVE."""
-        if isinstance(center, (int, float)):
-            self.center = np.array([center for _ in range(_DIM)])
-        elif isinstance(center, (tuple, list)) and len(center) == _DIM:
+        if isinstance(center, (tuple, list)) and len(center) == _DIM:
             self.center = np.array(center)
         elif isinstance(center, np.ndarray) and center.shape == (_DIM,):
             self.center = center
