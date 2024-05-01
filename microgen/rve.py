@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import warnings
+from typing import TYPE_CHECKING, List, Tuple
 
 import cadquery as cq
 import numpy as np
-import numpy.typing as npt
 
 _DIM = 3
 
-Vector3DType = tuple[float, float, float] | list[float] | npt.NDArray[np.float64]
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    Vector3DType = Tuple[float, float, float] | List[float] | npt.NDArray[np.float64]
 
 
 class Rve:
@@ -24,7 +27,7 @@ class Rve:
     """
 
     def __init__(
-        self,
+        self: Rve,
         dim_x: float | None = None,
         dim_y: float | None = None,
         dim_z: float | None = None,
@@ -96,7 +99,7 @@ class Rve:
 
     @classmethod
     def from_min_max(
-        cls,
+        cls: Rve,
         x_min: float = -0.5,
         x_max: float = 0.5,
         y_min: float = -0.5,
