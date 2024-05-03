@@ -15,13 +15,13 @@ import pyvista as pv
 
 from microgen.operations import rotateEuler, rotatePvEuler
 
-from .basic_geometry import BasicGeometry
+from .basic_geometry import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
-class Box(BasicGeometry):
+class Box(Shape):
     """Class to generate a box.
 
     .. jupyter-execute::
@@ -33,17 +33,16 @@ class Box(BasicGeometry):
        shape.plot(color='white')
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Box,
-        center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
         dim: tuple[float, float, float] = (1, 1, 1),
         dim_x: float | None = None,
         dim_y: float | None = None,
         dim_z: float | None = None,
+        **kwargs: Vector3DType,
     ) -> None:
         """Initialize the box."""
-        super().__init__(shape="Box", center=center, orientation=orientation)
+        super().__init__(**kwargs)
         if dim_x is not None or dim_y is not None or dim_z is not None:
             warnings.warn(
                 "The 'dim_x', 'dim_y', and 'dim_z' parameters are deprecated. \

@@ -25,7 +25,7 @@ from scipy.optimize import root_scalar
 
 from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 
-from .basic_geometry import BasicGeometry
+from .basic_geometry import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
@@ -39,7 +39,7 @@ Field = Callable[
 _DIM = 3
 
 
-class Tpms(BasicGeometry):
+class Tpms(Shape):
     """Triply Periodical Minimal Surfaces.
 
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
@@ -72,9 +72,8 @@ class Tpms(BasicGeometry):
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
         resolution: int = 20,
-        center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
         density: float | None = None,
+        **kwargs: Vector3DType,
     ) -> None:
         r"""Class used to generate TPMS geometries (sheet or skeletals parts).
 
@@ -83,8 +82,6 @@ class Tpms(BasicGeometry):
         The number of repetitions in each direction of the created geometry \
             can be modified with the 'repeat_cell' parameter.
 
-        :param center: center of the geometry
-        :param orientation: orientation of the geometry
         :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
         :param phase_shift: phase shift of the isosurface \
@@ -99,7 +96,7 @@ class Tpms(BasicGeometry):
             If density is given, the offset is automatically computed to fit the\
                   density (performance is slower than when using the offset)
         """
-        super().__init__(shape="TPMS", center=center, orientation=orientation)
+        super().__init__(**kwargs)
 
         self.surface_function = surface_function
         self.offset = offset

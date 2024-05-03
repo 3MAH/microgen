@@ -16,13 +16,13 @@ import pyvista as pv
 
 from microgen.operations import rotateEuler, rotatePvEuler
 
-from .basic_geometry import BasicGeometry
+from .basic_geometry import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
-class Ellipsoid(BasicGeometry):
+class Ellipsoid(Shape):
     """Class to generate an ellipsoid.
 
     .. jupyter-execute::
@@ -34,21 +34,16 @@ class Ellipsoid(BasicGeometry):
        shape.plot(color='white')
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Ellipsoid,
-        center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
         radii: tuple[float, float, float] = (1, 0.5, 0.25),
         a_x: float | None = None,
         a_y: float | None = None,
         a_z: float | None = None,
+        **kwargs: Vector3DType,
     ) -> None:
         """Initialize the ellipsoid."""
-        super().__init__(
-            shape="Ellipsoid",
-            center=center,
-            orientation=orientation,
-        )
+        super().__init__(**kwargs)
         if a_x is not None or a_y is not None or a_z is not None:
             warnings.warn(
                 "The 'a_x', 'a_y', and 'a_z' parameters are deprecated. \
