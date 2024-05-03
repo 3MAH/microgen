@@ -67,7 +67,7 @@ class Tpms(Shape):
     def __init__(  # noqa: PLR0913
         self: Tpms,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -96,9 +96,19 @@ class Tpms(Shape):
             If density is given, the offset is automatically computed to fit the\
                   density (performance is slower than when using the offset)
         """
+        if offset is not None and density is not None:
+            err_msg = (
+                "offset and density cannot be given at the same time. Give only one."
+            )
+            raise ValueError(err_msg)
+        if offset is None and density is None:
+            err_msg = "offset or density must be given. Give one of them."
+            raise ValueError(err_msg)
+
         super().__init__(**kwargs)
 
         self.surface_function = surface_function
+        self._offset = offset if offset is not None else 0.0
         self.phase_shift = phase_shift
 
         self.grid: pv.StructuredGrid
@@ -180,6 +190,7 @@ class Tpms(Shape):
 
         temp_tpms = Tpms(
             surface_function=self.surface_function,
+            offset=0.0,
             resolution=resolution if resolution is not None else self.resolution,
         )
 
@@ -346,7 +357,7 @@ class Tpms(Shape):
 
     @offset.setter
     def offset(self: Tpms, offset: float | npt.NDArray[np.float64] | Field) -> None:
-        if isinstance(offset, (float, np.ndarray)):
+        if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
         elif callable(offset):
             self._offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
@@ -675,7 +686,7 @@ class CylindricalTpms(Tpms):
         self: CylindricalTpms,
         radius: float,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -756,7 +767,7 @@ class SphericalTpms(Tpms):
         self: SphericalTpms,
         radius: float,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
