@@ -229,11 +229,14 @@ class Tpms(Shape):
         if self.density is not None:
             self._compute_offset_to_fit_density(part_type="sheet")
 
-        self._grid_sheet = self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
+        self._grid_sheet = self.grid.clip_scalar(
+            scalars="lower_surface",
+            invert=False,
+        ).clip_scalar(
             scalars="upper_surface",
         )
         return self._grid_sheet
-    
+
     @property
     def grid_upper_skeletal(self: Tpms) -> pv.UnstructuredGrid:
         """Return upper skeletal part."""
@@ -244,7 +247,10 @@ class Tpms(Shape):
         if self.density is not None:
             self._compute_offset_to_fit_density(part_type="upper_skeletal")
 
-        self._grid_upper_skeletal = self.grid.clip_scalar(scalars="upper_surface", invert=False)
+        self._grid_upper_skeletal = self.grid.clip_scalar(
+            scalars="upper_surface",
+            invert=False,
+        )
         return self._grid_upper_skeletal
 
     @property
@@ -628,18 +634,19 @@ class Tpms(Shape):
             phi=self.orientation[2],
         )
         return polydata.translate(xyz=self.center)
-    
+
     def generate_grid_vtk(
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
+        """Generate VTK UnstructuredGrid object of the required TPMS part."""
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
               'upper skeletal'"
             raise ValueError(err_msg)
-        
+
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
