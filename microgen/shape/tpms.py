@@ -102,10 +102,10 @@ class Tpms(Shape):
         self.phase_shift = phase_shift
 
         self.grid: pv.StructuredGrid
-        self._sheet = None
-        self._upper_skeletal = None
-        self._lower_skeletal = None
-        self._surface = None
+        self._grid_sheet: pv.UnstructuredGrid = None
+        self._grid_upper_skeletal: pv.UnstructuredGrid = None
+        self._grid_lower_skeletal: pv.UnstructuredGrid = None
+        self._surface: pv.PolyData = None
 
         self._init_cell_parameters(cell_size, repeat_cell)
 
@@ -182,11 +182,11 @@ class Tpms(Shape):
             surface_function=self.surface_function,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        grid_part = getattr(temp_tpms, f"grid_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
             temp_tpms.offset = offset
-            return abs(grid_part().volume)
+            grid_part = getattr(temp_tpms, f"grid_{part_type.replace(' ', '_')}")
+            return abs(grid_part.volume)
 
         part = "skeletal" if "skeletal" in part_type else part_type
         computed_offset = root_scalar(
@@ -219,62 +219,61 @@ class Tpms(Shape):
                 Given: {repeat_cell}"
             raise ValueError(err_msg)
 
+    @property
     def grid_sheet(self: Tpms) -> pv.UnstructuredGrid:
         """Return sheet part."""
-        return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
-            scalars="upper_surface",
-        )
-
-    def grid_upper_skeletal(self: Tpms) -> pv.UnstructuredGrid:
-        """Return upper skeletal part."""
-        return self.grid.clip_scalar(scalars="upper_surface", invert=False)
-
-    def grid_lower_skeletal(self: Tpms) -> pv.UnstructuredGrid:
-        """Return lower skeletal part."""
-        return self.grid.clip_scalar(scalars="lower_surface")
-
-    @property
-    def sheet(self: Tpms) -> pv.PolyData:
-        """Return sheet part."""
-        if self._sheet is not None and not self.offset_updated:
-            return self._sheet
+        if self._grid_sheet is not None and not self.offset_updated:
+            return self._grid_sheet
+        self.offset_updated = False
 
         if self.density is not None:
             self._compute_offset_to_fit_density(part_type="sheet")
 
-        self._sheet = self.grid_sheet().extract_surface().clean().triangulate()
+        self._grid_sheet = self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
+            scalars="upper_surface",
+        )
+        return self._grid_sheet
+    
+    @property
+    def grid_upper_skeletal(self: Tpms) -> pv.UnstructuredGrid:
+        """Return upper skeletal part."""
+        if self._grid_upper_skeletal is not None and not self.offset_updated:
+            return self._grid_upper_skeletal
         self.offset_updated = False
-        return self._sheet
+
+        if self.density is not None:
+            self._compute_offset_to_fit_density(part_type="upper_skeletal")
+
+        self._grid_upper_skeletal = self.grid.clip_scalar(scalars="upper_surface", invert=False)
+        return self._grid_upper_skeletal
+
+    @property
+    def grid_lower_skeletal(self: Tpms) -> pv.UnstructuredGrid:
+        """Return lower skeletal part."""
+        if self._grid_lower_skeletal is not None and not self.offset_updated:
+            return self._grid_lower_skeletal
+        self.offset_updated = False
+
+        if self.density is not None:
+            self._compute_offset_to_fit_density(part_type="lower_skeletal")
+
+        self._grid_lower_skeletal = self.grid.clip_scalar(scalars="lower_surface")
+        return self._grid_lower_skeletal
+
+    @property
+    def sheet(self: Tpms) -> pv.PolyData:
+        """Return sheet part."""
+        return self.grid_sheet.extract_surface().clean().triangulate()
 
     @property
     def upper_skeletal(self: Tpms) -> pv.PolyData:
         """Return upper skeletal part."""
-        if self._upper_skeletal is not None and not self.offset_updated:
-            return self._upper_skeletal
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="upper skeletal")
-
-        self._upper_skeletal = (
-            self.grid_upper_skeletal().extract_surface().clean().triangulate()
-        )
-        self.offset_updated = False
-        return self._upper_skeletal
+        return self.grid_upper_skeletal.extract_surface().clean().triangulate()
 
     @property
     def lower_skeletal(self: Tpms) -> pv.PolyData:
         """Return lower skeletal part."""
-        if self._lower_skeletal is not None and not self.offset_updated:
-            return self._lower_skeletal
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="lower skeletal")
-
-        self._lower_skeletal = (
-            self.grid_lower_skeletal().extract_surface().clean().triangulate()
-        )
-        self.offset_updated = False
-        return self._lower_skeletal
+        return self.grid_lower_skeletal.extract_surface().clean().triangulate()
 
     @property
     def skeletals(self: Tpms) -> tuple[pv.PolyData, pv.PolyData]:
@@ -629,6 +628,25 @@ class Tpms(Shape):
             phi=self.orientation[2],
         )
         return polydata.translate(xyz=self.center)
+    
+    def generate_grid_vtk(
+        self: Tpms,
+        type_part: TpmsPartType = "sheet",
+        algo_resolution: int | None = None,
+        **_: KwargsGenerateType,
+    ) -> pv.UnstructuredGrid:
+        if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
+            err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
+              'upper skeletal'"
+            raise ValueError(err_msg)
+        
+        if self.density is not None:
+            self._compute_offset_to_fit_density(
+                part_type=type_part,
+                resolution=algo_resolution,
+            )
+
+        return getattr(self, f"grid_{type_part.replace(" ", "_")}")
 
     def generateVtk(  # noqa: N802
         self: Tpms,

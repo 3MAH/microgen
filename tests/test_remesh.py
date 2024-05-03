@@ -93,7 +93,7 @@ def fixture_box_mesh() -> BoxMesh:
 
 @pytest.fixture(name="gyroid_mesh", scope="function")
 def fixture_gyroid_mesh() -> pv.UnstructuredGrid:
-    return Tpms(surface_function=gyroid, offset=1.0).grid_sheet()
+    return Tpms(surface_function=gyroid, offset=1.0).grid_sheet
 
 
 @pytest.fixture(name="non_periodic_mesh", scope="function")
