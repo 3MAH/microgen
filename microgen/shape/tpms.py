@@ -646,7 +646,7 @@ class Tpms(Shape):
                 resolution=algo_resolution,
             )
 
-        return getattr(self, f"grid_{type_part.replace(" ", "_")}")
+        return getattr(self, f"grid_{type_part.replace(' ', '_')}")
 
     def generateVtk(  # noqa: N802
         self: Tpms,
