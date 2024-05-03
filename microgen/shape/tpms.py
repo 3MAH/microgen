@@ -403,15 +403,14 @@ class Tpms(BasicGeometry):
 
     def _generate_sheet_surfaces(
         self: Tpms,
-        eps: float,
         smoothing: int,
     ) -> tuple[cq.Shape, cq.Shape]:
         """Generate the surfaces to create the sheet part of the TPMS."""
         isovalues = [
-            -self.offset / 2.0,
-            -self.offset / 2.0 + eps,
-            self.offset / 2.0 - eps,
-            self.offset / 2.0,
+            -0.5 * self.offset,
+            -0.25 * self.offset,
+            0.25 * self.offset,
+            0.5 * self.offset,
         ]
 
         shells = self._create_surfaces(isovalues, smoothing)
@@ -427,13 +426,13 @@ class Tpms(BasicGeometry):
 
     def _generate_lower_skeletal_surfaces(
         self: Tpms,
-        eps: float,
         smoothing: int,
     ) -> tuple[cq.Shape, cq.Shape]:
         """Generate the surfaces to create the lower skeletal part of the TPMS."""
+        min_offset = 2.0 * np.min(self.grid["surface"])
         isovalues = [
-            -self.offset / 2.0,
-            -self.offset / 2.0 - eps,
+            -0.5 * self.offset,
+            -0.25 * (self.offset - min_offset),
         ]
 
         shells = self._create_surfaces(isovalues, smoothing)
@@ -444,13 +443,13 @@ class Tpms(BasicGeometry):
 
     def _generate_upper_skeletal_surfaces(
         self: Tpms,
-        eps: float,
         smoothing: int,
     ) -> tuple[cq.Shape, cq.Shape]:
         """Generate the surfaces to create the upper skeletal part of the TPMS."""
+        min_offset = 2.0 * np.min(self.grid["surface"])
         isovalues = [
-            self.offset / 2.0,
-            self.offset / 2.0 + eps,
+            0.5 * self.offset,
+            0.25 * (self.offset - min_offset),
         ]
 
         shells = self._create_surfaces(isovalues, smoothing)
@@ -462,7 +461,6 @@ class Tpms(BasicGeometry):
     def _extract_part_from_box(
         self: Tpms,
         type_part: TpmsPartType,
-        eps: float,
         smoothing: int,
     ) -> cq.Shape:
         """Extract the required part from the box."""
@@ -471,7 +469,7 @@ class Tpms(BasicGeometry):
         surface, test_surface = getattr(
             self,
             f"_generate_{type_part.replace(' ', '_')}_surfaces",
-        )(eps, smoothing)
+        )(smoothing)
 
         splitted_box = box.split(surface)
         tpms_solids = splitted_box.solids().all()
@@ -566,11 +564,7 @@ class Tpms(BasicGeometry):
 
         self._check_offset(type_part)
 
-        eps = self.offset / 3.0
-        if isinstance(self.offset, float) and self.offset == 0.0:
-            eps = 0.1 * np.min(self.cell_size)
-
-        shape = self._extract_part_from_box(type_part, eps, smoothing)
+        shape = self._extract_part_from_box(type_part, smoothing)
 
         shape = rotateEuler(
             obj=shape,
