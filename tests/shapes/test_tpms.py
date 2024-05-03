@@ -197,11 +197,7 @@ def test_tpms_given_zero_and_max_repeat_cell_values_volumes_must_correspond(
 
 def test_tpms_given_generate_surface_must_not_be_empty() -> None:
     """Test for the surface of the TPMS shapes generated with CadQuery and VTK."""
-    tpms = microgen.Tpms(
-        surface_function=microgen.surface_functions.gyroid,
-        offset=TEST_DEFAULT_OFFSET,
-        density=0.2,
-    )
+    tpms = microgen.Tpms(surface_function=microgen.surface_functions.gyroid, offset=0.0)
 
     surface = tpms.generate(type_part="surface")
     assert np.any(surface.Vertices())
@@ -326,9 +322,7 @@ def test_tpms_given_100_percent_density_must_return_a_cube(
 
 def test_tpms_offset_from_density_given_density_must_return_valid_offset() -> None:
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
-    tpms = microgen.Tpms(
-        surface_function=microgen.surface_functions.gyroid,
-    )
+    tpms = microgen.Tpms(surface_function=microgen.surface_functions.gyroid, offset=0.0)
 
     offset = microgen.Tpms.offset_from_density(
         surface_function=microgen.surface_functions.gyroid,
@@ -356,9 +350,7 @@ def test_tpms_given_property_must_return_the_same_value() -> None:
 
 def test_tpms_given_surface_must_not_be_empty() -> None:
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
-    tpms = microgen.Tpms(
-        surface_function=microgen.surface_functions.gyroid,
-    )
+    tpms = microgen.Tpms(surface_function=microgen.surface_functions.gyroid, offset=0.0)
 
     assert np.any(tpms.surface.points)
     assert np.any(tpms.surface.faces)
