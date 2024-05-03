@@ -556,3 +556,21 @@ def test_infill_raises_error_when_cell_size_is_too_large() -> None:
             offset=TEST_DEFAULT_OFFSET,
             cell_size=too_large_cell_size,
         )
+
+
+def test_tpms_both_offset_and_density_given_must_raise_error() -> None:
+    """Test whether providing both offset and density results in an error."""
+    with pytest.raises(ValueError):
+        microgen.Tpms(
+            surface_function=microgen.surface_functions.gyroid,
+            offset=0.5,
+            density=0.5,
+        )
+
+
+def test_tpms_none_offset_and_density_given_must_raise_error() -> None:
+    """Test whether omitting both offset and density results in an error."""
+    with pytest.raises(ValueError):
+        microgen.Tpms(
+            surface_function=microgen.surface_functions.gyroid,
+        )

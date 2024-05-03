@@ -67,7 +67,7 @@ class Tpms(BasicGeometry):
     def __init__(  # noqa: PLR0913
         self: Tpms,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -99,6 +99,15 @@ class Tpms(BasicGeometry):
             If density is given, the offset is automatically computed to fit the\
                   density (performance is slower than when using the offset)
         """
+        if offset is not None and density is not None:
+            err_msg = (
+                "offset and density cannot be given at the same time. Give only one."
+            )
+            raise ValueError(err_msg)
+        if offset is None and density is None:
+            err_msg = "offset or density must be given. Give one of them."
+            raise ValueError(err_msg)
+
         super().__init__(shape="TPMS", center=center, orientation=orientation)
 
         self.surface_function = surface_function
