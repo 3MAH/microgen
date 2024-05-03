@@ -5,22 +5,24 @@ import pytest
 
 import microgen
 from microgen.shape import (
-    BasicGeometry,
     Box,
     Capsule,
     Cylinder,
     Ellipsoid,
     ExtrudedPolygon,
     Polyhedron,
+    ShapeError,
     Sphere,
 )
+from microgen.shape.basic_geometry import BasicGeometry
 
 
 def test_shapes():
     rve = microgen.Rve(dim=1)
 
     elem = microgen.newGeometry(
-        shape="Ellipsoid", param_geom={"a_x": 0.15, "a_y": 0.31, "a_z": 0.4}
+        shape="Ellipsoid",
+        param_geom={"radii": (0.15, 0.31, 0.4)},
     )
     ellipsoid = elem.generate()
     phase = microgen.Phase(shape=ellipsoid)
@@ -45,24 +47,27 @@ def test_shapes():
 
     elem = microgen.newGeometry(shape="Sphere", param_geom={"radius": 0.15})
     elem = microgen.newGeometry(
-        shape="Box", param_geom={"dim_x": 0.15, "dim_y": 0.31, "dim_z": 0.4}
+        shape="Box",
+        param_geom={"dim": (0.15, 0.31, 0.4)},
     )
     elem = microgen.newGeometry(
-        shape="Capsule", param_geom={"height": 0.5, "radius": 0.1}
+        shape="Capsule",
+        param_geom={"height": 0.5, "radius": 0.1},
     )
     elem = microgen.newGeometry(
-        shape="Cylinder", param_geom={"height": 0.5, "radius": 0.1}
+        shape="Cylinder",
+        param_geom={"height": 0.5, "radius": 0.1},
     )
     elem = microgen.newGeometry(
         shape="ExtrudedPolygon",
         param_geom={"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
     )
     dic = microgen.shape.polyhedron.read_obj(
-        "examples/BasicShapes/platon/tetrahedron.obj"
+        "examples/BasicShapes/platon/tetrahedron.obj",
     )
     microgen.newGeometry(shape="Polyhedron", param_geom={"dic": dic})
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ShapeError):
         microgen.newGeometry(shape="fake", param_geom={"fake": 0})
 
 
@@ -73,7 +78,7 @@ def test_shapes():
 def test_shape_cad_and_vtk_volume_must_correspond(shape: Type[BasicGeometry]):
     geom = shape()
     shape_cad = geom.generate()
-    shape_vtk = geom.generateVtk()
+    shape_vtk = geom.generate_vtk()
 
     volume_cad = shape_cad.Volume()
 
