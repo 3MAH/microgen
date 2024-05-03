@@ -72,6 +72,12 @@ def remesh_keeping_periodicity_for_fem(
     :param hsiz: Build a constant size map of size hsiz
     """
     if isinstance(input_mesh, pv.UnstructuredGrid):
+        is_only_tetra = (
+            len(input_mesh.cells_dict) == 1
+            and pv.CellType.TETRA in input_mesh.cells_dict
+        )
+        if not is_only_tetra:
+            input_mesh = input_mesh.triangulate()
         nodes_coords = input_mesh.points
         input_box_mesh = BoxMesh.from_pyvista(input_mesh)
     elif isinstance(input_mesh, BoxMesh):

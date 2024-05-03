@@ -15,13 +15,13 @@ import pyvista as pv
 
 from microgen.operations import rotateEuler, rotatePvEuler
 
-from .basic_geometry import BasicGeometry
+from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
-class ExtrudedPolygon(BasicGeometry):
+class ExtrudedPolygon(Shape):
     """ExtrudedPolygon.
 
     Class to generate an extruded polygon with a given list of points and a thickness
@@ -37,18 +37,14 @@ class ExtrudedPolygon(BasicGeometry):
 
     def __init__(
         self: ExtrudedPolygon,
-        center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
         list_corners: Sequence[tuple[float, float]] | None = None,
         height: float = 1,
-        **kwargs: dict[str, Sequence[tuple[float, float]]],
+        **kwargs: Vector3DType | dict[str, Sequence[tuple[float, float]]],
     ) -> None:
         """Initialize the extruded polygon. The default shape is a hexagon."""
-        super().__init__(
-            shape="ExtrudedPolygon",
-            center=center,
-            orientation=orientation,
-        )
+        center = kwargs.get("center", (0, 0, 0))
+        orientation = kwargs.get("orientation", (0, 0, 0))
+        super().__init__(center=center, orientation=orientation)
 
         if kwargs.get("listCorners", None) is not None:
             list_corners = kwargs["listCorners"]
