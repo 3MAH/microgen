@@ -75,3 +75,26 @@ filterwarnings = [
 [[tool.mypy.overrides]]
 module = ["gmsh", "scipy.spatial"]
 ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
+exclude = [
+    "setup.py",
+    "docs/*",
+    "tests/*",
+    "microgen/box_mesh.py",
+    "microgen/external.py",
+    "microgen/mesh.py",
+    "microgen/operations.py",
+    "microgen/periodic.py",
+    "microgen/phase.py",
+    "microgen/remesh.py",
+    "microgen/report.py",
+    "microgen/rve.py",
+    "microgen/single_mesh.py",
+    "examples/*",
+] # external = ["E131", "D102", "D105"]
+select = ["ALL"]
+ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003"]

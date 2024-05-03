@@ -6,5 +6,5 @@ geometry = Tpms(
     density=0.30,
     resolution=30,
 )
-shape = geometry.generateVtk(type_part="sheet").extract_surface()
+shape = geometry.generate_vtk(type_part="sheet").extract_surface()
 shape.save("gyroid.stl")

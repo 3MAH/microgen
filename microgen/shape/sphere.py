@@ -1,40 +1,47 @@
-"""
-=============================================
+"""Sphere.
+
+=====================================
 Sphere (:mod:`microgen.shape.sphere`)
-=============================================
+=====================================
 """
 
-from typing import Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from .basicGeometry import BasicGeometry
+from .basic_geometry import BasicGeometry
+
+if TYPE_CHECKING:
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 
 class Sphere(BasicGeometry):
-    """
-    Class to generate a sphere
+    """Class to generate a sphere.
 
     .. jupyter-execute::
        :hide-code:
 
        import microgen
 
-       shape = microgen.Sphere().generateVtk()
+       shape = microgen.Sphere().generate_vtk()
        shape.plot(color='white')
     """
 
     def __init__(
-        self,
-        center: Tuple[float, float, float] = (0, 0, 0),
+        self: Sphere,
+        center: Vector3DType = (0, 0, 0),
         radius: float = 1,
     ) -> None:
+        """Initialize the sphere."""
         super().__init__(shape="Sphere", center=center)
         self.radius = radius
 
-    def generate(self, **kwargs) -> cq.Shape:
+    def generate(self: Sphere, **_: KwargsGenerateType) -> cq.Shape:
+        """Generate a sphere CAD shape using the given parameters."""
         # Temporary workaround bug fix for OpenCascade bug using a random
         # direct parameter for cq.Workplane().sphere() method
         # Related to issue https://github.com/CadQuery/cadquery/issues/1461
@@ -47,12 +54,25 @@ class Sphere(BasicGeometry):
         )
         return cq.Shape(sphere.val().wrapped)
 
-    def generateVtk(
-        self, theta_resolution=50, phi_resolution=50, **kwargs
+    def generate_vtk(
+        self: Sphere,
+        theta_resolution: int = 50,
+        phi_resolution: int = 50,
+        **_: KwargsGenerateType,
     ) -> pv.PolyData:
+        """Generate a sphere VTK shape using the given parameters."""
         return pv.Sphere(
             radius=self.radius,
             center=tuple(self.center),
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
         )
+
+    def generateVtk(  # noqa: N802
+        self: Sphere,
+        theta_resolution: int = 50,
+        phi_resolution: int = 50,
+        **_: KwargsGenerateType,
+    ) -> pv.PolyData:
+        """Deprecated method. Use generate_vtk instead."""  # noqa: D401
+        return self.generate_vtk(theta_resolution, phi_resolution)
