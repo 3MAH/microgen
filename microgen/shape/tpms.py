@@ -111,7 +111,7 @@ class Tpms(BasicGeometry):
         super().__init__(shape="TPMS", center=center, orientation=orientation)
 
         self.surface_function = surface_function
-        self.offset = offset
+        self.offset = offset if offset is not None else 0.0
         self.phase_shift = phase_shift
 
         self.grid = pv.StructuredGrid()
@@ -186,6 +186,7 @@ class Tpms(BasicGeometry):
 
         temp_tpms = Tpms(
             surface_function=self.surface_function,
+            offset=0.0,
             resolution=resolution if resolution is not None else self.resolution,
         )
         polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
