@@ -25,7 +25,7 @@ from scipy.optimize import root_scalar
 
 from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 
-from .basic_geometry import BasicGeometry
+from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
@@ -39,7 +39,7 @@ Field = Callable[
 _DIM = 3
 
 
-class Tpms(BasicGeometry):
+class Tpms(Shape):
     """Triply Periodical Minimal Surfaces.
 
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
@@ -72,9 +72,8 @@ class Tpms(BasicGeometry):
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
         resolution: int = 20,
-        center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
         density: float | None = None,
+        **kwargs: Vector3DType,
     ) -> None:
         r"""Class used to generate TPMS geometries (sheet or skeletals parts).
 
@@ -83,8 +82,6 @@ class Tpms(BasicGeometry):
         The number of repetitions in each direction of the created geometry \
             can be modified with the 'repeat_cell' parameter.
 
-        :param center: center of the geometry
-        :param orientation: orientation of the geometry
         :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
         :param phase_shift: phase shift of the isosurface \
@@ -108,13 +105,13 @@ class Tpms(BasicGeometry):
             err_msg = "offset or density must be given. Give one of them."
             raise ValueError(err_msg)
 
-        super().__init__(shape="TPMS", center=center, orientation=orientation)
+        super().__init__(**kwargs)
 
         self.surface_function = surface_function
         self.offset = offset if offset is not None else 0.0
         self.phase_shift = phase_shift
 
-        self.grid = pv.StructuredGrid()
+        self.grid: pv.StructuredGrid
         self._sheet = None
         self._upper_skeletal = None
         self._lower_skeletal = None
@@ -123,6 +120,7 @@ class Tpms(BasicGeometry):
         self._init_cell_parameters(cell_size, repeat_cell)
 
         self.resolution = resolution
+
         self._compute_tpms_field()
 
         min_field = np.min(self.grid["surface"])
@@ -142,6 +140,13 @@ class Tpms(BasicGeometry):
             err_msg = f"density must be between 0 and 1. Given: {density}"
             raise ValueError(err_msg)
         self.density = density
+
+        self._offset: float | npt.NDArray | None
+        if density is not None:
+            self._offset = None
+        else:
+            self.offset = offset  # call setter
+        self.offset_updated: bool
 
     @classmethod
     def offset_from_density(
@@ -176,32 +181,30 @@ class Tpms(BasicGeometry):
             raise ValueError(err_msg)
 
         if self.density == 1.0:
-            offset = (
+            self.offset = (
                 self.offset_lim["sheet"][1]
                 if part_type == "sheet"
                 else self.offset_lim["skeletal"][0]
             )
-            self._update_offset(offset)
-            return offset
+            return self.offset
 
         temp_tpms = Tpms(
             surface_function=self.surface_function,
             offset=0.0,
             resolution=resolution if resolution is not None else self.resolution,
         )
-        polydata_func = getattr(temp_tpms, f"vtk_{part_type.replace(' ', '_')}")
+        grid_part = getattr(temp_tpms, f"grid_{part_type.replace(' ', '_')}")
 
         def density(offset: float) -> float:
-            """Compute the density of the TPMS with the given offset."""
-            temp_tpms._update_offset(offset)  # noqa: SLF001
-            return abs(polydata_func().volume)
+            temp_tpms.offset = offset
+            return abs(grid_part().volume)
 
         part = "skeletal" if "skeletal" in part_type else part_type
         computed_offset = root_scalar(
             lambda offset: density(offset) - self.density,
             bracket=self.offset_lim[part],
         ).root
-        self._update_offset(computed_offset)
+        self.offset = computed_offset
         return computed_offset
 
     def _init_cell_parameters(
@@ -227,54 +230,61 @@ class Tpms(BasicGeometry):
                 Given: {repeat_cell}"
             raise ValueError(err_msg)
 
-    def vtk_sheet(self: Tpms) -> pv.PolyData:
+    def grid_sheet(self: Tpms) -> pv.UnstructuredGrid:
         """Return sheet part."""
         return self.grid.clip_scalar(scalars="lower_surface", invert=False).clip_scalar(
             scalars="upper_surface",
         )
 
-    def vtk_upper_skeletal(self: Tpms) -> pv.PolyData:
+    def grid_upper_skeletal(self: Tpms) -> pv.UnstructuredGrid:
         """Return upper skeletal part."""
         return self.grid.clip_scalar(scalars="upper_surface", invert=False)
 
-    def vtk_lower_skeletal(self: Tpms) -> pv.PolyData:
+    def grid_lower_skeletal(self: Tpms) -> pv.UnstructuredGrid:
         """Return lower skeletal part."""
         return self.grid.clip_scalar(scalars="lower_surface")
 
     @property
     def sheet(self: Tpms) -> pv.PolyData:
-        """Returns sheet part."""
-        if self._sheet is not None:
+        """Return sheet part."""
+        if self._sheet is not None and not self.offset_updated:
             return self._sheet
 
         if self.density is not None:
             self._compute_offset_to_fit_density(part_type="sheet")
 
-        self._sheet = self.vtk_sheet().clean().triangulate()
+        self._sheet = self.grid_sheet().extract_surface().clean().triangulate()
+        self.offset_updated = False
         return self._sheet
 
     @property
     def upper_skeletal(self: Tpms) -> pv.PolyData:
-        """Returns upper skeletal part."""
-        if self._upper_skeletal is not None:
+        """Return upper skeletal part."""
+        if self._upper_skeletal is not None and not self.offset_updated:
             return self._upper_skeletal
 
         if self.density is not None:
             self._compute_offset_to_fit_density(part_type="upper skeletal")
 
-        self._upper_skeletal = self.vtk_upper_skeletal().clean().triangulate()
+        self._upper_skeletal = (
+            self.grid_upper_skeletal().extract_surface().clean().triangulate()
+        )
+        self.offset_updated = False
         return self._upper_skeletal
 
     @property
     def lower_skeletal(self: Tpms) -> pv.PolyData:
-        """Returns lower skeletal part."""
-        if self._lower_skeletal is not None:
+        """Return lower skeletal part."""
+        if self._lower_skeletal is not None and not self.offset_updated:
             return self._lower_skeletal
 
         if self.density is not None:
             self._compute_offset_to_fit_density(part_type="lower skeletal")
 
-        self._lower_skeletal = self.vtk_lower_skeletal().clean().triangulate()
+        self._lower_skeletal = (
+            self.grid_lower_skeletal().extract_surface().clean().triangulate()
+        )
+        self.offset_updated = False
         return self._lower_skeletal
 
     @property
@@ -330,20 +340,30 @@ class Tpms(BasicGeometry):
         )
 
         self.grid["surface"] = tpms_field.ravel(order="F")
-        self._update_offset(self.offset)
 
-    def _update_offset(self: Tpms, offset: float | Callable) -> None:
-        """Update the offset of the TPMS."""
-        if isinstance(offset, float):
-            self.offset = offset
-        elif isinstance(offset, Callable):
-            self.offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
-
+    def _update_grid_offset(self: Tpms) -> None:
         self.grid["lower_surface"] = self.grid["surface"] + 0.5 * self.offset
         self.grid["upper_surface"] = self.grid["surface"] - 0.5 * self.offset
 
+    @property
+    def offset(self: Tpms) -> float | npt.NDArray[np.float64] | None:
+        """Returns the offset value."""
+        return self._offset
+
+    @offset.setter
+    def offset(self: Tpms, offset: float | npt.NDArray[np.float64] | Field) -> None:
+        if isinstance(offset, (float, np.ndarray)):
+            self._offset = offset
+        elif callable(offset):
+            self._offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
+        else:
+            err_msg = "offset must be a float, a numpy array or a callable"
+            raise TypeError(err_msg)
+
+        self._update_grid_offset()
+        self.offset_updated = True
+
     def _create_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shell:
-        """Create a CadQuery Shell object from a VTK PolyData object."""
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)  # useless ?
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
@@ -610,8 +630,7 @@ class Tpms(BasicGeometry):
                 part_type=type_part,
                 resolution=algo_resolution,
             )
-        polydata = getattr(self, f"vtk_{type_part.replace(' ', '_')}")()
-        polydata = polydata.clean().triangulate()
+        polydata = getattr(self, type_part.replace(" ", "_"))
 
         polydata = rotatePvEuler(
             polydata,
