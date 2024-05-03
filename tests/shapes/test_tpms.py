@@ -5,11 +5,10 @@ from __future__ import annotations
 from inspect import getmembers, isfunction
 from typing import Literal
 
+import microgen
 import numpy as np
 import numpy.typing as npt
 import pytest
-
-import microgen
 
 TEST_DEFAULT_OFFSET = 0.5
 
@@ -469,7 +468,7 @@ def test_tpms_center_and_orientation_must_correspond() -> None:
 
 
 @pytest.mark.parametrize("part_type", ["sheet", "lower skeletal", "upper skeletal"])
-def test_tpms_check_that_volume_has_changed_when_the_offset_is_updated(
+def test_tpms_generate_vtk_check_that_volume_has_changed_when_the_offset_is_updated(
     part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
 ) -> None:
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
@@ -481,6 +480,22 @@ def test_tpms_check_that_volume_has_changed_when_the_offset_is_updated(
 
     tpms.offset *= 2.0
     second_part = tpms.generate_vtk(type_part=part_type)
+    assert not np.isclose(first_part.volume, second_part.volume)
+
+
+@pytest.mark.parametrize("part_type", ["sheet", "lower skeletal", "upper skeletal"])
+def test_tpms_generate_grid_vtk_check_that_volume_has_changed_when_the_offset_is_updated(
+    part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
+) -> None:
+    """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+    )
+    first_part = tpms.generate_grid_vtk(type_part=part_type)
+
+    tpms.offset *= 2.0
+    second_part = tpms.generate_grid_vtk(type_part=part_type)
     assert not np.isclose(first_part.volume, second_part.volume)
 
 
