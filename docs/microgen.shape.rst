@@ -6,7 +6,7 @@ microgen.shape package
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: microgen.shape.basic_geometry
+.. automodule:: microgen.shape.shape
    :members:
    :undoc-members:
    :show-inheritance:

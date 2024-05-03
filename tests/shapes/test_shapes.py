@@ -11,10 +11,10 @@ from microgen.shape import (
     Ellipsoid,
     ExtrudedPolygon,
     Polyhedron,
+    Shape,
     ShapeError,
     Sphere,
 )
-from microgen.shape.basic_geometry import BasicGeometry
 
 
 def test_shapes():
@@ -75,7 +75,7 @@ def test_shapes():
     "shape",
     [Box, Capsule, Cylinder, Ellipsoid, ExtrudedPolygon, Polyhedron, Sphere],
 )
-def test_shape_cad_and_vtk_volume_must_correspond(shape: Type[BasicGeometry]):
+def test_shape_cad_and_vtk_volume_must_correspond(shape: Type[Shape]):
     geom = shape()
     shape_cad = geom.generate()
     shape_vtk = geom.generate_vtk()
