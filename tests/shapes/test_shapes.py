@@ -14,7 +14,7 @@ from microgen.shape import (
     ShapeError,
     Sphere,
 )
-from microgen.shape.basic_geometry import Shape
+from microgen.shape.shape import Shape
 
 
 def test_shapes():

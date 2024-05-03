@@ -25,7 +25,7 @@ from scipy.optimize import root_scalar
 
 from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 
-from .basic_geometry import Shape
+from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType

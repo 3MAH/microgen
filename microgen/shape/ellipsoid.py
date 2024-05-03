@@ -16,7 +16,7 @@ import pyvista as pv
 
 from microgen.operations import rotateEuler, rotatePvEuler
 
-from .basic_geometry import Shape
+from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType

@@ -32,7 +32,7 @@ from .sphere import Sphere
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 
 if TYPE_CHECKING:
-    from .basic_geometry import Shape
+    from .shape import Shape
 
     Vector3DType = Tuple[float, float, float] | Sequence[float]
 
