@@ -357,7 +357,7 @@ class Tpms(Shape):
 
     @offset.setter
     def offset(self: Tpms, offset: float | npt.NDArray[np.float64] | Field) -> None:
-        if isinstance(offset, (float, np.ndarray)):
+        if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
         elif callable(offset):
             self._offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
@@ -686,7 +686,7 @@ class CylindricalTpms(Tpms):
         self: CylindricalTpms,
         radius: float,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -767,7 +767,7 @@ class SphericalTpms(Tpms):
         self: SphericalTpms,
         radius: float,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
