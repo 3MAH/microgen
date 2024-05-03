@@ -14,13 +14,13 @@ import pyvista as pv
 
 from microgen.operations import rotateEuler, rotatePvEuler
 
-from .basic_geometry import BasicGeometry
+from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
-class Capsule(BasicGeometry):
+class Capsule(Shape):
     """Class to generate a capsule (cylinder with hemispherical ends).
 
     .. jupyter-execute::
@@ -34,13 +34,12 @@ class Capsule(BasicGeometry):
 
     def __init__(
         self: Capsule,
-        center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
         height: float = 1,
         radius: float = 0.5,
+        **kwargs: Vector3DType,
     ) -> None:
         """Initialize the capsule."""
-        super().__init__(shape="Capsule", center=center, orientation=orientation)
+        super().__init__(**kwargs)
         self.height = height
         self.radius = radius
 

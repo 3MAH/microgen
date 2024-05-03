@@ -28,12 +28,11 @@ from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
+from .shape import Shape
 from .sphere import Sphere
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 
 if TYPE_CHECKING:
-    from .basic_geometry import BasicGeometry
-
     Vector3DType = Tuple[float, float, float] | Sequence[float]
 
     TpmsPartType = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
@@ -54,7 +53,7 @@ def new_geometry(  # noqa: PLR0911
     param_geom: dict[str, GeometryParameterType],
     center: tuple[float, float, float] = (0, 0, 0),
     orientation: tuple[float, float, float] = (0, 0, 0),
-) -> BasicGeometry:
+) -> Shape:
     """Create a new basic geometry with given shape and geometrical parameters.
 
     :param shape: name of the geometry
@@ -62,7 +61,7 @@ def new_geometry(  # noqa: PLR0911
     :param center: center
     :param orientation: orientation
 
-    :return geometry: BasicGeometry
+    :return geometry: Shape
     """
     if shape.lower() == "box":
         return Box(
@@ -139,6 +138,7 @@ __all__ = [
     "ExtrudedPolygon",
     "Infill",
     "Polyhedron",
+    "Shape",
     "SphericalTpms",
     "Sphere",
     "Tpms",

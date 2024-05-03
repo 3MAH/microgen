@@ -13,13 +13,13 @@ import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from .basic_geometry import BasicGeometry
+from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
-class Sphere(BasicGeometry):
+class Sphere(Shape):
     """Class to generate a sphere.
 
     .. jupyter-execute::
@@ -33,11 +33,11 @@ class Sphere(BasicGeometry):
 
     def __init__(
         self: Sphere,
-        center: Vector3DType = (0, 0, 0),
         radius: float = 1,
+        **kwargs: Vector3DType,
     ) -> None:
         """Initialize the sphere."""
-        super().__init__(shape="Sphere", center=center)
+        super().__init__(**kwargs)
         self.radius = radius
 
     def generate(self: Sphere, **_: KwargsGenerateType) -> cq.Shape:
