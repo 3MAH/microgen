@@ -20,7 +20,7 @@ with open(data_file) as f:
     seedList = [[1, 1, 1]]
     seedList = np.genfromtxt(f, delimiter="\t")
 
-box = Box(dim_x=thickness, dim_y=60, dim_z=60)
+box = Box(dim=(thickness, 60, 60))
 
 shapeList = []
 for seed in seedList:
