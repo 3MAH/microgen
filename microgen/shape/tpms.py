@@ -108,7 +108,7 @@ class Tpms(Shape):
         super().__init__(**kwargs)
 
         self.surface_function = surface_function
-        self.offset = offset if offset is not None else 0.0
+        self._offset = offset if offset is not None else 0.0
         self.phase_shift = phase_shift
 
         self.grid: pv.StructuredGrid
