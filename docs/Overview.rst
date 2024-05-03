@@ -71,30 +71,3 @@ Brief examples
    shape = geometry.sheet
 
    shape.plot(color='white')
-
-..
- .. jupyter-execute::
-
-..    import cadquery as cq
-
-..    capsule = microgen.Capsule(center=(0, 0, 0.5), height=3, radius=1)
-..    shape = capsule.generate()
-
-..    shell = cq.Workplane().add(shape).shell(0.025).split(keepBottom=True).val()
-..    half_capsule = cq.Workplane().add(shape).split(keepBottom=True).val()
-
-..    gyroid = microgen.Tpms(center=(0., 0., 0),
-..                 surface_function=microgen.surface_functions.gyroid,
-..                 offset=0.3,
-..                 cell_size=1,
-..                 repeat_cell=(5, 3, 1))
-..    shape_gyroid = gyroid.generate(type_part="sheet")
-
-..    inner_gyroid = shape_gyroid.intersect(half_capsule)
-..    fuse = inner_gyroid.fuse(shell)
-
-..    mesh = pyvista.PolyData(fuse.toVtkPolyData(0.1))
-..    pl = pyvista.Plotter()
-..    pl.add_mesh(mesh, color='white')
-..    pl.camera.zoom(1.5)
-..    pl.show()

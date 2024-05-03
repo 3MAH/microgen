@@ -15,22 +15,23 @@ repos:
   - id: detect-private-key
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.3.0
+  rev: v0.4.1
   hooks:
     - id: ruff
-      args: [--fix]
+      # args: ["--fix"]
     - id: ruff-format
+
+# - repo: https://github.com/econchick/interrogate
+#   rev: 1.7.0
+#   hooks:
+#     - id: interrogate
+#       args: [-vv, --fail-under=100, --omit-covered-files]
 
 - repo: https://github.com/keewis/blackdoc
   rev: v0.3.9
   hooks:
   - id: blackdoc
     files: '\.py$'
-
-- repo: https://github.com/pycqa/isort
-  rev: 5.13.2
-  hooks:
-  - id: isort
 
 - repo: https://github.com/codespell-project/codespell
   rev: v2.2.6
