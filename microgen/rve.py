@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Sequence, Tuple
 
 import cadquery as cq
 import numpy as np
@@ -11,9 +11,7 @@ import numpy as np
 _DIM = 3
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
-    Vector3DType = Tuple[float, float, float] | List[float] | npt.NDArray[np.float64]
+    Vector3DType = Tuple[float, float, float] | Sequence[float]
 
 
 class Rve:

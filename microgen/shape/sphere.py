@@ -16,7 +16,7 @@ import pyvista as pv
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerateType
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 
 class Sphere(BasicGeometry):
@@ -33,7 +33,7 @@ class Sphere(BasicGeometry):
 
     def __init__(
         self: Sphere,
-        center: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
         radius: float = 1,
     ) -> None:
         """Initialize the sphere."""

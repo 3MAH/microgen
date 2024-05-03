@@ -19,7 +19,7 @@ Shape (:mod:`microgen.shape`)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Literal, Sequence
+from typing import TYPE_CHECKING, Callable, Literal, Sequence, Tuple
 
 from . import surface_functions
 from .box import Box
@@ -33,6 +33,8 @@ from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 
 if TYPE_CHECKING:
     from .basic_geometry import BasicGeometry
+
+    Vector3DType = Tuple[float, float, float] | Sequence[float]
 
     TpmsPartType = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
 

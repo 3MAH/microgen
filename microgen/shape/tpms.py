@@ -28,7 +28,7 @@ from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerateType, TpmsPartType
+    from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[
@@ -72,8 +72,8 @@ class Tpms(BasicGeometry):
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
         resolution: int = 20,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
         density: float | None = None,
     ) -> None:
         r"""Class used to generate TPMS geometries (sheet or skeletals parts).
@@ -352,7 +352,13 @@ class Tpms(BasicGeometry):
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
 
-        return cq.Shell.makeShell(faces)
+        try:
+            shell = cq.Shell.makeShell(faces)
+        except ValueError as err:
+            err_msg = "Failed to create the shell, \
+                try to increase the resolution or the smoothing."
+            raise ShellCreationError(err_msg) from err
+        return shell
 
     def _create_surface(
         self: Tpms,
@@ -369,12 +375,7 @@ class Tpms(BasicGeometry):
         mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
         mesh.clean(inplace=True)
 
-        try:
-            shell = self._create_shell(mesh=mesh)
-        except ValueError as exc:
-            err_msg = "Cannot create shell, try to use a higher smoothing value."
-            raise ValueError(err_msg) from exc
-        return shell
+        return self._create_shell(mesh=mesh)
 
     def _create_surfaces(
         self: Tpms,
@@ -641,8 +642,8 @@ class CylindricalTpms(Tpms):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
         resolution: int = 20,
         density: float | None = None,
     ) -> None:
@@ -722,8 +723,8 @@ class SphericalTpms(Tpms):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
         resolution: int = 20,
         density: float | None = None,
     ) -> None:
@@ -879,3 +880,11 @@ class Infill(Tpms):
         grid = grid.clip_surface(obj)
         logging.info("Grid resolution: %s points", grid.n_points)
         return grid
+
+
+class ShellCreationError(Exception):
+    """Error raised when the shell creation fails."""
+
+    def __init__(self: ShellCreationError, message: str) -> None:
+        """Initialize the ShellCreationError."""
+        super().__init__(message)

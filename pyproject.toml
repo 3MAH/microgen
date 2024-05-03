@@ -90,7 +90,6 @@ exclude = [
     "microgen/operations.py",
     "microgen/periodic.py",
     "microgen/phase.py",
-    "microgen/phase.py",
     "microgen/remesh.py",
     "microgen/report.py",
     "microgen/rve.py",

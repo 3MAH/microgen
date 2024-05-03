@@ -18,7 +18,7 @@ from microgen.operations import rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerateType
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 
 class ExtrudedPolygon(BasicGeometry):
@@ -37,8 +37,8 @@ class ExtrudedPolygon(BasicGeometry):
 
     def __init__(
         self: ExtrudedPolygon,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
         list_corners: Sequence[tuple[float, float]] | None = None,
         height: float = 1,
         **kwargs: dict[str, Sequence[tuple[float, float]]],

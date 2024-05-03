@@ -19,7 +19,7 @@ from microgen.operations import rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerateType
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 
 class Ellipsoid(BasicGeometry):
@@ -36,8 +36,8 @@ class Ellipsoid(BasicGeometry):
 
     def __init__(  # noqa: PLR0913
         self: Ellipsoid,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
         radii: tuple[float, float, float] = (1, 0.5, 0.25),
         a_x: float | None = None,
         a_y: float | None = None,

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     import cadquery as cq
     import pyvista as pv
 
-    from microgen.shape import KwargsGenerateType
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 
 class BasicGeometry:
@@ -29,8 +29,8 @@ class BasicGeometry:
     def __init__(
         self: BasicGeometry,
         shape: str,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         """Initialize the shape."""
         self.number = self.num_instances

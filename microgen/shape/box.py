@@ -18,7 +18,7 @@ from microgen.operations import rotateEuler, rotatePvEuler
 from .basic_geometry import BasicGeometry
 
 if TYPE_CHECKING:
-    from microgen.shape import KwargsGenerateType
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 
 class Box(BasicGeometry):
@@ -35,8 +35,8 @@ class Box(BasicGeometry):
 
     def __init__(  # noqa: PLR0913
         self: Box,
-        center: tuple[float, float, float] = (0, 0, 0),
-        orientation: tuple[float, float, float] = (0, 0, 0),
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType = (0, 0, 0),
         dim: tuple[float, float, float] = (1, 1, 1),
         dim_x: float | None = None,
         dim_y: float | None = None,
