@@ -28,12 +28,11 @@ from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
+from .shape import Shape
 from .sphere import Sphere
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 
 if TYPE_CHECKING:
-    from .shape import Shape
-
     Vector3DType = Tuple[float, float, float] | Sequence[float]
 
     TpmsPartType = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
@@ -139,6 +138,7 @@ __all__ = [
     "ExtrudedPolygon",
     "Infill",
     "Polyhedron",
+    "Shape",
     "SphericalTpms",
     "Sphere",
     "Tpms",

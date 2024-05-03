@@ -11,10 +11,10 @@ from microgen.shape import (
     Ellipsoid,
     ExtrudedPolygon,
     Polyhedron,
+    Shape,
     ShapeError,
     Sphere,
 )
-from microgen.shape.shape import Shape
 
 
 def test_shapes():
