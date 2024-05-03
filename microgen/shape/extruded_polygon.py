@@ -42,7 +42,9 @@ class ExtrudedPolygon(Shape):
         **kwargs: Vector3DType | dict[str, Sequence[tuple[float, float]]],
     ) -> None:
         """Initialize the extruded polygon. The default shape is a hexagon."""
-        super().__init__(**kwargs)
+        center = kwargs.get("center", (0, 0, 0))
+        orientation = kwargs.get("orientation", (0, 0, 0))
+        super().__init__(center=center, orientation=orientation)
 
         if kwargs.get("listCorners", None) is not None:
             list_corners = kwargs["listCorners"]
