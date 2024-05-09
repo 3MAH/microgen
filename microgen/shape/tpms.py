@@ -364,7 +364,7 @@ class Tpms(Shape):
         if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
         elif isinstance(offset, OffsetGrading):
-            self.offset = offset.compute_offset(self.grid)
+            self._offset = offset.compute_offset(self.grid)
         elif callable(offset):
             self._offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
         else:
