@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import pyvista as pv
+from typing_extensions import override
 
 if TYPE_CHECKING:
     import numpy as np
@@ -12,18 +14,33 @@ if TYPE_CHECKING:
     import pyvista as pv
 
 
-class OffsetGrading:
+class OffsetGrading(ABC):
     """Base class for offset grading functions."""
 
-    def __init__(self: OffsetGrading) -> None:
-        """Initialize the OffsetGrading object."""
-        raise NotImplementedError
-
+    @abstractmethod
     def compute_offset(
         self: OffsetGrading,
         grid: pv.UnstructuredGrid | pv.StructuredGrid,
     ) -> npt.NDArray[np.float64]:
-        """Compute the offset of the grid."""
+        """Compute the offset of the grid.
+
+        This method should compute the offset on each point of the grid and return \
+            it as a 1D array.
+        The `lower_surface` and `upper_surface` fields of the grid will then be \
+            updated using this computed offset.
+
+        Parameters
+        ----------
+        grid : pv.UnstructuredGrid | pv.StructuredGrid
+            The grid to compute the offset on.
+
+        Returns
+        -------
+        npt.NDArray[np.float64]
+            The offset of the grid as a 1D array that matches the \
+                number of points in the grid.
+
+        """
         raise NotImplementedError
 
 
@@ -60,26 +77,19 @@ class NormedDistance(OffsetGrading):
         self.furthest_offset = furthest_offset
         self.boundary_weight = boundary_weight
 
+    @override
     def compute_offset(
         self: NormedDistance,
         grid: pv.UnstructuredGrid | pv.StructuredGrid,
     ) -> npt.NDArray[np.float64]:
-        """Compute the offset based on the implicit distance to the object.
-
-        Parameters
-        ----------
-        grid : pv.UnstructuredGrid | pv.StructuredGrid
-            The grid to compute the distance on.
-
-        Returns
-        -------
-        pv.UnstructuredGrid | pv.StructuredGrid
-            The offset computed based on the implicit distance.
-
-        """
         distance = grid.compute_implicit_distance(self.obj)["implicit_distance"]
 
-        normed_distance = distance / distance.max()
+        if max_distance := distance.max() == 0:
+            err_msg = "The maximum distance to the object is 0. \
+                Cannot compute the normed disrtance offset."
+            raise ValueError(err_msg)
+
+        normed_distance = distance / max_distance
         normed_distance[normed_distance < 0] = 0
 
         weighted_distance = normed_distance**self.boundary_weight
