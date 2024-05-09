@@ -83,8 +83,9 @@ class NormedDistance(OffsetGrading):
         grid: pv.UnstructuredGrid | pv.StructuredGrid,
     ) -> npt.NDArray[np.float64]:
         distance = grid.compute_implicit_distance(self.obj)["implicit_distance"]
+        max_distance = distance.max()
 
-        if max_distance := distance.max() == 0:
+        if max_distance == 0:
             err_msg = "The maximum distance to the object is 0. \
                 Cannot compute the normed disrtance offset."
             raise ValueError(err_msg)
