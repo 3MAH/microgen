@@ -49,9 +49,7 @@ jobs:
 
       - name: Install microgen for Windows
         if: runner.os == 'Windows'
-        run: |
-          pip install uv
-          uv pip install --system microgen@. --no-deps
+        run: pip install . --no-deps
         shell: pwsh
 
       - name: Examples on Windows without MMG
