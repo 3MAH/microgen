@@ -87,7 +87,7 @@ class NormedDistance(OffsetGrading):
 
         if max_distance == 0:
             err_msg = "The maximum distance to the object is 0. \
-                Cannot compute the normed disrtance offset."
+                Cannot compute the normed distance offset."
             raise ValueError(err_msg)
 
         normed_distance = distance / max_distance
