@@ -40,7 +40,9 @@ def test_normed_distance_offsets_must_correspond(
 
     offset = grading.compute_offset(grid)
 
+    first_corner = 0
     middle = len(offset) // 2
+    last_corner = -1
+    assert np.isclose(offset[first_corner], boundary_offset)
     assert np.isclose(offset[middle], furthest_offset)
-    assert np.isclose(offset[0], boundary_offset)
-    assert np.isclose(offset[-1], boundary_offset)
+    assert np.isclose(offset[last_corner], boundary_offset)
