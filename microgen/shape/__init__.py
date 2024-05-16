@@ -31,6 +31,7 @@ from .polyhedron import Polyhedron
 from .shape import Shape
 from .sphere import Sphere
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
+from .tpms_grading import NormedDistance
 
 if TYPE_CHECKING:
     Vector3DType = Tuple[float, float, float] | Sequence[float]
@@ -137,6 +138,7 @@ __all__ = [
     "Ellipsoid",
     "ExtrudedPolygon",
     "Infill",
+    "NormedDistance",
     "Polyhedron",
     "Shape",
     "SphericalTpms",

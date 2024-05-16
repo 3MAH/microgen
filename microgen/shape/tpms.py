@@ -29,6 +29,7 @@ from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
+from .tpms_grading import OffsetGrading
 
 logging.basicConfig(level=logging.INFO)
 Field = Callable[
@@ -67,7 +68,7 @@ class Tpms(Shape):
     def __init__(  # noqa: PLR0913
         self: Tpms,
         surface_function: Field,
-        offset: float | Field | None = None,
+        offset: float | OffsetGrading | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -256,7 +257,7 @@ class Tpms(Shape):
         self.offset_updated = False
 
         if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="upper_skeletal")
+            self._compute_offset_to_fit_density(part_type="upper skeletal")
 
         self._grid_upper_skeletal = self.grid.clip_scalar(
             scalars="upper_surface",
@@ -272,7 +273,7 @@ class Tpms(Shape):
         self.offset_updated = False
 
         if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="lower_skeletal")
+            self._compute_offset_to_fit_density(part_type="lower skeletal")
 
         self._grid_lower_skeletal = self.grid.clip_scalar(scalars="lower_surface")
         return self._grid_lower_skeletal
@@ -356,9 +357,14 @@ class Tpms(Shape):
         return self._offset
 
     @offset.setter
-    def offset(self: Tpms, offset: float | npt.NDArray[np.float64] | Field) -> None:
+    def offset(
+        self: Tpms,
+        offset: float | npt.NDArray[np.float64] | OffsetGrading | Field,
+    ) -> None:
         if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
+        elif isinstance(offset, OffsetGrading):
+            self._offset = offset.compute_offset(self.grid)
         elif callable(offset):
             self._offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
         else:
@@ -686,7 +692,7 @@ class CylindricalTpms(Tpms):
         self: CylindricalTpms,
         radius: float,
         surface_function: Field,
-        offset: float | Field | None = None,
+        offset: float | OffsetGrading | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -767,7 +773,7 @@ class SphericalTpms(Tpms):
         self: SphericalTpms,
         radius: float,
         surface_function: Field,
-        offset: float | Field | None = None,
+        offset: float | OffsetGrading | Field | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         cell_size: float | Sequence[float] = 1.0,
         repeat_cell: int | Sequence[int] = 1,
@@ -859,7 +865,7 @@ class Infill(Tpms):
         self: Infill,
         obj: pv.PolyData,
         surface_function: Field,
-        offset: float | Field = 0.0,
+        offset: float | OffsetGrading | Field = 0.0,
         cell_size: float | Sequence[float] | npt.NDArray[np.float64] | None = None,
         repeat_cell: int | Sequence[int] | npt.NDArray[np.int8] | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
