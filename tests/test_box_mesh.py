@@ -243,6 +243,11 @@ def test_closest_points_on_boundaries_must_have_good_number_of_neighbours() -> N
     for key, value in closest_pts.items():
         assert (len(value[0][0])) == 1
 
+
+def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_neighbours() -> (
+    None
+):
+    box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
     dummy_noise_factor = 0.01
 
     # perturb faces and edges with non-zero perturbation so that multiple neighbours must be found
@@ -257,6 +262,8 @@ def test_closest_points_on_boundaries_must_have_good_number_of_neighbours() -> N
         )
 
     box_mesh_to_test.nodes_coords = np.clip(box_mesh_to_test.nodes_coords, 0.0, 1.0)
+
+    closest_pts = box_mesh_to_test.closest_points_on_boundaries(k_neighbours=3)
 
     closest_neighbours_truth = [3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     closest_neighbours_to_test = []
