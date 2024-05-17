@@ -237,7 +237,6 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
 
 
 def test_closest_points_on_boundaries_must_have_good_number_of_neighbours() -> None:
-
     box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
     closest_pts = box_mesh_to_test.closest_points_on_boundaries(k_neighbours=3)
 
