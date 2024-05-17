@@ -1,9 +1,11 @@
 import math as m
+import random
 from typing import Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
 import pytest
+
 import pyvista as pv
 from pytest import FixtureRequest
 
@@ -232,3 +234,34 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
     assert boundary.n_cells == expected_number_of_cells and all(
         bool_check_triangle_on_boundary_list
     )
+
+
+def test_closest_points_on_boundaries_must_have_good_number_of_neighbours() -> None:
+
+    box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
+    closest_pts = box_mesh_to_test.closest_points_on_boundaries(k_neighbours=3)
+
+    for key, value in closest_pts.items():
+        assert (len(value[0][0])) == 1
+
+    dummy_noise_factor = 0.01
+
+    # perturbate faces and edges with non-zero perturbation so that multiple neighbours must be found
+    for key, value in box_mesh_to_test.faces.items():
+        box_mesh_to_test.nodes_coords[value[0]] += dummy_noise_factor * (
+            1 - random.uniform(0, 1)
+        )
+
+    for key, value in box_mesh_to_test.edges.items():
+        box_mesh_to_test.nodes_coords[value[0]] += dummy_noise_factor * (
+            1 - random.uniform(0, 1)
+        )
+
+    box_mesh_to_test.nodes_coords = np.clip(box_mesh_to_test.nodes_coords, 0.0, 1.0)
+
+    closest_neighbours_truth = [3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    closest_neighbours_to_test = []
+    for key, value in closest_pts.items():
+        closest_neighbours_to_test.append(len(value[0][0]))
+
+    assert closest_neighbours_to_test == closest_neighbours_truth
