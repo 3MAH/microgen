@@ -338,9 +338,9 @@ class BoxMesh(SingleMesh):
         :param tol: tolerance
 
         :return dict: a dictionary with (np.array) of indices and a np.array of distances for each neighbor:
-            'face_Xp' : (index[0], dist[0]),
-            'face_Yp' : (index[1], dist[1]),
-            'face_Zp' : (index[2], dist[2])
+            'face_xp' : (index[0], dist[0]),
+            'face_xp' : (index[1], dist[1]),
+            'face_xp' : (index[2], dist[2])
         """
 
         if rve is None:
@@ -436,9 +436,9 @@ class BoxMesh(SingleMesh):
             index.append(index_temp_list)
 
         return {
-            "face_Xp": (np.asarray(index[0]), np.asarray(dist[0])),
-            "face_Yp": (np.asarray(index[1]), np.asarray(dist[1])),
-            "face_Zp": (np.asarray(index[2]), np.asarray(dist[2])),
+            "face_xp": (np.asarray(index[0]), np.asarray(dist[0])),
+            "face_yp": (np.asarray(index[1]), np.asarray(dist[1])),
+            "face_zp": (np.asarray(index[2]), np.asarray(dist[2])),
         }
 
     def _closest_points_on_edges(
@@ -505,7 +505,7 @@ class BoxMesh(SingleMesh):
 
         all_edge_yp_zm = np.hstack(
             (
-                self.edges["edge_ym_zm"],
+                self.edges["edge_yp_zm"],
                 self.corners["corner_xm_yp_zm"],
                 self.corners["corner_xp_yp_zm"],
             )
@@ -595,15 +595,15 @@ class BoxMesh(SingleMesh):
             index.append(index_temp_list)
 
         return {
-            "edge_XpYm": (index[0], dist[0]),
-            "edge_XpYp": (index[1], dist[1]),
-            "edge_XmYp": (index[2], dist[2]),
-            "edge_XpZm": (index[3], dist[3]),
-            "edge_XpZp": (index[4], dist[4]),
-            "edge_XmZp": (index[5], dist[5]),
-            "edge_YpZm": (index[6], dist[6]),
-            "edge_YpZp": (index[7], dist[7]),
-            "edge_YmZp": (index[8], dist[8]),
+            "edge_xpym": (index[0], dist[0]),
+            "edge_xpyp": (index[1], dist[1]),
+            "edge_xmyp": (index[2], dist[2]),
+            "edge_xpzm": (index[3], dist[3]),
+            "edge_xpzp": (index[4], dist[4]),
+            "edge_xmzp": (index[5], dist[5]),
+            "edge_ypzm": (index[6], dist[6]),
+            "edge_ypzp": (index[7], dist[7]),
+            "edge_ymzp": (index[8], dist[8]),
         }
 
     def closest_points_on_boundaries(
