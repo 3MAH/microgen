@@ -245,7 +245,7 @@ def test_closest_points_on_boundaries_must_have_good_number_of_neighbours() -> N
 
     dummy_noise_factor = 0.01
 
-    # perturbate faces and edges with non-zero perturbation so that multiple neighbours must be found
+    # perturb faces and edges with non-zero perturbation so that multiple neighbours must be found
     for key, value in box_mesh_to_test.faces.items():
         box_mesh_to_test.nodes_coords[value[0]] += dummy_noise_factor * (
             1 - random.uniform(0, 1)
