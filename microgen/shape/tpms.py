@@ -317,7 +317,13 @@ class Tpms(Shape):
         z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
         """Return the structured cartesian grid of the TPMS."""
-        return pv.StructuredGrid(x, y, z)
+        grid = pv.StructuredGrid(x, y, z)
+        grid["coords"] = np.c_[
+            x.ravel(order="F"),
+            y.ravel(order="F"),
+            z.ravel(order="F"),
+        ]
+        return grid
 
     def _compute_tpms_field(self: Tpms) -> None:
         """Compute the TPMS scalar field on the grid."""
@@ -338,7 +344,7 @@ class Tpms(Shape):
         self.grid = self._create_grid(x, y, z)
 
         k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
-        x, y, z = self.grid.points.T
+        x, y, z = self.grid["coords"].T
         tpms_field = self.surface_function(
             k_x * (x + self.phase_shift[0]),
             k_y * (y + self.phase_shift[1]),
@@ -763,7 +769,13 @@ class CylindricalTpms(Tpms):
         rho = x + self.cylinder_radius
         theta = y * self.unit_theta
 
-        return pv.StructuredGrid(rho * np.cos(theta), rho * np.sin(theta), z)
+        grid = pv.StructuredGrid(rho * np.cos(theta), rho * np.sin(theta), z)
+        grid["coords"] = np.c_[
+            x.ravel(order="F"),
+            y.ravel(order="F"),
+            z.ravel(order="F"),
+        ]
+        return grid
 
 
 class SphericalTpms(Tpms):
@@ -851,11 +863,17 @@ class SphericalTpms(Tpms):
         theta = y * self.unit_theta + np.pi / 2.0
         phi = z * self.unit_phi
 
-        return pv.StructuredGrid(
+        grid = pv.StructuredGrid(
             rho * np.sin(theta) * np.cos(phi),
             rho * np.sin(theta) * np.sin(phi),
             rho * np.cos(theta),
         )
+        grid["coords"] = np.c_[
+            x.ravel(order="F"),
+            y.ravel(order="F"),
+            z.ravel(order="F"),
+        ]
+        return grid
 
 
 class Infill(Tpms):
