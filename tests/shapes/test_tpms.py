@@ -5,10 +5,11 @@ from __future__ import annotations
 from inspect import getmembers, isfunction
 from typing import Literal
 
-import microgen
 import numpy as np
 import numpy.typing as npt
 import pytest
+
+import microgen
 
 TEST_DEFAULT_OFFSET = 0.5
 
@@ -117,6 +118,41 @@ def test_tpms_given_density_must_match_computed_density(
 
     # Assert
     assert np.isclose(computed_density, density, rtol=0.1)
+
+
+@pytest.mark.parametrize(
+    "coord_sys_tpms",
+    [microgen.Tpms, microgen.CylindricalTpms, microgen.SphericalTpms],
+)
+def test_tpms_given_coord_system_tpms_coordinates_field_must_be_in_cartesian_frame(
+    coord_sys_tpms: type[microgen.Tpms],
+) -> None:
+    """Test if the `coords` field of the grid correspond to the cartesian frame."""
+    kwargs = {"radius": 1.0} if coord_sys_tpms != microgen.Tpms else {}
+
+    tpms = coord_sys_tpms(
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        **kwargs,
+    )
+
+    linspaces: list[npt.NDArray[np.float64]] = [
+        np.linspace(
+            -0.5 * cell_size_axis * repeat_cell_axis,
+            0.5 * cell_size_axis * repeat_cell_axis,
+            tpms.resolution * repeat_cell_axis,
+        )
+        for repeat_cell_axis, cell_size_axis in zip(
+            tpms.repeat_cell,
+            tpms.cell_size,
+        )
+    ]
+
+    cartesian_coords = np.vstack(
+        [axis.ravel("F") for axis in np.meshgrid(*linspaces)],
+    ).T
+
+    assert np.all(cartesian_coords == tpms.grid["coords"])
 
 
 @pytest.mark.parametrize(

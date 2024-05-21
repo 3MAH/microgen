@@ -1,24 +1,29 @@
+"""Example of cylindrical TPMS with graded density."""
+
 from __future__ import annotations
 
 from functools import partial
 
 import numpy as np
+import pyvista as pv
 
 from microgen import CylindricalTpms
 from microgen.shape.surface_functions import gyroid
 
 
-def swapped_gyroid(x, y, z):
+def swapped_gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """Compute swapped gyroid function."""
     return gyroid(x=z, y=y, z=x)
 
 
 def grading(
     x: np.ndarray,
     y: np.ndarray,
-    z: np.ndarray,
+    _: np.ndarray,
     min_offset: float | np.ndarray = 0.0,
     max_offset: float | np.ndarray = 3.0,
 ) -> np.ndarray:
+    """Compute grading function based on radial distance."""
     rad = np.sqrt(x**2 + y**2)
     max_rad = np.max(rad)
     min_rad = np.min(rad)
@@ -48,9 +53,9 @@ geometry = CylindricalTpms(
 )
 sheet = geometry.sheet
 
-# plotter = pv.Plotter()
-# plotter.add_mesh(sheet, color="w")
-# plotter.view_xy()
-# plotter.enable_parallel_projection()
-# plotter.show_axes()
+plotter = pv.Plotter()
+plotter.add_mesh(sheet, color="w")
+plotter.view_xy()
+plotter.enable_parallel_projection()
+plotter.show_axes()
 # plotter.show()
