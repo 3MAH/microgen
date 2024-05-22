@@ -557,7 +557,7 @@ def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
 @pytest.mark.parametrize("kwarg", [{"cell_size": 0.5}, {"repeat_cell": 2}])
 def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
     """Test if the grid bounds match the object bounds."""
-    obj = microgen.Ellipsoid(a_x=1.0, a_y=2.0 / 3.0, a_z=0.5).generate_vtk()
+    obj = microgen.Ellipsoid(radii=(1.0, 2.0 / 3.0, 0.5)).generate_vtk()
     tpms = microgen.Infill(
         obj=obj,
         surface_function=microgen.surface_functions.gyroid,
