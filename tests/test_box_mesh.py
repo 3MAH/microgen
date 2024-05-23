@@ -5,11 +5,9 @@ from typing import Dict, List, Tuple
 import numpy as np
 import numpy.typing as npt
 import pytest
-
 import pyvista as pv
-from pytest import FixtureRequest
-
 from microgen import BoxMesh, Rve
+from pytest import FixtureRequest
 
 
 def _box_mesh_points() -> npt.NDArray[np.float_]:
@@ -247,12 +245,12 @@ def test_closest_points_on_boundaries_periodic_mesh_must_have_only_neighbour(
 
     number_of_closest_neighbours_to_test: List[int] = []
     number_closest_neighbours_truth_1_on_each_face_and_edge = [1] * 12
-    for key, list_of_neighbor_for_all_nodes in closest_pts.items():
-        list_of_neighbor_for_all_nodes_index = list_of_neighbor_for_all_nodes[0]
+    for key, list_of_neighbour_for_all_nodes in closest_pts.items():
+        list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
 
         number_of_closest_neighbours_to_test.extend(
-            len(list_of_neighbor_for_each_nodes)
-            for list_of_neighbor_for_each_nodes in list_of_neighbor_for_all_nodes_index
+            len(list_of_neighbour_for_each_nodes)
+            for list_of_neighbour_for_each_nodes in list_of_neighbour_for_all_nodes_index
         )
 
     assert (
@@ -283,7 +281,9 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
         )
 
     box_mesh_to_test.nodes_coords = np.clip(
-        box_mesh_to_test.nodes_coords, xyz_min_values_of_rve, xyz_max_values_of_rve
+        box_mesh_to_test.nodes_coords,
+        xyz_min_values_of_rve,
+        xyz_max_values_of_rve,
     )
 
     closest_pts = box_mesh_to_test.closest_points_on_boundaries(
@@ -305,12 +305,12 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
         2,
     ]
     number_of_closest_neighbours_to_test: List[int] = []
-    for key, list_of_neighbor_for_all_nodes in closest_pts.items():
-        list_of_neighbor_for_all_nodes_index = list_of_neighbor_for_all_nodes[0]
+    for key, list_of_neighbour_for_all_nodes in closest_pts.items():
+        list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
 
         number_of_closest_neighbours_to_test.extend(
-            len(list_of_neighbor_for_each_nodes)
-            for list_of_neighbor_for_each_nodes in list_of_neighbor_for_all_nodes_index
+            len(list_of_neighbour_for_each_nodes)
+            for list_of_neighbour_for_each_nodes in list_of_neighbour_for_all_nodes_index
         )
 
     assert (
