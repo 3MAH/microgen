@@ -1,13 +1,13 @@
 import math as m
+import random
 from typing import Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
-from pytest import FixtureRequest
-
 from microgen import BoxMesh, Rve
+from pytest import FixtureRequest
 
 
 def _box_mesh_points() -> npt.NDArray[np.float_]:
@@ -231,4 +231,89 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
 
     assert boundary.n_cells == expected_number_of_cells and all(
         bool_check_triangle_on_boundary_list
+    )
+
+
+@pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])
+def test_closest_points_on_boundaries_periodic_mesh_must_have_only_one_neighbour(
+    k_neighbours: int,
+) -> None:
+    box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
+    closest_pts = box_mesh_to_test.closest_points_on_boundaries(
+        k_neighbours=k_neighbours
+    )
+
+    number_of_closest_neighbours_to_test: List[int] = []
+    number_closest_neighbours_truth_1_on_each_face_and_edge = [1] * 12
+    for key, list_of_neighbour_for_all_nodes in closest_pts.items():
+        list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
+
+        number_of_closest_neighbours_to_test.extend(
+            len(list_of_neighbour_for_each_nodes)
+            for list_of_neighbour_for_each_nodes in list_of_neighbour_for_all_nodes_index
+        )
+
+    assert (
+        number_of_closest_neighbours_to_test
+        == number_closest_neighbours_truth_1_on_each_face_and_edge
+    )
+
+
+@pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])
+def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_neighbours(
+    k_neighbours: int,
+) -> None:
+    box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
+    perturbation_factor = 0.01
+
+    xyz_min_values_of_rve = np.min(box_mesh_to_test.rve.min_point)
+    xyz_max_values_of_rve = np.max(box_mesh_to_test.rve.max_point)
+
+    # perturb faces and edges with non-zero perturbation so that multiple neighbours must be found
+    for _, node_index_in_faces in box_mesh_to_test.faces.items():
+        box_mesh_to_test.nodes_coords[node_index_in_faces[0]] += perturbation_factor * (
+            1 - random.uniform(0, 1)
+        )
+
+    for _, node_index_in_edges in box_mesh_to_test.edges.items():
+        box_mesh_to_test.nodes_coords[node_index_in_edges[0]] += perturbation_factor * (
+            1 - random.uniform(0, 1)
+        )
+
+    box_mesh_to_test.nodes_coords = np.clip(
+        box_mesh_to_test.nodes_coords,
+        xyz_min_values_of_rve,
+        xyz_max_values_of_rve,
+    )
+
+    closest_pts = box_mesh_to_test.closest_points_on_boundaries(
+        k_neighbours=k_neighbours
+    )
+
+    number_closest_neighbours_truth_k_neighbours_on_each_face_2_on_each_edge = [
+        k_neighbours,
+        k_neighbours,
+        k_neighbours,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+    ]
+    number_of_closest_neighbours_to_test: List[int] = []
+    for _, list_of_neighbour_for_all_nodes in closest_pts.items():
+        list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
+
+        number_of_closest_neighbours_to_test.extend(
+            len(list_of_neighbour_for_each_nodes)
+            for list_of_neighbour_for_each_nodes in list_of_neighbour_for_all_nodes_index
+        )
+
+    assert (
+        number_of_closest_neighbours_to_test
+        == number_closest_neighbours_truth_k_neighbours_on_each_face_2_on_each_edge
     )
