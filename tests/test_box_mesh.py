@@ -236,38 +236,84 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
     )
 
 
-def test_closest_points_on_boundaries_must_have_good_number_of_neighbours() -> None:
+@pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])
+def test_closest_points_on_boundaries_periodic_mesh_must_have_only_neighbour(
+    k_neighbours: int,
+) -> None:
     box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
-    closest_pts = box_mesh_to_test.closest_points_on_boundaries(k_neighbours=3)
+    closest_pts = box_mesh_to_test.closest_points_on_boundaries(
+        k_neighbours=k_neighbours
+    )
 
-    for key, value in closest_pts.items():
-        assert (len(value[0][0])) == 1
+    number_of_closest_neighbours_to_test: List[int] = []
+    number_closest_neighbours_truth_1_on_each_face_and_edge = [1] * 12
+    for key, list_of_neighbor_for_all_nodes in closest_pts.items():
+        list_of_neighbor_for_all_nodes_index = list_of_neighbor_for_all_nodes[0]
+
+        number_of_closest_neighbours_to_test.extend(
+            len(list_of_neighbor_for_each_nodes)
+            for list_of_neighbor_for_each_nodes in list_of_neighbor_for_all_nodes_index
+        )
+
+    assert (
+        number_of_closest_neighbours_to_test
+        == number_closest_neighbours_truth_1_on_each_face_and_edge
+    )
 
 
-def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_neighbours() -> (
-    None
-):
+@pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])
+def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_neighbours(
+    k_neighbours: int,
+) -> None:
     box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
-    dummy_noise_factor = 0.01
+    perturbation_factor = 0.01
+
+    xyz_min_values_of_rve = np.min(box_mesh_to_test.rve.min_point)
+    xyz_max_values_of_rve = np.max(box_mesh_to_test.rve.max_point)
 
     # perturb faces and edges with non-zero perturbation so that multiple neighbours must be found
-    for key, value in box_mesh_to_test.faces.items():
-        box_mesh_to_test.nodes_coords[value[0]] += dummy_noise_factor * (
+    for key, node_index_in_faces in box_mesh_to_test.faces.items():
+        box_mesh_to_test.nodes_coords[node_index_in_faces[0]] += perturbation_factor * (
             1 - random.uniform(0, 1)
         )
 
-    for key, value in box_mesh_to_test.edges.items():
-        box_mesh_to_test.nodes_coords[value[0]] += dummy_noise_factor * (
+    for key, node_index_in_edges in box_mesh_to_test.edges.items():
+        box_mesh_to_test.nodes_coords[node_index_in_edges[0]] += perturbation_factor * (
             1 - random.uniform(0, 1)
         )
 
-    box_mesh_to_test.nodes_coords = np.clip(box_mesh_to_test.nodes_coords, 0.0, 1.0)
+    box_mesh_to_test.nodes_coords = np.clip(
+        box_mesh_to_test.nodes_coords, xyz_min_values_of_rve, xyz_max_values_of_rve
+    )
 
-    closest_pts = box_mesh_to_test.closest_points_on_boundaries(k_neighbours=3)
+    closest_pts = box_mesh_to_test.closest_points_on_boundaries(
+        k_neighbours=k_neighbours
+    )
 
-    closest_neighbours_truth = [3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2]
-    closest_neighbours_to_test = []
-    for key, value in closest_pts.items():
-        closest_neighbours_to_test.append(len(value[0][0]))
+    number_closest_neighbours_truth_k_neighbours_on_each_face_2_on_each_edge = [
+        k_neighbours,
+        k_neighbours,
+        k_neighbours,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+    ]
+    number_of_closest_neighbours_to_test: List[int] = []
+    for key, list_of_neighbor_for_all_nodes in closest_pts.items():
+        list_of_neighbor_for_all_nodes_index = list_of_neighbor_for_all_nodes[0]
 
-    assert closest_neighbours_to_test == closest_neighbours_truth
+        number_of_closest_neighbours_to_test.extend(
+            len(list_of_neighbor_for_each_nodes)
+            for list_of_neighbor_for_each_nodes in list_of_neighbor_for_all_nodes_index
+        )
+
+    assert (
+        number_of_closest_neighbours_to_test
+        == number_closest_neighbours_truth_k_neighbours_on_each_face_2_on_each_edge
+    )
