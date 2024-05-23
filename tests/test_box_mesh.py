@@ -235,7 +235,7 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
 
 
 @pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])
-def test_closest_points_on_boundaries_periodic_mesh_must_have_only_neighbour(
+def test_closest_points_on_boundaries_periodic_mesh_must_have_only_one_neighbour(
     k_neighbours: int,
 ) -> None:
     box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
@@ -270,12 +270,12 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
     xyz_max_values_of_rve = np.max(box_mesh_to_test.rve.max_point)
 
     # perturb faces and edges with non-zero perturbation so that multiple neighbours must be found
-    for key, node_index_in_faces in box_mesh_to_test.faces.items():
+    for _, node_index_in_faces in box_mesh_to_test.faces.items():
         box_mesh_to_test.nodes_coords[node_index_in_faces[0]] += perturbation_factor * (
             1 - random.uniform(0, 1)
         )
 
-    for key, node_index_in_edges in box_mesh_to_test.edges.items():
+    for _, node_index_in_edges in box_mesh_to_test.edges.items():
         box_mesh_to_test.nodes_coords[node_index_in_edges[0]] += perturbation_factor * (
             1 - random.uniform(0, 1)
         )
@@ -305,7 +305,7 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
         2,
     ]
     number_of_closest_neighbours_to_test: List[int] = []
-    for key, list_of_neighbour_for_all_nodes in closest_pts.items():
+    for _, list_of_neighbour_for_all_nodes in closest_pts.items():
         list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
 
         number_of_closest_neighbours_to_test.extend(
