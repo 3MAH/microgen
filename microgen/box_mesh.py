@@ -418,19 +418,23 @@ class BoxMesh(SingleMesh):
 
             dist_temp, index_temp = kd_trees[i].query(crd_face, minimum_query_points)
             all_faces_p_i = all_faces_p[i]
-            index_temp_list = all_faces_p_i[index_temp].tolist()
             if k_neighbours == 1:
-                dist_temp_list = [[d] for d in dist_temp]
-                index_temp_list = [[i] for i in index_temp_list]
+                dist_temp_list = [d for d in dist_temp]
+                index_temp_list = [all_faces_p_i[index_temp]]
             else:
                 dist_temp_list = dist_temp.tolist()
+                index_temp_list = all_faces_p_i[index_temp].tolist()
 
             # If pair nodes exist (opposite node exactly match), return only the pair node (the closest neighbour)
             if k_neighbours > 1:
-                for i in range(0, len(dist_temp)):
-                    if dist_temp_list[i][0] < tol:
-                        dist_temp_list[i] = dist_temp_list[i][0:1]
-                        index_temp_list[i] = index_temp_list[i][0:1]
+                for nb_pts_on_face in range(0, len(dist_temp)):
+                    if dist_temp_list[nb_pts_on_face][0] < tol:
+                        dist_temp_list[nb_pts_on_face] = dist_temp_list[nb_pts_on_face][
+                            0:1
+                        ]
+                        index_temp_list[nb_pts_on_face] = index_temp_list[
+                            nb_pts_on_face
+                        ][0:1]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
@@ -586,10 +590,12 @@ class BoxMesh(SingleMesh):
             all_edges_p_i = all_edges_p[i]
             index_temp_list = all_edges_p_i[index_temp].tolist()
 
-            for i in range(0, len(dist_temp)):
-                if dist_temp_list[i][0] < tol:
-                    dist_temp_list[i] = dist_temp_list[i][0:1]
-                    index_temp_list[i] = index_temp_list[i][0:1]
+            for nb_pts_on_edge in range(0, len(dist_temp)):
+                if dist_temp_list[nb_pts_on_edge][0] < tol:
+                    dist_temp_list[nb_pts_on_edge] = dist_temp_list[nb_pts_on_edge][0:1]
+                    index_temp_list[nb_pts_on_edge] = index_temp_list[nb_pts_on_edge][
+                        0:1
+                    ]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
