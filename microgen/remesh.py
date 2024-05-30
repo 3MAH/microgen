@@ -1,3 +1,5 @@
+"""Remesh a mesh using mmg while keeping periodicity."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -158,17 +160,21 @@ def remesh_keeping_periodicity_for_fem(
 
 
 def _generate_mesh_with_required_triangles(
-    input_mesh: BoxMesh, mesh_including_required_triangles: str = "merged_reqtri.mesh"
+    input_mesh: BoxMesh,
+    mesh_including_required_triangles: str = "merged_reqtri.mesh",
 ) -> None:
     with NamedTemporaryFile(suffix=".mesh", delete=True) as mesh_file:
         _generate_mesh_with_boundary_triangles(input_mesh, mesh_file.name)
         _add_required_triangles_to_mesh_file(
-            input_mesh, mesh_file.name, mesh_including_required_triangles
+            input_mesh,
+            mesh_file.name,
+            mesh_including_required_triangles,
         )
 
 
 def _generate_mesh_with_boundary_triangles(
-    input_mesh: BoxMesh, output_mesh: str = "merged.mesh"
+    input_mesh: BoxMesh,
+    output_mesh: str = "merged.mesh",
 ) -> None:
     pyvista_mesh = input_mesh.to_pyvista()
     mesh_boundary, _ = input_mesh.boundary_elements(input_mesh.rve)
@@ -182,7 +188,9 @@ def _get_number_of_boundary_triangles_from_boxmesh(input_mesh: BoxMesh) -> int:
 
 
 def _add_required_triangles_to_mesh_file(
-    input_mesh: BoxMesh, input_mesh_file: str, output_mesh_file: str
+    input_mesh: BoxMesh,
+    input_mesh_file: str,
+    output_mesh_file: str,
 ) -> None:
     n_required_triangles = _get_number_of_boundary_triangles_from_boxmesh(input_mesh)
     with Path(input_mesh_file).open() as input_file:
@@ -198,7 +206,10 @@ def _add_required_triangles_to_mesh_file(
 
 
 def _remove_unnecessary_fields_from_mesh_file(
-    input_mesh_file: str, output_mesh_file: str, mesh_version: int, dimension: int
+    input_mesh_file: str,
+    output_mesh_file: str,
+    mesh_version: int,
+    dimension: int,
 ) -> None:
     with Path(input_mesh_file).open() as input_file:
         lines = input_file.readlines()

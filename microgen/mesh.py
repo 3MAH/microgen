@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Iterator
 
 import gmsh
 import numpy as np
 import numpy.typing as npt
-from deprecated import deprecated
 
 if TYPE_CHECKING:
     from .phase import Phase
@@ -24,7 +24,6 @@ class OutputMeshNotPeriodicError(Exception):
 
 def mesh(
     mesh_file: str,
-    list_phases: list[Phase],
     listPhases: list[Phase],
     size: float,
     order: int,
@@ -49,7 +48,6 @@ def mesh(
     _finalize_mesh(size, output_file)
 
 
-@deprecated(version="1.2.0", reason="Use mesh_periodic instead")
 def meshPeriodic(
     mesh_file: str,
     rve: Rve,
@@ -74,6 +72,11 @@ def meshPeriodic(
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
+    warnings.warn(
+        "meshPeriodic is deprecated, use mesh_periodic instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     mesh_periodic(
         mesh_file,
         rve,
