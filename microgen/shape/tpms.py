@@ -912,7 +912,7 @@ class Infill(Tpms):
         self.obj = obj
         bounds = np.array(obj.bounds)
 
-        margin_factor = 1.0  # 001  # to avoid the object surface that can create issues
+        margin_factor = 1.001  # to avoid the object surface that can create issues
         obj_dim = margin_factor * (bounds[1::2] - bounds[::2])  # [dim_x, dim_y, dim_z]
 
         if cell_size is not None and repeat_cell is not None:
