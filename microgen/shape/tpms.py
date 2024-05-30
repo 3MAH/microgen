@@ -883,7 +883,7 @@ class Infill(Tpms):
         self: Infill,
         obj: pv.PolyData,
         surface_function: Field,
-        offset: float | OffsetGrading | Field = 0.0,
+        offset: float | OffsetGrading | Field | None = None,
         cell_size: float | Sequence[float] | npt.NDArray[np.float64] | None = None,
         repeat_cell: int | Sequence[int] | npt.NDArray[np.int8] | None = None,
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
@@ -892,7 +892,9 @@ class Infill(Tpms):
     ) -> None:
         r"""Initialize the Infill object.
 
-        :param obj: object in which the infill is generated
+        :param obj: object in which the infill is generated. Normals must be oriented\
+                towards the outside of the object. Use the `flip_normals` method if\
+                     needed.
         :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
         :param cell_size: float or list of float for each dimension to set\
@@ -909,7 +911,9 @@ class Infill(Tpms):
         """
         self.obj = obj
         bounds = np.array(obj.bounds)
-        obj_dim = bounds[1::2] - bounds[::2]  # [dim_x, dim_y, dim_z]
+
+        margin_factor = 1.0  # 001  # to avoid the object surface that can create issues
+        obj_dim = margin_factor * (bounds[1::2] - bounds[::2])  # [dim_x, dim_y, dim_z]
 
         if cell_size is not None and repeat_cell is not None:
             err_msg = "cell_size and repeat_cell cannot be given at the same time, \
@@ -917,7 +921,7 @@ class Infill(Tpms):
             raise ValueError(err_msg)
 
         if cell_size is not None:
-            repeat_cell = np.ceil(obj_dim / cell_size).astype(int)
+            repeat_cell = np.round(obj_dim / cell_size).astype(int)
         elif repeat_cell is not None:
             cell_size = obj_dim / repeat_cell
 
@@ -948,8 +952,7 @@ class Infill(Tpms):
             y + self.obj.center[1],
             z + self.obj.center[2],
         )
-        obj = self.obj.compute_normals(cell_normals=False, auto_orient_normals=True)
-        grid = grid.clip_surface(obj)
+        grid = grid.clip_surface(self.obj)
         logging.info("Grid resolution: %s points", grid.n_points)
         return grid
 
