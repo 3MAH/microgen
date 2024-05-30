@@ -590,6 +590,7 @@ def test_infill_cylinder_has_expected_volume() -> None:
     n_unique = len(np.unique(components))
 
     assert n_unique == 1
+    assert np.isclose(infill.sheet.volume, density * cylinder.volume, rtol=1e-2)
 
 
 def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
