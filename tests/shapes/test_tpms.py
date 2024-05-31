@@ -5,10 +5,11 @@ from __future__ import annotations
 from inspect import getmembers, isfunction
 from typing import Literal
 
-import microgen
 import numpy as np
 import numpy.typing as npt
 import pytest
+
+import microgen
 
 TEST_DEFAULT_OFFSET = 0.5
 
@@ -585,12 +586,22 @@ def test_infill_cylinder_has_expected_volume() -> None:
         density=density,
         repeat_cell=2,
     )
+    assert np.isclose(infill.sheet.volume, density * cylinder.volume, rtol=1e-2)
+
+
+def test_infill_cylinder_returns_single_connected_component_mesh() -> None:
+    """Test if the infilled cylinder returns a single connected component mesh."""
+    infill = microgen.Infill(
+        obj=microgen.Cylinder().generate_vtk(),
+        surface_function=microgen.surface_functions.gyroid,
+        offset=TEST_DEFAULT_OFFSET,
+        repeat_cell=2,
+    )
 
     components = infill.sheet.connectivity().point_data["RegionId"]
     n_unique = len(np.unique(components))
 
     assert n_unique == 1
-    assert np.isclose(infill.sheet.volume, density * cylinder.volume, rtol=1e-2)
 
 
 def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
