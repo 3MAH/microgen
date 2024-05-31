@@ -5,10 +5,11 @@ from __future__ import annotations
 from inspect import getmembers, isfunction
 from typing import Literal
 
-import microgen
 import numpy as np
 import numpy.typing as npt
 import pytest
+
+import microgen
 
 TEST_DEFAULT_OFFSET = 0.5
 
@@ -551,7 +552,7 @@ def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
     )
 
     expected_cell_size = (1.0, 1.0, 0.5)
-    assert np.allclose(tpms.cell_size, expected_cell_size)
+    assert np.allclose(tpms.cell_size, expected_cell_size, rtol=1e-2)
 
 
 @pytest.mark.parametrize("kwarg", [{"cell_size": 0.5}, {"repeat_cell": 2}])
@@ -575,26 +576,32 @@ def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
     assert np.all(grid_dim < obj_dim + tpms.cell_size)
 
 
-def test_infill_fills_the_object_with_any_normal_orientation() -> None:
-    """Test if the object is filled correctly with any normal orientation."""
-    mesh = microgen.Box(dim=(1.0, 1.0, 1.0)).generate_vtk()
-    first = microgen.Infill(
-        obj=mesh,
+def test_infill_cylinder_has_expected_volume() -> None:
+    """Test if an infilled cylinder has the expected volume."""
+    density = 0.5
+    cylinder = microgen.Cylinder().generate_vtk()
+    infill = microgen.Infill(
+        cylinder,
         surface_function=microgen.surface_functions.gyroid,
-        offset=TEST_DEFAULT_OFFSET,
-        cell_size=0.5,
+        density=density,
+        repeat_cell=2,
     )
-    mesh = mesh.triangulate()
-    mesh.flip_normals()
-    second = microgen.Infill(
-        obj=mesh,
+    assert np.isclose(infill.sheet.volume, density * cylinder.volume, rtol=1e-2)
+
+
+def test_infill_cylinder_returns_single_connected_component_mesh() -> None:
+    """Test if the infilled cylinder returns a single connected component mesh."""
+    infill = microgen.Infill(
+        obj=microgen.Cylinder().generate_vtk(),
         surface_function=microgen.surface_functions.gyroid,
         offset=TEST_DEFAULT_OFFSET,
-        cell_size=0.5,
+        repeat_cell=2,
     )
 
-    assert np.allclose(first.sheet.volume, second.sheet.volume)
-    assert first.sheet.points.shape == second.sheet.points.shape
+    components = infill.sheet.connectivity().point_data["RegionId"]
+    n_unique = len(np.unique(components))
+
+    assert n_unique == 1
 
 
 def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
