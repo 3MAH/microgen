@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import warnings
 from typing import TYPE_CHECKING, Iterator
 
@@ -196,11 +197,14 @@ def _sort_adjacent_faces_2d(
     nodes_coords: npt.NDArray[np.float64],
 ) -> dict[str, npt.NDArray[np.int64]]:
     """Sort adjacent faces to ensure node correspondence."""
-    complementary_indices = [1, 0]
-    for axis, idx in zip("xy", complementary_indices):
-        for sign in "-+":
-            face = f"{axis}{sign}"
-            faces[face] = faces[face][np.argsort(nodes_coords[faces[face], idx])]
+    complementary_indices = {
+        "x": 1,
+        "y": 0,
+    }
+    for axis, sign in itertools.product("xy", "-+"):
+        face = f"{axis}{sign}"
+        idx = complementary_indices[axis]
+        faces[face] = faces[face][np.argsort(nodes_coords[faces[face], idx])]
     return faces
 
 
@@ -226,11 +230,15 @@ def _sort_adjacent_faces_3d(
             )
         ]
 
-    complementary_indices = [[1, 2], [0, 2], [0, 1]]
-    for axis, slc in zip("xyz", complementary_indices):
-        for sign in "-+":
-            face = f"{axis}{sign}"
-            faces[face] = _sort_dim(faces[face], slc[0], slc[1])
+    complementary_indices = {
+        "x": (1, 2),
+        "y": (0, 2),
+        "z": (0, 1),
+    }
+    for axis, sign in itertools.product("xyz", "-+"):
+        face = f"{axis}{sign}"
+        slc = complementary_indices[axis]
+        faces[face] = _sort_dim(faces[face], slc[0], slc[1])
     return faces
 
 
@@ -243,7 +251,7 @@ def is_periodic(
 
     :param nodes_coords: list of nodes coordinates of the analyzed mesh
     :param tol: tolerance
-    :param dim: mesh dimension
+    :param dim: mesh dimension (deprecated: unnecessary parameter)
     """
     if dim is not None:
         warnings.warn(
