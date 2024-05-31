@@ -15,7 +15,9 @@ if TYPE_CHECKING:
 
 _DIM_COUNT = 3
 _BOUNDS_COUNT = 2
-_Point3D = np.ndarray
+_Point3D = npt.NDArray[np.float64]
+_DIM_2D = 2
+_DIM_3D = 3
 
 
 class OutputMeshNotPeriodicError(Exception):
@@ -143,10 +145,99 @@ def mesh_periodic(
     _check_output_mesh_periodicity(output_file, tol)
 
 
+def _get_bounding_box(
+    nodes_coords: npt.NDArray[np.float64],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Get bounding box of a mesh.
+
+    :param nodes_coords: list of nodes coordinates of the analyzed mesh
+    """
+    min_point = np.min(nodes_coords, axis=0)
+    max_point = np.max(nodes_coords, axis=0)
+    return min_point, max_point
+
+
+def _extract_face_nodes(
+    nodes_coords: npt.NDArray[np.float64],
+    min_point: npt.NDArray[np.float64],
+    max_point: npt.NDArray[np.float64],
+    tol: float,
+    dim: int,
+) -> dict[str, npt.NDArray[np.int64]]:
+    """Extract face nodes of a mesh.
+
+    :param nodes_coords: list of nodes coordinates of the analyzed mesh
+    :param min_point: minimum point of the bounding box
+    :param max_point: maximum point of the bounding box
+    :param tol: tolerance
+    :param dim: mesh dimension
+
+    :return: dictionary of face nodes as
+        {
+            "x-": face_xm,
+            "x+": face_xp,
+            "y-": face_ym,
+            "y+": face_yp,
+            "z-": face_zm,
+            "z+": face_zp,
+        }
+    """
+    axes = "xyz"[:dim]
+    faces = {}
+    for i, axis in enumerate(axes):
+        for sign, point in zip("-+", [min_point, max_point]):
+            face = f"{axis}{sign}"
+            faces[face] = np.where(np.abs(nodes_coords[:, i] - point[i]) < tol)[0]
+    return faces
+
+
+def _sort_adjacent_faces_2d(
+    faces: dict[str, npt.NDArray[np.int64]],
+    nodes_coords: npt.NDArray[np.float64],
+) -> dict[str, npt.NDArray[np.int64]]:
+    """Sort adjacent faces to ensure node correspondence."""
+    complementary_indices = [1, 0]
+    for axis, idx in zip("xy", complementary_indices):
+        for sign in "-+":
+            face = f"{axis}{sign}"
+            faces[face] = faces[face][np.argsort(nodes_coords[faces[face], idx])]
+    return faces
+
+
+def _sort_adjacent_faces_3d(
+    faces: dict[str, npt.NDArray[np.int64]],
+    nodes_coords: npt.NDArray[np.float64],
+    tol: float,
+) -> dict[str, npt.NDArray[np.int64]]:
+    """Sort adjacent faces to ensure node correspondence."""
+    decimal_round = int(-np.log10(tol) - 1)
+
+    def _sort_dim(
+        indices: npt.NDArray[np.int64],
+        dim_a: int,
+        dim_b: int,
+    ) -> npt.NDArray[np.int64]:
+        return indices[
+            np.lexsort(
+                (
+                    nodes_coords[indices, dim_a],
+                    nodes_coords[indices, dim_b].round(decimal_round),
+                ),
+            )
+        ]
+
+    complementary_indices = [[1, 2], [0, 2], [0, 1]]
+    for axis, slc in zip("xyz", complementary_indices):
+        for sign in "-+":
+            face = f"{axis}{sign}"
+            faces[face] = _sort_dim(faces[face], slc[0], slc[1])
+    return faces
+
+
 def is_periodic(
     nodes_coords: npt.NDArray[np.float64],
     tol: float = 1e-8,
-    dim: int = 3,
+    dim: int | None = None,
 ) -> bool:
     """Check whether a mesh is periodic, given its nodes' coordinates.
 
@@ -154,82 +245,35 @@ def is_periodic(
     :param tol: tolerance
     :param dim: mesh dimension
     """
-    # bounding box
-    xmax = np.max(nodes_coords[:, 0])
-    xmin = np.min(nodes_coords[:, 0])
-    ymax = np.max(nodes_coords[:, 1])
-    ymin = np.min(nodes_coords[:, 1])
-    if dim == 3:
-        zmax = np.max(nodes_coords[:, 2])
-        zmin = np.min(nodes_coords[:, 2])
+    dim = nodes_coords.shape[1]
+    axes = "xyz"[:dim]
+    min_point, max_point = _get_bounding_box(nodes_coords)
 
-    # extract face nodes
-    face_xm = np.where(np.abs(nodes_coords[:, 0] - xmin) < tol)[0]
-    face_xp = np.where(np.abs(nodes_coords[:, 0] - xmax) < tol)[0]
+    faces = _extract_face_nodes(nodes_coords, min_point, max_point, tol, dim)
 
-    if dim > 1:
-        face_ym = np.where(np.abs(nodes_coords[:, 1] - ymin) < tol)[0]
-        face_yp = np.where(np.abs(nodes_coords[:, 1] - ymax) < tol)[0]
+    if dim == _DIM_2D:
+        faces = _sort_adjacent_faces_2d(faces, nodes_coords)
+    elif dim == _DIM_3D:
+        faces = _sort_adjacent_faces_3d(faces, nodes_coords, tol)
 
-    if dim > 2:  # or dim == 3
-        face_zm = np.where(np.abs(nodes_coords[:, 2] - zmin) < tol)[0]
-        face_zp = np.where(np.abs(nodes_coords[:, 2] - zmax) < tol)[0]
+    # test if mesh is periodic
+    complementary_indices = {
+        "x": slice(1, None),
+        "y": slice(None, None, 2),
+        "z": slice(None, 2),
+    }
+    for axis in axes:
+        face_m = faces[f"{axis}-"]
+        face_p = faces[f"{axis}+"]
 
-        # sort adjacent faces to ensure node correspondence
-    if nodes_coords.shape[1] == 2:  # 2D mesh
-        face_xm = face_xm[np.argsort(nodes_coords[face_xm, 1])]
-        face_xp = face_xp[np.argsort(nodes_coords[face_xp, 1])]
-        if dim > 1:
-            face_ym = face_ym[np.argsort(nodes_coords[face_ym, 0])]
-            face_yp = face_yp[np.argsort(nodes_coords[face_yp, 0])]
-
-    elif nodes_coords.shape[1] > 2:
-        decimal_round = int(-np.log10(tol) - 1)
-
-        def _sort_dim(indices: np.ndarray, dim_a: int, dim_b: int) -> np.ndarray:
-            return indices[
-                np.lexsort(
-                    (
-                        nodes_coords[indices, dim_a],
-                        nodes_coords[indices, dim_b].round(decimal_round),
-                    ),
-                )
-            ]
-
-        face_xm = _sort_dim(face_xm, dim_a=1, dim_b=2)
-        face_xp = _sort_dim(face_xp, dim_a=1, dim_b=2)
-        if dim > 1:
-            face_ym = _sort_dim(face_ym, dim_a=0, dim_b=2)
-            face_yp = _sort_dim(face_yp, dim_a=0, dim_b=2)
-        if dim > 2:
-            face_zm = _sort_dim(face_zm, dim_a=0, dim_b=1)
-            face_zp = _sort_dim(face_zp, dim_a=0, dim_b=1)
-
-    # ==========================
-    # test if mesh is periodic:
-    # ==========================
-
-    # test if same number of nodes in adjacent faces
-    if len(face_xm) != len(face_xp):
-        return False
-    if dim > 1 and len(face_ym) != len(face_yp):
-        return False
-    if dim > 2 and (len(face_zm) != len(face_zp)):
-        return False
-
-    # check nodes position
-    x_diff = nodes_coords[face_xp, 1:] - nodes_coords[face_xm, 1:]
-    if (x_diff > tol).any():
-        return False
-
-    if dim > 1:
-        y_diff = nodes_coords[face_yp, ::2] - nodes_coords[face_ym, ::2]
-        if (y_diff > tol).any():
+        # test if same number of nodes in adjacent faces
+        if len(face_m) != len(face_p):
             return False
 
-    if dim > 2:
-        z_diff = nodes_coords[face_zp, :2] - nodes_coords[face_zm, :2]
-        if (z_diff > tol).any():
+        # check nodes position
+        slc = complementary_indices[axis]
+        diff = nodes_coords[face_p, slc] - nodes_coords[face_m, slc]
+        if (diff > tol).any():
             return False
 
     return True
@@ -332,23 +376,10 @@ def _iter_bounding_boxes(
         yield bounds, tag
 
 
-def _get_deltas(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.dx, rve.dy, rve.dz])
-
-
-def _get_min(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.x_min, rve.y_min, rve.z_min])
-
-
-def _get_max(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
-    return np.array([rve.x_max, rve.y_max, rve.z_max])
-
-
 def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
-    deltas = _get_deltas(rve)
-    eps: float = 1.0e-3 * min(deltas)
-    minimum = _get_min(rve)
-    maximum = _get_max(rve)
+    eps: float = 1.0e-3 * min(rve.dim)
+    minimum = rve.min_point.copy()
+    maximum = rve.max_point.copy()
     maximum[axis] = minimum[axis]
 
     # Get all the entities on the surface m (minimum value on axis, i.e. Xm, Ym or Zm)
