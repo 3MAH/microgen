@@ -245,6 +245,12 @@ def is_periodic(
     :param tol: tolerance
     :param dim: mesh dimension
     """
+    if dim is not None:
+        warnings.warn(
+            "dim is deprecated, it is now inferred from the nodes' coordinates.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     dim = nodes_coords.shape[1]
     axes = "xyz"[:dim]
     min_point, max_point = _get_bounding_box(nodes_coords)
