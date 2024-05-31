@@ -24,11 +24,13 @@ class OutputMeshNotPeriodicError(Exception):
 
 def mesh(
     mesh_file: str,
-    listPhases: list[Phase],
-    size: float,
-    order: int,
+    list_phases: list[Phase] | None = None,
+    size: float | None = None,
+    order: int | None = None,
     output_file: str = "Mesh.msh",
-    mshFileVersion: int = 4,
+    msh_file_version: int = 4,
+    listPhases: list[Phase] | None = None,
+    mshFileVersion: int | None = None,
 ) -> None:
     """Mesh step file with gmsh with list of phases management.
 
@@ -42,8 +44,30 @@ def mesh(
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
-    list_phases = listPhases
-    msh_file_version = mshFileVersion
+    if listPhases is not None:
+        warnings.warn(
+            "listPhases is deprecated, use list_phases instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        list_phases = listPhases
+
+    if mshFileVersion is not None:
+        warnings.warn(
+            "mshFileVersion is deprecated, use msh_file_version instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        msh_file_version = mshFileVersion
+
+    if size is None:
+        err_msg = "size parameter must be provided"
+        raise ValueError(err_msg)
+
+    if order is None:
+        err_msg = "order parameter must be provided"
+        raise ValueError(err_msg)
+
     _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
     _finalize_mesh(size, output_file)
 
