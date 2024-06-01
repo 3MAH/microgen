@@ -166,12 +166,10 @@ def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[cq.Shape]) -> Phas
 
     :return resultCut: cut phase
     """
-    result_cut = phase_to_cut.shape
+    result = phase_to_cut.shape
     for shape in shapes:
-        result_cut = cq.Shape(
-            BRepAlgoAPI_Cut(result_cut.wrapped, shape.wrapped).Shape(),
-        )
-    return Phase(shape=result_cut)
+        result = cq.Shape(BRepAlgoAPI_Cut(result.wrapped, shape.wrapped).Shape())
+    return Phase(shape=result)
 
 
 def cut_shapes(shapes: list[cq.Shape], *, reverse_order: bool = True) -> list[cq.Shape]:
@@ -267,19 +265,14 @@ def repeat_polydata(
     :return: pv.PolyData of the repeated geometry
     """
     xyz_repeat = pv.PolyData()
-    for i_x, i_y, i_z in itertools.product(
+    for idx in itertools.product(
         range(grid[0]),
         range(grid[1]),
         range(grid[2]),
     ):
         new_mesh = mesh.copy()
-        new_mesh.translate(
-            [
-                -rve.dim[0] * (0.5 * grid[0] - 0.5 - i_x),
-                -rve.dim[1] * (0.5 * grid[1] - 0.5 - i_y),
-                -rve.dim[2] * (0.5 * grid[2] - 0.5 - i_z),
-            ],
-        )
+        xyz = [-rve.dim[i] * (0.5 * grid[i] - 0.5 - idx[i]) for i in range(3)]
+        new_mesh.translate(xyz)
         xyz_repeat.merge(new_mesh)
     return xyz_repeat
 
