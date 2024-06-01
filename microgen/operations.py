@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+import warnings
 from typing import TYPE_CHECKING, Sequence
 
 import cadquery as cq
@@ -295,6 +296,11 @@ def rotateEuler(  # noqa: N802
 
     Deprecated in favor of rotate_euler.
     """
+    warnings.warn(
+        "rotateEuler is deprecated, use rotate_euler instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return rotate_euler(obj, center, (psi, theta, phi))
 
 
@@ -309,6 +315,11 @@ def rotatePvEuler(  # noqa: N802
 
     Deprecated in favor of rotatePvEuler.
     """
+    warnings.warn(
+        "rotatePvEuler is deprecated, use rotate_pv_euler instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return rotate_pv_euler(obj, center, (psi, theta, phi))
 
 
@@ -317,6 +328,11 @@ def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:  # 
 
     Deprecated in favor of fuse_shapes.
     """
+    warnings.warn(
+        "fuseShapes is deprecated, use fuse_shapes instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return fuse_shapes(cqShapeList, retain_edges=retain_edges)
 
 
@@ -325,6 +341,11 @@ def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]: 
 
     Deprecated in favor of cut_phases_by_shape.
     """
+    warnings.warn(
+        "cutPhasesByShape is deprecated, use cut_phases_by_shape instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return cut_phases_by_shape(phaseList, cut_obj)
 
 
@@ -333,6 +354,11 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase
 
     Deprecated in favor of cut_phase_by_shape_list.
     """
+    warnings.warn(
+        "cutPhaseByShapeList is deprecated, use cut_phase_by_shape_list instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return cut_phase_by_shape_list(phaseToCut, cqShapeList)
 
 
@@ -341,6 +367,11 @@ def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq
 
     Deprecated in favor of cut_shapes.
     """
+    warnings.warn(
+        "cutShapes is deprecated, use cut_shapes instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return cut_shapes(cqShapeList, reverse_order=reverseOrder)
 
 
@@ -349,6 +380,11 @@ def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
 
     Deprecated in favor of cut_phases.
     """
+    warnings.warn(
+        "cutPhases is deprecated, use cut_phases instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return cut_phases(phaseList, reverse_order=reverseOrder)
 
 
@@ -362,6 +398,11 @@ def rasterPhase(  # noqa: N802
 
     Deprecated in favor of raster_phase.
     """
+    warnings.warn(
+        "rasterPhase is deprecated, use raster_phase instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return raster_phase(phase, rve, grid, phase_per_raster=phasePerRaster)
 
 
@@ -370,6 +411,11 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq
 
     Deprecated in favor of repeat_shape.
     """
+    warnings.warn(
+        "repeatShape is deprecated, use repeat_shape instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return repeat_shape(unit_geom, rve, grid)
 
 
@@ -382,4 +428,9 @@ def repeatPolyData(  # noqa: N802
 
     Deprecated in favor of repeat_polydata.
     """
+    warnings.warn(
+        "repeatPolyData is deprecated, use repeat_polydata instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return repeat_polydata(mesh, rve, grid)
