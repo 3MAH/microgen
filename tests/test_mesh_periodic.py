@@ -65,7 +65,6 @@ def tmp_output_vtk_filename(tmp_dir: Path) -> str:
     return (tmp_dir / "octettruss.vtk").as_posix()
 
 
-@pytest.mark.filterwarnings("ignore:Object intersecting")
 def _generate_cqcompound_octettruss(rve: Rve) -> list[Phase]:
     """Generate a list of periodic octet truss cylinders."""
     # data to generate octet truss cylinders
@@ -181,6 +180,7 @@ def octet_truss_heterogeneous(
     )
 
 
+@pytest.mark.filterwarnings("ignore:Object intersecting")
 @pytest.mark.parametrize(
     "shape",
     [

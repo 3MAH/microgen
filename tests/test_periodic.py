@@ -20,14 +20,16 @@ def _generate_sphere(x: float, y: float, z: float, rve: Rve) -> Phase:
     return periodic(phase=phase, rve=rve)
 
 
-@pytest.mark.filterwarnings("ignore:Object intersecting")
 def test_periodic_generates_warning_on_intersection_with_opposite_faces() -> None:
     """Test that x- and x+ faces of the RVE are intersected by the capsule."""
     rve = Rve(dim=1, center=(0.5, 0.5, 0.5))
 
     elem = shape.capsule.Capsule(center=(0.5, 0, 0.5), height=1, radius=0.1)
     phase = Phase(shape=elem.generate())
-    phase = periodic(phase=phase, rve=rve)
+
+    expected_warning_msg = r"Object intersecting ([xyz])\+ and ([xyz])\- faces: not doing anything in this direction"
+    with pytest.warns(UserWarning, match=expected_warning_msg):
+        phase = periodic(phase=phase, rve=rve)
 
 
 def test_periodic_when_no_intersection() -> None:
