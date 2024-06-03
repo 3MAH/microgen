@@ -460,11 +460,11 @@ class BoxMesh(SingleMesh):
                 for nb_pts_on_face in range(len(dist_temp)):
                     if dist_temp_list[nb_pts_on_face][0] < tol:
                         dist_temp_list[nb_pts_on_face] = dist_temp_list[nb_pts_on_face][
-                            0
+                            :1
                         ]
                         index_temp_list[nb_pts_on_face] = index_temp_list[
                             nb_pts_on_face
-                        ][0]
+                        ][:1]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
