@@ -615,19 +615,18 @@ class BoxMesh(SingleMesh):
             offset = offsets[i]
             crd_edge = crd[edge] + offset
 
-            dist_temp, index_temp = kd_trees[i].query(crd_edge, 2)
+            dist_tmp, index_tmp = kd_trees[i].query(crd_edge, 2)
 
-            dist_temp_list = dist_temp.tolist()
-            all_edges_p_i = all_edges_p[i]
-            index_temp_list = all_edges_p_i[index_temp].tolist()
+            dist_tmp_list = dist_tmp.tolist()
+            index_tmp_list = all_edges_p[i][index_tmp].tolist()
 
-            for nb_pts_on_edge in range(len(dist_temp)):
-                if dist_temp_list[nb_pts_on_edge][0] < tol:
-                    dist_temp_list[nb_pts_on_edge] = dist_temp_list[nb_pts_on_edge][0]
-                    index_temp_list[nb_pts_on_edge] = index_temp_list[nb_pts_on_edge][0]
+            for nb_pts_on_edge in range(len(dist_tmp)):
+                if dist_tmp_list[nb_pts_on_edge][0] < tol:
+                    dist_tmp_list[nb_pts_on_edge] = dist_tmp_list[nb_pts_on_edge][:1]
+                    index_tmp_list[nb_pts_on_edge] = index_tmp_list[nb_pts_on_edge][:1]
 
-            dist.append(dist_temp_list)
-            index.append(index_temp_list)
+            dist.append(dist_tmp_list)
+            index.append(index_tmp_list)
 
         return {
             "edge_xpym": (index[0], dist[0]),
