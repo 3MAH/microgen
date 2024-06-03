@@ -190,8 +190,8 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
     if set_cells_in_pvmesh.intersection(set_elm2d_type):
         warnings.warn(
             (
-                "2D elements are present in the PyVista UnstructuredGrid."
-                "They will be ignored."
+                "2D elements are present in the PyVista UnstructuredGrid. "
+                "They will be ignored. "
                 "Surface elements shall be extracted automatically from the 3d mesh."
             ),
             stacklevel=2,

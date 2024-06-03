@@ -439,7 +439,7 @@ class BoxMesh(SingleMesh):
             if minimum_query_points < k_neighbours:
                 warnings.warn(
                     (
-                        "Number of query points is greater than the number"
+                        "Number of query points is greater than the number "
                         "of points in the KDTree."
                     ),
                     stacklevel=2,
