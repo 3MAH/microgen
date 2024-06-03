@@ -1,9 +1,9 @@
-"""
-Cubic mesh for FE
-"""
+"""Cubic mesh for FE."""
+
+from __future__ import annotations
 
 import warnings
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -27,33 +27,36 @@ USE_MULTI_RAY = False
 
 
 class ClosestCellsOnBoundaries(NamedTuple):
-    """
-    Class to manage closest cells on boundaries
+    """Class to manage closest cells on boundaries.
+
     :param cells_id: list of cells identification number
     :param intersection_point_coords: list of intersection points of projected
     rays from one face's nodes with the opposing face
-    :param closest_opposing_cells_id: list of closest cells identification number on opposing face
+    :param closest_opposing_cells_id:
+        list of closest cells identification number on opposing face
     """
 
     cells_id: npt.NDArray[np.int_]
-    intersection_point_coords: npt.NDArray[np.float_]
-    closest_opposing_cells_id: List[npt.NDArray[np.int_]]
+    intersection_point_coords: npt.NDArray[np.float64]
+    closest_opposing_cells_id: list[npt.NDArray[np.int_]]
 
 
 class BoxMesh(SingleMesh):
-    """
-    Class to manage list of Nodes and Elements inside a Rve
+    """Class to manage list of Nodes and Elements inside a Rve.
+
     :param nodes_coords: list of nodes (np.ndarray)
     :param elements: list of elements (np.ndarray)
-    :param nodes_indices : index of node list (if different from the natural index of nodes array)
+    :param nodes_indices : index of node list
+        (if different from the natural index of nodes array)
     """
 
     def __init__(
-        self,
-        nodes_coords: npt.NDArray[np.float_],
-        elements: Dict[pv.CellType, npt.NDArray[np.int_]],
-        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+        self: BoxMesh,
+        nodes_coords: npt.NDArray[np.float64],
+        elements: dict[pv.CellType, npt.NDArray[np.int_]],
+        nodes_indices: npt.NDArray[np.int_] | None = None,
     ) -> None:
+        """Initialize the BoxMesh object with nodes and elements."""
         super().__init__(
             nodes_coords=nodes_coords,
             elements=elements,
@@ -61,54 +64,56 @@ class BoxMesh(SingleMesh):
         )
 
         self.rve = self._build_rve()
-        self.center: Optional[npt.NDArray[np.float_]] = None
+        self.center: npt.NDArray[np.float64] | None = None
         self._construct()
 
     @staticmethod
-    def from_pyvista(pvmesh: Union[pv.PolyData, pv.UnstructuredGrid]):
-        """Build a BoxMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case,
-        the PolyData object is cast into an Unstructured Grid).
+    def from_pyvista(pvmesh: pv.PolyData | pv.UnstructuredGrid) -> BoxMesh:
+        """Build a BoxMesh from a pyvista UnstructuredGrid or PolyData mesh.
+
+        If pvmesh is a PolyData object, it is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
         Mesh with multiple element type are not handled.
         Note that for now singleMesh works only considering tetrahedral elements
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
 
-        :return : A BoxMesh Object from the tetrahedral elements of the pyvista Unstructured Grid
+        :return : A BoxMesh Object from the tetrahedral elements
+            of the pyvista Unstructured Grid
         """
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
 
         # extract only the tetrahedral elements
-        # raises an Exception if 3d elements other than linear tetrahedra are found in the mesh
+        # raises an Exception if 3d elements other than
+        # linear tetrahedra are found in the mesh
         check_if_only_linear_tetrahedral(pvmesh)
         elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
         return BoxMesh(pvmesh.points, elements)
 
-    def _construct(
-        self,
-        tol: float = 1.0e-8,
-    ) -> None:
-        """
-        Construct a box Mesh with list of points in faces (excluding edges), edges (excluding corners) and corners.
+    def _construct(self: BoxMesh, tol: float = 1.0e-8) -> None:
+        """Construct a box Mesh.
+
+        With list of points in faces (excluding edges),
+        edges (excluding corners) and corners.
 
         :param tol: tolerance to find the points on a face or an edge
         """
-
         crd = self.nodes_coords
         closest_point_to_rve_center = np.linalg.norm(
-            crd - self.rve.center, axis=1
+            crd - self.rve.center,
+            axis=1,
         ).argmin()
         self.center = crd[closest_point_to_rve_center]
 
-        face_list_xm = np.where(np.abs(crd[:, 0] - self.rve.x_min) < tol)[0]
-        face_list_xp = np.where(np.abs(crd[:, 0] - self.rve.x_max) < tol)[0]
+        face_list_xm = np.where(np.abs(crd[:, 0] - self.rve.min_point[0]) < tol)[0]
+        face_list_xp = np.where(np.abs(crd[:, 0] - self.rve.max_point[0]) < tol)[0]
 
-        face_list_ym = np.where(np.abs(crd[:, 1] - self.rve.y_min) < tol)[0]
-        face_list_yp = np.where(np.abs(crd[:, 1] - self.rve.y_max) < tol)[0]
+        face_list_ym = np.where(np.abs(crd[:, 1] - self.rve.min_point[1]) < tol)[0]
+        face_list_yp = np.where(np.abs(crd[:, 1] - self.rve.max_point[1]) < tol)[0]
 
-        face_list_zm = np.where(np.abs(crd[:, 2] - self.rve.z_min) < tol)[0]
-        face_list_zp = np.where(np.abs(crd[:, 2] - self.rve.z_max) < tol)[0]
+        face_list_zm = np.where(np.abs(crd[:, 2] - self.rve.min_point[2]) < tol)[0]
+        face_list_zp = np.where(np.abs(crd[:, 2] - self.rve.max_point[2]) < tol)[0]
 
         edge_list_xm_ym = np.intersect1d(face_list_xm, face_list_ym, assume_unique=True)
         edge_list_xp_ym = np.intersect1d(face_list_xp, face_list_ym, assume_unique=True)
@@ -127,28 +132,44 @@ class BoxMesh(SingleMesh):
 
         # extract corners from the intersection of edges
         corner_list_xm_ym_zm = np.intersect1d(
-            edge_list_xm_ym, edge_list_ym_zm, assume_unique=True
+            edge_list_xm_ym,
+            edge_list_ym_zm,
+            assume_unique=True,
         )
         corner_list_xm_yp_zm = np.intersect1d(
-            edge_list_xm_yp, edge_list_yp_zm, assume_unique=True
+            edge_list_xm_yp,
+            edge_list_yp_zm,
+            assume_unique=True,
         )
         corner_list_xp_ym_zm = np.intersect1d(
-            edge_list_xp_ym, edge_list_ym_zm, assume_unique=True
+            edge_list_xp_ym,
+            edge_list_ym_zm,
+            assume_unique=True,
         )
         corner_list_xp_yp_zm = np.intersect1d(
-            edge_list_xp_yp, edge_list_yp_zm, assume_unique=True
+            edge_list_xp_yp,
+            edge_list_yp_zm,
+            assume_unique=True,
         )
         corner_list_xm_ym_zp = np.intersect1d(
-            edge_list_xm_ym, edge_list_ym_zp, assume_unique=True
+            edge_list_xm_ym,
+            edge_list_ym_zp,
+            assume_unique=True,
         )
         corner_list_xm_yp_zp = np.intersect1d(
-            edge_list_xm_yp, edge_list_yp_zp, assume_unique=True
+            edge_list_xm_yp,
+            edge_list_yp_zp,
+            assume_unique=True,
         )
         corner_list_xp_ym_zp = np.intersect1d(
-            edge_list_xp_ym, edge_list_ym_zp, assume_unique=True
+            edge_list_xp_ym,
+            edge_list_ym_zp,
+            assume_unique=True,
         )
         corner_list_xp_yp_zp = np.intersect1d(
-            edge_list_xp_yp, edge_list_yp_zp, assume_unique=True
+            edge_list_xp_yp,
+            edge_list_yp_zp,
+            assume_unique=True,
         )
 
         # Remove nodes that belong to several sets
@@ -162,7 +183,7 @@ class BoxMesh(SingleMesh):
                 corner_list_xm_yp_zp,
                 corner_list_xp_ym_zp,
                 corner_list_xp_yp_zp,
-            )
+            ),
         )
 
         edge_list_xm_ym = np.setdiff1d(edge_list_xm_ym, all_corners, assume_unique=True)
@@ -195,7 +216,7 @@ class BoxMesh(SingleMesh):
                 edge_list_yp_zp,
                 edge_list_ym_zp,
                 all_corners,
-            )
+            ),
         )
 
         face_list_xm = np.setdiff1d(face_list_xm, all_edges_corners, assume_unique=True)
@@ -226,7 +247,7 @@ class BoxMesh(SingleMesh):
                 (
                     crd[face_list_xm, 1],
                     crd[face_list_xm, 2].round(decimal_round),
-                )
+                ),
             )
         ]
         face_list_xp = face_list_xp[
@@ -234,7 +255,7 @@ class BoxMesh(SingleMesh):
                 (
                     crd[face_list_xp, 1],
                     crd[face_list_xp, 2].round(decimal_round),
-                )
+                ),
             )
         ]
         face_list_ym = face_list_ym[
@@ -242,7 +263,7 @@ class BoxMesh(SingleMesh):
                 (
                     crd[face_list_ym, 0],
                     crd[face_list_ym, 2].round(decimal_round),
-                )
+                ),
             )
         ]
         face_list_yp = face_list_yp[
@@ -250,7 +271,7 @@ class BoxMesh(SingleMesh):
                 (
                     crd[face_list_yp, 0],
                     crd[face_list_yp, 2].round(decimal_round),
-                )
+                ),
             )
         ]
         face_list_zm = face_list_zm[
@@ -258,7 +279,7 @@ class BoxMesh(SingleMesh):
                 (
                     crd[face_list_zm, 0],
                     crd[face_list_zm, 1].round(decimal_round),
-                )
+                ),
             )
         ]
         face_list_zp = face_list_zp[
@@ -266,7 +287,7 @@ class BoxMesh(SingleMesh):
                 (
                     crd[face_list_zp, 0],
                     crd[face_list_zp, 1].round(decimal_round),
-                )
+                ),
             )
         ]
 
@@ -305,11 +326,8 @@ class BoxMesh(SingleMesh):
             "face_zp": face_list_zp,
         }
 
-    def _build_rve(
-        self,
-    ) -> Rve:
-        """
-        build a representative volume element (Rve) of the considered mesh from its bounding box
+    def _build_rve(self: BoxMesh) -> Rve:
+        """Build a representative volume element (Rve) from the mesh's bounding box.
 
         :return rve: RVE of the mesh bounding box
         """
@@ -317,32 +335,39 @@ class BoxMesh(SingleMesh):
             self._pvmesh = self.to_pyvista()
         xmin, xmax, ymin, ymax, zmin, zmax = self._pvmesh.bounds
         return Rve.from_min_max(
-            float(xmin), float(xmax), float(ymin), float(ymax), float(zmin), float(zmax)
+            float(xmin),
+            float(xmax),
+            float(ymin),
+            float(ymax),
+            float(zmin),
+            float(zmax),
         )
 
     def _closest_points_on_faces(
-        self,
+        self: BoxMesh,
         k_neighbours: int = 3,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
+        """Find closest points on opposite faces to write interpolation relationship.
+
+        If a displacement condition between pair nodes is defined on such opposite
+        surfaces, it takes the set of points on faces 'face_Xm', 'face_Ym', 'face_Zm'
+        (excluding edges and corners) and returns for each opposite face the closest
+        points (index of the points, distance) of the projected point on the
+        corresponding opposite face.
+
+        :param k_neighbours: Number of closest points.
+        :param rve: RVE of the mesh bounding box.
+            If None, the RVE is built from the mesh bounding box.
+        :param tol: Tolerance.
+
+        :return dict:A dictionary with (np.array) of indices and
+            a np.array of distances for each neighbor:
+            'face_xp': (index[0], dist[0]),
+            'face_xp': (index[1], dist[1]),
+            'face_xp': (index[2], dist[2])
         """
-        Find the closest points on opposite face to write interpolation relationship
-        if a displacement condition between pair nodes is defined on such opposite surfaces
-        It takes the set of points on faces 'face_Xm', 'face_Ym', 'face_Zm' (excluding edges and corners)
-        and returns for each opposite face the closest points (index of the points, distance) of the
-        projected point on the corresponding opposite face
-
-        :param k_neighbours : number of closest points
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
-        :param tol: tolerance
-
-        :return dict: a dictionary with (np.array) of indices and a np.array of distances for each neighbor:
-            'face_xp' : (index[0], dist[0]),
-            'face_xp' : (index[1], dist[1]),
-            'face_xp' : (index[2], dist[2])
-        """
-
         if rve is None:
             rve = self.rve
 
@@ -359,7 +384,7 @@ class BoxMesh(SingleMesh):
                 self.corners["corner_xp_yp_zm"],
                 self.corners["corner_xp_ym_zp"],
                 self.corners["corner_xp_yp_zp"],
-            )
+            ),
         )
         all_face_yp = np.hstack(
             (
@@ -372,7 +397,7 @@ class BoxMesh(SingleMesh):
                 self.corners["corner_xp_yp_zm"],
                 self.corners["corner_xm_yp_zp"],
                 self.corners["corner_xp_yp_zp"],
-            )
+            ),
         )
         all_face_zp = np.hstack(
             (
@@ -385,7 +410,7 @@ class BoxMesh(SingleMesh):
                 self.corners["corner_xp_ym_zp"],
                 self.corners["corner_xm_yp_zp"],
                 self.corners["corner_xp_yp_zp"],
-            )
+            ),
         )
 
         kd_trees = [
@@ -413,28 +438,33 @@ class BoxMesh(SingleMesh):
 
             if minimum_query_points < k_neighbours:
                 warnings.warn(
-                    "Number of query points is greater than the number of points in the KDTree."
+                    (
+                        "Number of query points is greater than the number"
+                        "of points in the KDTree."
+                    ),
+                    stacklevel=2,
                 )
 
             dist_temp, index_temp = kd_trees[i].query(crd_face, minimum_query_points)
             all_faces_p_i = all_faces_p[i]
             if k_neighbours == 1:
-                dist_temp_list = [d for d in dist_temp]
+                dist_temp_list = list(dist_temp)
                 index_temp_list = [all_faces_p_i[index_temp]]
             else:
                 dist_temp_list = dist_temp.tolist()
                 index_temp_list = all_faces_p_i[index_temp].tolist()
 
-            # If pair nodes exist (opposite node exactly match), return only the pair node (the closest neighbour)
+            # If pair nodes exist (opposite node exactly match)
+            # return only the pair node (the closest neighbour)
             if k_neighbours > 1:
-                for nb_pts_on_face in range(0, len(dist_temp)):
+                for nb_pts_on_face in range(len(dist_temp)):
                     if dist_temp_list[nb_pts_on_face][0] < tol:
                         dist_temp_list[nb_pts_on_face] = dist_temp_list[nb_pts_on_face][
-                            0:1
+                            0
                         ]
                         index_temp_list[nb_pts_on_face] = index_temp_list[
                             nb_pts_on_face
-                        ][0:1]
+                        ][0]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
@@ -446,18 +476,19 @@ class BoxMesh(SingleMesh):
         }
 
     def _closest_points_on_edges(
-        self,
-        rve: Optional[Rve] = None,
+        self: BoxMesh,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
-        """
-        Find the closest points on opposite edges to write interpolation relationship
-        if a displacement condition between pair nodes is defined on such opposite surfaces
+    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
+        """Find closest points on opposite edges to write interpolation relationship.
+
+        if a displacement condition between pair nodes is
+        defined on such opposite surfaces
         Note : the closest neighbours is set as 2 for edges
 
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box.
+            if None, the rve is built from the mesh bounding box
         """
-
         if rve is None:
             rve = self.rve
 
@@ -468,21 +499,21 @@ class BoxMesh(SingleMesh):
                 self.edges["edge_xp_ym"],
                 self.corners["corner_xp_ym_zm"],
                 self.corners["corner_xp_ym_zp"],
-            )
+            ),
         )
         all_edge_xp_yp = np.hstack(
             (
                 self.edges["edge_xp_yp"],
                 self.corners["corner_xp_yp_zm"],
                 self.corners["corner_xp_yp_zp"],
-            )
+            ),
         )
         all_edge_xm_yp = np.hstack(
             (
                 self.edges["edge_xm_yp"],
                 self.corners["corner_xm_yp_zm"],
                 self.corners["corner_xm_yp_zp"],
-            )
+            ),
         )
 
         all_edge_xp_zm = np.hstack(
@@ -490,21 +521,21 @@ class BoxMesh(SingleMesh):
                 self.edges["edge_xp_zm"],
                 self.corners["corner_xp_ym_zm"],
                 self.corners["corner_xp_yp_zm"],
-            )
+            ),
         )
         all_edge_xp_zp = np.hstack(
             (
                 self.edges["edge_xp_zp"],
                 self.corners["corner_xp_ym_zp"],
                 self.corners["corner_xp_yp_zp"],
-            )
+            ),
         )
         all_edge_xm_zp = np.hstack(
             (
                 self.edges["edge_xm_zp"],
                 self.corners["corner_xm_ym_zp"],
                 self.corners["corner_xm_yp_zp"],
-            )
+            ),
         )
 
         all_edge_yp_zm = np.hstack(
@@ -512,21 +543,21 @@ class BoxMesh(SingleMesh):
                 self.edges["edge_yp_zm"],
                 self.corners["corner_xm_yp_zm"],
                 self.corners["corner_xp_yp_zm"],
-            )
+            ),
         )
         all_edge_yp_zp = np.hstack(
             (
                 self.edges["edge_yp_zp"],
                 self.corners["corner_xm_yp_zp"],
                 self.corners["corner_xp_yp_zp"],
-            )
+            ),
         )
         all_edge_ym_zp = np.hstack(
             (
                 self.edges["edge_ym_zp"],
                 self.corners["corner_xm_ym_zp"],
                 self.corners["corner_xp_ym_zp"],
-            )
+            ),
         )
 
         kd_trees = [
@@ -590,12 +621,10 @@ class BoxMesh(SingleMesh):
             all_edges_p_i = all_edges_p[i]
             index_temp_list = all_edges_p_i[index_temp].tolist()
 
-            for nb_pts_on_edge in range(0, len(dist_temp)):
+            for nb_pts_on_edge in range(len(dist_temp)):
                 if dist_temp_list[nb_pts_on_edge][0] < tol:
-                    dist_temp_list[nb_pts_on_edge] = dist_temp_list[nb_pts_on_edge][0:1]
-                    index_temp_list[nb_pts_on_edge] = index_temp_list[nb_pts_on_edge][
-                        0:1
-                    ]
+                    dist_temp_list[nb_pts_on_edge] = dist_temp_list[nb_pts_on_edge][0]
+                    index_temp_list[nb_pts_on_edge] = index_temp_list[nb_pts_on_edge][0]
 
             dist.append(dist_temp_list)
             index.append(index_temp_list)
@@ -613,38 +642,37 @@ class BoxMesh(SingleMesh):
         }
 
     def closest_points_on_boundaries(
-        self,
+        self: BoxMesh,
         k_neighbours: int = 3,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
-        """
-        Find the closest points on faces and edges to write interpolation relationship
+    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
+        """Find closest points on faces and edges to write interpolation relationship.
+
         if a displacement condition between pair nodes is defined
 
         :param k_neighbours : number of closest points
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box.
+            If None, the rve is built from the mesh bounding box
         :param tol: tolerance
         """
-
         if rve is None:
             rve = self.rve
 
         dict_faces = self._closest_points_on_faces(k_neighbours, rve, tol)
         dict_edges = self._closest_points_on_edges(rve, tol)
 
-        closest_points_on_boundaries = {**dict_faces, **dict_edges}
-        return closest_points_on_boundaries
+        return {**dict_faces, **dict_edges}
 
     def boundary_elements(
-        self,
-        rve: Optional[Rve] = None,
+        self: BoxMesh,
+        rve: Rve | None = None,
         tol: float = 1.0e-4,
-    ) -> Tuple[pv.PolyData, npt.NDArray[np.int_]]:
-        """
-        Finds boundary elements of mesh with given tolerance
+    ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
+        """Find boundary elements of mesh with given tolerance.
 
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
+        :param rve : RVE of the mesh bounding box.
+            If None, the rve is built from the mesh bounding box
         :param tol: tolerance
         """
         if rve is None:
@@ -682,7 +710,10 @@ class BoxMesh(SingleMesh):
 
         for normal, origin_p, size_plane in zip(normals, origins_p, size_planes):
             plane = pv.Plane(
-                center=origin_p, direction=normal, i_size=size_plane, j_size=size_plane
+                center=origin_p,
+                direction=normal,
+                i_size=size_plane,
+                j_size=size_plane,
             )
             surface.compute_implicit_distance(plane, inplace=True)
             surface_p = surface.threshold(
@@ -695,16 +726,17 @@ class BoxMesh(SingleMesh):
         return boundary_elements, boundary_elements["CellIDs"]
 
     def closest_cells_on_boundaries(
-        self,
-        rve: Optional[Rve] = None,
+        self: BoxMesh,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, ClosestCellsOnBoundaries]:
-        """
-        Find the cells to which a given point belongs to by using a ray tracing normal to the face on which it belongs
-        :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
-        :param tol : tolerance to evaluate the threshold between the cells and the boundary RVE of the mesh bounding box
-        """
+    ) -> dict[str, ClosestCellsOnBoundaries]:
+        """Find the cells containing a point using a ray tracing normal to its face.
 
+        :param rve : RVE of the mesh bounding box.
+            If None, the rve is built from the mesh bounding box
+        :param tol : tolerance to evaluate the threshold between the cells and
+            the boundary RVE of the mesh bounding box
+        """
         if rve is None:
             rve = self.rve
 
@@ -753,7 +785,8 @@ class BoxMesh(SingleMesh):
 
             if USE_MULTI_RAY:
                 raytraceresult = surface_p.multi_ray_trace(
-                    origins=face, directions=directions
+                    origins=face,
+                    directions=directions,
                 )
             else:
                 intersection_points = []
@@ -762,7 +795,8 @@ class BoxMesh(SingleMesh):
                 for j, face_m_i in enumerate(face):
                     end_point = face_m_i + size_planes[i] * directions[j]
                     intersection_point, intersection_cell = surface_p.ray_trace(
-                        origin=face_m_i, end_point=end_point
+                        origin=face_m_i,
+                        end_point=end_point,
                     )
                     intersection_ray = np.full_like(intersection_cell, j)
                     intersection_points.extend(intersection_point.tolist())
