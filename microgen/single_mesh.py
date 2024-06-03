@@ -192,7 +192,7 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
             (
                 "2D elements are present in the PyVista UnstructuredGrid. "
                 "They will be ignored. "
-                "Surface elements shall be extracted automatically from the 3d mesh."
+                "\nSurface elements shall be extracted automatically from the 3d mesh."
             ),
             stacklevel=2,
         )
