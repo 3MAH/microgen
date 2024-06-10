@@ -9,14 +9,16 @@ source:
 build:
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv
+  number: 0
 
 requirements:
   host:
-    - python >=3.8,<3.13
+    - python >=3.8,<3.12
     - pip
   run:
-    - python >=3.8,<3.13
+    - python >=3.8,<3.12
     - numpy
+    - vtk
     - pyvista
     - python-gmsh
     - meshio
@@ -26,11 +28,13 @@ requirements:
 test:
   imports:
     - microgen
-  commands:
-    - pip list
-    - pip check
   requires:
-    - pip
+    - pytest
+  source_files:
+    - tests
+    - examples/BasicShapes/platon/tetrahedron.obj
+  commands:
+    - pytest tests
 
 about:
   home: https://github.com/3MAH/microgen
@@ -47,3 +51,4 @@ extra:
   recipe-maintainers:
     - kmarchais
     - chemiskyy
+    - ricardo0115
