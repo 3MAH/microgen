@@ -23,7 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
+dependencies = ["numpy<2", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
 [project.optional-dependencies]
 dev = [
