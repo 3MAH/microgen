@@ -1,17 +1,20 @@
-import math as m
-import random
-from typing import Dict, List, Tuple
+"""Tests for the BoxMesh class."""
+
+from __future__ import annotations
 
 import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
+
 from microgen import BoxMesh, Rve
-from pytest import FixtureRequest
+
+# ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
+# ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
 
 
-def _box_mesh_points() -> npt.NDArray[np.float_]:
-    points = np.array(
+def _box_mesh_points() -> npt.NDArray[np.float64]:
+    return np.array(
         [
             [1.0, 1.0, 1.0],
             [1.0, 0.5, 1.0],
@@ -40,13 +43,12 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
             [0.0, 1.0, 0.0],
             [0.0, 0.5, 0.0],
             [0.0, 0.0, 0.0],
-        ]
+        ],
     )
-    return points
 
 
-def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
-    elements_dict = {
+def _box_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.int_]]:
+    return {
         pv.CellType.TETRA: np.array(
             [
                 [3, 4, 1, 9],
@@ -97,22 +99,22 @@ def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
                 [22, 24, 16, 25],
                 [23, 22, 17, 25],
                 [23, 25, 17, 26],
-            ]
-        )
+            ],
+        ),
     }
 
-    return elements_dict
 
-
-@pytest.fixture(scope="function")
-def default_box_mesh() -> Tuple[BoxMesh, Rve]:
+@pytest.fixture()
+def default_box_mesh() -> tuple[BoxMesh, Rve]:
+    """Return a default box mesh and its corresponding RVE."""
     mesh = BoxMesh(_box_mesh_points(), _box_mesh_elements())
     rve = Rve(dim=(1, 1, 1), center=(0.5, 0.5, 0.5))
     return (mesh, rve)
 
 
-@pytest.fixture(scope="function")
-def expanded_box_mesh_x() -> Tuple[BoxMesh, Rve]:
+@pytest.fixture()
+def expanded_box_mesh_x() -> tuple[BoxMesh, Rve]:
+    """Return a box mesh expanded in the x direction and its corresponding RVE."""
     expanded_mesh = _box_mesh_points()
     expanded_mesh[:, 0] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
@@ -120,8 +122,9 @@ def expanded_box_mesh_x() -> Tuple[BoxMesh, Rve]:
     return (mesh, rve)
 
 
-@pytest.fixture(scope="function")
-def expanded_box_mesh_y() -> Tuple[BoxMesh, Rve]:
+@pytest.fixture()
+def expanded_box_mesh_y() -> tuple[BoxMesh, Rve]:
+    """Return a box mesh expanded in the y direction and its corresponding RVE."""
     expanded_mesh = _box_mesh_points()
     expanded_mesh[:, 1] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
@@ -129,8 +132,9 @@ def expanded_box_mesh_y() -> Tuple[BoxMesh, Rve]:
     return (mesh, rve)
 
 
-@pytest.fixture(scope="function")
-def expanded_box_mesh_z() -> Tuple[BoxMesh, Rve]:
+@pytest.fixture()
+def expanded_box_mesh_z() -> tuple[BoxMesh, Rve]:
+    """Return a box mesh expanded in the z direction and its corresponding RVE."""
     expanded_mesh = _box_mesh_points()
     expanded_mesh[:, 2] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
@@ -139,8 +143,10 @@ def expanded_box_mesh_z() -> Tuple[BoxMesh, Rve]:
 
 
 def _check_triangle_on_boundary(
-    surface_mesh: pv.PolyData, triangle_index: int, rve: Rve
-):
+    surface_mesh: pv.PolyData,
+    triangle_index: int,
+    rve: Rve,
+) -> bool:
     triangle = surface_mesh.get_cell(triangle_index)
     triangle_nodes_coords = triangle.points.tolist()
     rve_boundaries = [
@@ -151,7 +157,7 @@ def _check_triangle_on_boundary(
     for i, rve_axis_min_max in enumerate(rve_boundaries):
         for rve_axis_boundary in rve_axis_min_max:
             is_triangle_on_boundary = all(
-                m.isclose(node[i], rve_axis_boundary) for node in triangle_nodes_coords
+                np.isclose(node[i], rve_axis_boundary) for node in triangle_nodes_coords
             )
             if is_triangle_on_boundary:
                 return True
@@ -168,24 +174,24 @@ def _check_triangle_on_boundary(
     ],
 )
 def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets(
-    box_mesh: BoxMesh, request: FixtureRequest
+    box_mesh: BoxMesh,
+    request: pytest.FixtureRequest,
 ) -> None:
+    """Test that the BoxMesh object is correctly constructed."""
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
-    target_center: npt.NDArray[np.float_] = rve.center
-    target_corners: List[int] = [0, 2, 6, 8, 18, 20, 24, 26]
-    target_edges: List[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
-    target_faces: List[int] = [4, 10, 12, 14, 16, 22]
+    target_center: npt.NDArray[np.float64] = rve.center
+    target_corners: list[int] = [0, 2, 6, 8, 18, 20, 24, 26]
+    target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+    target_faces: list[int] = [4, 10, 12, 14, 16, 22]
 
     box_mesh_corners = sorted(np.concatenate(list(box_mesh_to_test.corners.values())))
     box_mesh_edges = sorted(np.concatenate(list(box_mesh_to_test.edges.values())))
     box_mesh_faces = sorted(np.concatenate(list(box_mesh_to_test.faces.values())))
 
-    assert (
-        (box_mesh_to_test.center == target_center).all()
-        and box_mesh_corners == target_corners
-        and box_mesh_edges == target_edges
-        and box_mesh_faces == target_faces
-    )
+    assert (box_mesh_to_test.center == target_center).all()
+    assert box_mesh_corners == target_corners
+    assert box_mesh_edges == target_edges
+    assert box_mesh_faces == target_faces
 
 
 @pytest.mark.parametrize(
@@ -198,14 +204,15 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
     ],
 )
 def test_given_box_mesh_rve_property_must_build_correct_rve(
-    box_mesh: BoxMesh, request: FixtureRequest
+    box_mesh: BoxMesh,
+    request: pytest.FixtureRequest,
 ) -> None:
+    """Test that the BoxMesh object builds the correct RVE."""
     box_mesh_to_test, target_rve = request.getfixturevalue(box_mesh)
     test_rve = box_mesh_to_test.rve
 
-    assert np.all(test_rve.center == target_rve.center) and np.all(
-        test_rve.dim == target_rve.dim
-    )
+    assert np.all(test_rve.center == target_rve.center)
+    assert np.all(test_rve.dim == target_rve.dim)
 
 
 @pytest.mark.parametrize(
@@ -218,39 +225,39 @@ def test_given_box_mesh_rve_property_must_build_correct_rve(
     ],
 )
 def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_elements(
-    box_mesh: BoxMesh, request: FixtureRequest
+    box_mesh: BoxMesh,
+    request: pytest.FixtureRequest,
 ) -> None:
+    """Test that the BoxMesh object finds the correct boundary elements."""
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
     expected_number_of_cells = 48
     boundary, boundary_cells_index = box_mesh_to_test.boundary_elements(rve)
-    bool_check_triangle_on_boundary_list = []
-    for triangle_index in boundary_cells_index:
-        bool_check_triangle_on_boundary_list.append(
-            _check_triangle_on_boundary(boundary, triangle_index, rve)
-        )
-
-    assert boundary.n_cells == expected_number_of_cells and all(
-        bool_check_triangle_on_boundary_list
-    )
+    bool_check_triangle_on_boundary_list = [
+        _check_triangle_on_boundary(boundary, triangle_index, rve)
+        for triangle_index in boundary_cells_index
+    ]
+    assert boundary.n_cells == expected_number_of_cells
+    assert all(bool_check_triangle_on_boundary_list)
 
 
 @pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])
 def test_closest_points_on_boundaries_periodic_mesh_must_have_only_one_neighbour(
     k_neighbours: int,
 ) -> None:
+    """Test that the closest points on the boundaries of a periodic mesh have only one neighbour."""
     box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
     closest_pts = box_mesh_to_test.closest_points_on_boundaries(
-        k_neighbours=k_neighbours
+        k_neighbours=k_neighbours,
     )
 
-    number_of_closest_neighbours_to_test: List[int] = []
+    number_of_closest_neighbours_to_test: list[int] = []
     number_closest_neighbours_truth_1_on_each_face_and_edge = [1] * 12
-    for key, list_of_neighbour_for_all_nodes in closest_pts.items():
-        list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
+    for neighbours_for_all_nodes in closest_pts.values():
+        neighbours_for_all_nodes_index = neighbours_for_all_nodes[0]
 
         number_of_closest_neighbours_to_test.extend(
-            len(list_of_neighbour_for_each_nodes)
-            for list_of_neighbour_for_each_nodes in list_of_neighbour_for_all_nodes_index
+            len(neighbours_for_each_nodes)
+            for neighbours_for_each_nodes in neighbours_for_all_nodes_index
         )
 
     assert (
@@ -263,21 +270,24 @@ def test_closest_points_on_boundaries_periodic_mesh_must_have_only_one_neighbour
 def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_neighbours(
     k_neighbours: int,
 ) -> None:
+    """Test that the closest points on the boundaries of a perturbated mesh have the correct number of neighbours."""
     box_mesh_to_test = BoxMesh(_box_mesh_points(), _box_mesh_elements())
     perturbation_factor = 0.01
 
     xyz_min_values_of_rve = np.min(box_mesh_to_test.rve.min_point)
     xyz_max_values_of_rve = np.max(box_mesh_to_test.rve.max_point)
 
+    rng = np.random.default_rng()
+
     # perturb faces and edges with non-zero perturbation so that multiple neighbours must be found
-    for _, node_index_in_faces in box_mesh_to_test.faces.items():
+    for node_index_in_faces in box_mesh_to_test.faces.values():
         box_mesh_to_test.nodes_coords[node_index_in_faces[0]] += perturbation_factor * (
-            1 - random.uniform(0, 1)
+            1 - rng.uniform(0, 1)
         )
 
-    for _, node_index_in_edges in box_mesh_to_test.edges.items():
+    for node_index_in_edges in box_mesh_to_test.edges.values():
         box_mesh_to_test.nodes_coords[node_index_in_edges[0]] += perturbation_factor * (
-            1 - random.uniform(0, 1)
+            1 - rng.uniform(0, 1)
         )
 
     box_mesh_to_test.nodes_coords = np.clip(
@@ -287,7 +297,7 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
     )
 
     closest_pts = box_mesh_to_test.closest_points_on_boundaries(
-        k_neighbours=k_neighbours
+        k_neighbours=k_neighbours,
     )
 
     number_closest_neighbours_truth_k_neighbours_on_each_face_2_on_each_edge = [
@@ -304,13 +314,13 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
         2,
         2,
     ]
-    number_of_closest_neighbours_to_test: List[int] = []
-    for _, list_of_neighbour_for_all_nodes in closest_pts.items():
-        list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
+    number_of_closest_neighbours_to_test: list[int] = []
+    for neighbours_for_all_nodes in closest_pts.values():
+        neighbours_for_all_nodes_index = neighbours_for_all_nodes[0]
 
         number_of_closest_neighbours_to_test.extend(
-            len(list_of_neighbour_for_each_nodes)
-            for list_of_neighbour_for_each_nodes in list_of_neighbour_for_all_nodes_index
+            len(neighbours_for_each_nodes)
+            for neighbours_for_each_nodes in neighbours_for_all_nodes_index
         )
 
     assert (
