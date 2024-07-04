@@ -8,6 +8,9 @@ import pyvista as pv
 
 from microgen import NormedDistance
 
+# ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
+# ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
+
 
 @pytest.mark.parametrize(
     ("boundary_offset", "furthest_offset", "boundary_weight"),

@@ -1,3 +1,5 @@
+"""Test for the remesh module."""
+
 import shutil
 import warnings
 
@@ -13,16 +15,21 @@ from microgen.remesh import (
 )
 from microgen.shape.surface_functions import gyroid
 
+# ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
+# ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
+
+
 _MESH_DIM = 3
 _BOUNDARY_DIM = 2
 
 USE_MMG = shutil.which("mmg3d_O3") is not None
 if not USE_MMG:
-    warnings.warn("MMG will not be used in these tests")
+    warnings.warn("MMG will not be used in these tests", stacklevel=2)
 
 
-@pytest.fixture(name="box_mesh", scope="function")
+@pytest.fixture(name="box_mesh")
 def fixture_box_mesh() -> BoxMesh:
+    """Return a periodic box mesh."""
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -86,18 +93,18 @@ def fixture_box_mesh() -> BoxMesh:
         ),
     }
 
-    mesh = BoxMesh(nodes_array, elements_dict)
-
-    return mesh
+    return BoxMesh(nodes_array, elements_dict)
 
 
-@pytest.fixture(name="gyroid_mesh", scope="function")
+@pytest.fixture(name="gyroid_mesh")
 def fixture_gyroid_mesh() -> pv.UnstructuredGrid:
+    """Return a gyroid mesh."""
     return Tpms(surface_function=gyroid, offset=1.0).grid_sheet
 
 
-@pytest.fixture(name="non_periodic_mesh", scope="function")
+@pytest.fixture(name="non_periodic_mesh")
 def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
+    """Return a non-periodic mesh."""
     nodes = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -158,9 +165,7 @@ def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
         ],
     )
     cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
-    mesh = pv.UnstructuredGrid(elements, cell_types, nodes)
-
-    return mesh
+    return pv.UnstructuredGrid(elements, cell_types, nodes)
 
 
 @pytest.mark.parametrize(
@@ -174,11 +179,12 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
     shape: str,
     request: FixtureRequest,
 ) -> None:
+    """Test that remesh_keeping_periodicity_for_fem maintains periodicity."""
     # Arrange
     input_mesh = request.getfixturevalue(shape)
-    edge_length_gradient = 1.05
     # Act
     if USE_MMG:
+        edge_length_gradient = 1.05
         remeshed_shape = remesh_keeping_periodicity_for_fem(
             input_mesh,
             hgrad=edge_length_gradient,
@@ -188,14 +194,16 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
             input_mesh = input_mesh.to_pyvista()
             remeshed_shape = remeshed_shape.to_pyvista()
         # Assert
-        assert is_periodic(input_mesh.points) and is_periodic(remeshed_shape.points)
+        assert is_periodic(input_mesh.points)
+        assert is_periodic(remeshed_shape.points)
 
 
 def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
     non_periodic_mesh: pv.UnstructuredGrid,
 ) -> None:
-    edge_length_gradient = 1.05
+    """Test that remesh_keeping_periodicity_for_fem raises InputMeshNotPeriodicError."""
     if USE_MMG:
+        edge_length_gradient = 1.05
         with pytest.raises(
             InputMeshNotPeriodicError,
             match="Input mesh is not periodic",
