@@ -1,5 +1,12 @@
 """Module managing errors."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
 import scooby
 
 
@@ -37,6 +44,7 @@ class Report(scooby.Report):
       Python 3.11.6 | packaged by conda-forge | (main, Oct  3 2023, 10:37:07)
       [Clang 15.0.7 ]
 
+             microgen : 1.1.0
               pyvista : 0.42.2
                   vtk : 9.2.5
                 numpy : 1.26.0
@@ -47,22 +55,34 @@ class Report(scooby.Report):
             pytest-cov : 4.1.0
                 meshio : 5.3.4
     --------------------------------------------------------------------------------
+
     """
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False):
+    def __init__(
+        self: Report,
+        additional: list[str | ModuleType] | None = None,
+        ncol: int = 3,
+        text_width: int = 80,
+        *,
+        sort: bool = False,
+    ) -> None:
         """Generate a :class:`scooby.Report` instance."""
-
-        # Mandatory packages
-        core = ["pyvista", "vtk", "numpy", "scooby", "gmsh", "cadquery"]
-
-        # Optional packages.
-        optional = ["matplotlib", "pytest-cov", "meshio"]
+        mandatory_packages = [
+            "microgen",
+            "pyvista",
+            "vtk",
+            "numpy",
+            "scooby",
+            "gmsh",
+            "cadquery",
+        ]
+        optional_packages = ["matplotlib", "pytest-cov", "meshio"]
 
         scooby.Report.__init__(
             self,
             additional=additional,
-            core=core,
-            optional=optional,
+            core=mandatory_packages,
+            optional=optional_packages,
             ncol=ncol,
             text_width=text_width,
             sort=sort,
