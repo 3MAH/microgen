@@ -27,13 +27,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
       - name: Install
-        run: |
-          pip install uv
-          uv pip install --system microgen@. pytest pytest-xdist
+        run: uv pip install --system microgen@. pytest pytest-xdist
 
       - name: Test
-        run: pytest tests --numprocesses=auto
+        run: uv run python -m pytest tests --numprocesses=auto
