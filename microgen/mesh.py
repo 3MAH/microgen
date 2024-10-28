@@ -2,7 +2,9 @@
 Mesh using gmsh
 """
 
-from typing import Iterator, List, Tuple
+from __future__ import annotations
+
+from typing import Iterator
 
 import gmsh
 import numpy as np
@@ -22,7 +24,7 @@ class OutputMeshNotPeriodicError(Exception):
 
 def mesh(
     mesh_file: str,
-    listPhases: List[Phase],
+    listPhases: list[Phase],
     size: float,
     order: int,
     output_file: str = "Mesh.msh",
@@ -48,7 +50,7 @@ def mesh(
 def meshPeriodic(
     mesh_file: str,
     rve: Rve,
-    listPhases: List[Phase],
+    listPhases: list[Phase],
     size: float,
     order: int,
     output_file: str = "MeshPeriodic.msh",
@@ -162,8 +164,8 @@ def is_periodic(
     return True
 
 
-def _generate_list_tags(list_phases: List[Phase]) -> List[List[int]]:
-    list_tags: List[List[int]] = []
+def _generate_list_tags(list_phases: list[Phase]) -> list[list[int]]:
+    list_tags: list[list[int]] = []
     start: int = 1
     for phase in list_phases:
         stop = start + len(phase.solids)
@@ -172,14 +174,14 @@ def _generate_list_tags(list_phases: List[Phase]) -> List[List[int]]:
     return list_tags
 
 
-def _generate_list_dim_tags(list_phases: List[Phase]) -> List[Tuple[int, int]]:
+def _generate_list_dim_tags(list_phases: list[Phase]) -> list[tuple[int, int]]:
     nb_tags = sum(len(phase.solids) for phase in list_phases)
     return [(_DIM_COUNT, tag) for tag in range(1, nb_tags + 1)]
 
 
 def _initialize_mesh(
     mesh_file: str,
-    list_phases: List[Phase],
+    list_phases: list[Phase],
     order: int,
     msh_file_version: int = 4,
 ) -> None:
@@ -210,7 +212,7 @@ def _finalize_mesh(
     size: float,
     output_file: str = "Mesh.msh",
 ) -> None:
-    list_dim_tags: List[Tuple[int, int]] = gmsh.model.getEntities()
+    list_dim_tags: list[tuple[int, int]] = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(dimTags=list_dim_tags, size=size)
     gmsh.model.mesh.generate(dim=_DIM_COUNT)
     gmsh.write(fileName=output_file)
@@ -240,8 +242,8 @@ def _set_periodic(rve: Rve) -> None:
 
 def _iter_bounding_boxes(
     minimum: _Point3D, maximum: _Point3D, eps: float
-) -> Iterator[Tuple[np.ndarray, int]]:
-    entities: List[Tuple[int, int]] = gmsh.model.getEntitiesInBoundingBox(
+) -> Iterator[tuple[np.ndarray, int]]:
+    entities: list[tuple[int, int]] = gmsh.model.getEntitiesInBoundingBox(
         *np.subtract(minimum, eps), *np.add(maximum, eps), dim=2
     )
 
@@ -264,7 +266,7 @@ def _get_max(rve: Rve) -> np.ndarray:  # To add as a property of Rve?
     return np.array([rve.x_max, rve.y_max, rve.z_max])
 
 
-def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, int]]:
+def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[tuple[int, int]]:
     deltas = _get_deltas(rve)
     eps: float = 1.0e-3 * min(deltas)
     minimum = _get_min(rve)
@@ -287,7 +289,7 @@ def _iter_matching_bounding_boxes(rve: Rve, axis: int) -> Iterator[Tuple[int, in
 def _set_periodic_on_axis(rve: Rve, axis: int) -> None:
     translation_matrix = np.eye(_DIM_COUNT + 1)
     translation_matrix[axis, _DIM_COUNT] = rve.dim[axis]
-    translation: List[float] = list(translation_matrix.flatten())
+    translation: list[float] = list(translation_matrix.flatten())
 
     for tag_min, tag_max in _iter_matching_bounding_boxes(rve, axis):
         gmsh.model.mesh.setPeriodic(

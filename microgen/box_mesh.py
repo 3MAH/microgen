@@ -2,8 +2,10 @@
 Cubic mesh for FE
 """
 
+from __future__ import annotations
+
 import warnings
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -37,7 +39,7 @@ class ClosestCellsOnBoundaries(NamedTuple):
 
     cells_id: npt.NDArray[np.int_]
     intersection_point_coords: npt.NDArray[np.float_]
-    closest_opposing_cells_id: List[npt.NDArray[np.int_]]
+    closest_opposing_cells_id: list[npt.NDArray[np.int_]]
 
 
 class BoxMesh(SingleMesh):
@@ -51,8 +53,8 @@ class BoxMesh(SingleMesh):
     def __init__(
         self,
         nodes_coords: npt.NDArray[np.float_],
-        elements: Dict[pv.CellType, npt.NDArray[np.int_]],
-        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+        elements: dict[pv.CellType, npt.NDArray[np.int_]],
+        nodes_indices: npt.NDArray[np.int_] | None = None,
     ) -> None:
         super().__init__(
             nodes_coords=nodes_coords,
@@ -61,11 +63,11 @@ class BoxMesh(SingleMesh):
         )
 
         self.rve = self._build_rve()
-        self.center: Optional[npt.NDArray[np.float_]] = None
+        self.center: npt.NDArray[np.float_] | None = None
         self._construct()
 
     @staticmethod
-    def from_pyvista(pvmesh: Union[pv.PolyData, pv.UnstructuredGrid]):
+    def from_pyvista(pvmesh: pv.PolyData | pv.UnstructuredGrid):
         """Build a BoxMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case,
         the PolyData object is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Union, overload
+from typing import overload
 
 import pyvista as pv
 
@@ -21,11 +23,11 @@ def remesh_keeping_periodicity_for_fem(
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
-    hausd: Optional[float] = None,
-    hgrad: Optional[float] = None,
-    hmax: Optional[float] = None,
-    hmin: Optional[float] = None,
-    hsiz: Optional[float] = None,
+    hausd: float | None = None,
+    hgrad: float | None = None,
+    hmax: float | None = None,
+    hmin: float | None = None,
+    hsiz: float | None = None,
 ) -> BoxMesh: ...
 
 
@@ -35,25 +37,25 @@ def remesh_keeping_periodicity_for_fem(
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
-    hausd: Optional[float] = None,
-    hgrad: Optional[float] = None,
-    hmax: Optional[float] = None,
-    hmin: Optional[float] = None,
-    hsiz: Optional[float] = None,
+    hausd: float | None = None,
+    hgrad: float | None = None,
+    hmax: float | None = None,
+    hmin: float | None = None,
+    hsiz: float | None = None,
 ) -> pv.UnstructuredGrid: ...
 
 
 def remesh_keeping_periodicity_for_fem(
-    input_mesh: Union[BoxMesh, pv.UnstructuredGrid],
+    input_mesh: BoxMesh | pv.UnstructuredGrid,
     mesh_version: int = 2,
     dimension: int = 3,
     tol: float = 1e-8,
-    hausd: Optional[float] = None,
-    hgrad: Optional[float] = None,
-    hmax: Optional[float] = None,
-    hmin: Optional[float] = None,
-    hsiz: Optional[float] = None,
-) -> Union[BoxMesh, pv.UnstructuredGrid]:
+    hausd: float | None = None,
+    hgrad: float | None = None,
+    hmax: float | None = None,
+    hmin: float | None = None,
+    hsiz: float | None = None,
+) -> BoxMesh | pv.UnstructuredGrid:
     """
     Remeshes a mesh using mmg while keeping periodicity
 
@@ -207,5 +209,5 @@ def _remove_unnecessary_fields_from_mesh_file(
         output_file.write("End\n")
 
 
-def _only_numbers_in_line(line: List[str]) -> bool:
+def _only_numbers_in_line(line: list[str]) -> bool:
     return all(not flag.isalpha() for flag in line)

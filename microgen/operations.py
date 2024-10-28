@@ -4,7 +4,7 @@ Boolean operations
 
 from __future__ import annotations
 
-from typing import List, Sequence, Tuple
+from typing import Sequence
 
 import cadquery as cq
 import numpy as np
@@ -19,7 +19,7 @@ from .rve import Rve
 
 def _getRotationAxes(
     psi: float, theta: float, phi: float
-) -> List[Tuple[float, float, float]]:
+) -> list[tuple[float, float, float]]:
     """
     Retrieve the 3 Euler rotation axes
 
@@ -43,7 +43,7 @@ def _getRotationAxes(
 
 def rotateEuler(
     obj: cq.Shape | cq.Workplane,
-    center: np.ndarray | Tuple[float, float, float],
+    center: np.ndarray | tuple[float, float, float],
     psi: float,
     theta: float,
     phi: float,
@@ -94,7 +94,7 @@ def rotatePvEuler(
     return rotated_obj
 
 
-def rescale(shape: cq.Shape, scale: float | Tuple[float, float, float]) -> cq.Shape:
+def rescale(shape: cq.Shape, scale: float | tuple[float, float, float]) -> cq.Shape:
     """
     Rescale given object according to scale parameters [dim_x, dim_y, dim_z]
 
@@ -106,7 +106,7 @@ def rescale(shape: cq.Shape, scale: float | Tuple[float, float, float]) -> cq.Sh
     return Phase.rescaleShape(shape, scale)
 
 
-def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
+def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:
     """
     Fuse all shapes in cqShapeList
 
@@ -133,7 +133,7 @@ def fuseShapes(cqShapeList: List[cq.Shape], retain_edges: bool) -> cq.Shape:
             return cq.Shape(occ_Solids)
 
 
-def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
+def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
     """
     Cuts list of phases by a given shape
 
@@ -142,7 +142,7 @@ def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
 
     :return phase_cut: final result
     """
-    phase_cut: List[Phase] = []
+    phase_cut: list[Phase] = []
 
     for phase in phaseList:
         cut = BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped)
@@ -151,7 +151,7 @@ def cutPhasesByShape(phaseList: List[Phase], cut_obj: cq.Shape) -> List[Phase]:
     return phase_cut
 
 
-def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: List[cq.Shape]) -> Phase:
+def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase:
     """
     Cuts a phase by a list of shapes
 
@@ -168,7 +168,7 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: List[cq.Shape]) -> Phase
     return Phase(shape=resultCut)
 
 
-def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq.Shape]:
+def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq.Shape]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -177,7 +177,7 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
 
     :return cutted_shapes: list of CQ Shape
     """
-    cutted_shapes: List[cq.Shape] = []
+    cutted_shapes: list[cq.Shape] = []
     if reverseOrder:
         cqShapeList_inv = cqShapeList[::-1]
     else:
@@ -202,7 +202,7 @@ def cutShapes(cqShapeList: List[cq.Shape], reverseOrder: bool = True) -> List[cq
     return cutted_shapes
 
 
-def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
+def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:
     """
     Cuts list of shapes in the given order (or reverse) and fuse them.
 
@@ -218,8 +218,8 @@ def cutPhases(phaseList: List[Phase], reverseOrder: bool = True) -> List[Phase]:
 
 
 def rasterPhase(
-    phase: Phase, rve: Rve, grid: List[int], phasePerRaster: bool = True
-) -> Phase | List[Phase]:
+    phase: Phase, rve: Rve, grid: list[int], phasePerRaster: bool = True
+) -> Phase | list[Phase]:
     """
     Rasters solids from phase according to the rve divided by the given grid
 
@@ -230,14 +230,14 @@ def rasterPhase(
 
     :return: Phase or list of Phases
     """
-    solids: List[cq.Solid] = phase.split_solids(rve, grid)
+    solids: list[cq.Solid] = phase.split_solids(rve, grid)
 
     if phasePerRaster:
         return Phase.generate_phase_per_raster(solids, rve, grid)
     return Phase(solids=solids)
 
 
-def repeat_shape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
+def repeat_shape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
     """
     Repeats unit geometry in each direction according to the given grid
 
@@ -250,7 +250,7 @@ def repeat_shape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> c
     return Phase.repeat_shape(unit_geom, rve, grid)
 
 
-def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq.Shape:
+def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
     """
     Repeats unit geometry in each direction according to the given grid
 
@@ -264,7 +264,7 @@ def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: Tuple[int, int, int]) -> cq
 
 
 def repeatPolyData(
-    mesh: pv.PolyData, rve: Rve, grid: Tuple[int, int, int]
+    mesh: pv.PolyData, rve: Rve, grid: tuple[int, int, int]
 ) -> pv.PolyData:
     """
     Repeats mesh in each direction according to the given grid

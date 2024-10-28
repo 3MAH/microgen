@@ -10,7 +10,6 @@ Functions related to external software
 from __future__ import annotations
 
 import subprocess
-from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -19,7 +18,7 @@ from microgen.shape import Polyhedron
 
 class Neper:
     @staticmethod
-    def run(filename: str, nbCell: int, dimCube: Tuple[float, float, float]) -> None:
+    def run(filename: str, nbCell: int, dimCube: tuple[float, float, float]) -> None:
         """
         Runs neper command from the command line
 
@@ -56,7 +55,7 @@ class Neper:
         subprocess.run(command, check=True)
 
     @staticmethod
-    def generateVoronoiFromTessFile(filename: str) -> List[Polyhedron]:
+    def generateVoronoiFromTessFile(filename: str) -> list[Polyhedron]:
         """
         Generates list of Voronoi polyhedron shapes from a tessellation file generated with neper
         """
@@ -94,7 +93,7 @@ class Neper:
         return polyhedra
 
     @staticmethod
-    def tessParse(filename: str) -> Dict[str, dict]:
+    def tessParse(filename: str) -> dict[str, dict]:
         """
         Parses tessellation file (.tess) generated with neper.
         Following .tess structure from `neper's`_ documentation:
@@ -402,14 +401,14 @@ def parseNeper(filename: str) -> tuple:
     listeSommets = []
     listeSommetsOut = []
     for i in range(nbPolys):
-        voro: Dict[str, Dict | List] = {}
+        voro: dict[str, dict | list] = {}
         voro["original"] = seed[i]
         voro["faces"] = []
         listeSommetsPoly = []
         sommets = []
         for facePoly in polys[i][1:]:
             listeSommetsFace = []
-            dicVertices: Dict[str, List] = {}
+            dicVertices: dict[str, list] = {}
             dicVertices["vertices"] = []
             for segment in faces[facePoly - 1][1:]:
                 # Listes des sommets avec numérotation globale et faces associées
@@ -493,7 +492,7 @@ class MmgError(Exception):
 
 class Mmg:
     @staticmethod
-    def _run_mmg_command(cmd: List[str]):
+    def _run_mmg_command(cmd: list[str]):
         try:
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except (subprocess.CalledProcessError, FileNotFoundError) as error:
