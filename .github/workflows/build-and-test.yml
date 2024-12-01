@@ -29,6 +29,6 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
-      - run: uv sync --group dev
+      - run: uv sync --extra dev
 
       - run: uv run pytest --numprocesses=auto
