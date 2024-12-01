@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = ["numpy<2", "pyvista", "gmsh", "meshio", "cadquery", "scipy"]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     'pre-commit',
     'ruff',
