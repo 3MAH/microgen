@@ -1880,7 +1880,7 @@ wheels = [
 [[package]]
 name = "microgen"
 version = "1.2.1"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "cadquery" },
     { name = "gmsh" },
