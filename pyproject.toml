@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "cadquery>=2.4.0",
+    "cadquery>=2.5.0",
     "gmsh>=4.13.1",
     "meshio>=5.3.5",
     "numpy>1.24.0",
@@ -98,3 +98,6 @@ exclude = [
 ] # external = ["E131", "D102", "D105"]
 select = ["ALL"]
 ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003"]
+
+[tool.uv.sources]
+cadquery = { git = "https://github.com/cadquery/cadquery.git" }
