@@ -1760,7 +1760,7 @@ requires-dist = [
     { name = "microgen", extras = ["dev", "docs", "jupyter"], marker = "extra == 'all'" },
     { name = "mock", marker = "extra == 'docs'" },
     { name = "myst-parser", marker = "extra == 'docs'" },
-    { name = "numpy", specifier = ">=1.23.0,<=1.24.0" },
+    { name = "numpy", specifier = ">=1.24.0" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
