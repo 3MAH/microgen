@@ -1,9 +1,5 @@
 version = 1
 requires-python = ">=3.9"
-resolution-markers = [
-    "platform_machine == 'x86_64' and platform_system == 'Darwin'",
-    "platform_machine != 'x86_64' or platform_system != 'Darwin'",
-]
 
 [[package]]
 name = "aiofiles"
@@ -1725,8 +1721,7 @@ jupyter = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cadquery", marker = "platform_machine != 'x86_64' or platform_system != 'Darwin'", git = "https://github.com/cadquery/cadquery.git", specifier = ">=2.5.0" },
-    { name = "cadquery", marker = "platform_machine == 'x86_64' and platform_system == 'Darwin'", specifier = ">=2.4.0" },
+    { name = "cadquery", git = "https://github.com/cadquery/cadquery.git" },
     { name = "gmsh", specifier = ">=4.13.1" },
     { name = "ipygany", marker = "extra == 'jupyter'", specifier = ">=0.5.0" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.29.5" },
