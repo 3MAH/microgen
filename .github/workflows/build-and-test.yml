@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-13", "macos-11", "windows-latest"]
+        os: ["ubuntu-latest", "macos-13", "macos-latest", "windows-latest"]
         python-version: ["3.9", "3.12"]
 
     steps:
@@ -30,5 +30,4 @@ jobs:
         run: sudo apt-get install libglu1-mesa
 
       - run: uv sync --extra dev
-      - run: uv pip install .[dev]
       - run: uv run pytest --numprocesses=auto
