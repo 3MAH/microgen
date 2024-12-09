@@ -21,12 +21,12 @@ classifiers = [
 ]
 dependencies = [
     "cadquery>=2.5.0",
+    "cadquery<2.5; platform_system=='Darwin' and platform_machine=='x86_64'",
     "gmsh>=4.13.1",
     "meshio>=5.3.5",
     "numpy>1.24.0",
     "pyvista>=0.44.2",
     "scipy>=1.13.1",
-    "nlopt<2.8; platform_system=='Darwin' and platform_machine=='x86_64'",
 ]
 
 [project.optional-dependencies]
