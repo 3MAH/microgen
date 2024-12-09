@@ -19,7 +19,7 @@ jobs:
         os: [
             "ubuntu-latest",
             "windows-latest",
-            # "macos-13", # x86_64
+            "macos-13", # x86_64
             "macos-latest", # arm64
           ]
         python-version: ["3.9", "3.12"]
