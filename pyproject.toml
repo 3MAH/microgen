@@ -23,7 +23,7 @@ dependencies = [
     "cadquery>=2.4.0",
     "gmsh>=4.13.1",
     "meshio>=5.3.5",
-    "numpy>=1.24.0",
+    "numpy>1.24.0",
     "pyvista>=0.44.2",
     "scipy>=1.13.1",
 ]
