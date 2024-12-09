@@ -77,7 +77,7 @@ def meshPeriodic(
 
 
 def is_periodic(
-    nodes_coords: npt.NDArray[np.float_], tol: float = 1e-8, dim: int = 3
+    nodes_coords: npt.NDArray[np.float64], tol: float = 1e-8, dim: int = 3
 ) -> bool:
     """Checks whether a mesh is periodic, given its nodes' coordinates
 

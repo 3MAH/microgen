@@ -6,7 +6,7 @@ import pyvista as pv
 from microgen import is_periodic
 
 
-def _periodic_box_nodes() -> npt.NDArray[np.float_]:
+def _periodic_box_nodes() -> npt.NDArray[np.float64]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -30,7 +30,7 @@ def _periodic_box_nodes() -> npt.NDArray[np.float_]:
     return nodes_array
 
 
-def _one_shifted_node_box_nodes() -> npt.NDArray[np.float_]:
+def _one_shifted_node_box_nodes() -> npt.NDArray[np.float64]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -99,7 +99,7 @@ def _box_elements_same_number_of_nodes() -> npt.NDArray[np.int_]:
     return elements
 
 
-def _one_extra_node_box_nodes() -> npt.NDArray[np.float_]:
+def _one_extra_node_box_nodes() -> npt.NDArray[np.float64]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],

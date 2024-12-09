@@ -36,7 +36,7 @@ class ClosestCellsOnBoundaries(NamedTuple):
     """
 
     cells_id: npt.NDArray[np.int_]
-    intersection_point_coords: npt.NDArray[np.float_]
+    intersection_point_coords: npt.NDArray[np.float64]
     closest_opposing_cells_id: List[npt.NDArray[np.int_]]
 
 
@@ -50,7 +50,7 @@ class BoxMesh(SingleMesh):
 
     def __init__(
         self,
-        nodes_coords: npt.NDArray[np.float_],
+        nodes_coords: npt.NDArray[np.float64],
         elements: Dict[pv.CellType, npt.NDArray[np.int_]],
         nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:
@@ -61,7 +61,7 @@ class BoxMesh(SingleMesh):
         )
 
         self.rve = self._build_rve()
-        self.center: Optional[npt.NDArray[np.float_]] = None
+        self.center: Optional[npt.NDArray[np.float64]] = None
         self._construct()
 
     @staticmethod
@@ -325,7 +325,7 @@ class BoxMesh(SingleMesh):
         k_neighbours: int = 3,
         rve: Optional[Rve] = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
         """
         Find the closest points on opposite face to write interpolation relationship
         if a displacement condition between pair nodes is defined on such opposite surfaces
@@ -449,7 +449,7 @@ class BoxMesh(SingleMesh):
         self,
         rve: Optional[Rve] = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
         """
         Find the closest points on opposite edges to write interpolation relationship
         if a displacement condition between pair nodes is defined on such opposite surfaces
@@ -617,7 +617,7 @@ class BoxMesh(SingleMesh):
         k_neighbours: int = 3,
         rve: Optional[Rve] = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
         """
         Find the closest points on faces and edges to write interpolation relationship
         if a displacement condition between pair nodes is defined
