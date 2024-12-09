@@ -1,5 +1,7 @@
 """Test examples"""
 
+from __future__ import annotations
+
 import argparse
 import multiprocessing
 import os
@@ -7,7 +9,6 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 GREEN = "\033[32m"
 RED = "\033[31m"
@@ -16,10 +17,10 @@ BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
 
 
-def get_example_paths(exclude_dirs: List[str]) -> List[str]:
+def get_example_paths(exclude_dirs: list[str]) -> list[str]:
     """Get all the example paths in the examples directory.
     Exclude the directories in exclude_dirs."""
-    paths: List[str] = []
+    paths: list[str] = []
     for root, _, files in os.walk(Path(__file__).parent):
         if root not in exclude_dirs:
             paths.extend(
@@ -30,7 +31,7 @@ def get_example_paths(exclude_dirs: List[str]) -> List[str]:
     return paths
 
 
-def dashed_line(string: Optional[str] = "", char: str = "-") -> str:
+def dashed_line(string: str | None = "", char: str = "-") -> str:
     """Create a dashed line with a string in the middle."""
     terminal_width = shutil.get_terminal_size().columns
     title = f" {string} " if string else ""
@@ -41,12 +42,12 @@ def dashed_line(string: Optional[str] = "", char: str = "-") -> str:
 
 
 def launch_test_examples(
-    exclude_dirs: List[str],
+    exclude_dirs: list[str],
     n_procs: int = 1,
-) -> Tuple[List[str], List[str]]:
+) -> tuple[list[str], list[str]]:
     """Launch all the examples and return the paths of the examples that failed."""
     examples = get_example_paths(exclude_dirs=exclude_dirs)
-    failed: List[str] = []
+    failed: list[str] = []
     if n_procs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
@@ -58,7 +59,7 @@ def launch_test_examples(
             print(dashed_line())
             print()
     elif n_procs > 1:
-        results: Dict[str, multiprocessing.pool.AsyncResult] = {}
+        results: dict[str, multiprocessing.pool.AsyncResult] = {}
         with multiprocessing.Pool(processes=n_procs) as pool:
             for example in examples:
                 cmd = [sys.executable, example]
@@ -80,7 +81,7 @@ def launch_test_examples(
     return examples, failed
 
 
-def display_results(examples: List[str], failed: List[str]):
+def display_results(examples: list[str], failed: list[str]):
     """Display the results of the test examples.
     Raise an error if there are failed examples."""
     print(dashed_line(f"{UNDERLINE}{BOLD}RESULTS{RESET}"))
