@@ -20,8 +20,8 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "cadquery<2.5; platform_system=='Darwin' and platform_machine=='x86_64'",
-    "cadquery>=2.5.0; platform_system!='Darwin' or platform_machine!='x86_64'",
+    "cadquery<2.5; platform_system == 'Darwin' and platform_machine == 'x86_64'",
+    "cadquery>=2.5.0; platform_system != 'Darwin' or platform_machine != 'x86_64'",
     "gmsh>=4.13.1",
     "meshio>=5.3.5",
     "numpy>1.24.0",
@@ -31,31 +31,29 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    'pre-commit',
-    'ruff',
-    'black',
-    'isort',
-    'pytest',
-    'pytest-cov',
-    'pytest-xdist',
+    'pre-commit>=3.5.0',
+    "ruff>=0.8.1",
+    "pytest>=8.3.3",
+    "pytest-cov>=5.0.0",
+    "pytest-xdist>=3.6.1",
 ]
 docs = [
-    'ipykernel',
-    'sphinx',
-    'sphinx-rtd-theme',
-    'sphinxcontrib-napoleon',
-    'jupyter-sphinx',
-    'pythreejs',
-    'mock',
-    'myst-parser',
+    "ipykernel>=6.29.5",
+    "sphinx>=7.1.2",
+    "sphinx-rtd-theme>=3.0.2",
+    "sphinxcontrib-napoleon>=0.7",
+    "jupyter-sphinx>=0.5.3",
+    "pythreejs>=2.4.2",
+    "mock>=5.1.0",
+    "myst-parser>=3.0.1",
 ]
 jupyter = [
-    "jupyterlab<4.3",
-    "jupyter-cadquery",
-    "ipyvtklink",
-    "ipygany",
-    "sidecar",
-    "jupyterview",
+    "jupyterlab>=3.6.8,<4.3",
+    "jupyter-cadquery>=2.2.1",
+    "ipyvtklink>=0.2.3",
+    "ipygany>=0.5.0",
+    "sidecar>=0.5.2",
+    "jupyterview>=0.7.0",
 ]
 all = ["microgen[dev, docs, jupyter]"]
 
