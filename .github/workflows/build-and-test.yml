@@ -30,4 +30,5 @@ jobs:
         run: sudo apt-get install libglu1-mesa
 
       - run: uv sync --extra dev
+      - run: uv pip install .
       - run: uv run pytest --numprocesses=auto
