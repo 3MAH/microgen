@@ -26,6 +26,7 @@ dependencies = [
     "numpy>1.24.0",
     "pyvista>=0.44.2",
     "scipy>=1.13.1",
+    "nlopt<2.8; platform_system=='Darwin' and platform_machine=='x86_64'",
 ]
 
 [project.optional-dependencies]
