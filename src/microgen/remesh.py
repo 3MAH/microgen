@@ -89,15 +89,12 @@ def remesh_keeping_periodicity_for_fem(
     if not is_periodic(nodes_coords, tol, dimension):
         raise InputMeshNotPeriodicError("Input mesh is not periodic")
 
-    with NamedTemporaryFile(
-        suffix=".mesh", delete=False
-    ) as boundary_triangles_file, NamedTemporaryFile(
-        suffix=".mesh", delete=False
-    ) as premeshed_mesh_file, NamedTemporaryFile(
-        suffix=".mesh", delete=False
-    ) as raw_output_mesh_file, NamedTemporaryFile(
-        suffix=".mesh", delete=False
-    ) as output_mesh_file:
+    with (
+        NamedTemporaryFile(suffix=".mesh", delete=False) as boundary_triangles_file,
+        NamedTemporaryFile(suffix=".mesh", delete=False) as premeshed_mesh_file,
+        NamedTemporaryFile(suffix=".mesh", delete=False) as raw_output_mesh_file,
+        NamedTemporaryFile(suffix=".mesh", delete=False) as output_mesh_file,
+    ):
         _generate_mesh_with_required_triangles(
             input_box_mesh, boundary_triangles_file.name
         )
