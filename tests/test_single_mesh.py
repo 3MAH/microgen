@@ -1,4 +1,4 @@
-from typing import Dict, List
+from __future__ import annotations
 
 import numpy as np
 import numpy.typing as npt
@@ -10,8 +10,8 @@ from microgen.single_mesh import NotOnlyLinearTetrahedraError
 
 
 def are_elements_equal(
-    dict1: Dict[pv.CellType, npt.NDArray[np.int_]],
-    dict2: Dict[pv.CellType, npt.NDArray[np.int_]],
+    dict1: dict[pv.CellType, npt.NDArray[np.int_]],
+    dict2: dict[pv.CellType, npt.NDArray[np.int_]],
 ) -> bool:
     """Return whether two dictionaries of arrays are equal"""
     if dict1.keys() != dict2.keys():
@@ -75,7 +75,7 @@ def _box_single_mesh_nodes() -> npt.NDArray[np.float64]:
     return nodes_array
 
 
-def _box_single_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
+def _box_single_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.int_]]:
     elements_dict = {
         pv.CellType.TETRA: np.array(
             [
@@ -315,12 +315,12 @@ def _linear_3d_pyramid_mesh() -> pv.UnstructuredGrid:
 
 
 @pytest.fixture(name="sample_1d_mesh_list", scope="function")
-def fixture_sample_1d_mesh_list() -> List[pv.UnstructuredGrid]:
+def fixture_sample_1d_mesh_list() -> list[pv.UnstructuredGrid]:
     return [_linear_1d_mesh(), _quadratic_1d_mesh()]
 
 
 @pytest.fixture(name="sample_2d_mesh_list", scope="function")
-def fixture_sample_2d_mesh_list() -> List[pv.UnstructuredGrid]:
+def fixture_sample_2d_mesh_list() -> list[pv.UnstructuredGrid]:
     return [
         _linear_2d_quad_mesh(),
         _quadratic_2d_quad_mesh(),
@@ -330,7 +330,7 @@ def fixture_sample_2d_mesh_list() -> List[pv.UnstructuredGrid]:
 
 
 @pytest.fixture(name="sample_3d_non_linear_tet_mesh_list", scope="function")
-def fixture_sample_3d_non_linear_tet_mesh_list() -> List[pv.UnstructuredGrid]:
+def fixture_sample_3d_non_linear_tet_mesh_list() -> list[pv.UnstructuredGrid]:
     return [
         _quadratic_3d_tet_mesh(),
         _linear_3d_hex_mesh(),
@@ -402,7 +402,7 @@ def test_single_mesh_consistency_when_extracting_surface_mesh(
 
 
 def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_warning(
-    sample_1d_mesh_list: List[pv.UnstructuredGrid],
+    sample_1d_mesh_list: list[pv.UnstructuredGrid],
 ) -> None:
     warning_message = (
         "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
@@ -413,7 +413,7 @@ def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_wa
 
 
 def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_warning(
-    sample_2d_mesh_list: List[pv.UnstructuredGrid],
+    sample_2d_mesh_list: list[pv.UnstructuredGrid],
 ) -> None:
     warning_message = (
         "2D elements are present in the PyVista UnstructuredGrid. They will be ignored."
@@ -424,7 +424,7 @@ def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_wa
 
 
 def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(
-    sample_3d_non_linear_tet_mesh_list: List[pv.UnstructuredGrid],
+    sample_3d_non_linear_tet_mesh_list: list[pv.UnstructuredGrid],
 ) -> None:
     error_message_snippet = "Mesh contains elements other than linear tetrahedra."
     with pytest.raises(NotOnlyLinearTetrahedraError, match=error_message_snippet):
