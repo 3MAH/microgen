@@ -16,14 +16,14 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.11"]
+        python-version: ["3.9", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         with:
           generate-run-shell: true
-          micromamba-version: "1.5.8-0" # any version from https://github.com/mamba-org/micromamba-releases
+          micromamba-version: "2.0.4-0" # any version from https://github.com/mamba-org/micromamba-releases
           environment-file: environment.yml
           create-args: python=${{ matrix.python-version }}
           init-shell: powershell bash
