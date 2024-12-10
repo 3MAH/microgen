@@ -316,9 +316,7 @@ def rotatePvEuler(  # noqa: N802
     return rotate_pv_euler(obj, center, (psi, theta, phi))
 
 
-def fuseShapes(
-    cqShapeList: list[cq.Shape], retain_edges: bool
-) -> cq.Shape:  # noqa: N802, N803, FBT001
+def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:  # noqa: N802, N803, FBT001
     """See fuse_shapes.
 
     Deprecated in favor of fuse_shapes.
@@ -331,9 +329,7 @@ def fuseShapes(
     return fuse_shapes(cqShapeList, retain_edges=retain_edges)
 
 
-def cutPhasesByShape(
-    phaseList: list[Phase], cut_obj: cq.Shape
-) -> list[Phase]:  # noqa: N802, N803
+def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:  # noqa: N802, N803
     """See cut_phases_by_shape.
 
     Deprecated in favor of cut_phases_by_shape.
@@ -346,9 +342,7 @@ def cutPhasesByShape(
     return cut_phases_by_shape(phaseList, cut_obj)
 
 
-def cutPhaseByShapeList(
-    phaseToCut: Phase, cqShapeList: list[cq.Shape]
-) -> Phase:  # noqa: N802, N803
+def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase:  # noqa: N802, N803
     """See cut_phase_by_shape_list.
 
     Deprecated in favor of cut_phase_by_shape_list.
@@ -361,9 +355,7 @@ def cutPhaseByShapeList(
     return cut_phase_by_shape_list(phaseToCut, cqShapeList)
 
 
-def cutShapes(
-    cqShapeList: list[cq.Shape], reverseOrder: bool = True
-) -> list[cq.Shape]:  # noqa: N802, N803, FBT001, FBT002
+def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq.Shape]:  # noqa: N802, N803, FBT001, FBT002
     """See cut_shapes.
 
     Deprecated in favor of cut_shapes.
@@ -376,9 +368,7 @@ def cutShapes(
     return cut_shapes(cqShapeList, reverse_order=reverseOrder)
 
 
-def cutPhases(
-    phaseList: list[Phase], reverseOrder: bool = True
-) -> list[Phase]:  # noqa: N802, N803, FBT001, FBT002
+def cutPhases(phaseList: list[Phase], reverseOrder: bool = True) -> list[Phase]:  # noqa: N802, N803, FBT001, FBT002
     """See cut_phases.
 
     Deprecated in favor of cut_phases.
@@ -409,9 +399,7 @@ def rasterPhase(  # noqa: N802
     return raster_phase(phase, rve, grid, phase_per_raster=phasePerRaster)
 
 
-def repeatShape(
-    unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]
-) -> cq.Shape:  # noqa: N802
+def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:  # noqa: N802
     """See repeat_shape.
 
     Deprecated in favor of repeat_shape.
