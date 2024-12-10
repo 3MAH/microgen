@@ -17,7 +17,6 @@ from .phase import Phase
 
 if TYPE_CHECKING:
     import OCP
-
     from .rve import Rve
 
 
