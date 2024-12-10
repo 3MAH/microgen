@@ -13,7 +13,7 @@
 Generation of 3D objects is achievable through functions that utilize Open CASCADE (via Cadquery) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/morph_TPMS.gif" alt="morph" width="49%"/>
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
 </p>
 
