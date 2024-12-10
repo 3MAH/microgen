@@ -20,8 +20,6 @@ classifiers = [
 ]
 dependencies = [
     "cadquery>=2.5.0",
-    # "cadquery<2.5; platform_system == 'Darwin' and platform_machine == 'x86_64'",
-    # "cadquery>=2.5.0; platform_system != 'Darwin' or platform_machine != 'x86_64'",
     "gmsh>=4.13.1",
     "meshio>=5.3.5",
     "numpy>1.24.0",
@@ -62,9 +60,6 @@ Documentation = 'https://microgen.readthedocs.io/en/latest'
 "Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
-[tool.isort]
-profile = "black"
-
 [tool.pytest.ini_options]
 filterwarnings = [
     # Ignore deprecation warnings from numpy
@@ -80,7 +75,6 @@ target-version = "py38"
 
 [tool.ruff.lint]
 exclude = [
-    "setup.py",
     "docs/*",
     "tests/*",
     "microgen/box_mesh.py",
