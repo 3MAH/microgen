@@ -38,7 +38,7 @@ class ClosestCellsOnBoundaries(NamedTuple):
     """
 
     cells_id: npt.NDArray[np.int_]
-    intersection_point_coords: npt.NDArray[np.float_]
+    intersection_point_coords: npt.NDArray[np.float64]
     closest_opposing_cells_id: list[npt.NDArray[np.int_]]
 
 
@@ -52,7 +52,7 @@ class BoxMesh(SingleMesh):
 
     def __init__(
         self,
-        nodes_coords: npt.NDArray[np.float_],
+        nodes_coords: npt.NDArray[np.float64],
         elements: dict[pv.CellType, npt.NDArray[np.int_]],
         nodes_indices: npt.NDArray[np.int_] | None = None,
     ) -> None:
@@ -63,7 +63,7 @@ class BoxMesh(SingleMesh):
         )
 
         self.rve = self._build_rve()
-        self.center: npt.NDArray[np.float_] | None = None
+        self.center: npt.NDArray[np.float64] | None = None
         self._construct()
 
     @staticmethod
@@ -325,9 +325,9 @@ class BoxMesh(SingleMesh):
     def _closest_points_on_faces(
         self,
         k_neighbours: int = 3,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
         """
         Find the closest points on opposite face to write interpolation relationship
         if a displacement condition between pair nodes is defined on such opposite surfaces
@@ -449,9 +449,9 @@ class BoxMesh(SingleMesh):
 
     def _closest_points_on_edges(
         self,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
         """
         Find the closest points on opposite edges to write interpolation relationship
         if a displacement condition between pair nodes is defined on such opposite surfaces
@@ -617,9 +617,9 @@ class BoxMesh(SingleMesh):
     def closest_points_on_boundaries(
         self,
         k_neighbours: int = 3,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, Tuple[npt.NDArray[np.int_], npt.NDArray[np.float_]]]:
+    ) -> dict[str, tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]]:
         """
         Find the closest points on faces and edges to write interpolation relationship
         if a displacement condition between pair nodes is defined
@@ -640,9 +640,9 @@ class BoxMesh(SingleMesh):
 
     def boundary_elements(
         self,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-4,
-    ) -> Tuple[pv.PolyData, npt.NDArray[np.int_]]:
+    ) -> tuple[pv.PolyData, npt.NDArray[np.int_]]:
         """
         Finds boundary elements of mesh with given tolerance
 
@@ -698,9 +698,9 @@ class BoxMesh(SingleMesh):
 
     def closest_cells_on_boundaries(
         self,
-        rve: Optional[Rve] = None,
+        rve: Rve | None = None,
         tol: float = 1.0e-8,
-    ) -> Dict[str, ClosestCellsOnBoundaries]:
+    ) -> dict[str, ClosestCellsOnBoundaries]:
         """
         Find the cells to which a given point belongs to by using a ray tracing normal to the face on which it belongs
         :param rve : RVE of the mesh bounding box. if None, the rve is built from the mesh bounding box
