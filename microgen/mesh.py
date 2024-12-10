@@ -6,6 +6,7 @@ import itertools
 import warnings
 from typing import TYPE_CHECKING, Iterator
 
+
 import gmsh
 import numpy as np
 import numpy.typing as npt
