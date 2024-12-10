@@ -24,7 +24,7 @@ Periodic Mesh
 mmg
 ---
 
-.. include:: ../../examples/Mesh/mmg/test_mmg3d.py
+.. include:: ../../examples/Mesh/mmg/mmg3d.py
    :literal:
 
 .. image:: ../_static/examples/mmg.png
@@ -33,7 +33,7 @@ mmg
 mmg Voronoi
 -----------
 
-.. include:: ../../examples/Mesh/mmg-voro/test_mmg.py
+.. include:: ../../examples/Mesh/mmg-voro/mmg.py
    :literal:
 
 .. image:: ../_static/examples/mmg-voro.png
