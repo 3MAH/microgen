@@ -17,6 +17,8 @@ from microgen.single_mesh import NotOnlyLinearTetrahedraError
 def are_elements_equal(
     dict1: dict[pv.CellType, npt.NDArray[np.int_]],
     dict2: dict[pv.CellType, npt.NDArray[np.int_]],
+    dict1: dict[pv.CellType, npt.NDArray[np.int_]],
+    dict2: dict[pv.CellType, npt.NDArray[np.int_]],
 ) -> bool:
     """Return whether two dictionaries of arrays are equal."""
     if dict1.keys() != dict2.keys():
@@ -382,6 +384,7 @@ def test_single_mesh_consistency_when_extracting_surface_mesh(
 
 def test_given_sample_1d_mesh__check_if_only_linear_tetrahedral_must_raise_1d_warning(
     sample_1d_mesh_list: list[pv.UnstructuredGrid],
+    sample_1d_mesh_list: list[pv.UnstructuredGrid],
 ) -> None:
     """Test that the function raises a warning when the mesh contains 1D elements."""
     warning_message = (
@@ -405,6 +408,7 @@ def test_given_sample_2d_mesh__check_if_only_linear_tetrahedral_must_raise_2d_wa
 
 
 def test_given_sample_3d_mesh__check_if_only_linear_tetrahedral_must_raise_found_non_linear_tet_elements_error(
+    sample_3d_non_linear_tet_mesh_list: list[pv.UnstructuredGrid],
     sample_3d_non_linear_tet_mesh_list: list[pv.UnstructuredGrid],
 ) -> None:
     """Test that the function raises an error when the mesh contains non-linear tetrahedra."""
