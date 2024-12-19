@@ -24,7 +24,7 @@ class SingleMesh:
 
     def __init__(
         self,
-        nodes_coords: npt.NDArray[np.float_],
+        nodes_coords: npt.NDArray[np.float64],
         elements: Dict[pv.CellType, npt.NDArray[np.int_]],
         nodes_indices: Optional[npt.NDArray[np.int_]] = None,
     ) -> None:

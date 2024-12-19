@@ -19,7 +19,7 @@ def are_elements_equal(
     return all(np.array_equal(dict1[key], dict2[key]) for key in dict1)
 
 
-def _box_mesh_points() -> npt.NDArray[np.float_]:
+def _box_mesh_points() -> npt.NDArray[np.float64]:
     points = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -51,7 +51,7 @@ def fixture_simple_grid() -> pv.UnstructuredGrid:
     return grid
 
 
-def _box_single_mesh_nodes() -> npt.NDArray[np.float_]:
+def _box_single_mesh_nodes() -> npt.NDArray[np.float64]:
     nodes_array = np.array(
         [
             [0.0, 0.0, 0.0],

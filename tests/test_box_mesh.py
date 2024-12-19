@@ -12,7 +12,7 @@ from pytest import FixtureRequest
 from microgen import BoxMesh, Rve
 
 
-def _box_mesh_points() -> npt.NDArray[np.float_]:
+def _box_mesh_points() -> npt.NDArray[np.float64]:
     points = np.array(
         [
             [1.0, 1.0, 1.0],
@@ -173,7 +173,7 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
     box_mesh: BoxMesh, request: FixtureRequest
 ) -> None:
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
-    target_center: npt.NDArray[np.float_] = rve.center
+    target_center: npt.NDArray[np.float64] = rve.center
     target_corners: list[int] = [0, 2, 6, 8, 18, 20, 24, 26]
     target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
     target_faces: list[int] = [4, 10, 12, 14, 16, 22]
