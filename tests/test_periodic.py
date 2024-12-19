@@ -2,7 +2,7 @@
 
 import pytest
 
-from microgen import Phase, Rve, periodic, shape
+from microgen import Phase, Rve, periodic_split_and_translate, shape
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
@@ -17,7 +17,7 @@ def _generate_sphere(x: float, y: float, z: float, rve: Rve) -> Phase:
     """Generate a sphere at the given position and test periodicity."""
     elem = shape.sphere.Sphere(center=(x, y, z), radius=0.1)
     phase = Phase(shape=elem.generate())
-    return periodic(phase=phase, rve=rve)
+    return periodic_split_and_translate(phase=phase, rve=rve)
 
 
 def test_periodic_generates_warning_on_intersection_with_opposite_faces() -> None:
@@ -29,7 +29,7 @@ def test_periodic_generates_warning_on_intersection_with_opposite_faces() -> Non
 
     expected_warning_msg = r"Object intersecting ([xyz])\+ and ([xyz])\- faces: not doing anything in this direction"
     with pytest.warns(UserWarning, match=expected_warning_msg):
-        phase = periodic(phase=phase, rve=rve)
+        phase = periodic_split_and_translate(phase=phase, rve=rve)
 
 
 def test_periodic_when_no_intersection() -> None:
