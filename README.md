@@ -20,7 +20,7 @@ Generation of 3D objects is achievable through functions that utilize Open CASCA
 |        |            |
 | -------------- | ---------------- |
 | PyPI package   | [![PyPI](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/) |
-| Conda package  | [![Conda](https://anaconda.org/set3mah/microgen/badges/version.svg)](https://conda.anaconda.org/set3mah/microgen) |
+| Conda forge package  | [![Conda](https://anaconda.org/conda-forge/microgen/badges/version.svg)](https://anaconda.org/conda-forge/microgen) |
 | Documentation  | [![Documentation](https://readthedocs.org/projects/microgen/badge/?version=latest)](https://microgen.readthedocs.io/en/latest/?badge=latest) |
 | Status         | [![Status](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen) |
 | Citation       | [![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028) |
@@ -39,7 +39,7 @@ pip install microgen
 With conda:
 
 ```bash
-conda install -c conda-forge -c set3mah microgen
+conda install conda-forge::microgen
 ```
 
 -------------------------------------------------------------------------------------------------------
@@ -57,7 +57,8 @@ The `-e` or `--editable` option allows to modify the sources without having to r
 
 
 Run tests with pytest:
-```
+
+```bash
 pytest tests -n auto
 ```
 

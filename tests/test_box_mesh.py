@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import math as m
 import random
-from typing import Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
 import pytest
 import pyvista as pv
-from microgen import BoxMesh, Rve
 from pytest import FixtureRequest
+
+from microgen import BoxMesh, Rve
 
 
 def _box_mesh_points() -> npt.NDArray[np.float_]:
@@ -45,7 +47,7 @@ def _box_mesh_points() -> npt.NDArray[np.float_]:
     return points
 
 
-def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
+def _box_mesh_elements() -> dict[pv.CellType, npt.NDArray[np.int_]]:
     elements_dict = {
         pv.CellType.TETRA: np.array(
             [
@@ -105,14 +107,14 @@ def _box_mesh_elements() -> Dict[pv.CellType, npt.NDArray[np.int_]]:
 
 
 @pytest.fixture(scope="function")
-def default_box_mesh() -> Tuple[BoxMesh, Rve]:
+def default_box_mesh() -> tuple[BoxMesh, Rve]:
     mesh = BoxMesh(_box_mesh_points(), _box_mesh_elements())
     rve = Rve(dim=(1, 1, 1), center=(0.5, 0.5, 0.5))
     return (mesh, rve)
 
 
 @pytest.fixture(scope="function")
-def expanded_box_mesh_x() -> Tuple[BoxMesh, Rve]:
+def expanded_box_mesh_x() -> tuple[BoxMesh, Rve]:
     expanded_mesh = _box_mesh_points()
     expanded_mesh[:, 0] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
@@ -121,7 +123,7 @@ def expanded_box_mesh_x() -> Tuple[BoxMesh, Rve]:
 
 
 @pytest.fixture(scope="function")
-def expanded_box_mesh_y() -> Tuple[BoxMesh, Rve]:
+def expanded_box_mesh_y() -> tuple[BoxMesh, Rve]:
     expanded_mesh = _box_mesh_points()
     expanded_mesh[:, 1] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
@@ -130,7 +132,7 @@ def expanded_box_mesh_y() -> Tuple[BoxMesh, Rve]:
 
 
 @pytest.fixture(scope="function")
-def expanded_box_mesh_z() -> Tuple[BoxMesh, Rve]:
+def expanded_box_mesh_z() -> tuple[BoxMesh, Rve]:
     expanded_mesh = _box_mesh_points()
     expanded_mesh[:, 2] *= 3.0
     mesh = BoxMesh(expanded_mesh, _box_mesh_elements())
@@ -172,9 +174,9 @@ def test_given_box_mesh_construct_must_find_center_corners_edges_faces_node_sets
 ) -> None:
     box_mesh_to_test, rve = request.getfixturevalue(box_mesh)
     target_center: npt.NDArray[np.float_] = rve.center
-    target_corners: List[int] = [0, 2, 6, 8, 18, 20, 24, 26]
-    target_edges: List[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
-    target_faces: List[int] = [4, 10, 12, 14, 16, 22]
+    target_corners: list[int] = [0, 2, 6, 8, 18, 20, 24, 26]
+    target_edges: list[int] = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+    target_faces: list[int] = [4, 10, 12, 14, 16, 22]
 
     box_mesh_corners = sorted(np.concatenate(list(box_mesh_to_test.corners.values())))
     box_mesh_edges = sorted(np.concatenate(list(box_mesh_to_test.edges.values())))
@@ -243,7 +245,7 @@ def test_closest_points_on_boundaries_periodic_mesh_must_have_only_one_neighbour
         k_neighbours=k_neighbours
     )
 
-    number_of_closest_neighbours_to_test: List[int] = []
+    number_of_closest_neighbours_to_test: list[int] = []
     number_closest_neighbours_truth_1_on_each_face_and_edge = [1] * 12
     for key, list_of_neighbour_for_all_nodes in closest_pts.items():
         list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
@@ -304,7 +306,7 @@ def test_closest_points_on_perturbated_mesh_boundaries_must_have_good_number_of_
         2,
         2,
     ]
-    number_of_closest_neighbours_to_test: List[int] = []
+    number_of_closest_neighbours_to_test: list[int] = []
     for _, list_of_neighbour_for_all_nodes in closest_pts.items():
         list_of_neighbour_for_all_nodes_index = list_of_neighbour_for_all_nodes[0]
 

@@ -13,6 +13,7 @@ from scipy.spatial import KDTree
 from .rve import Rve
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
+# ruff: noqa: ERA001
 # We could in future versions make benefit of the embree library
 # with multi ray tracing embedded in PyVista.
 # However, a very old version of embree (2) is nowadays bound in python
@@ -91,7 +92,7 @@ class BoxMesh(SingleMesh):
         elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
         return BoxMesh(pvmesh.points, elements)
 
-    def _construct(self: BoxMesh, tol: float = 1.0e-8) -> None:
+    def _construct(self: BoxMesh, tol: float = 1.0e-8) -> None:  # noqa: PLR0915 TODO(kmarchais): refactor
         """Construct a box Mesh.
 
         With list of points in faces (excluding edges),
