@@ -27,6 +27,8 @@ from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
 USE_MULTI_RAY = False
 
+AXES = ("x", "y", "z")
+
 
 class ClosestCellsOnBoundaries(NamedTuple):
     """Class to manage closest cells on boundaries.
@@ -587,23 +589,16 @@ class BoxMesh(SingleMesh):
 
         crd = self.nodes_coords
 
-        normals = [
-            np.array([1.0, 0.0, 0.0]),
-            np.array([0.0, 1.0, 0.0]),
-            np.array([0.0, 0.0, 1.0]),
-        ]
-        origins_p = [
-            np.array([rve.x_max, rve.center[1], rve.center[2]]),
-            np.array([rve.center[0], rve.y_max, rve.center[2]]),
-            np.array([rve.center[0], rve.center[1], rve.z_max]),
-        ]
-        size_planes = [2.0 * rve.dx, 2.0 * rve.dy, 2.0 * rve.dz]
+        normals = np.eye(3)
+        origins_p = np.array(
+            [
+                [rve.max_point[i] if i == j else rve.center[i] for j in range(3)]
+                for i in range(3)
+            ],
+        )
+        size_planes = 2.0 * rve.dim
 
-        faces_m = [
-            crd[self.faces["x-"]],
-            crd[self.faces["y-"]],
-            crd[self.faces["z-"]],
-        ]
+        faces_m = [crd[self.faces[f"{axis}-"]] for axis in AXES]
         surface = self.surface
         surface["CellIDs"] = np.arange(surface.n_cells)
 
@@ -656,19 +651,10 @@ class BoxMesh(SingleMesh):
             list_ray_trace.append(raytraceresult)
 
         return {
-            "x+": ClosestCellsOnBoundaries(
-                list_cells_for_each_face[0],
-                list_ray_trace[0][0],
-                list_cells_for_each_face[0][list_ray_trace[0][2]],
-            ),
-            "y+": ClosestCellsOnBoundaries(
-                list_cells_for_each_face[1],
-                list_ray_trace[1][0],
-                list_cells_for_each_face[1][list_ray_trace[1][2]],
-            ),
-            "z+": ClosestCellsOnBoundaries(
-                list_cells_for_each_face[2],
-                list_ray_trace[2][0],
-                list_cells_for_each_face[2][list_ray_trace[2][2]],
-            ),
+            f"{axis}+": ClosestCellsOnBoundaries(
+                list_cells_for_each_face[a],
+                list_ray_trace[a][0],
+                list_cells_for_each_face[a][list_ray_trace[a][2]],
+            )
+            for a, axis in enumerate(AXES)
         }
