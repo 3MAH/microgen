@@ -443,17 +443,7 @@ class BoxMesh(SingleMesh):
             dist.append(dist_tmp_list)
             index.append(index_tmp_list)
 
-        return {
-            "x+y-": (index[0], dist[0]),
-            "x+y+": (index[1], dist[1]),
-            "x-y+": (index[2], dist[2]),
-            "x+z-": (index[3], dist[3]),
-            "x+z+": (index[4], dist[4]),
-            "x-z+": (index[5], dist[5]),
-            "y+z-": (index[6], dist[6]),
-            "y+z+": (index[7], dist[7]),
-            "y-z+": (index[8], dist[8]),
-        }
+        return {key: (index[i], dist[i]) for i, key in enumerate(all_edge_p.keys())}
 
     def closest_points_on_boundaries(
         self: BoxMesh,
