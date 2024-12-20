@@ -137,12 +137,7 @@ class BoxMesh(SingleMesh):
         }
 
         # Remove nodes that belong to several sets
-        all_corners = np.hstack(
-            [
-                corners[f"x{sx}y{sy}z{sz}"]
-                for sx, sy, sz in product(("-", "+"), repeat=3)
-            ],
-        )
+        all_corners = np.hstack(list(corners.values()))
 
         for axis1, axis2 in [("x", "y"), ("x", "z"), ("y", "z")]:
             for sign1, sign2 in product(("-", "+"), repeat=2):
@@ -152,34 +147,16 @@ class BoxMesh(SingleMesh):
                     assume_unique=True,
                 )
 
-        all_edges_corners = np.hstack(
-            [
-                edges[f"{axis1}{sign1}{axis2}{sign2}"]
-                for axis1, axis2 in [("x", "y"), ("x", "z"), ("y", "z")]
-                for sign1, sign2 in product(("-", "+"), repeat=2)
-            ]
-            + [all_corners],
-        )
+        all_edges_corners = np.hstack([*list(edges.values()), all_corners])
 
-        for axis in ["x", "y", "z"]:
+        decimal_round = int(-np.log10(tol) - 1)
+        for a, axis in enumerate(["x", "y", "z"]):
             for sign in ["-", "+"]:
                 faces[f"{axis}{sign}"] = np.setdiff1d(
                     faces[f"{axis}{sign}"],
                     all_edges_corners,
                     assume_unique=True,
                 )
-
-        for axis1, axis2 in [("x", "y"), ("x", "z"), ("y", "z")]:
-            for sign1, sign2 in product(("-", "+"), repeat=2):
-                edges[f"{axis1}{sign1}{axis2}{sign2}"] = np.setdiff1d(
-                    edges[f"{axis1}{sign1}{axis2}{sign2}"],
-                    all_corners,
-                    assume_unique=True,
-                )
-
-        decimal_round = int(-np.log10(tol) - 1)
-        for a, axis in enumerate(["x", "y", "z"]):
-            for sign in ["-", "+"]:
                 faces[f"{axis}{sign}"] = faces[f"{axis}{sign}"][
                     np.lexsort(
                         (
