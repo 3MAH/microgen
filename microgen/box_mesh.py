@@ -181,15 +181,7 @@ class BoxMesh(SingleMesh):
         """
         if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._pvmesh = self.to_pyvista()
-        xmin, xmax, ymin, ymax, zmin, zmax = self._pvmesh.bounds
-        return Rve.from_min_max(
-            float(xmin),
-            float(xmax),
-            float(ymin),
-            float(ymax),
-            float(zmin),
-            float(zmax),
-        )
+        return Rve.from_min_max(*self._pvmesh.bounds)
 
     def _closest_points_on_faces(
         self: BoxMesh,
