@@ -28,6 +28,8 @@ from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 USE_MULTI_RAY = False
 
 AXES = ("x", "y", "z")
+AXES_PAIRS = (("x", "y"), ("x", "z"), ("y", "z"))
+SIGNS = ("-", "+")
 
 
 class ClosestCellsOnBoundaries(NamedTuple):
@@ -114,8 +116,8 @@ class BoxMesh(SingleMesh):
             f"{axis}{sign}": np.where(
                 np.abs(crd[:, a] - bound[a]) < tol,
             )[0]
-            for a, axis in enumerate(("x", "y", "z"))
-            for bound, sign in zip((self.rve.min_point, self.rve.max_point), ("-", "+"))
+            for a, axis in enumerate(AXES)
+            for bound, sign in zip((self.rve.min_point, self.rve.max_point), SIGNS)
         }
 
         edges = {
@@ -124,8 +126,8 @@ class BoxMesh(SingleMesh):
                 faces[f"{axis2}{sign2}"],
                 assume_unique=True,
             )
-            for (axis1, axis2) in [("x", "y"), ("x", "z"), ("y", "z")]  # axis pairs
-            for (sign1, sign2) in product(("-", "+"), repeat=2)  # sign combinations
+            for (axis1, axis2) in AXES_PAIRS
+            for (sign1, sign2) in product(SIGNS, repeat=2)
         }
 
         # extract corners from the intersection of edges
@@ -135,14 +137,14 @@ class BoxMesh(SingleMesh):
                 edges[f"y{sy}z{sz}"],
                 assume_unique=True,
             )
-            for sx, sy, sz in product(("-", "+"), repeat=3)
+            for sx, sy, sz in product(SIGNS, repeat=3)
         }
 
         # Remove nodes that belong to several sets
         all_corners = np.hstack(list(corners.values()))
 
-        for axis1, axis2 in [("x", "y"), ("x", "z"), ("y", "z")]:
-            for sign1, sign2 in product(("-", "+"), repeat=2):
+        for axis1, axis2 in AXES_PAIRS:
+            for sign1, sign2 in product(SIGNS, repeat=2):
                 edges[f"{axis1}{sign1}{axis2}{sign2}"] = np.setdiff1d(
                     edges[f"{axis1}{sign1}{axis2}{sign2}"],
                     all_corners,
@@ -152,7 +154,7 @@ class BoxMesh(SingleMesh):
         all_edges_corners = np.hstack([*list(edges.values()), all_corners])
 
         decimal_round = int(-np.log10(tol) - 1)
-        for a, axis in enumerate(["x", "y", "z"]):
+        for a, axis in enumerate(AXES):
             for sign in ["-", "+"]:
                 faces[f"{axis}{sign}"] = np.setdiff1d(
                     faces[f"{axis}{sign}"],
