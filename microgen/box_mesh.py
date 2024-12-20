@@ -221,60 +221,54 @@ class BoxMesh(SingleMesh):
 
         crd = self.nodes_coords
 
-        all_face_xp = np.hstack(
-            (
-                self.faces["x+"],
-                self.edges["x+y-"],
-                self.edges["x+y+"],
-                self.edges["x+z-"],
-                self.edges["x+z+"],
-                self.corners["x+y-z-"],
-                self.corners["x+y+z-"],
-                self.corners["x+y-z+"],
-                self.corners["x+y+z+"],
+        all_face_p = {
+            "x+": np.hstack(
+                (
+                    self.faces["x+"],
+                    self.edges["x+y-"],
+                    self.edges["x+y+"],
+                    self.edges["x+z-"],
+                    self.edges["x+z+"],
+                    self.corners["x+y-z-"],
+                    self.corners["x+y+z-"],
+                    self.corners["x+y-z+"],
+                    self.corners["x+y+z+"],
+                ),
             ),
-        )
-        all_face_yp = np.hstack(
-            (
-                self.faces["y+"],
-                self.edges["y+z-"],
-                self.edges["y+z+"],
-                self.edges["x-y+"],
-                self.edges["x+y+"],
-                self.corners["x-y+z-"],
-                self.corners["x+y+z-"],
-                self.corners["x-y+z+"],
-                self.corners["x+y+z+"],
+            "y+": np.hstack(
+                (
+                    self.faces["y+"],
+                    self.edges["y+z-"],
+                    self.edges["y+z+"],
+                    self.edges["x-y+"],
+                    self.edges["x+y+"],
+                    self.corners["x-y+z-"],
+                    self.corners["x+y+z-"],
+                    self.corners["x-y+z+"],
+                    self.corners["x+y+z+"],
+                ),
             ),
-        )
-        all_face_zp = np.hstack(
-            (
-                self.faces["z+"],
-                self.edges["y-z+"],
-                self.edges["y+z+"],
-                self.edges["x-z+"],
-                self.edges["x+z+"],
-                self.corners["x-y-z+"],
-                self.corners["x+y-z+"],
-                self.corners["x-y+z+"],
-                self.corners["x+y+z+"],
+            "z+": np.hstack(
+                (
+                    self.faces["z+"],
+                    self.edges["y-z+"],
+                    self.edges["y+z+"],
+                    self.edges["x-z+"],
+                    self.edges["x+z+"],
+                    self.corners["x-y-z+"],
+                    self.corners["x+y-z+"],
+                    self.corners["x-y+z+"],
+                    self.corners["x+y+z+"],
+                ),
             ),
-        )
+        }
 
-        kd_trees = [
-            KDTree(crd[all_face_xp]),
-            KDTree(crd[all_face_yp]),
-            KDTree(crd[all_face_zp]),
-        ]
+        kd_trees = [KDTree(crd[all_face_p[f"{axis}+"]]) for axis in AXES]
 
-        offsets = [
-            np.array([rve.dim[0], 0.0, 0.0]),
-            np.array([0.0, rve.dim[1], 0.0]),
-            np.array([0.0, 0.0, rve.dim[2]]),
-        ]
+        offsets = np.eye(3) * rve.dim
 
-        faces_m = [self.faces["x-"], self.faces["y-"], self.faces["z-"]]
-        all_faces_p = [all_face_xp, all_face_yp, all_face_zp]
+        faces_m = [self.faces[f"{axis}-"] for axis in AXES]
+        all_faces_p = list(all_face_p.values())
 
         dist = []
         index = []
@@ -318,9 +312,8 @@ class BoxMesh(SingleMesh):
             index.append(index_temp_list)
 
         return {
-            "x+": (np.asarray(index[0]), np.asarray(dist[0])),
-            "y+": (np.asarray(index[1]), np.asarray(dist[1])),
-            "z+": (np.asarray(index[2]), np.asarray(dist[2])),
+            f"{axis}+": (np.asarray(index[a]), np.asarray(dist[a]))
+            for a, axis in enumerate(AXES)
         }
 
     def _closest_points_on_edges(
