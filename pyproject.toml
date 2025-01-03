@@ -61,7 +61,7 @@ Documentation = 'https://microgen.readthedocs.io/en/latest'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
 [tool.setuptools]
-packages = ["microgen"]
+packages = ["microgen", "microgen.shape"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
