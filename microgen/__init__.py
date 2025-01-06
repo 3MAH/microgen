@@ -18,7 +18,7 @@ from .operations import (
     rotateEuler,
     rotatePvEuler,
 )
-from .periodic import periodic
+from .periodic import periodic, periodic_split_and_translate
 from .phase import Phase
 from .report import Report
 from .rve import Rve
@@ -72,6 +72,7 @@ __all__ = [
     "newGeometry",
     "parseNeper",
     "periodic",
+    "periodic_split_and_translate",
     "rasterPhase",
     "repeatPolyData",
     "repeatShape",
