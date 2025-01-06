@@ -1,29 +1,33 @@
-import subprocess
+"""Miscellaneous tests."""
+
+import shutil
+import warnings
 from sys import platform
 
 import microgen
 
-USE_NEPER = False
-try:
-    # Check if neper is installed and available in the PATH
-    subprocess.run(["neper", "--version"], check=True)
-    USE_NEPER = True
-except (subprocess.CalledProcessError, FileNotFoundError):
-    print("Neper is not installed. Please install Neper before running this command.")
-    USE_NEPER = False
+USE_NEPER = shutil.which("neper") is not None
+if not USE_NEPER:
+    warnings.warn(
+        "Neper is not installed. Please install Neper before running this command",
+        stacklevel=2,
+    )
 
 
-def test_misc():
-    if USE_NEPER:
-        if platform != "win32":
-            microgen.Neper.run(
-                filename="tests/data/neper.tess", nbCell=2, dimCube=(1, 1, 1)
-            )
-            microgen.parseNeper("tests/data/neper")
-            microgen.Neper.generateVoronoiFromTessFile("tests/data/neper.tess")
+def test_neper() -> None:
+    """Test neper generation."""
+    if USE_NEPER and platform != "win32":
+        microgen.Neper.run(
+            filename="tests/data/neper.tess",
+            nbCell=2,
+            dimCube=(1, 1, 1),
+        )
+        microgen.parseNeper("tests/data/neper")
+        microgen.Neper.generateVoronoiFromTessFile("tests/data/neper.tess")
 
 
-def test_operations():
+def test_operations() -> None:
+    """Test operations on shapes."""
     elem = microgen.Box(center=(0.5, 0.5, 0.5), dim=(1, 1, 1))
     shape1 = elem.generate()
     phase1 = microgen.Phase(shape=shape1)
@@ -38,8 +42,3 @@ def test_operations():
 
     rve = microgen.Rve(dim=1, center=(0.5, 0.5, 0.5))
     microgen.repeatShape(shape1, rve, grid=(2, 2, 2))
-
-
-if __name__ == "__main__":
-    test_misc()
-    test_operations()

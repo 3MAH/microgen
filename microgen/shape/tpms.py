@@ -227,8 +227,10 @@ class Tpms(Shape):
         elif len(repeat_cell) == _DIM:
             self.repeat_cell = np.array(repeat_cell)
         else:
-            err_msg = f"`repeat_cell` must have a length of 3 integers. \
-                Given: {repeat_cell}"
+            err_msg = (
+                "`repeat_cell` must have a length of 3 integers. "
+                f"Given: {repeat_cell}"
+            )
             raise ValueError(err_msg)
 
     @property
@@ -556,9 +558,11 @@ class Tpms(Shape):
         elif type_part == "sheet":
             if np.any(self.offset <= 0.0):
                 if np.all(self.offset <= 0.0):
-                    err_msg = f"offset must be greater than \
-                        {self.offset_lim[type_part][0]} to generate '{type_part}' part\
-                              and lower than {self.offset_lim[type_part][1]}"
+                    err_msg = (
+                        f"offset must be greater than "
+                        f"{self.offset_lim[type_part][0]} to generate '{type_part}' "
+                        f"part and lower than {self.offset_lim[type_part][1]}"
+                    )
                     raise ValueError(err_msg)
                 err_msg = "generating part with a negative or zero offset\
                     value is not implemented yet"
@@ -589,8 +593,10 @@ class Tpms(Shape):
         :return: CadQuery Shape object of the required TPMS part
         """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
-            err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
-              'upper skeletal' or 'surface'"
+            err_msg = (
+                f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
+                "'upper skeletal' or 'surface'"
+            )
             raise ValueError(err_msg)
 
         if type_part == "surface":
@@ -639,8 +645,10 @@ class Tpms(Shape):
         if type_part == "surface":
             return self.surface
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
-            err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
-              'upper skeletal' or 'surface'"
+            err_msg = (
+                f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
+                "'upper skeletal' or 'surface'"
+            )
             raise ValueError(err_msg)
         if self.density is not None:
             self._compute_offset_to_fit_density(
@@ -666,8 +674,10 @@ class Tpms(Shape):
     ) -> pv.UnstructuredGrid:
         """Generate VTK UnstructuredGrid object of the required TPMS part."""
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
-            err_msg = f"type_part ({type_part}) must be 'sheet', 'lower skeletal',\
-              'upper skeletal'"
+            err_msg = (
+                f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
+                "'upper skeletal'"
+            )
             raise ValueError(err_msg)
 
         if self.density is not None:
@@ -916,8 +926,10 @@ class Infill(Tpms):
         obj_dim = margin_factor * (bounds[1::2] - bounds[::2])  # [dim_x, dim_y, dim_z]
 
         if cell_size is not None and repeat_cell is not None:
-            err_msg = "cell_size and repeat_cell cannot be given at the same time, \
-            one is computed from the other."
+            err_msg = (
+                "cell_size and repeat_cell cannot be given at the same time, "
+                "one is computed from the other."
+            )
             raise ValueError(err_msg)
 
         if cell_size is not None:
@@ -926,8 +938,10 @@ class Infill(Tpms):
             cell_size = obj_dim / repeat_cell
 
         if np.any(cell_size > obj_dim):
-            err_msg = f"cell_size must be lower than the object dimensions.\
-            Given: {cell_size}, Object dimensions: {obj_dim}"
+            err_msg = (
+                "cell_size must be lower than the object dimensions. "
+                f"Given: {cell_size}, Object dimensions: {obj_dim}"
+            )
             raise ValueError(err_msg)
 
         self._init_cell_parameters(cell_size, repeat_cell)
