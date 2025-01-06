@@ -72,8 +72,8 @@ def _detect_intersected_faces(
             intersected_faces.remove(face_p)
             intersected_faces.remove(face_m)
             warnings.warn(
-                f"Object intersecting {face_p} and {face_m} faces: \
-                    not doing anything in this direction",
+                f"Object intersecting {face_p} and {face_m} faces: "
+                "not doing anything in this direction",
                 stacklevel=2,
             )
     return intersected_faces, rve_planes, partitions

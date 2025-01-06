@@ -5,6 +5,9 @@ import pytest
 
 from microgen import Rve
 
+# ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
+# ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
+
 
 def test_rve_center_must_have_expected_value() -> None:
     """Test Rve center with different input types."""
@@ -23,17 +26,18 @@ def test_rve_center_must_have_expected_value() -> None:
 
 def test_rve_invalid_center_value() -> None:
     """Test Rve center with invalid inputs, center must be an array or Sequence of length 3."""
-    with pytest.raises(ValueError):
+    invalid_center_msg = "center must be an array or Sequence of length 3"
+    with pytest.raises(ValueError, match=invalid_center_msg):
         Rve(center=(1, 2))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=invalid_center_msg):
         Rve(center=[1, 2, 3, 4])
 
-    with pytest.raises(ValueError):
-        Rve(center=np.array([1, 2]))
+    with pytest.raises(ValueError, match=invalid_center_msg):
+        Rve(center=np.array([1, 2]))  # type: ignore[arg-type]
 
-    with pytest.raises(ValueError):
-        Rve(center=1)  # type: ignore
+    with pytest.raises(ValueError, match=invalid_center_msg):
+        Rve(center=1)  # type: ignore[arg-type]
 
 
 def test_rve_dim_must_have_expected_value() -> None:
@@ -71,13 +75,14 @@ def test_rve_deprecated_dim() -> None:
 
 def test_rve_given_negative_or_zero_dim_must_raise_error() -> None:
     """Test Rve dim with negative values must raise error."""
-    with pytest.raises(ValueError):
+    invalid_dim_msg = "dimensions of the RVE must be greater than 0"
+    with pytest.raises(ValueError, match=invalid_dim_msg):
         Rve(dim=-1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=invalid_dim_msg):
         Rve(dim=0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=invalid_dim_msg):
         Rve(dim=(1, -1, 0))
 
 
