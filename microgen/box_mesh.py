@@ -25,8 +25,7 @@ from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 #     USE_MULTI_RAY = True
 # except ImportError:
 
-USE_MULTI_RAY = False
-
+USE_MULTI_RAY = True
 
 class ClosestCellsOnBoundaries(NamedTuple):
     """
