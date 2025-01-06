@@ -14,17 +14,6 @@ from scipy.spatial import KDTree
 from .rve import Rve
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
-# ruff: noqa: ERA001
-# We could in future versions make benefit of the embree library
-# with multi ray tracing embedded in PyVista.
-# However, a very old version of embree (2) is nowadays bound in python
-# try:
-#     import trimesh
-#     import rtree
-#     import pyembree
-#     USE_MULTI_RAY = True
-# except ImportError:
-
 USE_MULTI_RAY = False
 
 AXES = ("x", "y", "z")
