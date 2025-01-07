@@ -1,3 +1,5 @@
+"""Tests for the is_periodic function."""
+
 import numpy as np
 import numpy.typing as npt
 import pytest
@@ -5,9 +7,12 @@ import pyvista as pv
 
 from microgen import is_periodic
 
+# ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
+# ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
+
 
 def _periodic_box_nodes() -> npt.NDArray[np.float64]:
-    nodes_array = np.array(
+    return np.array(
         [
             [0.0, 0.0, 0.0],
             [0.5, 0.5, 0.5],
@@ -24,14 +29,12 @@ def _periodic_box_nodes() -> npt.NDArray[np.float64]:
             [-0.5, 0.0, 0.0],
             [0.0, 0.0, 0.5],
             [0.0, 0.0, -0.5],
-        ]
+        ],
     )
-
-    return nodes_array
 
 
 def _one_shifted_node_box_nodes() -> npt.NDArray[np.float64]:
-    nodes_array = np.array(
+    return np.array(
         [
             [0.0, 0.0, 0.0],
             [0.5, 0.5, 0.5],
@@ -48,14 +51,12 @@ def _one_shifted_node_box_nodes() -> npt.NDArray[np.float64]:
             [-0.5, 0.0, 0.0],
             [0.0, 0.0, 0.5],
             [0.0, 0.0, -0.5],
-        ]
+        ],
     )
 
-    return nodes_array
 
-
-def _box_elements_same_number_of_nodes() -> npt.NDArray[np.int_]:
-    elements = np.array(
+def _box_elements_same_number_of_nodes() -> npt.NDArray[np.int64]:
+    return np.array(
         [
             [4, 11, 6, 0, 14],
             [4, 0, 9, 1, 11],
@@ -93,14 +94,12 @@ def _box_elements_same_number_of_nodes() -> npt.NDArray[np.int_]:
             [4, 8, 9, 0, 14],
             [4, 0, 9, 4, 14],
             [4, 9, 8, 4, 14],
-        ]
+        ],
     )
-
-    return elements
 
 
 def _one_extra_node_box_nodes() -> npt.NDArray[np.float64]:
-    nodes_array = np.array(
+    return np.array(
         [
             [0.0, 0.0, 0.0],
             [0.5, 0.5, 0.5],
@@ -118,44 +117,40 @@ def _one_extra_node_box_nodes() -> npt.NDArray[np.float64]:
             [0.0, 0.0, 0.5],
             [0.0, 0.0, -0.5],
             [0.3, 0.2, -0.5],
-        ]
+        ],
     )
 
-    return nodes_array
 
-
-@pytest.fixture(name="periodic_box", scope="function")
+@pytest.fixture(name="periodic_box")
 def fixture_periodic_box() -> pv.UnstructuredGrid:
+    """Return a periodic box mesh."""
     nodes = _periodic_box_nodes()
     elements = _box_elements_same_number_of_nodes()
     cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
-    grid = pv.UnstructuredGrid(elements, cell_types, nodes)
-
-    return grid
+    return pv.UnstructuredGrid(elements, cell_types, nodes)
 
 
-@pytest.fixture(name="non_periodic_box_1_extra_node", scope="function")
+@pytest.fixture(name="non_periodic_box_1_extra_node")
 def fixture_non_periodic_box_1_extra_node() -> pv.UnstructuredGrid:
+    """Return a non-periodic box mesh with an extra node."""
     points = _one_extra_node_box_nodes()
     point_cloud = pv.PolyData(points)
-    grid = point_cloud.delaunay_3d(offset=100.0)
-
-    return grid
+    return point_cloud.delaunay_3d(offset=100.0)
 
 
-@pytest.fixture(name="non_periodic_box_shifted_node", scope="function")
+@pytest.fixture(name="non_periodic_box_shifted_node")
 def fixture_non_periodic_box_shifted_node() -> pv.UnstructuredGrid:
+    """Return a non-periodic box mesh with a shifted node but no extra node."""
     nodes = _one_shifted_node_box_nodes()
     elements = _box_elements_same_number_of_nodes()
     cell_types = np.full(elements.shape[0], pv.CellType.TETRA, dtype=np.uint8)
-    grid = pv.UnstructuredGrid(elements, cell_types, nodes)
-
-    return grid
+    return pv.UnstructuredGrid(elements, cell_types, nodes)
 
 
 def test_given_periodic_box_is_periodic_must_return_true(
     periodic_box: pv.UnstructuredGrid,
 ) -> None:
+    """is_periodic must return True for a periodic box."""
     crd = periodic_box.points
 
     assert is_periodic(crd)
@@ -164,6 +159,7 @@ def test_given_periodic_box_is_periodic_must_return_true(
 def test_given_non_periodic_box_with_an_extra_node_is_periodic_must_return_false(
     non_periodic_box_1_extra_node: pv.UnstructuredGrid,
 ) -> None:
+    """is_periodic must return False for a non-periodic box with an extra node."""
     crd = non_periodic_box_1_extra_node.points
 
     assert not is_periodic(crd)
@@ -172,6 +168,7 @@ def test_given_non_periodic_box_with_an_extra_node_is_periodic_must_return_false
 def test_given_non_periodic_box_with_a_shifted_node_but_no_extra_node_is_periodic_must_return_false(
     non_periodic_box_shifted_node: pv.UnstructuredGrid,
 ) -> None:
+    """is_periodic must return False for a non-periodic box with a shifted node."""
     crd = non_periodic_box_shifted_node.points
 
     assert not is_periodic(crd)

@@ -1,9 +1,8 @@
-"""
-Cubic mesh for FE
-"""
+"""Cubic mesh for FE."""
+
+from __future__ import annotations
 
 import warnings
-from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -11,47 +10,50 @@ import pyvista as pv
 
 
 class NotOnlyLinearTetrahedraError(Exception):
-    """Raised when 3d elements other than linear tetrahedra are found in a mesh"""
+    """Raised when 3d elements other than linear tetrahedra are found in a mesh."""
 
 
 class SingleMesh:
-    """
-    SingleMesh class to manage list of Nodes and Elements inside a Phase
+    """SingleMesh class to manage list of Nodes and Elements inside a Phase.
+
     :param nodes_coords: list of nodes (np.ndarray)
-    :param elements : dictionary of elements (key: int, values : np.ndarray). The key is the element type
-    :param nodes_indices : index of node list (if different from the natural index of nodes array)
+    :param elements : dictionary of elements (key: int, values : np.ndarray).
+        The key is the element type
+    :param nodes_indices : index of node list
+        (if different from the natural index of nodes array)
     """
 
     def __init__(
-        self,
+        self: SingleMesh,
         nodes_coords: npt.NDArray[np.float64],
-        elements: Dict[pv.CellType, npt.NDArray[np.int_]],
-        nodes_indices: Optional[npt.NDArray[np.int_]] = None,
+        elements: dict[pv.CellType, npt.NDArray[np.int_]],
+        nodes_indices: npt.NDArray[np.int_] | None = None,
     ) -> None:
+        """Initialize the SingleMesh object with nodes and elements."""
         self.nodes_coords = nodes_coords
         self.elements = elements  # element dictionary
-        self._pvmesh: Optional[pv.UnstructuredGrid] = None
+        self._pvmesh: pv.UnstructuredGrid | None = None
         self.nodes_indices = nodes_indices  # indices of nodes
-        self._surface: Optional[pv.PolyData] = None
+        self._surface: pv.PolyData | None = None
 
     def _to_cells_and_celltype(
-        self,
-    ) -> Tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
-        """
-        Returns a numpy array, with the indices of the cells
+        self: SingleMesh,
+    ) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+        """Return a numpy array, with the indices of the cells.
+
         The “padding” indicating the number of points per cell is introduced
         exactly as a pyvista UnstructuredGrid.cells property
 
-        :return cells and cells_type : A tuple of flattened arrays that contains all cells and cells_type
+        :return cells and cells_type:
+            A tuple of flattened arrays that contains all cells and cells_type
 
         Note that if only tetrahedral elements are handled py SingleMesh, this function
         is able to handle multiple cells for future updates
         """
-
         cells = np.empty((0,), dtype=int)
         cells_type = np.empty((0,), dtype=int)
 
-        for key in self.elements.keys():
+        for key in self.elements:
             padding = self.elements[key].shape[1]
             cells_temp = np.empty((self.elements[key].shape[0], padding + 1), dtype=int)
             cells_temp[:, 0] = padding
@@ -62,75 +64,71 @@ class SingleMesh:
 
         return (cells.ravel(), cells_type.ravel())
 
-    def to_pyvista(self) -> pv.UnstructuredGrid:
-        """
-        Builds a pyvista UnstructuredGrid.
+    def to_pyvista(self: SingleMesh) -> pv.UnstructuredGrid:
+        """Build a pyvista UnstructuredGrid.
+
         Node and element data are not copied (by default a shallow copy is operated)
         Note that for now singleMesh works only considering tetrahedral elements
 
-        :return pvmesh : A pyvista.UnstructuredGrid object that contains the (points) nodes,
-        cells and celltypes from the SingleMesh object
+        :return pvmesh :
+            A pyvista.UnstructuredGrid object that contains the (points) nodes,
+            cells and celltypes from the SingleMesh object
         """
-
         cells, celltypes = self._to_cells_and_celltype()
 
         return pv.UnstructuredGrid(cells, celltypes, self.nodes_coords)
 
     @staticmethod
-    def from_pyvista(pvmesh: Union[pv.UnstructuredGrid, pv.PolyData]):
-        """Build a SingleMesh from a pyvista UnstructuredGrid or PolyData mesh (in this last case,
-        the PolyData object is cast into an Unstructured Grid).
+    def from_pyvista(pvmesh: pv.UnstructuredGrid | pv.PolyData) -> SingleMesh:
+        """Build a SingleMesh from a pyvista UnstructuredGrid or PolyData mesh.
+
+        In the case of a PolyData object, it is cast into an Unstructured Grid).
         Node and element data are not copied (by default a shallow copy is operated)
         Mesh with multiple element types are not handled.
         Note that for now SingleMesh works only considering tetrahedral elements
 
         :param pvmesh: the mesh as a pyvista UnstructuredGrid object
 
-        :return : A SingleMesh Object from the tetrahedral elements of the pyvista Unstructured Grid
+        :return : A SingleMesh Object from the tetrahedral elements of
+            the pyvista Unstructured Grid
         """
         if isinstance(pvmesh, pv.PolyData):
             pvmesh = pvmesh.cast_to_unstructured_grid()
 
         # extract only the tetrahedral elements
-        # raises an Exception if 3d elements other than linear tetrahedra are found in the mesh
+        # raises an Exception if 3d elements other than
+        # linear tetrahedra are found in the mesh
         check_if_only_linear_tetrahedral(pvmesh)
         elements = {pv.CellType.TETRA: pvmesh.cells_dict[pv.CellType.TETRA]}
         return SingleMesh(pvmesh.points, elements)
 
     @staticmethod
-    def read(filename: str):
-        """Build a SingleMesh from a pyvista mesh file. This function uses the pyvista load method.
+    def read(filename: str) -> SingleMesh:
+        """Build a SingleMesh from a pyvista mesh file.
+
+        This function uses the pyvista load method.
         The file type is inferred from the file name.
 
         :param filename : the name of the file that contains the pyvista mesh
 
         :return : a SingleMesh object
         """
-
-        mesh = SingleMesh.from_pyvista(pv.read(filename))
-        return mesh
+        return SingleMesh.from_pyvista(pv.read(filename))
 
     @property
-    def pvmesh(
-        self,
-    ) -> pv.UnstructuredGrid:
-        """
-        Return the pyvista mesh (UnstructuredGrid) of the considered SingleMesh
-        """
-
+    def pvmesh(self: SingleMesh) -> pv.UnstructuredGrid:
+        """Return the pyvista mesh (UnstructuredGrid) of the considered SingleMesh."""
         if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._pvmesh = self.to_pyvista()
 
         return self._pvmesh
 
     @property
-    def surface(
-        self,
-    ) -> pv.PolyData:
-        """
-        Return the surface mesh of the considered mesh
-        If it does not exist, the surface mesh is generated using the extract_surface() method from pyvista :
-        https://docs.pyvista.org/version/stable/api/core/_autosummary/pyvista.DataSetFilters.extract_surface.html#pyvista.DataSetFilters.extract_surface
+    def surface(self: SingleMesh) -> pv.PolyData:
+        """Return the surface mesh of the considered mesh.
+
+        If it does not exist, the surface mesh is generated using the extract_surface()
+        method from pyvista : https://docs.pyvista.org/version/stable/api/core/_autosummary/pyvista.DataSetFilters.extract_surface.html#pyvista.DataSetFilters.extract_surface
         """
         if not isinstance(self._surface, pv.PolyData):
             self._surface = self._extract_surface()
@@ -138,11 +136,13 @@ class SingleMesh:
         return self._surface
 
     def _extract_surface(
-        self,
+        self: SingleMesh,
     ) -> pv.PolyData:
-        """
-        extract the surface mesh of a pv.UnstructuredGrid (stored in self.mesh) using the pyvista extract_surface filter
-        If the mesh as a pyvista Unstructured Grid does not exist, the to_pyvista() method is utilized to generate it
+        """Extract the surface mesh of a pv.UnstructuredGrid.
+
+        Stored in self.mesh using the pyvista extract_surface filter
+        If the mesh as a pyvista Unstructured Grid does not exist, the to_pyvista()
+        method is utilized to generate it
 
         :return pv.PolyData: surface mesh
         """
@@ -153,27 +153,15 @@ class SingleMesh:
 
 
 def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
-    """
-    Check if only linear tetrahedral elements with 10 nodes are present in the pyvista UnstructuredGrid object
+    """Check if only linear tetrahedral elements in the mesh.
+
+    Check if only tetra elements with 10 nodes are present in the
+    pyvista UnstructuredGrid object.
     Warnings are prompted if 1D or 2D elements are present since they are not considered
     An error is raised if the mesh contains other than linear_tetrahedral 3D elements
 
     :param pvmesh: The pyvista UnstructuredGrid object
     """
-
-    # 3:'lin2',
-    # 5:'tri3',
-    # 9:'quad4',
-    # 10:'tet4',
-    # 12:'hex8',
-    # 13:'wed6',
-    # 14:'pyr5',
-    # 21:'lin3',
-    # 22:'tri6',
-    # 23:'quad8',
-    # 24:'tet10',
-    # 25:'hex20'
-
     set_elm1d_type = {pv.CellType.LINE, pv.CellType.QUADRATIC_EDGE}
     set_elm2d_type = {
         pv.CellType.TRIANGLE,
@@ -189,20 +177,29 @@ def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:
         pv.CellType.QUADRATIC_HEXAHEDRON,
     }
 
-    set_cells_in_pvmesh = set(list(pvmesh.cells_dict))
+    set_cells_in_pvmesh = set(pvmesh.cells_dict)
 
     if set_cells_in_pvmesh.intersection(set_elm1d_type):
         warnings.warn(
-            "1D elements are present in the PyVista UnstructuredGrid. They will be ignored."
+            (
+                "1D elements are present in the PyVista UnstructuredGrid. "
+                "They will be ignored."
+            ),
+            stacklevel=2,
         )
     if set_cells_in_pvmesh.intersection(set_elm2d_type):
         warnings.warn(
-            "2D elements are present in the PyVista UnstructuredGrid. They will be ignored."
-            "\nSurface elements shall be extracted automatically from the 3d mesh"
+            (
+                "2D elements are present in the PyVista UnstructuredGrid. "
+                "They will be ignored. "
+                "\nSurface elements shall be extracted automatically from the 3d mesh."
+            ),
+            stacklevel=2,
         )
 
     if set_cells_in_pvmesh.intersection(set_elm3d_type_other_than_linear_tetra):
-        raise NotOnlyLinearTetrahedraError(
+        err_msg = (
             "Mesh contains elements other than linear tetrahedra."
-            "\nUse triangulate() to ensure that only linear tetrahedra are used."
+            "Use triangulate() to ensure that only linear tetrahedra are used."
         )
+        raise NotOnlyLinearTetrahedraError(err_msg)
