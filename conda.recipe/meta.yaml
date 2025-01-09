@@ -13,10 +13,10 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - pip
   run:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - numpy
     - vtk
     - pyvista
