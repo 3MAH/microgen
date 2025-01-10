@@ -941,7 +941,7 @@ name = "ipykernel"
 version = "6.29.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "appnope", marker = "platform_system == 'Darwin'" },
+    { name = "appnope", marker = "sys_platform == 'darwin'" },
     { name = "comm" },
     { name = "debugpy" },
     { name = "ipython" },
@@ -1720,8 +1720,8 @@ jupyter = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cadquery", specifier = ">=2.5.0" },
-    { name = "gmsh", specifier = ">=4.13.1" },
+    { name = "cadquery", specifier = ">=2.5.0,<2.6" },
+    { name = "gmsh", specifier = ">=4.13.1,<5" },
     { name = "ipygany", marker = "extra == 'jupyter'", specifier = ">=0.5.0" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.29.5" },
     { name = "ipyvtklink", marker = "extra == 'jupyter'", specifier = ">=0.2.3" },
@@ -1729,19 +1729,19 @@ requires-dist = [
     { name = "jupyter-sphinx", marker = "extra == 'docs'", specifier = ">=0.5.3" },
     { name = "jupyterlab", marker = "extra == 'jupyter'", specifier = ">=3.6.8,<4.3" },
     { name = "jupyterview", marker = "extra == 'jupyter'", specifier = ">=0.7.0" },
-    { name = "meshio", specifier = ">=5.3.5" },
+    { name = "meshio", specifier = ">=5.3.5,<6" },
     { name = "microgen", extras = ["dev", "docs", "jupyter"], marker = "extra == 'all'" },
     { name = "mock", marker = "extra == 'docs'", specifier = ">=5.1.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=3.0.1" },
-    { name = "numpy", specifier = ">1.24.0" },
+    { name = "numpy", specifier = ">1.24.0,<3" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.5.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.3" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.6.1" },
     { name = "pythreejs", marker = "extra == 'docs'", specifier = ">=2.4.2" },
-    { name = "pyvista", specifier = ">=0.44.2" },
+    { name = "pyvista", specifier = ">=0.44.2,<0.45" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.1" },
-    { name = "scipy", specifier = ">=1.13.1" },
+    { name = "scipy", specifier = ">=1.13.1,<1.16" },
     { name = "sidecar", marker = "extra == 'jupyter'", specifier = ">=0.5.2" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.1.2" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=3.0.2" },
