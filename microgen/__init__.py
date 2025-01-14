@@ -4,17 +4,27 @@ import importlib.metadata
 
 from .box_mesh import BoxMesh
 from .external import Mmg, Neper, parseNeper
-from .mesh import is_periodic, mesh, meshPeriodic
+from .mesh import is_periodic, mesh, mesh_periodic, meshPeriodic
 from .operations import (
+    cut_phase_by_shape_list,
+    cut_phases,
+    cut_phases_by_shape,
+    cut_shapes,
     cutPhaseByShapeList,
     cutPhases,
     cutPhasesByShape,
     cutShapes,
+    fuse_shapes,
     fuseShapes,
+    raster_phase,
     rasterPhase,
+    repeat_polydata,
+    repeat_shape,
     repeatPolyData,
     repeatShape,
     rescale,
+    rotate_euler,
+    rotate_pv_euler,
     rotateEuler,
     rotatePvEuler,
 )
@@ -35,6 +45,7 @@ from .shape import (
     Sphere,
     SphericalTpms,
     Tpms,
+    new_geometry,
     newGeometry,
     surface_functions,
 )
