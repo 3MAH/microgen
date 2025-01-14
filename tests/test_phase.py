@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from microgen import Phase, Rve, rasterPhase
+from microgen import Phase, Rve, raster_phase
 from microgen.shape import Box, Ellipsoid, Sphere
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
@@ -16,7 +16,7 @@ def test_phase_sphere_rasterize_must_have_correct_number_of_solids() -> None:
 
     phase = Phase(shape=sphere)
     phases = phase.rasterize(rve=rve, grid=grid)
-    raster = rasterPhase(phase=phase, rve=rve, grid=grid, phasePerRaster=False)
+    raster = raster_phase(phase=phase, rve=rve, grid=grid, phasePerRaster=False)
 
     assert len(phases) == np.prod(grid)
     assert len(phases) == len(raster.solids)
