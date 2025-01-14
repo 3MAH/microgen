@@ -16,7 +16,7 @@ def test_phase_sphere_rasterize_must_have_correct_number_of_solids() -> None:
 
     phase = Phase(shape=sphere)
     phases = phase.rasterize(rve=rve, grid=grid)
-    raster = raster_phase(phase=phase, rve=rve, grid=grid, phasePerRaster=False)
+    raster = raster_phase(phase=phase, rve=rve, grid=grid, phase_per_raster=False)
 
     assert len(phases) == np.prod(grid)
     assert len(phases) == len(raster.solids)
