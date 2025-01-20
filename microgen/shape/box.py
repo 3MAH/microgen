@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate_euler, rotatePvEuler
 
 from .shape import Shape
 
@@ -62,7 +62,7 @@ class Box(Shape):
     def generate(self: Box, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a box CAD shape using the given parameters."""
         box = cq.Workplane().box(*self.dim).translate(self.center)
-        box = rotateEuler(
+        box = rotate_euler(
             box,
             self.center,
             self.orientation[0],
@@ -89,7 +89,7 @@ class Box(Shape):
             level=level,
             quads=True,
         )
-        return rotatePvEuler(
+        return rotate_pv_euler(
             box,
             self.center,
             self.orientation[0],

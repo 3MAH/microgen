@@ -13,7 +13,7 @@ import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate_euler, rotate_pv_euler
 
 from .shape import Shape
 
@@ -74,7 +74,7 @@ class ExtrudedPolygon(Shape):
                 (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
             )
         )
-        poly = rotateEuler(
+        poly = rotate_euler(
             poly,
             self.center,
             self.orientation[0],
@@ -102,7 +102,7 @@ class ExtrudedPolygon(Shape):
             .compute_normals()
         )
 
-        return rotatePvEuler(
+        return rotate_pv_euler(
             poly,
             self.center,
             self.orientation[0],

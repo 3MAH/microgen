@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate_euler, rotate_pv_euler
 
 from .shape import Shape
 
@@ -53,7 +53,7 @@ class Cylinder(Shape):
                 (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
             )
         )
-        cylinder = rotateEuler(
+        cylinder = rotate_euler(
             cylinder,
             self.center,
             self.orientation[0],
@@ -76,7 +76,7 @@ class Cylinder(Shape):
             resolution=resolution,
             capping=True,
         )
-        return rotatePvEuler(
+        return rotate_pv_euler(
             cylinder,
             self.center,
             self.orientation[0],
