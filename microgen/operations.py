@@ -10,6 +10,7 @@ import cadquery as cq
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
+from scipy.spatial.transform import Rotation
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
@@ -48,48 +49,53 @@ def _get_rotation_axes(
 def rotate_euler(
     obj: cq.Shape | cq.Workplane,
     center: npt.NDArray[np.float64] | Sequence[float],
-    angles: Sequence[float],
+    angles_or_rotation: Sequence[float] | Rotation,
 ) -> cq.Shape | cq.Workplane:
-    """Rotate object according to XZX Euler angle convention.
+    """Rotate object according to ZXZ Euler angle convention.
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param angles: list of Euler angles (psi, theta, phi) in degrees
+    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in degrees or scipy Rotation object
 
     :return: Rotated object
     """
     center_vector = cq.Vector(*center)
-    psi, theta, phi = angles
-    z, u, z2 = _get_rotation_axes(psi, theta, phi)
-    for axis, angle in zip((z, u, z2), (psi, theta, phi)):
-        obj = obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
-    return obj
+
+    if isinstance(angles_or_rotation, Rotation):
+        rotation = angles_or_rotation
+    else:
+        rotation = Rotation.from_euler("ZXZ", angles_or_rotation, degrees=True)
+
+    axis, angle = rotation.as_rotvec(), np.rad2deg(np.linalg.norm(rotation.as_rotvec()))
+    return obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
 
 
 def rotate_pv_euler(
     obj: pv.PolyData,
     center: Sequence[float],
-    angles: Sequence[float],
+    angles_or_rotation: Sequence[float] | Rotation,
 ) -> pv.PolyData:
-    """Rotate object according to XZX Euler angle convention.
+    """Rotate object according to ZXZ Euler angle convention.
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param angles: list of Euler angles (psi, theta, phi) in degrees
+    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in degrees or scipy Rotation object
 
     :return: Rotated object
     """
-    psi, theta, phi = angles
-    z, u, z2 = _get_rotation_axes(psi, theta, phi)
+    if isinstance(angles_or_rotation, Rotation):
+        rotation = angles_or_rotation
+    else:
+        rotation = Rotation.from_euler("ZXZ", angles_or_rotation, degrees=True)
+
+    axis, angle = rotation.as_rotvec(), np.rad2deg(np.linalg.norm(rotation.as_rotvec()))
 
     rotated_obj = obj.rotate_vector(
-        vector=z,
-        angle=psi,
+        vector=axis,
+        angle=angle,
         point=tuple(center),
         inplace=False,
     )
-    rotated_obj.rotate_vector(vector=u, angle=theta, point=tuple(center), inplace=True)
-    rotated_obj.rotate_vector(vector=z2, angle=phi, point=tuple(center), inplace=True)
     return rotated_obj
 
 
