@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import itertools
 import warnings
-from typing import TYPE_CHECKING, Sequence, TypeVar
+from typing import TYPE_CHECKING, Sequence, TypeVar, Union
 
 import cadquery as cq
 import numpy as np
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
     from .rve import Rve
 
-T = TypeVar("T", cq.Shape | cq.Workplane, pv.PolyData)
+T = TypeVar("T", Union[cq.Shape, cq.Workplane], pv.PolyData)
 
 
 def rotate(
