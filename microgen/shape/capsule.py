@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate_euler, rotate_pv_euler
 
 from .shape import Shape
 
@@ -76,7 +76,7 @@ class Capsule(Shape):
         )
         capsule = cylinder.fuse(sphere_left)
         capsule = capsule.fuse(sphere_right)
-        return rotateEuler(
+        return rotate_euler(
             capsule,
             self.center,
             self.orientation[0],
@@ -112,7 +112,7 @@ class Capsule(Shape):
             phi_resolution=phi_resolution,
         ).triangulate()
         capsule = cylinder.boolean_union(sphere_left).boolean_union(sphere_right)
-        return rotatePvEuler(
+        return rotate_pv_euler(
             capsule,
             self.center,
             self.orientation[0],
