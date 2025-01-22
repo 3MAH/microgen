@@ -14,7 +14,7 @@ import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate_euler, rotate_pv_euler
 
 from .shape import Shape
 
@@ -73,7 +73,7 @@ class Ellipsoid(Shape):
 
         sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
         ellipsoid = sphere.transformGeometry(transform_mat)
-        return rotateEuler(
+        return rotate_euler(
             ellipsoid,
             self.center,
             self.orientation[0],
@@ -93,7 +93,7 @@ class Ellipsoid(Shape):
         )
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
-        return rotatePvEuler(
+        return rotate_pv_euler(
             ellipsoid,
             self.center,
             self.orientation[0],
