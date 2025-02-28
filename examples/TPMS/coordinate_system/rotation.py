@@ -1,23 +1,26 @@
-import numpy as np
 from functools import partial
-from scipy.spatial.transform import Rotation as R
+
+import numpy as np
+from scipy.spatial.transform import Rotation
+
 from microgen import CylindricalTpms
 from microgen.shape.surface_functions import gyroid
 
 
-def rotated_gyroid(x, y, z, grid_rotation_matrix):
-    coords_rotated = np.dot(
-        np.stack([x, y, z], axis=-1), (grid_rotation_matrix.as_matrix()).T
-    )
-    x_rot, y_rot, z_rot = coords_rotated.T
-
+def rotated_gyroid(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+    grid_rotation: Rotation,
+) -> np.ndarray:
+    x_rot, y_rot, z_rot = grid_rotation.apply(np.stack([x, y, z], axis=-1)).T
     return gyroid(x=x_rot, y=y_rot, z=z_rot)
 
 
-grid_rotation_matrix = R.from_euler("zxz", [45.0, 0, 0], degrees=True)
+grid_rotation = Rotation.from_euler("z", 45, degrees=True)
 
 geometry = CylindricalTpms(
-    surface_function=partial(rotated_gyroid, grid_rotation_matrix=grid_rotation_matrix),
+    surface_function=partial(rotated_gyroid, grid_rotation=grid_rotation),
     offset=0.5,
     cell_size=(1, 1, 1),
     repeat_cell=(1, 0, 1),
@@ -26,6 +29,7 @@ geometry = CylindricalTpms(
 )
 sheet = geometry.sheet
 
+# import pyvista as pv
 # plotter = pv.Plotter()
 # plotter.add_mesh(sheet, color="w")
 # plotter.view_xy()
