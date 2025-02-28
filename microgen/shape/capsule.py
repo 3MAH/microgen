@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate
 
 from .shape import Shape
 
@@ -76,13 +76,7 @@ class Capsule(Shape):
         )
         capsule = cylinder.fuse(sphere_left)
         capsule = capsule.fuse(sphere_right)
-        return rotateEuler(
-            capsule,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(capsule, self.center, self.orientation)
 
     def generate_vtk(
         self: Capsule,
@@ -112,13 +106,7 @@ class Capsule(Shape):
             phi_resolution=phi_resolution,
         ).triangulate()
         capsule = cylinder.boolean_union(sphere_left).boolean_union(sphere_right)
-        return rotatePvEuler(
-            capsule,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(capsule, self.center, self.orientation)
 
     def generateVtk(  # noqa: N802
         self: Capsule,
