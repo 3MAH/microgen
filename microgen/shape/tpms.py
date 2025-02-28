@@ -228,8 +228,7 @@ class Tpms(Shape):
             self.repeat_cell = np.array(repeat_cell)
         else:
             err_msg = (
-                "`repeat_cell` must have a length of 3 integers. "
-                f"Given: {repeat_cell}"
+                f"`repeat_cell` must have a length of 3 integers. Given: {repeat_cell}"
             )
             raise ValueError(err_msg)
 
