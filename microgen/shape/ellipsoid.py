@@ -14,7 +14,7 @@ import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from microgen.operations import rotate_euler, rotate_pv_euler
+from microgen.operations import rotate
 
 from .shape import Shape
 
@@ -73,13 +73,7 @@ class Ellipsoid(Shape):
 
         sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
         ellipsoid = sphere.transformGeometry(transform_mat)
-        return rotate_euler(
-            ellipsoid,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(ellipsoid, self.center, self.orientation)
 
     def generate_vtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""
@@ -93,13 +87,7 @@ class Ellipsoid(Shape):
         )
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
-        return rotate_pv_euler(
-            ellipsoid,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(ellipsoid, self.center, self.orientation)
 
     def generateVtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401

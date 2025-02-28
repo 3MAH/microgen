@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import pyvista as pv
 
-from microgen.operations import rotate_euler, rotatePvEuler
+from microgen.operations import rotate
 
 from .shape import Shape
 
@@ -62,13 +62,7 @@ class Box(Shape):
     def generate(self: Box, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a box CAD shape using the given parameters."""
         box = cq.Workplane().box(*self.dim).translate(self.center)
-        box = rotate_euler(
-            box,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        box = rotate(box, self.center, self.orientation)
         return cq.Shape(box.val().wrapped)
 
     def generate_vtk(
@@ -89,13 +83,7 @@ class Box(Shape):
             level=level,
             quads=True,
         )
-        return rotate_pv_euler(
-            box,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(box, self.center, self.orientation)
 
     def generateVtk(self: Box, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401

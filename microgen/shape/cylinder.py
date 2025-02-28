@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import pyvista as pv
 
-from microgen.operations import rotate_euler, rotate_pv_euler
+from microgen.operations import rotate
 
 from .shape import Shape
 
@@ -53,13 +53,7 @@ class Cylinder(Shape):
                 (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
             )
         )
-        cylinder = rotate_euler(
-            cylinder,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        cylinder = rotate(cylinder, self.center, self.orientation)
         return cq.Shape(cylinder.val().wrapped)
 
     def generate_vtk(
@@ -76,13 +70,7 @@ class Cylinder(Shape):
             resolution=resolution,
             capping=True,
         )
-        return rotate_pv_euler(
-            cylinder,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(cylinder, self.center, self.orientation)
 
     def generateVtk(  # noqa: N802
         self: Cylinder,

@@ -4,21 +4,56 @@ from __future__ import annotations
 
 import itertools
 import warnings
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, TypeVar, Union
 
 import cadquery as cq
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
-from scipy.spatial.transform import Rotation
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+from scipy.spatial.transform import Rotation
 
 from .phase import Phase
 
 if TYPE_CHECKING:
     import OCP
+
     from .rve import Rve
+
+T = TypeVar("T", Union[cq.Shape, cq.Workplane], pv.PolyData)
+
+
+def rotate(
+    obj: T,
+    center: npt.NDArray[np.float64] | Sequence[float],
+    rotation: Rotation,
+) -> T:
+    """Rotate object according to given rotation.
+
+    :param obj: Object to rotate
+    :param center: numpy array (x, y, z)
+    :param rotation: scipy Rotation object
+
+    :return: Rotated object
+
+    :raises ValueError: if object type is not supported
+
+    """
+    rotvec = rotation.as_rotvec(degrees=True)
+    angle = np.linalg.norm(rotvec)
+    if angle == 0:
+        return obj
+    axis = rotvec / angle
+
+    if isinstance(obj, cq.Shape) or isinstance(obj, cq.Workplane):
+        center = cq.Vector(*center)
+        return obj.rotate(center, center + cq.Vector(*axis), angle)
+    if isinstance(obj, pv.PolyData):
+        return obj.rotate_vector(axis, angle, center)
+
+    err_msg = "Object type not supported."
+    raise ValueError(err_msg)
 
 
 def _get_rotation_axes(
@@ -66,7 +101,11 @@ def rotate_euler(
     else:
         rotation = Rotation.from_euler("ZXZ", angles_or_rotation, degrees=True)
 
-    axis, angle = rotation.as_rotvec(), np.rad2deg(np.linalg.norm(rotation.as_rotvec()))
+    rotvec = rotation.as_rotvec(degrees=True)
+    angle = np.linalg.norm(rotvec)
+    if angle == 0:
+        return obj
+    axis = rotvec / angle
     return obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
 
 
@@ -88,15 +127,18 @@ def rotate_pv_euler(
     else:
         rotation = Rotation.from_euler("ZXZ", angles_or_rotation, degrees=True)
 
-    axis, angle = rotation.as_rotvec(), np.rad2deg(np.linalg.norm(rotation.as_rotvec()))
+    rotvec = rotation.as_rotvec(degrees=True)
+    angle = np.linalg.norm(rotvec)
+    if angle == 0:
+        return obj
+    axis = rotvec / angle
 
-    rotated_obj = obj.rotate_vector(
+    return obj.rotate_vector(
         vector=axis,
         angle=angle,
         point=tuple(center),
         inplace=False,
     )
-    return rotated_obj
 
 
 def rescale(shape: cq.Shape, scale: float | tuple[float, float, float]) -> cq.Shape:
