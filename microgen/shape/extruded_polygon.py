@@ -13,7 +13,7 @@ import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from microgen.operations import rotateEuler, rotatePvEuler
+from microgen.operations import rotate
 
 from .shape import Shape
 
@@ -74,13 +74,7 @@ class ExtrudedPolygon(Shape):
                 (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
             )
         )
-        poly = rotateEuler(
-            poly,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        poly = rotate(poly, self.center, self.orientation)
         return cq.Shape(poly.val().wrapped)
 
     def generate_vtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:
@@ -102,13 +96,7 @@ class ExtrudedPolygon(Shape):
             .compute_normals()
         )
 
-        return rotatePvEuler(
-            poly,
-            self.center,
-            self.orientation[0],
-            self.orientation[1],
-            self.orientation[2],
-        )
+        return rotate(poly, self.center, self.orientation)
 
     def generateVtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
