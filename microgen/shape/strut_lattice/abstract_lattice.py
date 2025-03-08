@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 import numpy.typing as npt
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -12,13 +12,14 @@ from microgen import (
     Box,
     fuse_shapes,
     periodic,
+    rotate,
 )
 
 if TYPE_CHECKING:
     import cadquery as cq
     import pyvista as pv
 
-    from microgen.shape import Vector3DType
+    from microgen.shape import Vector3DType, KwargsGenerateType
 
 class AbstractLattice(Shape):
     """
@@ -41,7 +42,7 @@ class AbstractLattice(Shape):
         :param cell_size: size of the cubic rve in which the lattice cell is enclosed
         
         """
-        super.__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.strut_radius = strut_radius
         self.cell_size = cell_size
@@ -51,7 +52,7 @@ class AbstractLattice(Shape):
         self.vertices = self._compute_vertices()
         self.strut_centers = self._compute_strut_centers()
         self.strut_directions_cartesian = self._compute_strut_directions()
-        self.strut_directions_euler = self._compute_euler_angles()
+        self.strut_rotations = self._compute_rotations()
 
     @property
     @abstractmethod
@@ -70,35 +71,35 @@ class AbstractLattice(Shape):
     @abstractmethod
     def _compute_strut_directions(self) -> npt.NDArray[np.float64]: ...
 
-    def _compute_euler_angles(self) -> npt.NDArray[np.float64]:
+    def _compute_rotations(self) -> List[Rotation]:
         """Computes euler angles from default (1.0, 0.0, 0.0) oriented cylinder for all struts in the lattice"""
 
         default_direction = np.array([1.0, 0.0, 0.0])
 
-        rotation_vector_array = np.zeros((self.strut_number, 3))
-        euler_angles_array = np.zeros((self.strut_number, 3))
+        rotations_list = []
 
         for i in range(self.strut_number):
             if np.all(self.strut_directions_cartesian[i] == default_direction) or np.all(self.strut_directions_cartesian[i] == -default_direction):
-                euler_angles_array[i] = np.zeros(3)
+                rotation_vector = np.zeros(3)
+                rotations_list.append(Rotation.from_rotvec(rotation_vector))
             else:
                 axis = np.cross(default_direction, self.strut_directions_cartesian[i])
                 axis /= np.linalg.norm(axis)
                 angle = np.arccos(np.dot(default_direction, self.strut_directions_cartesian[i]))
-                rotation_vector_array[i] = angle * axis
-                euler_angles_array[i] = Rotation.from_rotvec(rotation_vector_array[i]).as_euler('zxz', degrees=True)
+                rotation_vector = angle * axis
+                rotations_list.append(Rotation.from_rotvec(rotation_vector))#.as_euler('zxz', degrees=True)
 
-        return euler_angles_array
+        return rotations_list
 
-    def generate(self) -> cq.Shape:
+    def generate(self, **_: KwargsGenerateType) -> cq.Shape:
+        """Generate a strut-based lattice CAD shape using the given parameters."""
         list_phases : list[Phase] = []
         list_periodic_phases : list[Phase] = []
 
         for i in range(self.strut_number):
             strut = Cylinder(
                 center=tuple(self.strut_centers[i]),
-                orientation=(self.strut_directions_euler[i, 2], self.strut_directions_euler[i, 1],
-                             self.strut_directions_euler[i, 0]),
+                orientation=self.strut_rotations[i],
                 height=self.strut_height,
                 radius=self.strut_radius,
             )
@@ -115,9 +116,39 @@ class AbstractLattice(Shape):
         cut_lattice = bounding_box.intersect(lattice)
 
         return cut_lattice
-
+    
     @property
     def volume(self) -> float:
         volume = self.generate().Volume()
 
         return volume
+    
+    def generate_vtk(self, resolution: int = 100, **_: KwargsGenerateType) -> pv.PolyData:
+        """Generate a strut-based lattice VTK shape using the given parameters."""
+        lattice_structure = None
+        
+        for i in range(self.strut_number):
+            strut = rotate(pv.Cylinder(
+                center=tuple(self.strut_centers[i]),
+                direction=(1.0, 0.0, 0.0),
+                radius=self.strut_radius,
+                height=self.strut_height,
+                resolution=resolution,
+                capping=True,  
+            ), center=self.strut_centers[i], rotation=self.strut_rotations[i])
+            
+            if lattice_structure is None:
+                lattice_structure = strut
+            else:
+                lattice_structure.boolean_union(strut)
+
+    def generateVtk( # noqa: N802
+        self,
+        resolution: int = 100,
+        **kwargs: KwargsGenerateType,
+        )-> pv.PolyData:
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        return self.generate_vtk(
+            resolution=resolution,
+            **kwargs,
+        )
