@@ -23,7 +23,7 @@ class BodyCenteredCubic(AbstractLattice):
     def strut_height(self) -> float:
         return self.cell_size * m.sqrt(3.0) / 2.0
 
-    def _compute_vertices(self) -> npt.NDArray[np.float_]:
+    def _compute_vertices(self) -> npt.NDArray[np.float64]:
         vertices_array = self.center + self.cell_size * np.array([
             [0.0, 0.0, 0.0],
             [0.5, -0.5, 0.5],
@@ -38,7 +38,7 @@ class BodyCenteredCubic(AbstractLattice):
 
         return vertices_array
 
-    def _compute_strut_centers(self) -> npt.NDArray[np.float_]:
+    def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
         centers_array = np.array([
             (self.vertices[1] + self.vertices[0]),
             (self.vertices[2] + self.vertices[0]),
@@ -51,7 +51,7 @@ class BodyCenteredCubic(AbstractLattice):
         ]) / 2.0
         return centers_array
 
-    def _compute_strut_directions(self) -> npt.NDArray[np.float_]:
+    def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
         directions_array = np.array([
             (self.vertices[1] - self.vertices[0]) / np.linalg.norm((self.vertices[1] - self.vertices[0])),
             (self.vertices[2] - self.vertices[0]) / np.linalg.norm((self.vertices[2] - self.vertices[0])),
