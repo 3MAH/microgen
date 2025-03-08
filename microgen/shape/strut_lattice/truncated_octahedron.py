@@ -1,4 +1,4 @@
-from .abstractLattice import AbstractLattice
+from .abstract_lattice import AbstractLattice
 import numpy as np
 import numpy.typing as npt
 import math as m
