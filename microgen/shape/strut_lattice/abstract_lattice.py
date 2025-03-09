@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List
 import numpy.typing as npt
 import numpy as np
 from scipy.spatial.transform import Rotation
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
 import cadquery as cq
 import pyvista as pv
 from microgen.shape import Shape
@@ -112,9 +113,10 @@ class AbstractLattice(Shape):
 
         bounding_box = Box(center=self.center, dim_x=self.cell_size, dim_y=self.cell_size, dim_z=self.cell_size).generate()
 
-        cut_lattice = bounding_box.intersect(lattice)
+        #cut_lattice = bounding_box.intersect(lattice)
+        cut_lattice = BRepAlgoAPI_Section(bounding_box.wrapped, lattice.wrapped).Shape()
 
-        return cut_lattice
+        return cq.Shape(cut_lattice)
     
     @property
     def volume(self) -> float:
