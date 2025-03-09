@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, List
 import numpy.typing as npt
 import numpy as np
 from scipy.spatial.transform import Rotation
+import cadquery as cq
+import pyvista as pv
 from microgen.shape import Shape
 from microgen import (
     Rve,
@@ -16,9 +18,6 @@ from microgen import (
 )
 
 if TYPE_CHECKING:
-    import cadquery as cq
-    import pyvista as pv
-
     from microgen.shape import Vector3DType, KwargsGenerateType
 
 class AbstractLattice(Shape):
@@ -135,12 +134,18 @@ class AbstractLattice(Shape):
                 height=self.strut_height,
                 resolution=resolution,
                 capping=True,  
-            ), center=self.strut_centers[i], rotation=self.strut_rotations[i])
+            ).triangulate(), center=self.strut_centers[i], rotation=self.strut_rotations[i])
             
             if lattice_structure is None:
                 lattice_structure = strut
             else:
                 lattice_structure.boolean_union(strut)
+        
+        bounding_box = Box(center=self.center, dim_x=self.cell_size, dim_y=self.cell_size, dim_z=self.cell_size).generate_vtk()
+        
+        cut_lattice = bounding_box.boolean_intersection(lattice_structure)
+        
+        return cut_lattice
 
     def generateVtk( # noqa: N802
         self,
