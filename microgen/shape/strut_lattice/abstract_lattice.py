@@ -1,10 +1,11 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import TYPE_CHECKING, List
+from tempfile import NamedTemporaryFile
+from pathlib import Path
 import numpy.typing as npt
 import numpy as np
 from scipy.spatial.transform import Rotation
-from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
 import cadquery as cq
 import pyvista as pv
 from microgen.shape import Shape
@@ -15,7 +16,8 @@ from microgen import (
     Box,
     fuse_shapes,
     periodic,
-    rotate,
+    mesh,
+    mesh_periodic,
 )
 
 if TYPE_CHECKING:
@@ -91,7 +93,7 @@ class AbstractLattice(Shape):
 
         return rotations_list
 
-    def generate(self, **_: KwargsGenerateType) -> cq.Shape:
+    def generate(self, **_: KwargsGenerateType) -> cq.Compound:
         """Generate a strut-based lattice CAD shape using the given parameters."""
         list_phases : list[Phase] = []
         list_periodic_phases : list[Phase] = []
@@ -113,10 +115,9 @@ class AbstractLattice(Shape):
 
         bounding_box = Box(center=self.center, dim_x=self.cell_size, dim_y=self.cell_size, dim_z=self.cell_size).generate()
 
-        #cut_lattice = bounding_box.intersect(lattice)
-        cut_lattice = BRepAlgoAPI_Section(bounding_box.wrapped, lattice.wrapped).Shape()
+        cut_lattice = bounding_box.intersect(lattice)
 
-        return cq.Shape(cut_lattice)
+        return cut_lattice
     
     @property
     def volume(self) -> float:
@@ -124,30 +125,45 @@ class AbstractLattice(Shape):
 
         return volume
     
-    def generate_vtk(self, resolution: int = 100, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_vtk(self, size: float = 0.05, order: int = 1, periodic: bool = True,**_: KwargsGenerateType) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
-        lattice_structure = None
+        cad_lattice = self.generate()
+        list_phases = [Phase(cad_lattice)]
         
-        for i in range(self.strut_number):
-            strut = rotate(pv.Cylinder(
-                center=tuple(self.strut_centers[i]),
-                direction=(1.0, 0.0, 0.0),
-                radius=self.strut_radius,
-                height=self.strut_height,
-                resolution=resolution,
-                capping=True,  
-            ).triangulate(), center=self.strut_centers[i], rotation=self.strut_rotations[i])
+        with (NamedTemporaryFile(suffix=".step", delete=False) as cad_step_file,
+              NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
+        ):
+            cq.exporters.export(cad_lattice, cad_step_file.name)
+            if periodic:
+                mesh_periodic(
+                    mesh_file=cad_step_file.name,
+                    rve=self.rve,
+                    list_phases=list_phases,
+                    size=size,
+                    order=order,
+                    output_file=mesh_file.name,
+                    )
+            mesh(
+                mesh_file=cad_step_file.name,
+                list_phases=list_phases,
+                size=size,
+                order=order,
+                output_file=mesh_file.name
+            )
             
-            if lattice_structure is None:
-                lattice_structure = strut
-            else:
-                lattice_structure.boolean_union(strut)
+            vtk_lattice = pv.read(mesh_file.name).extract_surface()
+            
+        # Solve compatibility issues of NamedTemporaryFiles with Windows
+        trash_files_list = [
+            cad_step_file.name,
+            mesh_file.name,
+        ]
+        for file in trash_files_list:
+            Path(file).unlink()
         
-        bounding_box = Box(center=self.center, dim_x=self.cell_size, dim_y=self.cell_size, dim_z=self.cell_size).generate_vtk()
+        return vtk_lattice
         
-        cut_lattice = bounding_box.boolean_intersection(lattice_structure)
         
-        return cut_lattice
 
     def generateVtk( # noqa: N802
         self,
