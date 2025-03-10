@@ -125,7 +125,7 @@ class AbstractLattice(Shape):
 
         return volume
     
-    def generate_vtk(self, size: float = 0.05, order: int = 1, periodic: bool = True,**_: KwargsGenerateType) -> pv.PolyData:
+    def generate_vtk(self, size: float = 0.02, order: int = 1, periodic: bool = True,**_: KwargsGenerateType) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
         cad_lattice = self.generate()
         list_phases = [Phase(cad_lattice)]
@@ -167,11 +167,15 @@ class AbstractLattice(Shape):
 
     def generateVtk( # noqa: N802
         self,
-        resolution: int = 100,
+        size: float = 0.02,
+        order: int = 1,
+        periodic: bool = True,
         **kwargs: KwargsGenerateType,
         )-> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
-            resolution=resolution,
+            size=size,
+            order=order,
+            periodic=periodic,
             **kwargs,
         )
