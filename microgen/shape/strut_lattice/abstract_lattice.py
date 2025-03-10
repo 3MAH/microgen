@@ -36,10 +36,7 @@ class AbstractLattice(Shape):
         """
         Abstract Class to create strut-based lattice.
         The lattice will be created in a cube which size can be modified with 'cell_size'.
-        The number of repetitions in each direction of the created geometry can be modified with 'repeat_cell'.
 
-        :param center: center of the lattice
-        :param orientation: orientation of the lattice
         :param strut_radius: radius of the struts
         :param cell_size: size of the cubic rve in which the lattice cell is enclosed
         
@@ -56,22 +53,28 @@ class AbstractLattice(Shape):
         self.strut_directions_cartesian = self._compute_strut_directions()
         self.strut_rotations = self._compute_rotations()
 
+
     @property
     @abstractmethod
     def strut_number(self) -> int: ...
+
 
     @property
     @abstractmethod
     def strut_height(self) -> float: ...
 
+
     @abstractmethod
     def _compute_vertices(self) -> npt.NDArray[np.float64]: ...
+
 
     @abstractmethod
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]: ...
 
+
     @abstractmethod
     def _compute_strut_directions(self) -> npt.NDArray[np.float64]: ...
+
 
     def _compute_rotations(self) -> List[Rotation]:
         """Computes euler angles from default (1.0, 0.0, 0.0) oriented cylinder for all struts in the lattice"""
@@ -92,6 +95,7 @@ class AbstractLattice(Shape):
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))#.as_euler('zxz', degrees=True)
 
         return rotations_list
+
 
     def generate(self, **_: KwargsGenerateType) -> cq.Compound:
         """Generate a strut-based lattice CAD shape using the given parameters."""
@@ -119,11 +123,13 @@ class AbstractLattice(Shape):
 
         return cut_lattice
     
+    
     @property
     def volume(self) -> float:
         volume = self.generate().Volume()
 
         return volume
+    
     
     def generate_vtk(self, size: float = 0.02, order: int = 1, periodic: bool = True,**_: KwargsGenerateType) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
@@ -164,7 +170,6 @@ class AbstractLattice(Shape):
         return vtk_lattice
         
         
-
     def generateVtk( # noqa: N802
         self,
         size: float = 0.02,
