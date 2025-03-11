@@ -15,5 +15,3 @@ __all__ = [
     "OctetTruss",
     "TruncatedOctahedron"
 ]
-
-##TODO: update init file to include all the new lattices
