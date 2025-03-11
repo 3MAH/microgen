@@ -8,7 +8,7 @@ _STRUT_HEIGHTS = m.sqrt(2.0)/2.0
 
 class FaceCenteredCubic(AbstractLattice):
     """
-Class to create a unit cubic lattice of given cell size and density or strut radius
+Class to create a unit face-centered cubic lattice of given cell size and density or strut radius
     """
     
     def __init__(self,
@@ -16,8 +16,6 @@ Class to create a unit cubic lattice of given cell size and density or strut rad
                  ) -> None:
 
         super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
-
-    ##TODO: reduce total number of struts
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         vertices_array = self.center + self.cell_size * np.array([
