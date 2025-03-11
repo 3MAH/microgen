@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union, Optional
 from tempfile import NamedTemporaryFile
 from pathlib import Path
 import numpy.typing as npt
@@ -23,6 +23,8 @@ from microgen import (
 if TYPE_CHECKING:
     from microgen.shape import Vector3DType, KwargsGenerateType
 
+##TODO add option to initialize lattice by giving density instead of strut radius
+
 class AbstractLattice(Shape):
     """
     Abstract Class to create strut-based lattice
@@ -30,6 +32,8 @@ class AbstractLattice(Shape):
 
     def __init__(self,
                  strut_radius: float = 0.05,
+                 strut_number: Optional[int] = None,
+                 strut_heights: Optional[Union[float, List[float]]] = None,
                  cell_size: float = 1.0,
                  **kwargs: Vector3DType,
                  ) -> None:
@@ -38,6 +42,8 @@ class AbstractLattice(Shape):
         The lattice will be created in a cube which size can be modified with 'cell_size'.
 
         :param strut_radius: radius of the struts
+        :param strut_number: number of struts in the lattice
+        :param strut_height: either the unique height of all struts (float), or a list of strut heights (List[float]). Enter value for a size 1 rve.
         :param cell_size: size of the cubic rve in which the lattice cell is enclosed
         
         """
@@ -45,6 +51,8 @@ class AbstractLattice(Shape):
 
         self.strut_radius = strut_radius
         self.cell_size = cell_size
+        self._strut_number = strut_number
+        self._strut_heights = strut_heights
 
         self.rve = Rve(dim=self.cell_size, center=self.center)
 
@@ -52,19 +60,43 @@ class AbstractLattice(Shape):
         self.strut_centers = self._compute_strut_centers()
         self.strut_directions_cartesian = self._compute_strut_directions()
         self.strut_rotations = self._compute_rotations()
+        
+        self._validate_inputs()
 
-    ##TODO: add option to initialize with density instead of strut radius
-    
-    
+    def _validate_inputs(self):
+        """Checks coherence of inputs."""
+
+        if self._strut_number is None:
+            raise NotImplementedError("strut_number must be defined in subclass.")
+
+        if self._strut_heights is None:
+            raise NotImplementedError("strut_heights must be defined in a subclass.")
+        if isinstance(self._strut_heights, list) and len(self._strut_heights) != self._strut_number:
+            raise ValueError(f"strut_heights must contain {self._strut_number} values, but {len(self._strut_heights)} were provided.")
+
+        attributes = {
+            "strut_centers": self.strut_centers,
+            "strut_directions_cartesian": self.strut_directions_cartesian,
+        }
+        for name, array in attributes.items():
+            if len(array) != self._strut_number:
+                raise ValueError(f"{name} must contain {self._strut_number} values, but {len(array)} were provided.")
+
     @property
-    @abstractmethod
-    def strut_number(self) -> int: ...
+    def strut_number(self) -> int:
+        return self._strut_number
 
-    ##TODO: add a way to have multiple strut heights
     @property
-    @abstractmethod
-    def strut_height(self) -> float: ...
+    def strut_heights(self) -> list[float]:
+        """
+        Returns the list of strut lengths.
+        If a single value is given, it is converted to a list.
+        """
+        if isinstance(self._strut_heights, float):
+            return [self._strut_heights * self.cell_size] * self.strut_number
 
+        return self._strut_heights * self.cell_size
+    
 
     @abstractmethod
     def _compute_vertices(self) -> npt.NDArray[np.float64]: ...
@@ -85,7 +117,7 @@ class AbstractLattice(Shape):
 
         rotations_list = []
 
-        for i in range(self.strut_number):
+        for i in range(self._strut_number):
             if np.all(self.strut_directions_cartesian[i] == default_direction) or np.all(self.strut_directions_cartesian[i] == -default_direction):
                 rotation_vector = np.zeros(3)
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))
@@ -94,7 +126,7 @@ class AbstractLattice(Shape):
                 axis /= np.linalg.norm(axis)
                 angle = np.arccos(np.dot(default_direction, self.strut_directions_cartesian[i]))
                 rotation_vector = angle * axis
-                rotations_list.append(Rotation.from_rotvec(rotation_vector))#.as_euler('zxz', degrees=True)
+                rotations_list.append(Rotation.from_rotvec(rotation_vector))
 
         return rotations_list
 
@@ -104,11 +136,11 @@ class AbstractLattice(Shape):
         list_phases : list[Phase] = []
         list_periodic_phases : list[Phase] = []
 
-        for i in range(self.strut_number):
+        for i in range(self._strut_number):
             strut = Cylinder(
                 center=tuple(self.strut_centers[i]),
                 orientation=self.strut_rotations[i],
-                height=self.strut_height,
+                height=self.strut_heights[i],
                 radius=self.strut_radius,
             )
             list_phases.append(Phase(strut.generate()))
