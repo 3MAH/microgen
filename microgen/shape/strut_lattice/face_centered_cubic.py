@@ -3,6 +3,9 @@ import numpy as np
 import numpy.typing as npt
 import math as m
 
+_STRUT_NUMBER = 24
+_STRUT_HEIGHTS = m.sqrt(2.0)/2.0
+
 class FaceCenteredCubic(AbstractLattice):
     """
 Class to create a unit cubic lattice of given cell size and density or strut radius
@@ -12,7 +15,7 @@ Class to create a unit cubic lattice of given cell size and density or strut rad
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs, strut_number=24, strut_heights=m.sqrt(2.0)/2.0)
+        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
 
     ##TODO: reduce total number of struts
 

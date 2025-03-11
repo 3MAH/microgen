@@ -3,6 +3,9 @@ import numpy as np
 import numpy.typing as npt
 import math as m
 
+_STRUT_NUMBER = 24
+_STRUT_HEIGHTS = m.sqrt(2.0)/2.0
+
 class Cuboctahedron(AbstractLattice):
     """
     Class to create a unit cuboctahedron lattice of given cell size and density or strut radius
@@ -12,7 +15,7 @@ class Cuboctahedron(AbstractLattice):
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs, strut_number=24, strut_heights=m.sqrt(2.0)/2.0)
+        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
 
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:

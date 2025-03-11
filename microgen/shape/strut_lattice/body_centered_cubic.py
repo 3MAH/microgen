@@ -3,6 +3,8 @@ import numpy as np
 import numpy.typing as npt
 import math as m
 
+_STRUT_NUMBER = 8
+_STRUT_HEIGHTS = m.sqrt(3.0)/2.0
 
 class BodyCenteredCubic(AbstractLattice):
     """
@@ -13,7 +15,7 @@ class BodyCenteredCubic(AbstractLattice):
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs, strut_number=8, strut_heights=m.sqrt(3.0)/2.0)
+        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
     
     ##TODO: reduce total number of struts
 

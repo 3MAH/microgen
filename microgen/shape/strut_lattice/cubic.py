@@ -2,6 +2,9 @@ from .abstract_lattice import AbstractLattice
 import numpy as np
 import numpy.typing as npt
 
+_STRUT_NUMBER = 12
+_STRUT_HEIGHTS = 1.0
+
 class Cubic(AbstractLattice):
     """
 Class to create a unit cubic lattice of given cell size and density or strut radius
@@ -11,7 +14,7 @@ Class to create a unit cubic lattice of given cell size and density or strut rad
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs, strut_number=12, strut_heights=1.0)
+        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
 
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:

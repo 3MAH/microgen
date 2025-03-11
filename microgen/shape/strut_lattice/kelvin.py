@@ -3,6 +3,9 @@ import numpy as np
 import numpy.typing as npt
 import math as m
 
+_STRUT_NUMBER = 72
+_STRUT_HEIGHTS = 1 / (1.0 + 2.0*m.sqrt(2))
+
 class Kelvin(AbstractLattice):
     """
     Class to create a unit kelvin lattice of given cell size and density or strut radius
@@ -12,7 +15,7 @@ class Kelvin(AbstractLattice):
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs, strut_number=72, strut_heights=(1 / (1.0 + 2.0*m.sqrt(2))))
+        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
 
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
