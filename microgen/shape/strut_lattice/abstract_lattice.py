@@ -53,12 +53,14 @@ class AbstractLattice(Shape):
         self.strut_directions_cartesian = self._compute_strut_directions()
         self.strut_rotations = self._compute_rotations()
 
-
+    ##TODO: add option to initialize with density instead of strut radius
+    
+    
     @property
     @abstractmethod
     def strut_number(self) -> int: ...
 
-
+    ##TODO: add a way to have multiple strut heights
     @property
     @abstractmethod
     def strut_height(self) -> float: ...

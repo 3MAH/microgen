@@ -14,6 +14,8 @@ class BodyCenteredCubic(AbstractLattice):
                  ) -> None:
 
         super().__init__(*args, **kwargs)
+    
+    ##TODO: reduce total number of struts
 
     @property
     def strut_number(self) -> int:
