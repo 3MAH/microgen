@@ -13,17 +13,9 @@ class BodyCenteredCubic(AbstractLattice):
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, strut_number=8, strut_heights=m.sqrt(3.0)/2.0)
     
     ##TODO: reduce total number of struts
-
-    @property
-    def strut_number(self) -> int:
-        return 8
-
-    @property
-    def strut_height(self) -> float:
-        return self.cell_size * m.sqrt(3.0) / 2.0
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         vertices_array = self.center + self.cell_size * np.array([

@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 import math as m
 
-class Cubic(AbstractLattice):
+class FaceCenteredCubic(AbstractLattice):
     """
 Class to create a unit cubic lattice of given cell size and density or strut radius
     """
@@ -12,18 +12,10 @@ Class to create a unit cubic lattice of given cell size and density or strut rad
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, strut_number=24, strut_heights=m.sqrt(2.0)/2.0)
 
     ##TODO: reduce total number of struts
 
-    @property
-    def strut_number(self) -> int:
-        return 12
-
-    @property
-    def strut_height(self) -> float:
-        return self.cell_size * m.sqrt(2.0)/2.0
-    
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         vertices_array = self.center + self.cell_size * np.array([
             [0.5, -0.5, 0.5],

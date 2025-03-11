@@ -12,15 +12,8 @@ class Kelvin(AbstractLattice):
                  *args, **kwargs
                  ) -> None:
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, strut_number=72, strut_heights=(1 / (1.0 + 2.0*m.sqrt(2))))
 
-    @property
-    def strut_number(self) -> int:
-        return 72
-
-    @property
-    def strut_height(self) -> float:
-        return self.cell_size * (1 / (1.0 + 2.0*m.sqrt(2)))
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         vertices_array = self.center + self.cell_size * np.array([
