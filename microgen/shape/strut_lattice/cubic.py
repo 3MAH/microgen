@@ -4,10 +4,11 @@ from scipy.spatial import KDTree
 import itertools
 from .abstract_lattice import AbstractLattice
 
+_UNIT_CUBE_SIZE = 1.0
 _STRUT_NUMBER = 12
 _STRUT_HEIGHTS = 1.0
-_VERTICES = np.array(list(itertools.product([-0.5, 0.5], repeat=3)))
-_STRUT_VERTICES_PAIRS = np.array([
+_VERTICES = np.array(list(itertools.product([-_UNIT_CUBE_SIZE/2, _UNIT_CUBE_SIZE/2], repeat=3)))
+_STRUT_VERTEX_PAIRS = np.array([
     [i, j] for i in range(len(_VERTICES)) 
     for j in KDTree(_VERTICES).query_ball_point(_VERTICES[i], r=_STRUT_HEIGHTS) if i < j
 ])
@@ -26,9 +27,9 @@ class Cubic(AbstractLattice):
 
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
         """Compute the centers of the struts."""
-        return np.mean(self.vertices[_STRUT_VERTICES_PAIRS], axis=1)
+        return np.mean(self.vertices[_STRUT_VERTEX_PAIRS], axis=1)
 
     def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
         """Compute the normalized direction vectors of the struts."""
-        vectors = np.diff(self.vertices[_STRUT_VERTICES_PAIRS], axis=1).squeeze()
+        vectors = np.diff(self.vertices[_STRUT_VERTEX_PAIRS], axis=1).squeeze()
         return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)

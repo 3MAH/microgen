@@ -4,6 +4,7 @@ import math as m
 import itertools
 from .abstract_lattice import AbstractLattice
 
+_UNIT_CUBE_SIZE = 1.0
 _STRUT_NUMBER = 8
 _STRUT_HEIGHTS = m.sqrt(3.0) / 2.0
 
@@ -17,8 +18,8 @@ class BodyCenteredCubic(AbstractLattice):
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         """Compute the vertices of the BCC lattice."""
-        unit_cube_vertices = np.array(list(itertools.product([-0.5, 0.5], repeat=3)))
-        vertices = np.vstack(([0, 0, 0], unit_cube_vertices))  # Ajoute le point central
+        unit_cube_vertices = np.array(list(itertools.product([-_UNIT_CUBE_SIZE/2, _UNIT_CUBE_SIZE/2], repeat=3)))
+        vertices = np.vstack(([0, 0, 0], unit_cube_vertices))
         return self.center + self.cell_size * vertices
 
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
