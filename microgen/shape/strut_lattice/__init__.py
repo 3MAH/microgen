@@ -5,6 +5,7 @@ from .face_centered_cubic import FaceCenteredCubic
 from .octahedron import Octahedron
 from .octet_truss import OctetTruss
 from .kelvin import Kelvin
+from .rhombic_dodecahedron import RhombicDodecahedron
 from .truncated_octahedron import TruncatedOctahedron
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "Kelvin",
     "Octahedron",
     "OctetTruss",
+    "RhombicDodecahedron",
     "TruncatedOctahedron"
 ]
