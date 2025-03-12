@@ -1,60 +1,31 @@
-from .abstract_lattice import AbstractLattice
 import numpy as np
 import numpy.typing as npt
 import math as m
+import itertools
+from .abstract_lattice import AbstractLattice
 
 _STRUT_NUMBER = 8
-_STRUT_HEIGHTS = m.sqrt(3.0)/2.0
+_STRUT_HEIGHTS = m.sqrt(3.0) / 2.0
 
 class BodyCenteredCubic(AbstractLattice):
     """
     Class to create a unit body-centered cubic lattice of given cell size and density or strut radius
     """
 
-    def __init__(self,
-                 *args, **kwargs
-                 ) -> None:
-
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
-        vertices_array = self.center + self.cell_size * np.array([
-            [0.0, 0.0, 0.0],
-            [0.5, -0.5, 0.5],
-            [0.5, 0.5, 0.5],
-            [-0.5, 0.5, 0.5],
-            [-0.5, -0.5, 0.5],
-            [0.5, -0.5, -0.5],
-            [0.5, 0.5, -0.5],
-            [-0.5, 0.5, -0.5],
-            [-0.5, -0.5, -0.5]
-        ])
-
-        return vertices_array
+        """Compute the vertices of the BCC lattice."""
+        unit_cube_vertices = np.array(list(itertools.product([-0.5, 0.5], repeat=3)))
+        vertices = np.vstack(([0, 0, 0], unit_cube_vertices))  # Ajoute le point central
+        return self.center + self.cell_size * vertices
 
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
-        centers_array = np.array([
-            (self.vertices[1] + self.vertices[0]),
-            (self.vertices[2] + self.vertices[0]),
-            (self.vertices[3] + self.vertices[0]),
-            (self.vertices[4] + self.vertices[0]),
-            (self.vertices[5] + self.vertices[0]),
-            (self.vertices[6] + self.vertices[0]),
-            (self.vertices[7] + self.vertices[0]),
-            (self.vertices[8] + self.vertices[0]),
-        ]) / 2.0
-        return centers_array
+        """Compute the centers of the struts."""
+        return (self.vertices[1:] + self.vertices[0]) / 2.0
 
     def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
-        directions_array = np.array([
-            (self.vertices[1] - self.vertices[0]) / np.linalg.norm((self.vertices[1] - self.vertices[0])),
-            (self.vertices[2] - self.vertices[0]) / np.linalg.norm((self.vertices[2] - self.vertices[0])),
-            (self.vertices[3] - self.vertices[0]) / np.linalg.norm((self.vertices[3] - self.vertices[0])),
-            (self.vertices[4] - self.vertices[0]) / np.linalg.norm((self.vertices[4] - self.vertices[0])),
-            (self.vertices[5] - self.vertices[0]) / np.linalg.norm((self.vertices[5] - self.vertices[0])),
-            (self.vertices[6] - self.vertices[0]) / np.linalg.norm((self.vertices[6] - self.vertices[0])),
-            (self.vertices[7] - self.vertices[0]) / np.linalg.norm((self.vertices[7] - self.vertices[0])),
-            (self.vertices[8] - self.vertices[0]) / np.linalg.norm((self.vertices[8] - self.vertices[0])),
-        ])
-
-        return directions_array
+        """Compute the normalized direction vectors of the struts."""
+        vectors = self.vertices[1:] - self.vertices[0]
+        return vectors / np.linalg.norm(vectors, axis=1)[:, np.newaxis]
