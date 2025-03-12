@@ -1,13 +1,13 @@
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
-import itertools
+from itertools import product
 from .abstract_lattice import AbstractLattice
 
 _UNIT_CUBE_SIZE = 1.0
 _STRUT_NUMBER = 12
 _STRUT_HEIGHTS = 1.0
-_VERTICES = np.array(list(itertools.product([-_UNIT_CUBE_SIZE/2, _UNIT_CUBE_SIZE/2], repeat=3)))
+_VERTICES = np.array(list(product([-_UNIT_CUBE_SIZE/2, _UNIT_CUBE_SIZE/2], repeat=3)))
 _STRUT_VERTEX_PAIRS = np.array([
     [i, j] for i in range(len(_VERTICES)) 
     for j in KDTree(_VERTICES).query_ball_point(_VERTICES[i], r=_STRUT_HEIGHTS) if i < j
