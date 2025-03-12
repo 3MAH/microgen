@@ -28,7 +28,7 @@ class Octahedron(AbstractLattice):
 
         return vertices_array
     
-    def _compute_strut_centers(self):
+    def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
         centers_array = np.array([
             (self.vertices[0] + self.vertices[2]),
             (self.vertices[0] + self.vertices[3]),
@@ -45,7 +45,7 @@ class Octahedron(AbstractLattice):
         ]) / 2.0
         return centers_array
     
-    def _compute_strut_directions(self):
+    def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
         directions_array = np.array([
             (self.vertices[2] - self.vertices[0]) / np.linalg.norm((self.vertices[2] - self.vertices[0])),
             (self.vertices[3] - self.vertices[0]) / np.linalg.norm((self.vertices[3] - self.vertices[0])),
