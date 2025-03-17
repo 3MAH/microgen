@@ -29,6 +29,8 @@ class AbstractLattice(Shape):
     """
     Abstract Class to create strut-based lattice
     """
+    
+    _UNIT_CUBE_SIZE = 1.0
 
     def __init__(self,
                  strut_radius: float = 0.05,
