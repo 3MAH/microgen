@@ -31,8 +31,7 @@ Class to create a unit face-centered cubic lattice of given cell size and densit
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         """Compute the vertices of the face-centered cubic lattice."""
-        base_vertices = self._generate_base_vertices()
-        return self.center + self.cell_size * base_vertices
+        return self.center + self.cell_size * self._base_vertices
     
     def _generate_face_center_to_cube_vertices_dict(self) -> dict[int: List[int]]:
         """
