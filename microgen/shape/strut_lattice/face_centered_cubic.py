@@ -3,6 +3,7 @@ from itertools import product
 import numpy as np
 import numpy.typing as npt
 import math as m
+from typing import List
 
 class FaceCenteredCubic(AbstractLattice):
     """
@@ -18,22 +19,22 @@ Class to create a unit face-centered cubic lattice of given cell size and densit
         super().__init__(*args, **kwargs, strut_number=24, strut_heights=m.sqrt(2.0)/2.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
-        unit_cube_size = 1.0
-        cube_vertices = list(product([-unit_cube_size/2, unit_cube_size/2], repeat=3))
+        cube_vertices = list(product([-self._UNIT_CUBE_SIZE/2, self._UNIT_CUBE_SIZE/2], repeat=3))
         
         face_centers = [
-            [sign * unit_cube_size/2 if i == axis else 0.0 for i in range(3)]
+            [sign * self._UNIT_CUBE_SIZE/2 if i == axis else 0.0 for i in range(3)]
             for axis in range(3) for sign in [-1, 1]
         ]
 
         return np.array(cube_vertices + face_centers)
+
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         """Compute the vertices of the face-centered cubic lattice."""
         base_vertices = self._generate_base_vertices()
         return self.center + self.cell_size * base_vertices
     
-    def _generate_face_to_vertices(self) -> dict:
+    def _generate_face_center_to_cube_vertices_dict(self) -> dict[int: List[int]]:
         """
         Dynamically generates a dictionary associating the indices of the face centers with the indices of the cube vertices.
         """
@@ -59,7 +60,7 @@ Class to create a unit face-centered cubic lattice of given cell size and densit
         """
         Generates the pairs of indices of the fcc strut vertices between the face centers and the cube vertices.
         """
-        face_to_vertices = self._generate_face_to_vertices()
+        face_to_vertices = self._generate_face_center_to_cube_vertices_dict()
 
         vertex_pairs_indices = [
             [face_index, vertex_index]
