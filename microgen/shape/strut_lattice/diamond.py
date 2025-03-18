@@ -49,7 +49,7 @@ class Diamond(AbstractLattice):
                 pair = tuple(sorted([i, j]))
                 pairs.add(pair)
         
-        return np.array(list(pairs), dtype=np.int64)
+        return np.array(list(pairs))
 
     
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]:

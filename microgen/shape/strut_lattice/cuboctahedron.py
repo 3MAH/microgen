@@ -30,7 +30,7 @@ class Cuboctahedron(AbstractLattice):
 
         return vertices_array
     
-    def _generate_vertex_pairs(self) -> npt.NDArray[int]:
+    def _generate_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self._base_vertices)
         pairs = set()
         tolerance = 1e-5

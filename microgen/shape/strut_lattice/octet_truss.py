@@ -31,7 +31,7 @@ class OctetTruss(AbstractLattice):
         """Compute the vertices of the face-centered cubic lattice."""
         return self.center + self.cell_size * self._base_vertices
     
-    def _generate_strut_vertex_pairs(self) -> npt.NDArray[int]:
+    def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         """Generate index pairs representing the struts in the octet-truss using KDTree."""
         tree = KDTree(self._base_vertices)
         pairs = set()

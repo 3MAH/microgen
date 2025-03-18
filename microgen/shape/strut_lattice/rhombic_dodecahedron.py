@@ -31,7 +31,7 @@ class RhombicDodecahedron(AbstractLattice):
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         return self.center + self.cell_size * self._base_vertices
     
-    def _generate_strut_vertex_pairs(self) -> npt.NDArray[int]:
+    def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self._base_vertices)
         tolerance = 1e-5
         target_distance = m.sqrt(3.0) / 4.0 + tolerance

@@ -55,7 +55,7 @@ Class to create a unit face-centered cubic lattice of given cell size and densit
 
         return face_to_vertices
 
-    def _generate_vertex_pairs(self) -> np.ndarray:
+    def _generate_vertex_pairs(self) -> npt.NDArray[np.int64]:
         """
         Generates the pairs of indices of the fcc strut vertices between the face centers and the cube vertices.
         """

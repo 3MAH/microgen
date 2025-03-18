@@ -26,7 +26,7 @@ class Octahedron(AbstractLattice):
         """Compute the vertices of the octahedric lattice."""
         return self.center + self.cell_size * self._base_vertices
     
-    def _generate_vertex_pairs(self) -> npt.NDArray[int]:
+    def _generate_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self._base_vertices)
         pairs = set()
         for i in range(len(self._base_vertices)):
