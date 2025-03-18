@@ -2,9 +2,8 @@ from .abstract_lattice import AbstractLattice
 import numpy as np
 import numpy.typing as npt
 import math as m
-
-_STRUT_NUMBER = 32
-_STRUT_HEIGHTS = m.sqrt(3.0) / 4.0
+from itertools import product
+from scipy.spatial import KDTree
 
 class RhombicDodecahedron(AbstractLattice):
     """
@@ -14,107 +13,35 @@ class RhombicDodecahedron(AbstractLattice):
     def __init__(self,
                  *args, **kwargs
                  ) -> None:
-        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
+        self._base_vertices = self._generate_base_vertices()
+        self._strut_vertex_pairs = self._generate_strut_vertex_pairs()
+        super().__init__(*args, **kwargs, strut_number=32, strut_heights=m.sqrt(3.0) / 4.0)
         
+    def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
+        outer_cube_vertices = list(product([-self._UNIT_CUBE_SIZE/2, self._UNIT_CUBE_SIZE/2], repeat=3))
+        inner_cube_vertices = list(product([-self._UNIT_CUBE_SIZE/4, self._UNIT_CUBE_SIZE/4], repeat=3))
+                
+        face_centers = [
+            [sign * self._UNIT_CUBE_SIZE/2 if i == axis else 0.0 for i in range(3)]
+            for axis in range(3) for sign in [-1, 1]
+        ]
+        
+        return np.array(outer_cube_vertices + inner_cube_vertices + face_centers)
+    
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
-        vertices_array = self.center + self.cell_size * np.array([
-            [0.25, 0.25, 0.25],
-            [0.25, 0.25, -0.25],
-            [0.25, -0.25, 0.25],
-            [0.25, -0.25, -0.25],
-            [-0.25, 0.25, 0.25],
-            [-0.25, 0.25, -0.25],
-            [-0.25, -0.25, 0.25],
-            [-0.25, -0.25, -0.25],
-            [0.5, 0.0, 0.0],
-            [-0.5, 0.0, 0.0],
-            [0.0, 0.5, 0.0],
-            [0.0, -0.5, 0.0],
-            [0.0, 0.0, 0.5],
-            [0.0, 0.0, -0.5],
-            [0.5, 0.5, 0.5],
-            [0.5, 0.5, -0.5],
-            [0.5, -0.5, 0.5],
-            [0.5, -0.5, -0.5],
-            [-0.5, 0.5, 0.5],
-            [-0.5, 0.5, -0.5],
-            [-0.5, -0.5, 0.5],
-            [-0.5, -0.5, -0.5]
-        ])
-
-        return vertices_array
+        return self.center + self.cell_size * self._base_vertices
+    
+    def _generate_strut_vertex_pairs(self) -> npt.NDArray[int]:
+        tree = KDTree(self._base_vertices)
+        tolerance = 1e-5
+        target_distance = m.sqrt(3.0) / 4.0 + tolerance
+        pairs = set(tree.query_pairs(r=target_distance))
+        return np.array(list(pairs))
     
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
-        centers_array = np.array([
-            (self.vertices[0] + self.vertices[8]),
-            (self.vertices[0] + self.vertices[10]),
-            (self.vertices[0] + self.vertices[12]),
-            (self.vertices[0] + self.vertices[14]),
-            (self.vertices[1] + self.vertices[8]),
-            (self.vertices[1] + self.vertices[10]),
-            (self.vertices[1] + self.vertices[13]),
-            (self.vertices[1] + self.vertices[15]),
-            (self.vertices[2] + self.vertices[8]),
-            (self.vertices[2] + self.vertices[11]),
-            (self.vertices[2] + self.vertices[12]),
-            (self.vertices[2] + self.vertices[16]),
-            (self.vertices[3] + self.vertices[8]),
-            (self.vertices[3] + self.vertices[11]),
-            (self.vertices[3] + self.vertices[13]),
-            (self.vertices[3] + self.vertices[17]),
-            (self.vertices[4] + self.vertices[9]),
-            (self.vertices[4] + self.vertices[10]),
-            (self.vertices[4] + self.vertices[12]),
-            (self.vertices[4] + self.vertices[18]),
-            (self.vertices[5] + self.vertices[9]),
-            (self.vertices[5] + self.vertices[10]),
-            (self.vertices[5] + self.vertices[13]),
-            (self.vertices[5] + self.vertices[19]),
-            (self.vertices[6] + self.vertices[9]),
-            (self.vertices[6] + self.vertices[11]),
-            (self.vertices[6] + self.vertices[12]),
-            (self.vertices[6] + self.vertices[20]),
-            (self.vertices[7] + self.vertices[9]),
-            (self.vertices[7] + self.vertices[11]),
-            (self.vertices[7] + self.vertices[13]),
-            (self.vertices[7] + self.vertices[21])
-        ])/2.0
-        return centers_array
+        return np.mean(self.vertices[self._strut_vertex_pairs], axis=1)
     
     def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
-        directions_array = np.array([
-            (self.vertices[8] - self.vertices[0]) / np.linalg.norm((self.vertices[8] - self.vertices[0])),
-            (self.vertices[10] - self.vertices[0]) / np.linalg.norm((self.vertices[10] - self.vertices[0])),
-            (self.vertices[12] - self.vertices[0]) / np.linalg.norm((self.vertices[12] - self.vertices[0])),
-            (self.vertices[14] - self.vertices[0]) / np.linalg.norm((self.vertices[14] - self.vertices[0])),
-            (self.vertices[8] - self.vertices[1]) / np.linalg.norm((self.vertices[8] - self.vertices[1])),
-            (self.vertices[10] - self.vertices[1]) / np.linalg.norm((self.vertices[10] - self.vertices[1])),
-            (self.vertices[13] - self.vertices[1]) / np.linalg.norm((self.vertices[13] - self.vertices[1])),
-            (self.vertices[15] - self.vertices[1]) / np.linalg.norm((self.vertices[15] - self.vertices[1])),
-            (self.vertices[8] - self.vertices[2]) / np.linalg.norm((self.vertices[8] - self.vertices[2])),
-            (self.vertices[11] - self.vertices[2]) / np.linalg.norm((self.vertices[11] - self.vertices[2])),
-            (self.vertices[12] - self.vertices[2]) / np.linalg.norm((self.vertices[12] - self.vertices[2])),
-            (self.vertices[16] - self.vertices[2]) / np.linalg.norm((self.vertices[16] - self.vertices[2])),
-            (self.vertices[8] - self.vertices[3]) / np.linalg.norm((self.vertices[8] - self.vertices[3])),
-            (self.vertices[11] - self.vertices[3]) / np.linalg.norm((self.vertices[11] - self.vertices[3])),
-            (self.vertices[13] - self.vertices[3]) / np.linalg.norm((self.vertices[13] - self.vertices[3])),
-            (self.vertices[17] - self.vertices[3]) / np.linalg.norm((self.vertices[17] - self.vertices[3])),
-            (self.vertices[9] - self.vertices[4]) / np.linalg.norm((self.vertices[9] - self.vertices[4])),
-            (self.vertices[10] - self.vertices[4]) / np.linalg.norm((self.vertices[10] - self.vertices[4])),
-            (self.vertices[12] - self.vertices[4]) / np.linalg.norm((self.vertices[12] - self.vertices[4])),
-            (self.vertices[18] - self.vertices[4]) / np.linalg.norm((self.vertices[18] - self.vertices[4])),
-            (self.vertices[9] - self.vertices[5]) / np.linalg.norm((self.vertices[9] - self.vertices[5])),
-            (self.vertices[10] - self.vertices[5]) / np.linalg.norm((self.vertices[10] - self.vertices[5])),
-            (self.vertices[13] - self.vertices[5]) / np.linalg.norm((self.vertices[13] - self.vertices[5])),
-            (self.vertices[19] - self.vertices[5]) / np.linalg.norm((self.vertices[19] - self.vertices[5])),
-            (self.vertices[9] - self.vertices[6]) / np.linalg.norm((self.vertices[9] - self.vertices[6])),
-            (self.vertices[11] - self.vertices[6]) / np.linalg.norm((self.vertices[11] - self.vertices[6])),
-            (self.vertices[12] - self.vertices[6]) / np.linalg.norm((self.vertices[12] - self.vertices[6])),
-            (self.vertices[20] - self.vertices[6]) / np.linalg.norm((self.vertices[20] - self.vertices[6])),
-            (self.vertices[9] - self.vertices[7]) / np.linalg.norm((self.vertices[9] - self.vertices[7])),
-            (self.vertices[11] - self.vertices[7]) / np.linalg.norm((self.vertices[11] - self.vertices[7])),
-            (self.vertices[13] - self.vertices[7]) / np.linalg.norm((self.vertices[13] - self.vertices[7])),
-            (self.vertices[21] - self.vertices[7]) / np.linalg.norm((self.vertices[21] - self.vertices[7]))
-        ])
-        return directions_array
+        vectors = np.diff(self.vertices[self._strut_vertex_pairs], axis=1).squeeze()
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
         
