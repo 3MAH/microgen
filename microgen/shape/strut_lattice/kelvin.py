@@ -2,9 +2,8 @@ from .abstract_lattice import AbstractLattice
 import numpy as np
 import numpy.typing as npt
 import math as m
-
-_STRUT_NUMBER = 72
-_STRUT_HEIGHTS = 1 / (1.0 + 2.0*m.sqrt(2))
+from itertools import product, permutations
+from scipy.spatial import KDTree
 
 class Kelvin(AbstractLattice):
     """
@@ -14,216 +13,41 @@ class Kelvin(AbstractLattice):
     def __init__(self,
                  *args, **kwargs
                  ) -> None:
+        self._base_vertices = self._generate_base_vertices()
+        self._strut_vertex_pairs = self._generate_strut_vertex_pairs()
+        super().__init__(*args, **kwargs, strut_number=72, strut_heights=1 / (1.0 + 2.0*m.sqrt(2)))
 
-        super().__init__(*args, **kwargs, strut_number=_STRUT_NUMBER, strut_heights=_STRUT_HEIGHTS)
+    def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
+        values = [1, -(1 + m.sqrt(2)), -(1 + 2 * m.sqrt(2))]
+        signs = [1, -1]
+        result = []
 
+        for perm in permutations(values):
+            for sign in product(signs, repeat=3):
+                result.append([sign[0] * perm[0], sign[1] * perm[1], sign[2] * perm[2]])
+
+        return np.array(result)/ (2.0 + 4.0*m.sqrt(2))
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
-        vertices_array = self.center + self.cell_size * np.array([
-            [1.0, (1.0 + m.sqrt(2)), (1.0 + 2.0*m.sqrt(2))],
-            [1.0, -(1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2))],
-            [1.0, (1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2))],
-            [1.0, -(1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2))],
-            [1.0, (1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2))],
-            [1.0, -(1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2))],
-            [1.0, (1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2))],
-            [1.0, -(1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2))],
-            [-1.0, (1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2))],
-            [-1.0, -(1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2))],
-            [-1.0, (1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2))],
-            [-1.0, -(1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2))],
-            [-1.0, (1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2))],
-            [-1.0, -(1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2))],
-            [-1.0, (1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2))],
-            [-1.0, -(1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2))],
-            [(1.0 + 2.0 * m.sqrt(2)), 1.0, (1.0 + m.sqrt(2))],
-            [(1.0 + 2.0 * m.sqrt(2)), -1.0, (1.0 + m.sqrt(2))],
-            [(1.0 + 2.0 * m.sqrt(2)), 1.0, -(1.0 + m.sqrt(2))],
-            [(1.0 + 2.0 * m.sqrt(2)), -1.0, -(1.0 + m.sqrt(2))],
-            [(1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2)), 1.0],
-            [(1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2)), 1.0],
-            [(1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2)), -1.0],
-            [(1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2)), -1.0],
-            [-(1.0 + 2.0 * m.sqrt(2)), 1.0, (1.0 + m.sqrt(2))],
-            [-(1.0 + 2.0 * m.sqrt(2)), -1.0, (1.0 + m.sqrt(2))],
-            [-(1.0 + 2.0 * m.sqrt(2)), 1.0, -(1.0 + m.sqrt(2))],
-            [-(1.0 + 2.0 * m.sqrt(2)), -1.0, -(1.0 + m.sqrt(2))],
-            [-(1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2)), 1.0],
-            [-(1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2)), 1.0],
-            [-(1.0 + 2.0 * m.sqrt(2)), (1.0 + m.sqrt(2)), -1.0],
-            [-(1.0 + 2.0 * m.sqrt(2)), -(1.0 + m.sqrt(2)), -1.0],
-            [(1.0 + m.sqrt(2)), 1.0, (1.0 + 2.0 * m.sqrt(2))],
-            [(1.0 + m.sqrt(2)), -1.0, (1.0 + 2.0 * m.sqrt(2))],
-            [(1.0 + m.sqrt(2)), 1.0, -(1.0 + 2.0 * m.sqrt(2))],
-            [(1.0 + m.sqrt(2)), -1.0, -(1.0 + 2.0 * m.sqrt(2))],
-            [(1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2)), 1.0],
-            [(1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2)), 1.0],
-            [(1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2)), -1.0],
-            [(1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2)), -1.0],
-            [-(1.0 + m.sqrt(2)), 1.0, (1.0 + 2.0 * m.sqrt(2))],
-            [-(1.0 + m.sqrt(2)), -1.0, (1.0 + 2.0 * m.sqrt(2))],
-            [-(1.0 + m.sqrt(2)), 1.0, -(1.0 + 2.0 * m.sqrt(2))],
-            [-(1.0 + m.sqrt(2)), -1.0, -(1.0 + 2.0 * m.sqrt(2))],
-            [-(1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2)), 1.0],
-            [-(1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2)), 1.0],
-            [-(1.0 + m.sqrt(2)), (1.0 + 2.0 * m.sqrt(2)), -1.0],
-            [-(1.0 + m.sqrt(2)), -(1.0 + 2.0 * m.sqrt(2)), -1.0],
-        ]) / (2.0 + 4.0*m.sqrt(2))
+        return self.center + self.cell_size * self._base_vertices
 
-        return vertices_array
+    def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
+        kdtree = KDTree(self._base_vertices)
+        tolerance = 1e-5
+        threshold_distance = 1 / (1.0 + 2.0*m.sqrt(2)) + tolerance
+        
+        pairs = []
+        for i in range(len(self._base_vertices)):
+            neighbors = kdtree.query_ball_point(self._base_vertices[i], threshold_distance)
+            for j in neighbors:
+                if i < j:
+                    pairs.append((i, j))
+        
+        return pairs
 
     def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
-        centers_array = np.array([
-            (self.vertices[2] + self.vertices[6]),
-            (self.vertices[6] + self.vertices[38]),
-            (self.vertices[38] + self.vertices[22]),
-            (self.vertices[22] + self.vertices[18]),
-            (self.vertices[18] + self.vertices[34]),
-            (self.vertices[34] + self.vertices[2]),
-            (self.vertices[6] + self.vertices[14]),
-            (self.vertices[14] + self.vertices[10]),
-            (self.vertices[10] + self.vertices[2]),
-            (self.vertices[38] + self.vertices[36]),
-            (self.vertices[20] + self.vertices[36]),
-            (self.vertices[22] + self.vertices[20]),
-            (self.vertices[34] + self.vertices[35]),
-            (self.vertices[35] + self.vertices[19]),
-            (self.vertices[18] + self.vertices[19]),
-            (self.vertices[10] + self.vertices[42]),
-            (self.vertices[42] + self.vertices[43]),
-            (self.vertices[43] + self.vertices[11]),
-            (self.vertices[11] + self.vertices[3]),
-            (self.vertices[3] + self.vertices[35]),
-            (self.vertices[3] + self.vertices[7]),
-            (self.vertices[7] + self.vertices[39]),
-            (self.vertices[39] + self.vertices[23]),
-            (self.vertices[23] + self.vertices[19]),
-            (self.vertices[23] + self.vertices[21]),
-            (self.vertices[21] + self.vertices[37]),
-            (self.vertices[39] + self.vertices[37]),
-            (self.vertices[21] + self.vertices[17]),
-            (self.vertices[17] + self.vertices[16]),
-            (self.vertices[16] + self.vertices[20]),
-            (self.vertices[16] + self.vertices[32]),
-            (self.vertices[17] + self.vertices[33]),
-            (self.vertices[33] + self.vertices[32]),
-            (self.vertices[32] + self.vertices[0]),
-            (self.vertices[0] + self.vertices[4]),
-            (self.vertices[36] + self.vertices[4]),
-            (self.vertices[37] + self.vertices[5]),
-            (self.vertices[5] + self.vertices[1]),
-            (self.vertices[1] + self.vertices[33]),
-            (self.vertices[7] + self.vertices[15]),
-            (self.vertices[11] + self.vertices[15]),
-            (self.vertices[15] + self.vertices[47]),
-            (self.vertices[47] + self.vertices[45]),
-            (self.vertices[45] + self.vertices[13]),
-            (self.vertices[13] + self.vertices[5]),
-            (self.vertices[47] + self.vertices[31]),
-            (self.vertices[43] + self.vertices[27]),
-            (self.vertices[27] + self.vertices[31]),
-            (self.vertices[42] + self.vertices[26]),
-            (self.vertices[27] + self.vertices[26]),
-            (self.vertices[26] + self.vertices[30]),
-            (self.vertices[46] + self.vertices[30]),
-            (self.vertices[14] + self.vertices[46]),
-            (self.vertices[46] + self.vertices[44]),
-            (self.vertices[44] + self.vertices[12]),
-            (self.vertices[12] + self.vertices[4]),
-            (self.vertices[12] + self.vertices[8]),
-            (self.vertices[8] + self.vertices[0]),
-            (self.vertices[8] + self.vertices[40]),
-            (self.vertices[41] + self.vertices[40]),
-            (self.vertices[41] + self.vertices[9]),
-            (self.vertices[9] + self.vertices[1]),
-            (self.vertices[9] + self.vertices[13]),
-            (self.vertices[44] + self.vertices[28]),
-            (self.vertices[28] + self.vertices[30]),
-            (self.vertices[28] + self.vertices[24]),
-            (self.vertices[24] + self.vertices[40]),
-            (self.vertices[24] + self.vertices[25]),
-            (self.vertices[25] + self.vertices[41]),
-            (self.vertices[25] + self.vertices[29]),
-            (self.vertices[29] + self.vertices[31]),
-            (self.vertices[29] + self.vertices[45])
-        ]) / 2.0
-
-        return centers_array
+        return np.mean(self.vertices[self._strut_vertex_pairs], axis=1)
 
     def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
-        directions_array = np.array([
-            (self.vertices[2] - self.vertices[6]) / np.linalg.norm((self.vertices[2] - self.vertices[6])),
-            (self.vertices[6] - self.vertices[38]) / np.linalg.norm((self.vertices[6] - self.vertices[38])),
-            (self.vertices[38] - self.vertices[22]) / np.linalg.norm((self.vertices[38] - self.vertices[22])),
-            (self.vertices[22] - self.vertices[18]) / np.linalg.norm((self.vertices[22] - self.vertices[18])),
-            (self.vertices[18] - self.vertices[34]) / np.linalg.norm((self.vertices[18] - self.vertices[34])),
-            (self.vertices[34] - self.vertices[2]) / np.linalg.norm((self.vertices[34] - self.vertices[2])),
-            (self.vertices[6] - self.vertices[14]) / np.linalg.norm((self.vertices[6] - self.vertices[14])),
-            (self.vertices[14] - self.vertices[10]) / np.linalg.norm((self.vertices[14] - self.vertices[10])),
-            (self.vertices[10] - self.vertices[2]) / np.linalg.norm((self.vertices[10] - self.vertices[2])),
-            (self.vertices[38] - self.vertices[36]) / np.linalg.norm((self.vertices[38] - self.vertices[36])),
-            (self.vertices[20] - self.vertices[36]) / np.linalg.norm((self.vertices[20] - self.vertices[36])),
-            (self.vertices[22] - self.vertices[20]) / np.linalg.norm((self.vertices[22] - self.vertices[20])),
-            (self.vertices[34] - self.vertices[35]) / np.linalg.norm((self.vertices[34] - self.vertices[35])),
-            (self.vertices[35] - self.vertices[19]) / np.linalg.norm((self.vertices[35] - self.vertices[19])),
-            (self.vertices[18] - self.vertices[19]) / np.linalg.norm((self.vertices[18] - self.vertices[19])),
-            (self.vertices[10] - self.vertices[42]) / np.linalg.norm((self.vertices[10] - self.vertices[42])),
-            (self.vertices[42] - self.vertices[43]) / np.linalg.norm((self.vertices[42] - self.vertices[43])),
-            (self.vertices[43] - self.vertices[11]) / np.linalg.norm((self.vertices[43] - self.vertices[11])),
-            (self.vertices[11] - self.vertices[3]) / np.linalg.norm((self.vertices[11] - self.vertices[3])),
-            (self.vertices[3] - self.vertices[35]) / np.linalg.norm((self.vertices[3] - self.vertices[35])),
-            (self.vertices[3] - self.vertices[7]) / np.linalg.norm((self.vertices[3] - self.vertices[7])),
-            (self.vertices[7] - self.vertices[39]) / np.linalg.norm((self.vertices[7] - self.vertices[39])),
-            (self.vertices[39] - self.vertices[23]) / np.linalg.norm((self.vertices[39] - self.vertices[23])),
-            (self.vertices[23] - self.vertices[19]) / np.linalg.norm((self.vertices[23] - self.vertices[19])),
-            (self.vertices[23] - self.vertices[21]) / np.linalg.norm((self.vertices[23] - self.vertices[21])),
-            (self.vertices[21] - self.vertices[37]) / np.linalg.norm((self.vertices[21] - self.vertices[37])),
-            (self.vertices[39] - self.vertices[37]) / np.linalg.norm((self.vertices[39] - self.vertices[37])),
-            (self.vertices[21] - self.vertices[17]) / np.linalg.norm((self.vertices[21] - self.vertices[17])),
-            (self.vertices[17] - self.vertices[16]) / np.linalg.norm((self.vertices[17] - self.vertices[16])),
-            (self.vertices[16] - self.vertices[20]) / np.linalg.norm((self.vertices[16] - self.vertices[20])),
-            (self.vertices[16] - self.vertices[32]) / np.linalg.norm((self.vertices[16] - self.vertices[32])),
-            (self.vertices[17] - self.vertices[33]) / np.linalg.norm((self.vertices[17] - self.vertices[33])),
-            (self.vertices[33] - self.vertices[32]) / np.linalg.norm((self.vertices[33] - self.vertices[32])),
-            (self.vertices[32] - self.vertices[0]) / np.linalg.norm((self.vertices[32] - self.vertices[0])),
-            (self.vertices[0] - self.vertices[4]) / np.linalg.norm((self.vertices[0] - self.vertices[4])),
-            (self.vertices[36] - self.vertices[4]) / np.linalg.norm((self.vertices[36] - self.vertices[4])),
-            (self.vertices[37] - self.vertices[5]) / np.linalg.norm((self.vertices[37] - self.vertices[5])),
-            (self.vertices[5] - self.vertices[1]) / np.linalg.norm((self.vertices[5] - self.vertices[1])),
-            (self.vertices[1] - self.vertices[33]) / np.linalg.norm((self.vertices[1] - self.vertices[33])),
-            (self.vertices[7] - self.vertices[15]) / np.linalg.norm((self.vertices[7] - self.vertices[15])),
-            (self.vertices[11] - self.vertices[15]) / np.linalg.norm((self.vertices[11] - self.vertices[15])),
-            (self.vertices[15] - self.vertices[47]) / np.linalg.norm((self.vertices[15] - self.vertices[47])),
-            (self.vertices[47] - self.vertices[45]) / np.linalg.norm((self.vertices[47] - self.vertices[45])),
-            (self.vertices[45] - self.vertices[13]) / np.linalg.norm((self.vertices[45] - self.vertices[13])),
-            (self.vertices[13] - self.vertices[5]) / np.linalg.norm((self.vertices[13] - self.vertices[5])),
-            (self.vertices[47] - self.vertices[31]) / np.linalg.norm((self.vertices[47] - self.vertices[31])),
-            (self.vertices[43] - self.vertices[27]) / np.linalg.norm((self.vertices[43] - self.vertices[27])),
-            (self.vertices[27] - self.vertices[31]) / np.linalg.norm((self.vertices[27] - self.vertices[31])),
-            (self.vertices[42] - self.vertices[26]) / np.linalg.norm((self.vertices[42] - self.vertices[26])),
-            (self.vertices[27] - self.vertices[26]) / np.linalg.norm((self.vertices[27] - self.vertices[26])),
-            (self.vertices[26] - self.vertices[30]) / np.linalg.norm((self.vertices[26] - self.vertices[30])),
-            (self.vertices[46] - self.vertices[30]) / np.linalg.norm((self.vertices[46] - self.vertices[30])),
-            (self.vertices[14] - self.vertices[46]) / np.linalg.norm((self.vertices[14] - self.vertices[46])),
-            (self.vertices[46] - self.vertices[44]) / np.linalg.norm((self.vertices[46] - self.vertices[44])),
-            (self.vertices[44] - self.vertices[12]) / np.linalg.norm((self.vertices[44] - self.vertices[12])),
-            (self.vertices[12] - self.vertices[4]) / np.linalg.norm((self.vertices[12] - self.vertices[4])),
-            (self.vertices[12] - self.vertices[8]) / np.linalg.norm((self.vertices[12] - self.vertices[8])),
-            (self.vertices[8] - self.vertices[0]) / np.linalg.norm((self.vertices[8] - self.vertices[0])),
-            (self.vertices[8] - self.vertices[40]) / np.linalg.norm((self.vertices[8] - self.vertices[40])),
-            (self.vertices[41] - self.vertices[40]) / np.linalg.norm((self.vertices[41] - self.vertices[40])),
-            (self.vertices[41] - self.vertices[9]) / np.linalg.norm((self.vertices[41] - self.vertices[9])),
-            (self.vertices[9] - self.vertices[1]) / np.linalg.norm((self.vertices[9] - self.vertices[1])),
-            (self.vertices[9] - self.vertices[13]) / np.linalg.norm((self.vertices[9] - self.vertices[13])),
-            (self.vertices[44] - self.vertices[28]) / np.linalg.norm((self.vertices[44] - self.vertices[28])),
-            (self.vertices[28] - self.vertices[30]) / np.linalg.norm((self.vertices[28] - self.vertices[30])),
-            (self.vertices[28] - self.vertices[24]) / np.linalg.norm((self.vertices[28] - self.vertices[24])),
-            (self.vertices[24] - self.vertices[40]) / np.linalg.norm((self.vertices[24] - self.vertices[40])),
-            (self.vertices[24] - self.vertices[25]) / np.linalg.norm((self.vertices[24] - self.vertices[25])),
-            (self.vertices[25] - self.vertices[41]) / np.linalg.norm((self.vertices[25] - self.vertices[41])),
-            (self.vertices[25] - self.vertices[29]) / np.linalg.norm((self.vertices[25] - self.vertices[29])),
-            (self.vertices[29] - self.vertices[31]) / np.linalg.norm((self.vertices[29] - self.vertices[31])),
-            (self.vertices[29] - self.vertices[45]) / np.linalg.norm((self.vertices[29] - self.vertices[45]))
-        ])
-
-        return directions_array
+        vectors = np.diff(self.vertices[self._strut_vertex_pairs], axis=1).squeeze()
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
