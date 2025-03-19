@@ -8,6 +8,7 @@ from .octahedron import Octahedron
 from .octet_truss import OctetTruss
 from .truncated_cuboctahedron import TruncatedCuboctahedron
 from .truncated_cube import TruncatedCube
+from .rhombic_cuboctahedron import RhombicCuboctahedron
 from .rhombic_dodecahedron import RhombicDodecahedron
 from .truncated_octahedron import TruncatedOctahedron
 
@@ -22,6 +23,7 @@ __all__ = [
     "Octahedron",
     "OctetTruss",
     "TruncatedCube",
+    "RhombicCuboctahedron",
     "RhombicDodecahedron",
     "TruncatedOctahedron",
 ]
