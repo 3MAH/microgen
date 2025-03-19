@@ -15,7 +15,7 @@ class CustomLattice(AbstractLattice):
         super().__init__(*args, **kwargs, base_vertices=base_vertices, strut_vertex_pairs=strut_vertex_pairs)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
-        return self._base_vertices
+        return self.base_vertices
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         return self._strut_vertex_pairs

@@ -34,8 +34,9 @@ class AbstractLattice(Shape):
 
     def __init__(self,
                  strut_radius: float = 0.05,
-                 strut_number: Optional[int] = None,
                  strut_heights: Optional[Union[float, List[float]]] = None,
+                 base_vertices: Optional[npt.NDArray[np.float64]] = None,
+                 strut_vertex_pairs: Optional[npt.NDArray[np.int64]] = None,
                  cell_size: float = 1.0,
                  **kwargs: Vector3DType,
                  ) -> None:
@@ -44,17 +45,18 @@ class AbstractLattice(Shape):
         The lattice will be created in a cube which size can be modified with 'cell_size'.
 
         :param strut_radius: radius of the struts
-        :param strut_number: number of struts in the lattice
         :param strut_height: either the unique height of all struts (float), or a list of strut heights (List[float]). Enter value for a size 1 rve.
+        :param base_vertices: array of lattice vertices, considering it is created in a cubic RVE of size 1 and centered on the origin
+        :param strut_vertex_pairs: array of strut vertex pairs that define how vertices are connected by the struts
         :param cell_size: size of the cubic rve in which the lattice cell is enclosed
-        
         """
         super().__init__(**kwargs)
 
         self.strut_radius = strut_radius
         self.cell_size = cell_size
-        self._strut_number = strut_number
         self._strut_heights = strut_heights
+        self._base_vertices = base_vertices
+        self._strut_vertex_pairs = strut_vertex_pairs
 
         self.rve = Rve(dim=self.cell_size, center=self.center)
 
@@ -65,28 +67,59 @@ class AbstractLattice(Shape):
         
         self._validate_inputs()
 
+    @property
+    def base_vertices(self) -> npt.NDArray[np.float64]:
+        if self._base_vertices is not None:
+            return self._base_vertices
+        return self._generate_base_vertices()
+
+    @property
+    def strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
+        if self._strut_vertex_pairs is not None:
+            return self._strut_vertex_pairs
+        return self._generate_strut_vertex_pairs()
+
+    @abstractmethod
+    def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
+        """Abstract method to generate base vertices, ie as if the
+        lattice was centered at the origin and in a cubic size 1 rve.
+        """
+        pass
+
+    @abstractmethod
+    def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
+        """Abstract method to generate strut vertex pairs."""
+        pass
+
+    def _compute_vertices(self) -> npt.NDArray[np.float64]:
+        return self.center + self.cell_size * self.base_vertices
+
+    def _compute_strut_centers(self) -> npt.NDArray[np.float64]:
+        return np.mean(self.vertices[self.strut_vertex_pairs], axis=1)
+
+    def _compute_strut_directions(self) -> npt.NDArray[np.float64]:
+        vectors = np.diff(self.vertices[self.strut_vertex_pairs], axis=1).squeeze()
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
+
     def _validate_inputs(self):
         """Checks coherence of inputs."""
 
-        if self._strut_number is None:
-            raise NotImplementedError("strut_number must be defined in subclass.")
-
         if self._strut_heights is None:
             raise NotImplementedError("strut_heights must be defined in a subclass.")
-        if isinstance(self._strut_heights, list) and len(self._strut_heights) != self._strut_number:
-            raise ValueError(f"strut_heights must contain {self._strut_number} values, but {len(self._strut_heights)} were provided.")
+        if isinstance(self._strut_heights, list) and len(self._strut_heights) != self.strut_number:
+            raise ValueError(f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided.")
 
         attributes = {
             "strut_centers": self.strut_centers,
             "strut_directions_cartesian": self.strut_directions_cartesian,
         }
         for name, array in attributes.items():
-            if len(array) != self._strut_number:
-                raise ValueError(f"{name} must contain {self._strut_number} values, but {len(array)} were provided.")
+            if len(array) != self.strut_number:
+                raise ValueError(f"{name} must contain {self.strut_number} values, but {len(array)} were provided.")
 
     @property
     def strut_number(self) -> int:
-        return self._strut_number
+        return len(self.strut_vertex_pairs)
 
     @property
     def strut_heights(self) -> list[float]:
@@ -99,19 +132,6 @@ class AbstractLattice(Shape):
 
         return self._strut_heights * self.cell_size
     
-
-    @abstractmethod
-    def _compute_vertices(self) -> npt.NDArray[np.float64]: ...
-
-
-    @abstractmethod
-    def _compute_strut_centers(self) -> npt.NDArray[np.float64]: ...
-
-
-    @abstractmethod
-    def _compute_strut_directions(self) -> npt.NDArray[np.float64]: ...
-
-
     def _compute_rotations(self) -> List[Rotation]:
         """Computes euler angles from default (1.0, 0.0, 0.0) oriented cylinder for all struts in the lattice"""
 
@@ -119,7 +139,7 @@ class AbstractLattice(Shape):
 
         rotations_list = []
 
-        for i in range(self._strut_number):
+        for i in range(self.strut_number):
             if np.all(self.strut_directions_cartesian[i] == default_direction) or np.all(self.strut_directions_cartesian[i] == -default_direction):
                 rotation_vector = np.zeros(3)
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))
@@ -138,7 +158,7 @@ class AbstractLattice(Shape):
         list_phases : list[Phase] = []
         list_periodic_phases : list[Phase] = []
 
-        for i in range(self._strut_number):
+        for i in range(self.strut_number):
             strut = Cylinder(
                 center=tuple(self.strut_centers[i]),
                 orientation=self.strut_rotations[i],
