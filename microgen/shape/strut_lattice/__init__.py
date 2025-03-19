@@ -1,6 +1,7 @@
 from .body_centered_cubic import BodyCenteredCubic
 from .cubic import Cubic
 from .cuboctahedron import Cuboctahedron
+from .custom_lattice import CustomLattice
 from .diamond import Diamond
 from .face_centered_cubic import FaceCenteredCubic
 from .octahedron import Octahedron
@@ -13,6 +14,7 @@ __all__ = [
     "BodyCenteredCubic",
     "Cubic",
     "Cuboctahedron",
+    "CustomLattice",
     "Diamond",
     "FaceCenteredCubic",
     "Kelvin",
