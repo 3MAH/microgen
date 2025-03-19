@@ -18,4 +18,4 @@ class CustomLattice(AbstractLattice):
         return self.base_vertices
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
-        return self._strut_vertex_pairs
+        return self.strut_vertex_pairs
