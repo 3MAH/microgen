@@ -6,7 +6,8 @@ from .diamond import Diamond
 from .face_centered_cubic import FaceCenteredCubic
 from .octahedron import Octahedron
 from .octet_truss import OctetTruss
-from .kelvin import Kelvin
+from .truncated_cuboctahedron import TruncatedCuboctahedron
+from .truncated_cube import TruncatedCube
 from .rhombic_dodecahedron import RhombicDodecahedron
 from .truncated_octahedron import TruncatedOctahedron
 
@@ -17,9 +18,10 @@ __all__ = [
     "CustomLattice",
     "Diamond",
     "FaceCenteredCubic",
-    "Kelvin",
+    "TruncatedCuboctahedron",
     "Octahedron",
     "OctetTruss",
+    "TruncatedCube",
     "RhombicDodecahedron",
-    "TruncatedOctahedron"
+    "TruncatedOctahedron",
 ]

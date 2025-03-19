@@ -25,21 +25,23 @@ if TYPE_CHECKING:
 
 ##TODO add option to initialize lattice by giving density instead of strut radius
 
+
 class AbstractLattice(Shape):
     """
     Abstract Class to create strut-based lattice
     """
-    
+
     _UNIT_CUBE_SIZE = 1.0
 
-    def __init__(self,
-                 strut_radius: float = 0.05,
-                 strut_heights: Optional[Union[float, List[float]]] = None,
-                 base_vertices: Optional[npt.NDArray[np.float64]] = None,
-                 strut_vertex_pairs: Optional[npt.NDArray[np.int64]] = None,
-                 cell_size: float = 1.0,
-                 **kwargs: Vector3DType,
-                 ) -> None:
+    def __init__(
+        self,
+        strut_radius: float = 0.05,
+        strut_heights: Optional[Union[float, List[float]]] = None,
+        base_vertices: Optional[npt.NDArray[np.float64]] = None,
+        strut_vertex_pairs: Optional[npt.NDArray[np.int64]] = None,
+        cell_size: float = 1.0,
+        **kwargs: Vector3DType,
+    ) -> None:
         """
         Abstract Class to create strut-based lattice.
         The lattice will be created in a cube which size can be modified with 'cell_size'.
@@ -64,7 +66,7 @@ class AbstractLattice(Shape):
         self.strut_centers = self._compute_strut_centers()
         self.strut_directions_cartesian = self._compute_strut_directions()
         self.strut_rotations = self._compute_rotations()
-        
+
         self._validate_inputs()
 
     @property
@@ -106,8 +108,13 @@ class AbstractLattice(Shape):
 
         if self._strut_heights is None:
             raise NotImplementedError("strut_heights must be defined in a subclass.")
-        if isinstance(self._strut_heights, list) and len(self._strut_heights) != self.strut_number:
-            raise ValueError(f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided.")
+        if (
+            isinstance(self._strut_heights, list)
+            and len(self._strut_heights) != self.strut_number
+        ):
+            raise ValueError(
+                f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided."
+            )
 
         attributes = {
             "strut_centers": self.strut_centers,
@@ -115,7 +122,9 @@ class AbstractLattice(Shape):
         }
         for name, array in attributes.items():
             if len(array) != self.strut_number:
-                raise ValueError(f"{name} must contain {self.strut_number} values, but {len(array)} were provided.")
+                raise ValueError(
+                    f"{name} must contain {self.strut_number} values, but {len(array)} were provided."
+                )
 
     @property
     def strut_number(self) -> int:
@@ -131,7 +140,7 @@ class AbstractLattice(Shape):
             return [self._strut_heights * self.cell_size] * self.strut_number
 
         return self._strut_heights * self.cell_size
-    
+
     def _compute_rotations(self) -> List[Rotation]:
         """Computes euler angles from default (1.0, 0.0, 0.0) oriented cylinder for all struts in the lattice"""
 
@@ -140,23 +149,26 @@ class AbstractLattice(Shape):
         rotations_list = []
 
         for i in range(self.strut_number):
-            if np.all(self.strut_directions_cartesian[i] == default_direction) or np.all(self.strut_directions_cartesian[i] == -default_direction):
+            if np.all(
+                self.strut_directions_cartesian[i] == default_direction
+            ) or np.all(self.strut_directions_cartesian[i] == -default_direction):
                 rotation_vector = np.zeros(3)
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))
             else:
                 axis = np.cross(default_direction, self.strut_directions_cartesian[i])
                 axis /= np.linalg.norm(axis)
-                angle = np.arccos(np.dot(default_direction, self.strut_directions_cartesian[i]))
+                angle = np.arccos(
+                    np.dot(default_direction, self.strut_directions_cartesian[i])
+                )
                 rotation_vector = angle * axis
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))
 
         return rotations_list
 
-
     def generate(self, **_: KwargsGenerateType) -> cq.Compound:
         """Generate a strut-based lattice CAD shape using the given parameters."""
-        list_phases : list[Phase] = []
-        list_periodic_phases : list[Phase] = []
+        list_phases: list[Phase] = []
+        list_periodic_phases: list[Phase] = []
 
         for i in range(self.strut_number):
             strut = Cylinder(
@@ -171,29 +183,41 @@ class AbstractLattice(Shape):
             periodic_phase = periodic(phase=phase_strut, rve=self.rve)
             list_periodic_phases.append(periodic_phase)
 
-        lattice = fuse_shapes([phase.shape for phase in list_periodic_phases], retain_edges=False)
+        lattice = fuse_shapes(
+            [phase.shape for phase in list_periodic_phases], retain_edges=False
+        )
 
-        bounding_box = Box(center=self.center, dim_x=self.cell_size, dim_y=self.cell_size, dim_z=self.cell_size).generate()
+        bounding_box = Box(
+            center=self.center,
+            dim_x=self.cell_size,
+            dim_y=self.cell_size,
+            dim_z=self.cell_size,
+        ).generate()
 
         cut_lattice = bounding_box.intersect(lattice)
 
         return cut_lattice
-    
-    
+
     @property
     def volume(self) -> float:
         volume = self.generate().Volume()
 
         return volume
-    
-    
-    def generate_vtk(self, size: float = 0.02, order: int = 1, periodic: bool = True,**_: KwargsGenerateType) -> pv.PolyData:
+
+    def generate_vtk(
+        self,
+        size: float = 0.02,
+        order: int = 1,
+        periodic: bool = True,
+        **_: KwargsGenerateType,
+    ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
         cad_lattice = self.generate()
         list_phases = [Phase(cad_lattice)]
-        
-        with (NamedTemporaryFile(suffix=".step", delete=False) as cad_step_file,
-              NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
+
+        with (
+            NamedTemporaryFile(suffix=".step", delete=False) as cad_step_file,
+            NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
         ):
             cq.exporters.export(cad_lattice, cad_step_file.name)
             if periodic:
@@ -204,17 +228,17 @@ class AbstractLattice(Shape):
                     size=size,
                     order=order,
                     output_file=mesh_file.name,
-                    )
+                )
             mesh(
                 mesh_file=cad_step_file.name,
                 list_phases=list_phases,
                 size=size,
                 order=order,
-                output_file=mesh_file.name
+                output_file=mesh_file.name,
             )
-            
+
             vtk_lattice = pv.read(mesh_file.name).extract_surface()
-            
+
         # Solve compatibility issues of NamedTemporaryFiles with Windows
         trash_files_list = [
             cad_step_file.name,
@@ -222,17 +246,16 @@ class AbstractLattice(Shape):
         ]
         for file in trash_files_list:
             Path(file).unlink()
-        
+
         return vtk_lattice
-        
-        
-    def generateVtk( # noqa: N802
+
+    def generateVtk(  # noqa: N802
         self,
         size: float = 0.02,
         order: int = 1,
         periodic: bool = True,
         **kwargs: KwargsGenerateType,
-        )-> pv.PolyData:
+    ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
             size=size,
