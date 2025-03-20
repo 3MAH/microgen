@@ -1,27 +1,30 @@
 from __future__ import annotations
+
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Union, Optional
-from tempfile import NamedTemporaryFile
 from pathlib import Path
-import numpy.typing as npt
-import numpy as np
-from scipy.spatial.transform import Rotation
+from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING, List, Optional, Union
+
 import cadquery as cq
+import numpy as np
+import numpy.typing as npt
 import pyvista as pv
-from microgen.shape import Shape
+from scipy.spatial.transform import Rotation
+
 from microgen import (
-    Rve,
-    Phase,
-    Cylinder,
     Box,
+    Cylinder,
+    Phase,
+    Rve,
     fuse_shapes,
-    periodic,
     mesh,
     mesh_periodic,
+    periodic,
 )
+from microgen.shape import Shape
 
 if TYPE_CHECKING:
-    from microgen.shape import Vector3DType, KwargsGenerateType
+    from microgen.shape import KwargsGenerateType, Vector3DType
 
 ##TODO add option to initialize lattice by giving density instead of strut radius
 
@@ -115,16 +118,6 @@ class AbstractLattice(Shape):
             raise ValueError(
                 f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided."
             )
-
-        attributes = {
-            "strut_centers": self.strut_centers,
-            "strut_directions_cartesian": self.strut_directions_cartesian,
-        }
-        for name, array in attributes.items():
-            if len(array) != self.strut_number:
-                raise ValueError(
-                    f"{name} must contain {self.strut_number} values, but {len(array)} were provided."
-                )
 
     @property
     def strut_number(self) -> int:
