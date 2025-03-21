@@ -13,6 +13,7 @@ from scipy.spatial.transform import Rotation
 
 from microgen import (
     Box,
+    Capsule,
     Cylinder,
     Phase,
     Rve,
@@ -26,7 +27,8 @@ from microgen.shape import Shape
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
-##TODO add option to initialize lattice by giving density instead of strut radius
+# TODO add option to initialize lattice by giving density
+# instead of strut radius
 
 
 class AbstractLattice(Shape):
@@ -43,22 +45,31 @@ class AbstractLattice(Shape):
         base_vertices: Optional[npt.NDArray[np.float64]] = None,
         strut_vertex_pairs: Optional[npt.NDArray[np.int64]] = None,
         cell_size: float = 1.0,
+        strut_joints: bool = False,
         **kwargs: Vector3DType,
     ) -> None:
         """
         Abstract Class to create strut-based lattice.
-        The lattice will be created in a cube which size can be modified with 'cell_size'.
+        The lattice will be created in a cube which size can be
+        modified with 'cell_size'.
 
         :param strut_radius: radius of the struts
-        :param strut_height: either the unique height of all struts (float), or a list of strut heights (List[float]). Enter value for a size 1 rve.
-        :param base_vertices: array of lattice vertices, considering it is created in a cubic RVE of size 1 and centered on the origin
-        :param strut_vertex_pairs: array of strut vertex pairs that define how vertices are connected by the struts
-        :param cell_size: size of the cubic rve in which the lattice cell is enclosed
+        :param strut_height: either the unique height of all struts (float),
+        or a list of strut heights (List[float]). Enter value for a size 1 rve.
+        :param base_vertices: array of lattice vertices, considering it is
+        created in a cubic RVE of size 1 and centered on the origin
+        :param strut_vertex_pairs: array of strut vertex pairs that define how
+        vertices are connected by the struts
+        :param cell_size: size of the cubic rve in which the lattice
+        cell is enclosed
+        :param strut_caps: option to add spherical caps to struts to
+        better manage strut joints
         """
         super().__init__(**kwargs)
 
         self.strut_radius = strut_radius
         self.cell_size = cell_size
+        self.strut_joints = strut_joints
         self._strut_heights = strut_heights
         self._base_vertices = base_vertices
         self._strut_vertex_pairs = strut_vertex_pairs
@@ -74,12 +85,15 @@ class AbstractLattice(Shape):
 
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
+        """Property: coordinates of the vertices for a structure
+        centered at the origin and enclosed in a size 1 cubic rve"""
         if self._base_vertices is not None:
             return self._base_vertices
         return self._generate_base_vertices()
 
     @property
     def strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
+        """Property: pairs of vertex indices forming a strut"""
         if self._strut_vertex_pairs is not None:
             return self._strut_vertex_pairs
         return self._generate_strut_vertex_pairs()
@@ -110,7 +124,7 @@ class AbstractLattice(Shape):
         """Checks coherence of inputs."""
 
         if self._strut_heights is None:
-            raise NotImplementedError("strut_heights must be defined in a subclass.")
+            raise NotImplementedError("strut_heights must be defined by the subclass")
         if (
             isinstance(self._strut_heights, list)
             and len(self._strut_heights) != self.strut_number
@@ -135,7 +149,7 @@ class AbstractLattice(Shape):
         return self._strut_heights * self.cell_size
 
     def _compute_rotations(self) -> List[Rotation]:
-        """Computes euler angles from default (1.0, 0.0, 0.0) oriented cylinder for all struts in the lattice"""
+        """Computes euler angles from default (1.0, 0.0, 0.0) oriented Capsule for all struts in the lattice"""
 
         default_direction = np.array([1.0, 0.0, 0.0])
 
@@ -164,12 +178,21 @@ class AbstractLattice(Shape):
         list_periodic_phases: list[Phase] = []
 
         for i in range(self.strut_number):
-            strut = Cylinder(
-                center=tuple(self.strut_centers[i]),
-                orientation=self.strut_rotations[i],
-                height=self.strut_heights[i],
-                radius=self.strut_radius,
-            )
+            strut: Union[Capsule, Cylinder]
+            if not self.strut_joints:
+                strut = Cylinder(
+                    center=tuple(self.strut_centers[i]),
+                    orientation=self.strut_rotations[i],
+                    height=self.strut_heights[i],
+                    radius=self.strut_radius,
+                )
+            else:
+                strut = Capsule(
+                    center=tuple(self.strut_centers[i]),
+                    orientation=self.strut_rotations[i],
+                    height=self.strut_heights[i],
+                    radius=self.strut_radius,
+                )
             list_phases.append(Phase(strut.generate()))
 
         for phase_strut in list_phases:
