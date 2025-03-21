@@ -89,7 +89,7 @@ auxetic_lattice = CustomLattice(
     strut_heights=strut_heights,
     base_vertices=base_vertices,
     strut_vertex_pairs=strut_vertex_pairs,
-    strut_caps=True,
+    strut_joints=True,
 )
 
 shape = auxetic_lattice.generate()
