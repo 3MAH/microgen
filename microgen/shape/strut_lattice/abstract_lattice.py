@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
@@ -25,6 +25,8 @@ from microgen import (
 from microgen.shape import Shape
 
 if TYPE_CHECKING:
+    from scipy.spatial.transform import Rotation
+
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 # TODO add option to initialize lattice by giving density
@@ -41,12 +43,12 @@ class AbstractLattice(Shape):
     def __init__(
         self,
         strut_radius: float = 0.05,
-        strut_heights: Optional[Union[float, List[float]]] = None,
-        base_vertices: Optional[npt.NDArray[np.float64]] = None,
-        strut_vertex_pairs: Optional[npt.NDArray[np.int64]] = None,
+        strut_heights: float | list[float] | None = None,
+        base_vertices: npt.NDArray[np.float64] | None = None,
+        strut_vertex_pairs: npt.NDArray[np.int64] | None = None,
         cell_size: float = 1.0,
         strut_joints: bool = False,
-        **kwargs: Vector3DType,
+        **kwargs: Vector3DType | Rotation,
     ) -> None:
         """
         Abstract Class to create strut-based lattice.
@@ -55,7 +57,7 @@ class AbstractLattice(Shape):
 
         :param strut_radius: radius of the struts
         :param strut_height: either the unique height of all struts (float),
-        or a list of strut heights (List[float]). Enter value for a size 1 rve.
+        or a list of strut heights (list[float]). Enter value for a size 1 rve.
         :param base_vertices: array of lattice vertices, considering it is
         created in a cubic RVE of size 1 and centered on the origin
         :param strut_vertex_pairs: array of strut vertex pairs that define how
@@ -82,6 +84,9 @@ class AbstractLattice(Shape):
         self.strut_rotations = self._compute_rotations()
 
         self._validate_inputs()
+
+        self.plotter = pv.Plotter()  # debug
+        self.plotter.add_axes()  # debug
 
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
@@ -148,7 +153,7 @@ class AbstractLattice(Shape):
 
         return self._strut_heights * self.cell_size
 
-    def _compute_rotations(self) -> List[Rotation]:
+    def _compute_rotations(self) -> list[Rotation]:
         """Computes euler angles from default (1.0, 0.0, 0.0) oriented Capsule for all struts in the lattice"""
 
         default_direction = np.array([1.0, 0.0, 0.0])
@@ -172,13 +177,16 @@ class AbstractLattice(Shape):
 
         return rotations_list
 
-    def generate(self, **_: KwargsGenerateType) -> cq.Compound:
+    def generate(self, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
         list_phases: list[Phase] = []
         list_periodic_phases: list[Phase] = []
 
+        list_shapes = []
+
         for i in range(self.strut_number):
-            strut: Union[Capsule, Cylinder]
+            strut: Capsule | Cylinder
+
             if not self.strut_joints:
                 strut = Cylinder(
                     center=tuple(self.strut_centers[i]),
@@ -193,14 +201,28 @@ class AbstractLattice(Shape):
                     height=self.strut_heights[i],
                     radius=self.strut_radius,
                 )
-            list_phases.append(Phase(strut.generate()))
+
+            self.plotter.add_mesh(
+                strut.generate().toVtkPolyData(),
+                color="blue",
+                opacity=0.5,
+            )  # debug
+            shape = strut.generate()
+            list_shapes.append(shape)  # debug
+            list_phases.append(Phase(shape))
+
+        lattice = fuse_shapes(list_shapes, retain_edges=True)  # debug
+        self.plotter.add_mesh(
+            lattice.toVtkPolyData(), color="red", opacity=0.5
+        )  # debug
 
         for phase_strut in list_phases:
             periodic_phase = periodic(phase=phase_strut, rve=self.rve)
             list_periodic_phases.append(periodic_phase)
 
         lattice = fuse_shapes(
-            [phase.shape for phase in list_periodic_phases], retain_edges=False
+            [phase.shape for phase in list_periodic_phases],
+            retain_edges=False,
         )
 
         bounding_box = Box(
@@ -211,6 +233,8 @@ class AbstractLattice(Shape):
         ).generate()
 
         cut_lattice = bounding_box.intersect(lattice)
+
+        self.plotter.show()  # debug
 
         return cut_lattice
 
