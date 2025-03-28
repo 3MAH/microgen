@@ -958,6 +958,91 @@ class Infill(Tpms):
         return grid
 
 
+class Sweep(Tpms):
+    """Generate a TPMS that swwps inside a given object."""
+
+    def __init__(  # noqa: PLR0913
+        self: Sweep,
+        obj: pv.PolyData,
+        surface_function: Field,
+        offset: float | OffsetGrading | Field | None = None,
+        cell_size: float | Sequence[float] | npt.NDArray[np.float64] | None = None,
+        repeat_cell: int | Sequence[int] | npt.NDArray[np.int8] | None = None,
+        phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
+        resolution: int = 20,
+        density: float | None = None,
+    ) -> None:
+        r"""Initialize the Infill object.
+
+        :param obj: object in which the infill is generated. Normals must be oriented\
+                towards the outside of the object. Use the `flip_normals` method if\
+                     needed.
+        :param surface_function: tpms function or custom function (f(x, y, z) = 0)
+        :param offset: offset of the isosurface to generate thickness
+        :param cell_size: float or list of float for each dimension to set\
+              unit cell dimensions
+        :param repeat_cell: integer or list of integers to repeat the geometry\
+              in each dimension
+        :param phase_shift: phase shift of the tpms function \
+            $f(x + \\phi_x, y + \\phi_y, z + \\phi_z) = 0$
+        :param resolution: unit cell resolution of the grid to compute tpms scalar\
+              fields
+        :param density: density percentage of the generated geometry (0 < density < 1) \
+            If density is given, the offset is automatically computed to fit the\
+                  density (performance is slower than when using the offset)
+        """
+        self.obj = obj
+        bounds = np.array(obj.bounds)
+
+        margin_factor = 1.001  # to avoid the object surface that can create issues
+        obj_dim = margin_factor * (bounds[1::2] - bounds[::2])  # [dim_x, dim_y, dim_z]
+
+        if cell_size is not None and repeat_cell is not None:
+            err_msg = (
+                "cell_size and repeat_cell cannot be given at the same time, "
+                "one is computed from the other."
+            )
+            raise ValueError(err_msg)
+
+        if cell_size is not None:
+            repeat_cell = np.round(obj_dim / cell_size).astype(int)
+        elif repeat_cell is not None:
+            cell_size = obj_dim / repeat_cell
+
+        if np.any(cell_size > obj_dim):
+            err_msg = (
+                "cell_size must be lower than the object dimensions. "
+                f"Given: {cell_size}, Object dimensions: {obj_dim}"
+            )
+            raise ValueError(err_msg)
+
+        self._init_cell_parameters(cell_size, repeat_cell)
+        super().__init__(
+            surface_function=surface_function,
+            offset=offset,
+            phase_shift=phase_shift,
+            cell_size=self.cell_size,
+            repeat_cell=self.repeat_cell,
+            resolution=resolution,
+            density=density,
+        )
+
+    def _create_grid(
+        self: Infill,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+    ) -> pv.StructuredGrid:
+        grid = super()._create_grid(
+            x + self.obj.center[0],
+            y + self.obj.center[1],
+            z + self.obj.center[2],
+        )
+        grid = grid.clip_surface(self.obj)
+        logging.info("Grid resolution: %s points", grid.n_points)
+        return grid
+
+
 class ShellCreationError(Exception):
     """Error raised when the shell creation fails."""
 
