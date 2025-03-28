@@ -139,7 +139,7 @@ if __name__ == "__main__":
                 "Mesh/mmg",
                 "Mesh/mmg-voro",
                 "Mesh/remesh",
-                "TPMS/gyroid/gyroid_step_remesh.py",
+                "Mesh/gyroid",
             ]
         )
     EXCLUDE.append("Fibers")
