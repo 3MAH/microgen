@@ -12,15 +12,15 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
-          auto-update-conda: true          
+          auto-update-conda: true
 
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
-          conda update --all     
-          conda clean --all          
+          conda update --all
+          conda clean --all
           conda install conda-build anaconda-client conda-verify
-          conda config --set anaconda_upload no          
+          conda config --set anaconda_upload no
 
       - name: Build Package
         shell: bash -l {0}
