@@ -134,7 +134,14 @@ if __name__ == "__main__":
 
     EXCLUDE = parser.parse_args().exclude
     if parser.parse_args().no_mmg:
-        EXCLUDE.extend(["Mesh/mmg", "Mesh/mmg-voro", "Mesh/remesh"])
+        EXCLUDE.extend(
+            [
+                "Mesh/mmg",
+                "Mesh/mmg-voro",
+                "Mesh/remesh",
+                "TPMS/gyroid/gyroid_step_remesh.py",
+            ]
+        )
     EXCLUDE.append("Fibers")
     EXCLUDE = [str(PARENT_DIR / exclude) for exclude in EXCLUDE]
 
