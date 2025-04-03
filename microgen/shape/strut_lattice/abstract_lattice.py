@@ -13,10 +13,10 @@ from scipy.spatial.transform import Rotation
 
 from microgen import (
     Box,
-    Capsule,
     Cylinder,
     Phase,
     Rve,
+    Sphere,
     fuse_shapes,
     mesh,
     mesh_periodic,
@@ -64,8 +64,8 @@ class AbstractLattice(Shape):
         vertices are connected by the struts
         :param cell_size: size of the cubic rve in which the lattice
         cell is enclosed
-        :param strut_caps: option to add spherical caps to struts to
-        better manage strut joints
+        :param strut_joints: option to add spherical joints at the vertices
+        to better manage strut junctions
         """
         super().__init__(**kwargs)
 
@@ -84,9 +84,6 @@ class AbstractLattice(Shape):
         self.strut_rotations = self._compute_rotations()
 
         self._validate_inputs()
-
-        self.plotter = pv.Plotter()  # debug
-        self.plotter.add_axes()  # debug
 
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
@@ -182,42 +179,26 @@ class AbstractLattice(Shape):
         list_phases: list[Phase] = []
         list_periodic_phases: list[Phase] = []
 
-        list_shapes = []
-
         for i in range(self.strut_number):
-            strut: Capsule | Cylinder
-
-            if not self.strut_joints:
-                strut = Cylinder(
-                    center=tuple(self.strut_centers[i]),
-                    orientation=self.strut_rotations[i],
-                    height=self.strut_heights[i],
-                    radius=self.strut_radius,
-                )
-            else:
-                strut = Capsule(
-                    center=tuple(self.strut_centers[i]),
-                    orientation=self.strut_rotations[i],
-                    height=self.strut_heights[i],
-                    radius=self.strut_radius,
-                )
-
-            self.plotter.add_mesh(
-                strut.generate().toVtkPolyData(),
-                color="blue",
-                opacity=0.5,
-            )  # debug
+            strut = Cylinder(
+                center=tuple(self.strut_centers[i]),
+                orientation=self.strut_rotations[i],
+                height=self.strut_heights[i],
+                radius=self.strut_radius,
+            )
             shape = strut.generate()
-            list_shapes.append(shape)  # debug
             list_phases.append(Phase(shape))
+        if self.strut_joints:
+            for vertex in self.vertices:
+                joint = Sphere(
+                    center=tuple(vertex),
+                    radius=self.strut_radius,
+                )
+                shape = joint.generate()
+                list_phases.append(Phase(shape))
 
-        lattice = fuse_shapes(list_shapes, retain_edges=True)  # debug
-        self.plotter.add_mesh(
-            lattice.toVtkPolyData(), color="red", opacity=0.5
-        )  # debug
-
-        for phase_strut in list_phases:
-            periodic_phase = periodic(phase=phase_strut, rve=self.rve)
+        for phase in list_phases:
+            periodic_phase = periodic(phase=phase, rve=self.rve)
             list_periodic_phases.append(periodic_phase)
 
         lattice = fuse_shapes(
@@ -233,8 +214,6 @@ class AbstractLattice(Shape):
         ).generate()
 
         cut_lattice = bounding_box.intersect(lattice)
-
-        self.plotter.show()  # debug
 
         return cut_lattice
 
