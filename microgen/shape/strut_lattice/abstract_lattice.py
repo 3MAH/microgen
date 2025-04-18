@@ -20,7 +20,7 @@ from microgen import (
     fuse_shapes,
     mesh,
     mesh_periodic,
-    periodic,
+    periodic_split_and_translate,
 )
 from microgen.shape import Shape
 
@@ -200,7 +200,7 @@ class AbstractLattice(Shape):
                 list_phases.append(Phase(shape))
 
         for phase in list_phases:
-            periodic_phase = periodic(phase=phase, rve=self.rve)
+            periodic_phase = periodic_split_and_translate(phase=phase, rve=self.rve)
             list_periodic_phases.append(periodic_phase)
 
         lattice = fuse_shapes(
@@ -210,9 +210,7 @@ class AbstractLattice(Shape):
 
         bounding_box = Box(
             center=self.center,
-            dim_x=self.cell_size,
-            dim_y=self.cell_size,
-            dim_z=self.cell_size,
+            dim=(self.cell_size, self.cell_size, self.cell_size),
         ).generate()
 
         cut_lattice = bounding_box.intersect(lattice)
