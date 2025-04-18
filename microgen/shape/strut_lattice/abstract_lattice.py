@@ -85,6 +85,8 @@ class AbstractLattice(Shape):
 
         self._validate_inputs()
 
+        self.cad_shape = self.generate()
+
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
         """Property: coordinates of the vertices for a structure
@@ -219,7 +221,7 @@ class AbstractLattice(Shape):
 
     @property
     def volume(self) -> float:
-        volume = self.generate().Volume()
+        volume = self.cad_shape.Volume()
 
         return volume
 
@@ -231,7 +233,7 @@ class AbstractLattice(Shape):
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
-        cad_lattice = self.generate()
+        cad_lattice = self.cad_shape
         list_phases = [Phase(cad_lattice)]
 
         with (
