@@ -153,7 +153,7 @@ class AbstractLattice(Shape):
         return self._strut_heights * self.cell_size
 
     def _compute_rotations(self) -> list[Rotation]:
-        """Computes euler angles from default (1.0, 0.0, 0.0) oriented Capsule for all struts in the lattice"""
+        """Computes euler angles from default (1.0, 0.0, 0.0) oriented Cylinder for all struts in the lattice"""
 
         default_direction = np.array([1.0, 0.0, 0.0])
 
