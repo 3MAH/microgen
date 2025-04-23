@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pyvista as pv
 
-from microgen.shape.strut_lattice import (
+from microgen import (
     BodyCenteredCubic,
     Cubic,
     Cuboctahedron,

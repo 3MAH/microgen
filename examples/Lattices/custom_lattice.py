@@ -4,7 +4,7 @@ from pathlib import Path
 import cadquery as cq
 import numpy as np
 
-from microgen.shape.strut_lattice import CustomLattice
+from microgen import CustomLattice
 
 # Generate custom auxetic strut lattice based on
 # DOI:10.1007/s00707-019-02387-x and
