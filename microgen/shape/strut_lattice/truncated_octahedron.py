@@ -5,7 +5,6 @@ Truncated Octahedron (:mod:`microgen.shape.strut_lattice.truncated_octahedron`)
 ===============================================================================
 """
 
-import math as m
 from itertools import permutations, product
 
 import numpy as np
@@ -29,7 +28,7 @@ class TruncatedOctahedron(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(2.0) / 4.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(2.0) / 4.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         base_vertices = set()
@@ -47,7 +46,7 @@ class TruncatedOctahedron(AbstractLattice):
         tree = KDTree(self.base_vertices)
         tolerance = 1e-5
         pairs = set()
-        connection_distance = m.sqrt(2.0) / 4.0 + tolerance
+        connection_distance = np.sqrt(2.0) / 4.0 + tolerance
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, connection_distance)
             for j in indices:
