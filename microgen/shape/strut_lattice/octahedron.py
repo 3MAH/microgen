@@ -5,8 +5,6 @@ Octahedron (:mod:`microgen.shape.strut_lattice.octahedron`)
 ===========================================================
 """
 
-import math as m
-
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
@@ -28,7 +26,7 @@ class Octahedron(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(2.0) / 2.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(2.0) / 2.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         return np.array(

@@ -5,7 +5,6 @@ Cuboctahedron (:mod:`microgen.shape.strut_lattice.cuboctahedron`)
 =================================================================
 """
 
-import math as m
 from itertools import product
 
 import numpy as np
@@ -29,7 +28,7 @@ class Cuboctahedron(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(2.0) / 2.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(2.0) / 2.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = np.array(
@@ -54,7 +53,7 @@ class Cuboctahedron(AbstractLattice):
         tolerance = 1e-5
         for i, indices in enumerate(
             tree.query_ball_point(
-                self.base_vertices, r=self._UNIT_CUBE_SIZE / m.sqrt(2.0) + tolerance
+                self.base_vertices, r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + tolerance
             )
         ):
             for j in indices:

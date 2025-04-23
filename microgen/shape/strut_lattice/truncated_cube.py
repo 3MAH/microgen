@@ -5,7 +5,6 @@ Truncated Cube (:mod:`microgen.shape.strut_lattice.truncated_cube`)
 ===================================================================
 """
 
-import math as m
 from itertools import product
 
 import numpy as np
@@ -29,12 +28,12 @@ class TruncatedCube(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(2) - 1.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(2) - 1.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         values = [
-            -self._UNIT_CUBE_SIZE / 2.0 * (m.sqrt(2) - 1.0),
-            self._UNIT_CUBE_SIZE / 2.0 * (m.sqrt(2) - 1.0),
+            -self._UNIT_CUBE_SIZE / 2.0 * (np.sqrt(2) - 1.0),
+            self._UNIT_CUBE_SIZE / 2.0 * (np.sqrt(2) - 1.0),
             -self._UNIT_CUBE_SIZE / 2.0,
             self._UNIT_CUBE_SIZE / 2.0,
         ]
@@ -53,7 +52,7 @@ class TruncatedCube(AbstractLattice):
         tree = KDTree(self.base_vertices)
         pairs = set()
         tolerance = 1e-5
-        distance = m.sqrt(2) - 1.0 + tolerance
+        distance = np.sqrt(2) - 1.0 + tolerance
 
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, distance)

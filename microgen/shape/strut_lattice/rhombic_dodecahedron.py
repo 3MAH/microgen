@@ -5,7 +5,6 @@ Rhombic Dodecahedron (:mod:`microgen.shape.strut_lattice.rhombic_dodecahedron`)
 ===============================================================================
 """
 
-import math as m
 from itertools import product
 
 import numpy as np
@@ -29,7 +28,7 @@ class RhombicDodecahedron(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(3.0) / 4.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(3.0) / 4.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         outer_cube_vertices = list(
@@ -50,6 +49,6 @@ class RhombicDodecahedron(AbstractLattice):
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self.base_vertices)
         tolerance = 1e-5
-        target_distance = m.sqrt(3.0) / 4.0 + tolerance
+        target_distance = np.sqrt(3.0) / 4.0 + tolerance
         pairs = set(tree.query_pairs(r=target_distance))
         return np.array(list(pairs))

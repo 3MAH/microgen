@@ -5,7 +5,6 @@ Face Centered Cubic (:mod:`microgen.shape.strut_lattice.face_centered_cubic`)
 =============================================================================
 """
 
-import math as m
 from itertools import product
 from typing import List
 
@@ -29,7 +28,7 @@ class FaceCenteredCubic(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(2.0) / 2.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(2.0) / 2.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = list(
@@ -44,7 +43,7 @@ class FaceCenteredCubic(AbstractLattice):
 
         return np.array(cube_vertices + face_centers)
 
-    def _generate_face_center_to_cube_vertices_dict(self) -> dict[int : List[int]]:
+    def _generate_face_center_to_cube_vertices_dict(self) -> dict[int, List[int]]:
         """
         Dynamically generates a dictionary associating the indices of the face centers with the indices of the cube vertices.
         """

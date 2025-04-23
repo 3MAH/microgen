@@ -5,7 +5,6 @@ Rhombic Cuboctahedron (:mod:`microgen.shape.strut_lattice.rhombic_cuboctahedron`
 =================================================================================
 """
 
-import math as m
 from itertools import permutations, product
 
 import numpy as np
@@ -29,7 +28,7 @@ class RhombicCuboctahedron(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=m.sqrt(2.0) - 1.0)
+        super().__init__(*args, **kwargs, strut_heights=np.sqrt(2.0) - 1.0)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         permutations_set = set(
@@ -49,7 +48,7 @@ class RhombicCuboctahedron(AbstractLattice):
         tree = KDTree(self.base_vertices)
         pairs = set()
         tolerance = 1e-5
-        distance = m.sqrt(2) - 1.0 + tolerance
+        distance = np.sqrt(2) - 1.0 + tolerance
 
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, distance)
