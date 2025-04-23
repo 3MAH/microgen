@@ -1,3 +1,22 @@
+"""Strut-based lattice structures.
+
+========================================
+Strut Lattice (:mod:`microgen.shape.strut_lattice`)
+========================================
+
+.. jupyter-execute::
+   :hide-code:
+
+   import pyvista
+   pyvista.set_jupyter_backend('static')
+   pyvista.global_theme.background = 'white'
+   pyvista.global_theme.window_size = [600, 400]
+   pyvista.global_theme.axes.show = False
+   pyvista.global_theme.smooth_shading = True
+   pyvista.global_theme.split_sharp_edges = True
+
+"""
+
 from .abstract_lattice import AbstractLattice
 from .body_centered_cubic import BodyCenteredCubic
 from .cubic import Cubic
