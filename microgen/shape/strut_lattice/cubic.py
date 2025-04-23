@@ -1,13 +1,30 @@
+"""Cubic.
+
+=================================================
+Cubic (:mod:`microgen.shape.strut_lattice.cubic`)
+=================================================
+"""
+
+from itertools import product
+
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
-from itertools import product
+
 from .abstract_lattice import AbstractLattice
 
 
 class Cubic(AbstractLattice):
     """
     Class to create a unit cubic lattice of given cell size and density or strut radius.
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.Cubic().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

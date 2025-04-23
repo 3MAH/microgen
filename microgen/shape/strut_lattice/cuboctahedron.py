@@ -1,14 +1,31 @@
-from .abstract_lattice import AbstractLattice
+"""Cuboctahedron.
+
+=================================================================
+Cuboctahedron (:mod:`microgen.shape.strut_lattice.cuboctahedron`)
+=================================================================
+"""
+
+import math as m
 from itertools import product
+
 import numpy as np
 import numpy.typing as npt
-import math as m
 from scipy.spatial import KDTree
+
+from .abstract_lattice import AbstractLattice
 
 
 class Cuboctahedron(AbstractLattice):
     """
     Class to create a unit cuboctahedron lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.Cuboctahedron().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

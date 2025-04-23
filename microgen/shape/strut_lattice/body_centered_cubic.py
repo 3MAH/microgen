@@ -1,13 +1,30 @@
-import numpy as np
-import numpy.typing as npt
+"""Body Centered Cubic.
+
+=============================================================================
+Body Centered Cubic (:mod:`microgen.shape.strut_lattice.body_centered_cubic`)
+=============================================================================
+"""
+
 import math as m
 from itertools import product
+
+import numpy as np
+import numpy.typing as npt
+
 from .abstract_lattice import AbstractLattice
 
 
 class BodyCenteredCubic(AbstractLattice):
     """
     Class to create a unit body-centered cubic lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.BodyCenteredCubic().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

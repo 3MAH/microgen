@@ -1,13 +1,30 @@
-from .abstract_lattice import AbstractLattice
+"""Octahedron.
+
+===========================================================
+Octahedron (:mod:`microgen.shape.strut_lattice.octahedron`)
+===========================================================
+"""
+
+import math as m
+
 import numpy as np
 import numpy.typing as npt
-import math as m
 from scipy.spatial import KDTree
+
+from .abstract_lattice import AbstractLattice
 
 
 class Octahedron(AbstractLattice):
     """
     Class to create a unit octahedron lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.Octahedron().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

@@ -1,14 +1,31 @@
-from .abstract_lattice import AbstractLattice
-import numpy as np
-import numpy.typing as npt
+"""Truncated Cube.
+
+===================================================================
+Truncated Cube (:mod:`microgen.shape.strut_lattice.truncated_cube`)
+===================================================================
+"""
+
 import math as m
 from itertools import product
+
+import numpy as np
+import numpy.typing as npt
 from scipy.spatial import KDTree
+
+from .abstract_lattice import AbstractLattice
 
 
 class TruncatedCube(AbstractLattice):
     """
     Class to create a unit truncated cubic lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.TruncatedCube().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

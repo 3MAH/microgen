@@ -1,14 +1,31 @@
-from .abstract_lattice import AbstractLattice
+"""Face Centered Cubic.
+
+=============================================================================
+Face Centered Cubic (:mod:`microgen.shape.strut_lattice.face_centered_cubic`)
+=============================================================================
+"""
+
+import math as m
 from itertools import product
+from typing import List
+
 import numpy as np
 import numpy.typing as npt
-import math as m
-from typing import List
+
+from .abstract_lattice import AbstractLattice
 
 
 class FaceCenteredCubic(AbstractLattice):
     """
     Class to create a unit face-centered cubic lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.FaceCenteredCubic().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

@@ -1,14 +1,31 @@
-from .abstract_lattice import AbstractLattice
+"""Diamond.
+
+=====================================================
+Diamond (:mod:`microgen.shape.strut_lattice.diamond`)
+=====================================================
+"""
+
+import math as m
+from itertools import product
+
 import numpy as np
 import numpy.typing as npt
-import math as m
 from scipy.spatial import KDTree
-from itertools import product
+
+from .abstract_lattice import AbstractLattice
 
 
 class Diamond(AbstractLattice):
     """
     Class to create a unit diamond lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.Diamond().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

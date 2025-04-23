@@ -1,14 +1,31 @@
-from .abstract_lattice import AbstractLattice
+"""Rhombic Cuboctahedron.
+
+=================================================================================
+Rhombic Cuboctahedron (:mod:`microgen.shape.strut_lattice.rhombic_cuboctahedron`)
+=================================================================================
+"""
+
+import math as m
+from itertools import permutations, product
+
 import numpy as np
 import numpy.typing as npt
-import math as m
-from itertools import product, permutations
 from scipy.spatial import KDTree
+
+from .abstract_lattice import AbstractLattice
 
 
 class RhombicCuboctahedron(AbstractLattice):
     """
     Class to create a unit rhombic cuboctahedron lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.RhombicCuboctahedron().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:

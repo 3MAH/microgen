@@ -1,3 +1,10 @@
+"""Abstract Lattice.
+
+=======================================================================
+Abstract Lattice (:mod:`microgen.shape.strut_lattice.abstract_lattice`)
+=======================================================================
+"""
+
 from __future__ import annotations
 
 from abc import abstractmethod

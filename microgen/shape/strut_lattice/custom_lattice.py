@@ -1,6 +1,14 @@
-from .abstract_lattice import AbstractLattice
+"""Custom Lattice.
+
+===================================================================
+Custom Lattice (:mod:`microgen.shape.strut_lattice.custom_lattice`)
+===================================================================
+"""
+
 import numpy as np
 import numpy.typing as npt
+
+from .abstract_lattice import AbstractLattice
 
 
 class CustomLattice(AbstractLattice):

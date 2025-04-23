@@ -1,14 +1,31 @@
-from .abstract_lattice import AbstractLattice
+"""Octet-truss.
+
+=============================================================
+Octet-truss (:mod:`microgen.shape.strut_lattice.octet_truss`)
+=============================================================
+"""
+
+import math as m
 from itertools import product
+
 import numpy as np
 import numpy.typing as npt
-import math as m
 from scipy.spatial import KDTree
+
+from .abstract_lattice import AbstractLattice
 
 
 class OctetTruss(AbstractLattice):
     """
     Class to create a unit octet-truss lattice of given cell size and density or strut radius
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       shape = microgen.OctetTruss().generate_vtk()
+       shape.plot(color='white')
     """
 
     def __init__(self, *args, **kwargs) -> None:
