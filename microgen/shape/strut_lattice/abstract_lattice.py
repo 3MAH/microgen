@@ -11,22 +11,17 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.spatial.transform import Rotation
 
-from microgen import (
-    Box,
-    Cylinder,
-    Phase,
-    Rve,
-    Sphere,
-    fuse_shapes,
-    mesh,
-    mesh_periodic,
-    periodic_split_and_translate,
-)
-from microgen.shape import Shape
+from ...mesh import mesh, mesh_periodic
+from ...operations import fuse_shapes
+from ...periodic import periodic_split_and_translate
+from ...phase import Phase
+from ...rve import Rve
+from ..box import Box
+from ..cylinder import Cylinder
+from ..shape import Shape
+from ..sphere import Sphere
 
 if TYPE_CHECKING:
-    from scipy.spatial.transform import Rotation
-
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 # TODO add option to initialize lattice by giving density
@@ -153,7 +148,8 @@ class AbstractLattice(Shape):
         return self._strut_heights * self.cell_size
 
     def _compute_rotations(self) -> list[Rotation]:
-        """Computes euler angles from default (1.0, 0.0, 0.0) oriented Cylinder for all struts in the lattice"""
+        """Computes rotation from default (1.0, 0.0, 0.0) oriented Cylinder
+        for all struts in the lattice using Scipy's Rotation object."""
 
         default_direction = np.array([1.0, 0.0, 0.0])
 
