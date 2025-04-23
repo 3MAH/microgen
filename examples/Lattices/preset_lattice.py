@@ -19,18 +19,18 @@ from microgen import (
 )
 
 preset_lattice_list = [
-    BodyCenteredCubic(strut_radius=0.1),
-    Cubic(strut_radius=0.1),
-    Cuboctahedron(strut_radius=0.1),
-    Diamond(strut_radius=0.1),
-    FaceCenteredCubic(strut_radius=0.1),
-    Octahedron(strut_radius=0.1),
-    OctetTruss(strut_radius=0.1),
-    RhombicCuboctahedron(strut_radius=0.1),
-    RhombicDodecahedron(strut_radius=0.1),
-    TruncatedCube(strut_radius=0.1),
-    TruncatedCuboctahedron(strut_radius=0.1),
-    TruncatedOctahedron(strut_radius=0.1),
+    BodyCenteredCubic(),
+    Cubic(),
+    Cuboctahedron(),
+    Diamond(),
+    FaceCenteredCubic(),
+    Octahedron(),
+    OctetTruss(),
+    RhombicCuboctahedron(),
+    RhombicDodecahedron(),
+    TruncatedCube(),
+    TruncatedCuboctahedron(),
+    TruncatedOctahedron(),
 ]
 
 meshes = []

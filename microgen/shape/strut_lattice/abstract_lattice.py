@@ -37,7 +37,7 @@ class AbstractLattice(Shape):
 
     def __init__(
         self,
-        strut_radius: float = 0.05,
+        strut_radius: float = 0.1,
         strut_heights: float | list[float] | None = None,
         base_vertices: npt.NDArray[np.float64] | None = None,
         strut_vertex_pairs: npt.NDArray[np.int64] | None = None,
