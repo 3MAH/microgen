@@ -73,9 +73,7 @@ class AbstractLattice(Shape):
         """
         kwargs.pop("strut_heights", None)
         if strut_radius is not None and density is not None:
-            err_msg = (
-                "strut radius and density cannot be given at the same time. Give only one."
-            )
+            err_msg = "strut radius and density cannot be given at the same time. Give only one."
             raise ValueError(err_msg)
 
         if strut_radius is None and density is None:
@@ -114,15 +112,19 @@ class AbstractLattice(Shape):
 
     def _compute_radius_to_fit_density(
         self,
-    ) -> float :
+    ) -> float:
         _generate_cad_find_radius = None
         """Compute the radius to fit the required density."""
+
         def calc_density(radius: float) -> float:
             self.strut_radius = radius
             _generate_cad_find_radius = self._generate_cad()
-            return (_generate_cad_find_radius.Volume()/(self.cell_size))
+            return _generate_cad_find_radius.Volume() / (self.cell_size)
 
-        computed_radius = root_scalar(lambda radius : float(calc_density(radius))-self.density, bracket=[10e-4,1]).root
+        computed_radius = root_scalar(
+            lambda radius: float(calc_density(radius)) - self.density,
+            bracket=[10e-4, 1],
+        ).root
 
         self._cad_shape = _generate_cad_find_radius
         return computed_radius
@@ -217,14 +219,14 @@ class AbstractLattice(Shape):
 
         return rotations_list
 
-    cad_shape = property(generate):
-
     def generate(self, **_: KwargsGenerateType) -> cq.Shape:
         if isinstance(self._cad_shape, cq.Shape):
             return self._cad_shape
 
-        self._cad_shape = _generate_cad()
+        self._cad_shape = self._generate_cad()
         return self._cad_shape
+
+    cad_shape = property(generate)
 
     def _generate_cad(self, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
