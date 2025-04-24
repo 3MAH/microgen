@@ -17,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 from scipy.spatial.transform import Rotation
+from scipy.optimize import root_scalar
 
 from ...mesh import mesh, mesh_periodic
 from ...operations import fuse_shapes
@@ -44,12 +45,13 @@ class AbstractLattice(Shape):
 
     def __init__(
         self,
-        strut_radius: float = 0.1,
+        strut_radius: float | None = None,
         strut_heights: float | list[float] | None = None,
         base_vertices: npt.NDArray[np.float64] | None = None,
         strut_vertex_pairs: npt.NDArray[np.int64] | None = None,
         cell_size: float = 1.0,
         strut_joints: bool = False,
+        density: float | None = None,
         **kwargs: Vector3DType | Rotation,
     ) -> None:
         """
@@ -70,6 +72,16 @@ class AbstractLattice(Shape):
         to better manage strut junctions
         """
         kwargs.pop("strut_heights", None)
+        if strut_radius is not None and density is not None:
+            err_msg = (
+                "strut radius and density cannot be given at the same time. Give only one."
+            )
+            raise ValueError(err_msg)
+
+        if strut_radius is None and density is None:
+            err_msg = "strut radius or density must be given. Give one of them."
+            raise ValueError(err_msg)
+
         super().__init__(**kwargs)
 
         self.strut_radius = strut_radius
@@ -87,8 +99,33 @@ class AbstractLattice(Shape):
         self.strut_rotations = self._compute_rotations()
 
         self._validate_inputs()
+        self._cad_shape = None        
 
-        self.cad_shape = self.generate()
+        if density is not None and not 0.0 < density <= 1.0:
+            err_msg = f"density must be between 0 and 1. Given: {density}"
+            raise ValueError(err_msg)
+
+        self.density = density
+        
+        if density is not None:
+            self.strut_radius = self._compute_radius_to_fit_density()
+        else:
+            self.strut_radius = strut_radius
+
+    def _compute_radius_to_fit_density(
+        self,
+    ) -> float :
+        _generate_cad_find_radius = None  
+        """Compute the radius to fit the required density."""
+        def calc_density(radius: float) -> float:
+            self.strut_radius = radius 
+            _generate_cad_find_radius = self._generate_cad()
+            return (_generate_cad_find_radius.Volume()/(self.cell_size))
+
+        computed_radius = root_scalar(lambda radius : float(calc_density(radius))-self.density, bracket=[10e-4,1]).root
+
+        self._cad_shape = _generate_cad_find_radius
+        return computed_radius
 
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
@@ -180,7 +217,16 @@ class AbstractLattice(Shape):
 
         return rotations_list
 
+    cad_shape = property(generate):
+
     def generate(self, **_: KwargsGenerateType) -> cq.Shape:
+        if isinstance(self._cad_shape, cq.Shape):
+            return self._cad_shape 
+
+        self._cad_shape = _generate_cad()
+        return self._cad_shape 
+
+    def _generate_cad(self, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
         list_phases: list[Phase] = []
         list_periodic_phases: list[Phase] = []
@@ -286,3 +332,5 @@ class AbstractLattice(Shape):
             periodic=periodic,
             **kwargs,
         )
+
+    
