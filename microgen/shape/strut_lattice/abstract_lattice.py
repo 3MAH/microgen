@@ -69,6 +69,7 @@ class AbstractLattice(Shape):
         :param strut_joints: option to add spherical joints at the vertices
         to better manage strut junctions
         """
+        kwargs.pop("strut_heights", None)
         super().__init__(**kwargs)
 
         self.strut_radius = strut_radius

@@ -27,7 +27,8 @@ class BodyCenteredCubic(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=np.sqrt(3.0) / 2.0)
+        kwargs.setdefault("strut_heights", np.sqrt(3.0) / 2.0)
+        super().__init__(*args, **kwargs)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         unit_cube_vertices = np.array(

@@ -30,7 +30,8 @@ class Diamond(AbstractLattice):
     def __init__(self, *args, **kwargs) -> None:
         self._tetrahedra_centers = self._generate_tetrahedra_centers()
         self._tetrahedra_vertices = self._generate_tetrahedra_vertices()
-        super().__init__(*args, **kwargs, strut_heights=np.sqrt(3.0) / 4.0)
+        kwargs.setdefault("strut_heights", np.sqrt(3.0) / 4.0)
+        super().__init__(*args, **kwargs)
 
     def _generate_tetrahedra_centers(self) -> npt.NDArray[np.float64]:
         candidates = np.array(

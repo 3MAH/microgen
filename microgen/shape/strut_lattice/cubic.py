@@ -28,7 +28,8 @@ class Cubic(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=self._UNIT_CUBE_SIZE)
+        kwargs.setdefault("strut_heights", self._UNIT_CUBE_SIZE)
+        super().__init__(*args, **kwargs)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         return np.array(

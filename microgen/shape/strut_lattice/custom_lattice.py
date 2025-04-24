@@ -23,11 +23,11 @@ class CustomLattice(AbstractLattice):
         *args,
         **kwargs,
     ) -> None:
+        kwargs["base_vertices"] = base_vertices
+        kwargs["strut_vertex_pairs"] = strut_vertex_pairs
         super().__init__(
             *args,
             **kwargs,
-            base_vertices=base_vertices,
-            strut_vertex_pairs=strut_vertex_pairs,
         )
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:

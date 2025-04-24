@@ -28,7 +28,8 @@ class TruncatedCuboctahedron(AbstractLattice):
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs, strut_heights=1 / (1.0 + 2.0 * np.sqrt(2)))
+        kwargs.setdefault("strut_heights", 1 / (1.0 + 2.0 * np.sqrt(2)))
+        super().__init__(*args, **kwargs)
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         values = [1, -(1 + np.sqrt(2)), -(1 + 2 * np.sqrt(2))]
