@@ -3,6 +3,7 @@
 import numpy as np
 from typing import Literal
 import pytest
+import cadquery as cq
 
 from microgen.shape.strut_lattice import (
     BodyCenteredCubic,
