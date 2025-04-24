@@ -16,8 +16,8 @@ import cadquery as cq
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
-from scipy.spatial.transform import Rotation
 from scipy.optimize import root_scalar
+from scipy.spatial.transform import Rotation
 
 from ...mesh import mesh, mesh_periodic
 from ...operations import fuse_shapes
@@ -31,9 +31,6 @@ from ..sphere import Sphere
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
-
-# TODO add option to initialize lattice by giving density
-# instead of strut radius
 
 
 class AbstractLattice(Shape):
