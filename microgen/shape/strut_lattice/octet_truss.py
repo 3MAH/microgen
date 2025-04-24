@@ -23,7 +23,7 @@ class OctetTruss(AbstractLattice):
 
        import microgen
 
-       shape = microgen.OctetTruss().generate_vtk()
+       shape = microgen.OctetTruss(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

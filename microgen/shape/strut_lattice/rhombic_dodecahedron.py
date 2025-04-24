@@ -23,7 +23,7 @@ class RhombicDodecahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.RhombicDodecahedron().generate_vtk()
+       shape = microgen.RhombicDodecahedron(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

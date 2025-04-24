@@ -23,7 +23,7 @@ class TruncatedOctahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.TruncatedOctahedron().generate_vtk()
+       shape = microgen.TruncatedOctahedron(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

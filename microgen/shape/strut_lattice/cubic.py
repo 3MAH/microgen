@@ -23,7 +23,7 @@ class Cubic(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Cubic().generate_vtk()
+       shape = microgen.Cubic(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

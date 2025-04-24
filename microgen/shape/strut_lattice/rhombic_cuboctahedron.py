@@ -23,7 +23,7 @@ class RhombicCuboctahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.RhombicCuboctahedron().generate_vtk()
+       shape = microgen.RhombicCuboctahedron(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

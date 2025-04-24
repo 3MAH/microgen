@@ -21,7 +21,7 @@ class Octahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Octahedron().generate_vtk()
+       shape = microgen.Octahedron(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

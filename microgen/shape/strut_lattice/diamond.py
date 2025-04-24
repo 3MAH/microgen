@@ -23,7 +23,7 @@ class Diamond(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Diamond().generate_vtk()
+       shape = microgen.Diamond(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 

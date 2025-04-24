@@ -22,7 +22,7 @@ class BodyCenteredCubic(AbstractLattice):
 
        import microgen
 
-       shape = microgen.BodyCenteredCubic().generate_vtk()
+       shape = microgen.BodyCenteredCubic(strut_radius=0.1).generate_vtk()
        shape.plot(color='white')
     """
 
