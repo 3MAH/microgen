@@ -99,14 +99,14 @@ class AbstractLattice(Shape):
         self.strut_rotations = self._compute_rotations()
 
         self._validate_inputs()
-        self._cad_shape = None        
+        self._cad_shape = None
 
         if density is not None and not 0.0 < density <= 1.0:
             err_msg = f"density must be between 0 and 1. Given: {density}"
             raise ValueError(err_msg)
 
         self.density = density
-        
+
         if density is not None:
             self.strut_radius = self._compute_radius_to_fit_density()
         else:
@@ -115,10 +115,10 @@ class AbstractLattice(Shape):
     def _compute_radius_to_fit_density(
         self,
     ) -> float :
-        _generate_cad_find_radius = None  
+        _generate_cad_find_radius = None
         """Compute the radius to fit the required density."""
         def calc_density(radius: float) -> float:
-            self.strut_radius = radius 
+            self.strut_radius = radius
             _generate_cad_find_radius = self._generate_cad()
             return (_generate_cad_find_radius.Volume()/(self.cell_size))
 
@@ -221,10 +221,10 @@ class AbstractLattice(Shape):
 
     def generate(self, **_: KwargsGenerateType) -> cq.Shape:
         if isinstance(self._cad_shape, cq.Shape):
-            return self._cad_shape 
+            return self._cad_shape
 
         self._cad_shape = _generate_cad()
-        return self._cad_shape 
+        return self._cad_shape
 
     def _generate_cad(self, **_: KwargsGenerateType) -> cq.Shape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
@@ -332,5 +332,3 @@ class AbstractLattice(Shape):
             periodic=periodic,
             **kwargs,
         )
-
-    
