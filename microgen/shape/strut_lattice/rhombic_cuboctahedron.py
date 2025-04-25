@@ -1,5 +1,4 @@
-"""Rhombic Cuboctahedron.
-
+"""
 =================================================================================
 Rhombic Cuboctahedron (:mod:`microgen.shape.strut_lattice.rhombic_cuboctahedron`)
 =================================================================================

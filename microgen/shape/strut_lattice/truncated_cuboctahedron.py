@@ -1,5 +1,4 @@
-"""Truncated Cuboctahedron.
-
+"""
 =====================================================================================
 Truncated Cuboctahedron (:mod:`microgen.shape.strut_lattice.truncated_cuboctahedron`)
 =====================================================================================

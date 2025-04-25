@@ -1,5 +1,4 @@
-"""Truncated Octahedron.
-
+"""
 ===============================================================================
 Truncated Octahedron (:mod:`microgen.shape.strut_lattice.truncated_octahedron`)
 ===============================================================================

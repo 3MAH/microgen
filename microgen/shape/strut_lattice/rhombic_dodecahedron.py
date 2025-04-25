@@ -1,5 +1,4 @@
-"""Rhombic Dodecahedron.
-
+"""
 ===============================================================================
 Rhombic Dodecahedron (:mod:`microgen.shape.strut_lattice.rhombic_dodecahedron`)
 ===============================================================================

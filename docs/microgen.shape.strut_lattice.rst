@@ -1,7 +1,7 @@
 .. _microgen.shape.strut_lattice:
 
-Strut Lattice Subpackage
-=========================
+microgen.shape.strut_lattice subpackage
+=======================================
 
 .. automodule:: microgen.shape.strut_lattice.abstract_lattice
    :members:
