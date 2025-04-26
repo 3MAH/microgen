@@ -33,20 +33,19 @@ preset_lattice_list = [
     TruncatedOctahedron(strut_radius=0.1),
 ]
 
-meshes = []
+meshes = pv.PolyData()
 
-i = 0
-n_col = 4
-n_row = np.ceil(len(preset_lattice_list) / n_col)
+N_COL = 4
+n_row = np.ceil(len(preset_lattice_list) / N_COL)
 for i, lattice in enumerate(preset_lattice_list):
-    i_x = i % n_col
-    i_y = i // n_col
+    i_x = i % N_COL
+    i_y = i // N_COL
     mesh = lattice.generate_vtk()
     mesh.translate(
-        [1.2 * (i_x - 0.5 * (n_col - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0],
+        [1.2 * (i_x - 0.5 * (N_COL - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0],
         inplace=True,
     )
-    meshes.append(mesh)
+    meshes.append_polydata(mesh, inplace=True)
 
 stl_file = Path(__file__).parent / "lattices.stl"
-pv.MultiBlock(meshes).save(stl_file)
+meshes.save(stl_file)
