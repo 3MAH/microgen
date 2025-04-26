@@ -19,10 +19,15 @@ class RhombicCuboctahedron(AbstractLattice):
 
     .. jupyter-execute::
        :hide-code:
+       :hide-output:
 
        import microgen
 
        shape = microgen.RhombicCuboctahedron(strut_radius=0.1).generate_vtk()
+
+    .. jupyter-execute::
+       :hide-code:
+
        shape.plot(color='white')
     """
 

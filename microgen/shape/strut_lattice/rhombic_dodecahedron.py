@@ -19,10 +19,15 @@ class RhombicDodecahedron(AbstractLattice):
 
     .. jupyter-execute::
        :hide-code:
+       :hide-output:
 
        import microgen
 
        shape = microgen.RhombicDodecahedron(strut_radius=0.1).generate_vtk()
+
+    .. jupyter-execute::
+       :hide-code:
+
        shape.plot(color='white')
     """
 

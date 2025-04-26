@@ -19,3 +19,19 @@ Honeycomb
    :literal:
 
 .. image:: ../_static/examples/honeycomb.png
+
+Preset strut-based lattices
+---------------------------
+
+.. include:: ../../examples/Lattices/preset_lattices.py
+   :literal:
+
+.. image:: ../_static/examples/lattices.png
+
+Custom strut-based lattices
+---------------------------
+
+.. include:: ../../examples/Lattices/custom_lattice.py
+   :literal:
+
+.. image:: ../_static/examples/auxetic_custom_lattice.png

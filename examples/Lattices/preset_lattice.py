@@ -48,5 +48,5 @@ for i, lattice in enumerate(preset_lattice_list):
     )
     meshes.append(mesh)
 
-vtm_file = Path(__file__).parent / "lattices.vtm"
-pv.MultiBlock(meshes).save(vtm_file)
+stl_file = Path(__file__).parent / "lattices.stl"
+pv.MultiBlock(meshes).save(stl_file)

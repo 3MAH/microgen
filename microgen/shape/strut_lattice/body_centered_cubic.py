@@ -18,10 +18,15 @@ class BodyCenteredCubic(AbstractLattice):
 
     .. jupyter-execute::
        :hide-code:
+       :hide-output:
 
        import microgen
 
        shape = microgen.BodyCenteredCubic(strut_radius=0.1).generate_vtk()
+
+    .. jupyter-execute::
+       :hide-code:
+
        shape.plot(color='white')
     """
 
