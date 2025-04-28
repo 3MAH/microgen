@@ -23,7 +23,7 @@ Honeycomb
 Preset strut-based lattices
 ---------------------------
 
-.. include:: ../../examples/Lattices/preset_lattices.py
+.. include:: ../../examples/Lattices/preset_lattice.py
    :literal:
 
 .. image:: ../_static/examples/lattices.png
