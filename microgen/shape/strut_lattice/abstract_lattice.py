@@ -115,11 +115,11 @@ class AbstractLattice(Shape):
         def calc_density(radius: float) -> float:
             self.strut_radius = radius
             _generate_cad_find_radius = self._generate_cad()
-            return _generate_cad_find_radius.Volume() / (self.cell_size)
+            return _generate_cad_find_radius.Volume() / (self.cell_size**3)
 
         computed_radius = root_scalar(
             lambda radius: float(calc_density(radius)) - self.density,
-            bracket=[10e-4, 1],
+            bracket=[10e-4, 1.0 * self.cell_size],
         ).root
 
         self._cad_shape = _generate_cad_find_radius

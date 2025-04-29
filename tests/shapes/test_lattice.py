@@ -60,17 +60,19 @@ def test_lattice_vertices_strut_centers_and_directions_must_correspond_to_preset
 
 
 @pytest.mark.parametrize("shape", [Diamond, Cubic, OctetTruss])
+@pytest.mark.parametrize("cell_size", [0.5, 1.0, 2.0])
 @pytest.mark.parametrize("density", [0.25, 0.8])
-def test_lattice_diamond_given_density_must_match_computed_density(
+def test_lattice_diamond_given_density_and_cell_size_must_match_computed_density(
     shape: Literal[Diamond, Cubic, OctetTruss],
     density: float,
+    cell_size: float,
 ) -> None:
     """Test for the density of the diamond lattice shape generated with CadQuery and VTK."""
     # Arrange
     expected_density = density
 
     # Act
-    shape_fit_to_density = shape(density=expected_density, cell_size=1)
+    shape_fit_to_density = shape(density=expected_density, cell_size=cell_size)
     density = shape_fit_to_density.density
 
     generated_cad = shape_fit_to_density.cad_shape
