@@ -9,10 +9,7 @@ import pyvista as pv
 from _pytest.fixtures import FixtureRequest
 
 from microgen import BoxMesh, Tpms, is_periodic
-from microgen.remesh import (
-    InputMeshNotPeriodicError,
-    remesh_keeping_periodicity_for_fem,
-)
+from microgen.remesh import InputMeshNotPeriodicError, remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
@@ -185,7 +182,7 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
     # Act
     if USE_MMG:
         edge_length_gradient = 1.05
-        remeshed_shape = remesh_keeping_periodicity_for_fem(
+        remeshed_shape = remesh_keeping_boundaries_for_fem(
             input_mesh,
             hgrad=edge_length_gradient,
         )
@@ -208,7 +205,7 @@ def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
             InputMeshNotPeriodicError,
             match="Input mesh is not periodic",
         ):
-            remesh_keeping_periodicity_for_fem(
+            remesh_keeping_boundaries_for_fem(
                 non_periodic_mesh,
                 hgrad=edge_length_gradient,
             )
