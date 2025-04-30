@@ -16,9 +16,6 @@ from microgen.shape.surface_functions import gyroid
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
 
 
-_MESH_DIM = 3
-_BOUNDARY_DIM = 2
-
 USE_MMG = shutil.which("mmg3d_O3") is not None
 if not USE_MMG:
     warnings.warn("MMG will not be used in these tests", stacklevel=2)
@@ -172,11 +169,11 @@ def fixture_non_periodic_mesh() -> pv.UnstructuredGrid:
         "gyroid_mesh",
     ],
 )
-def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_periodicity(
+def test_given_periodic_mesh_remesh_keeping_boundaries_for_fem_with_periodic_option_must_maintain_periodicity(
     shape: str,
     request: FixtureRequest,
 ) -> None:
-    """Test that remesh_keeping_periodicity_for_fem maintains periodicity."""
+    """Tests that remesh_keeping_boundaries_for_fem with periodic=True maintains periodicity."""
     # Arrange
     input_mesh = request.getfixturevalue(shape)
     # Act
@@ -195,10 +192,10 @@ def test_given_periodic_mesh_remesh_keeping_periodicity_for_fem_must_maintain_pe
         assert is_periodic(remeshed_shape.points)
 
 
-def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
+def test_given_non_periodic_mesh_remesh_with_periodic_option_must_raise_inputmeshnotperiodicerror(
     non_periodic_mesh: pv.UnstructuredGrid,
 ) -> None:
-    """Test that remesh_keeping_periodicity_for_fem raises InputMeshNotPeriodicError."""
+    """Tests that remesh_keeping_boundaries_for_fem raises InputMeshNotPeriodicError."""
     if USE_MMG:
         edge_length_gradient = 1.05
         with pytest.raises(
@@ -209,3 +206,44 @@ def test_given_non_periodic_mesh_remesh_must_raise_inputmeshnotperiodicerror(
                 non_periodic_mesh,
                 hgrad=edge_length_gradient,
             )
+
+
+def test_given_non_periodic_mesh_remesh_without_periodic_option_must_remesh_keeping_boundaries_intact(
+    non_periodic_mesh: pv.UnstructuredGrid,
+) -> None:
+    """Tests that remesh_keeping_boundaries_for_fem with periodic=False
+    remeshes the mesh while keeping boundaries intact."""
+
+    # Arrange
+
+    BOUNDARY_ELEMENTS_POLYDATA_INDEX = 0
+    initial_mesh_nodes_coords = non_periodic_mesh.points
+    initial_mesh_boundary_nodes_coords = (
+        BoxMesh.from_pyvista(non_periodic_mesh)
+        .boundary_elements()[BOUNDARY_ELEMENTS_POLYDATA_INDEX]
+        .points
+    )
+
+    # Act
+
+    if USE_MMG:
+        edge_length_gradient = 1.05
+        remeshed_mesh = remesh_keeping_boundaries_for_fem(
+            non_periodic_mesh,
+            periodic=False,
+            hgrad=edge_length_gradient,
+        )
+        remeshed_mesh_nodes_coords = remeshed_mesh.points
+        remeshed_mesh_boundary_nodes_coords = (
+            BoxMesh.from_pyvista(remeshed_mesh)
+            .boundary_elements()[BOUNDARY_ELEMENTS_POLYDATA_INDEX]
+            .points
+        )
+
+        # Assert
+
+        assert not np.array_equal(initial_mesh_nodes_coords, remeshed_mesh_nodes_coords)
+        assert np.allclose(
+            np.sort(initial_mesh_boundary_nodes_coords.flat),
+            np.sort(remeshed_mesh_boundary_nodes_coords.flat),
+        )
