@@ -110,7 +110,10 @@ class AbstractLattice(Shape):
         self,
     ) -> float:
         _generate_cad_find_radius = None
-        """Compute the radius to fit the required density."""
+        """Compute the radius to fit the required density.
+            The computed_radius is an objective function to find the adequate radiuus from a given density
+            Note that the last cad_shape generated is stored to avoid to generate it afterwards.
+        """
 
         def calc_density(radius: float) -> float:
             self.strut_radius = radius
