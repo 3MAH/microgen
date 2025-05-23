@@ -209,13 +209,10 @@ class AbstractLattice(Shape):
                 rotation_vector = np.zeros(3)
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))
             else:
-                axis = np.cross(default_direction, self.strut_directions_cartesian[i])
-                axis /= np.linalg.norm(axis)
-                angle = np.arccos(
-                    np.dot(default_direction, self.strut_directions_cartesian[i])
+                rotation, _ = Rotation.align_vectors(
+                    self.strut_directions_cartesian[i], default_direction
                 )
-                rotation_vector = angle * axis
-                rotations_list.append(Rotation.from_rotvec(rotation_vector))
+                rotations_list.append(rotation)
 
         return rotations_list
 
