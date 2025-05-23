@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import AbstractLattice
+from .abstract_lattice import TOLERANCE, AbstractLattice
 
 
 class RhombicCuboctahedron(AbstractLattice):
@@ -52,7 +52,6 @@ class RhombicCuboctahedron(AbstractLattice):
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self.base_vertices)
         pairs = set()
-        TOLERANCE = 1e-5
         distance = np.sqrt(2) - 1.0 + TOLERANCE
 
         for i, vertex in enumerate(self.base_vertices):

@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import AbstractLattice
+from .abstract_lattice import TOLERANCE, AbstractLattice
 
 
 class RhombicDodecahedron(AbstractLattice):
@@ -53,7 +53,6 @@ class RhombicDodecahedron(AbstractLattice):
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self.base_vertices)
-        TOLERANCE = 1e-5
         target_distance = np.sqrt(3.0) / 4.0 + TOLERANCE
         pairs = set(tree.query_pairs(r=target_distance))
         return np.array(list(pairs))

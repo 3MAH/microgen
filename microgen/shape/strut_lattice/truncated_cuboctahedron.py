@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import AbstractLattice
+from .abstract_lattice import TOLERANCE, AbstractLattice
 
 
 class TruncatedCuboctahedron(AbstractLattice):
@@ -48,7 +48,6 @@ class TruncatedCuboctahedron(AbstractLattice):
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         kdtree = KDTree(self.base_vertices)
-        TOLERANCE = 1e-5
         threshold_distance = 1 / (1.0 + 2.0 * np.sqrt(2)) + TOLERANCE
 
         pairs = []

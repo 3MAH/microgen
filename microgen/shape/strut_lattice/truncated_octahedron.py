@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import AbstractLattice
+from .abstract_lattice import TOLERANCE, AbstractLattice
 
 
 class TruncatedOctahedron(AbstractLattice):
@@ -49,7 +49,6 @@ class TruncatedOctahedron(AbstractLattice):
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         """Generate index pairs representing the struts in the truncated octahedron."""
         tree = KDTree(self.base_vertices)
-        TOLERANCE = 1e-5
         pairs = set()
         connection_distance = np.sqrt(2.0) / 4.0 + TOLERANCE
         for i, vertex in enumerate(self.base_vertices):

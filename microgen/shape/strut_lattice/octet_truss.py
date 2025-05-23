@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import AbstractLattice
+from .abstract_lattice import TOLERANCE, AbstractLattice
 
 
 class OctetTruss(AbstractLattice):
@@ -52,7 +52,6 @@ class OctetTruss(AbstractLattice):
         """Generate index pairs representing the struts in the octet-truss using KDTree."""
         tree = KDTree(self.base_vertices)
         pairs = set()
-        TOLERANCE = 1e-5
 
         connection_distance = (self._UNIT_CUBE_SIZE / np.sqrt(2)) + TOLERANCE
 
