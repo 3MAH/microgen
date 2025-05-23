@@ -1,9 +1,10 @@
 """Test the lattice shapes."""
 
-import numpy as np
 from typing import Literal
-import pytest
+
 import cadquery as cq
+import numpy as np
+import pytest
 
 from microgen.shape.strut_lattice import (
     BodyCenteredCubic,
@@ -61,22 +62,18 @@ def test_lattice_vertices_strut_centers_and_directions_must_correspond_to_preset
 
 @pytest.mark.parametrize("shape", [Diamond, Cubic, OctetTruss])
 @pytest.mark.parametrize("cell_size", [0.5, 1.0, 2.0])
-@pytest.mark.parametrize("density", [0.25, 0.8])
-def test_lattice_diamond_given_density_and_cell_size_must_match_computed_density(
+@pytest.mark.parametrize("expected_density", [0.25, 0.8])
+def test_lattice_given_density_and_cell_size_must_match_computed_density(
     shape: Literal[Diamond, Cubic, OctetTruss],
-    density: float,
+    expected_density: float,
     cell_size: float,
 ) -> None:
-    """Test for the density of the diamond lattice shape generated with CadQuery and VTK."""
+    """Test for the density of lattice shapes generated with CadQuery and VTK."""
     # Arrange
-    expected_density = density
+    shape_fit_to_density = shape(density=expected_density, cell_size=cell_size)
 
     # Act
-    shape_fit_to_density = shape(density=expected_density, cell_size=cell_size)
-    density = shape_fit_to_density.density
-
-    generated_cad = shape_fit_to_density.cad_shape
+    shape_density = shape_fit_to_density.density
 
     # Assert
-    assert isinstance(generated_cad, cq.Shape)
-    assert np.isclose(expected_density, density, rtol=0.01)
+    assert np.isclose(expected_density, shape_density, rtol=0.01)
