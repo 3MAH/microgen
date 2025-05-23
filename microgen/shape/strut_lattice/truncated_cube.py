@@ -56,8 +56,8 @@ class TruncatedCube(AbstractLattice):
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self.base_vertices)
         pairs = set()
-        tolerance = 1e-5
-        distance = np.sqrt(2) - 1.0 + tolerance
+        TOLERANCE = 1e-5
+        distance = np.sqrt(2) - 1.0 + TOLERANCE
 
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, distance)

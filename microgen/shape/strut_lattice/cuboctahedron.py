@@ -55,10 +55,10 @@ class Cuboctahedron(AbstractLattice):
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self.base_vertices)
         pairs = set()
-        tolerance = 1e-5
+        TOLERANCE = 1e-5
         for i, indices in enumerate(
             tree.query_ball_point(
-                self.base_vertices, r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + tolerance
+                self.base_vertices, r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + TOLERANCE
             )
         ):
             for j in indices:

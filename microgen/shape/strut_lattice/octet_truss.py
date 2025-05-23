@@ -52,9 +52,9 @@ class OctetTruss(AbstractLattice):
         """Generate index pairs representing the struts in the octet-truss using KDTree."""
         tree = KDTree(self.base_vertices)
         pairs = set()
-        tolerance = 1e-5
+        TOLERANCE = 1e-5
 
-        connection_distance = (self._UNIT_CUBE_SIZE / np.sqrt(2)) + tolerance
+        connection_distance = (self._UNIT_CUBE_SIZE / np.sqrt(2)) + TOLERANCE
 
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, connection_distance)
