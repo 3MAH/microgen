@@ -118,6 +118,9 @@ class AbstractLattice(Shape):
             Note that the last cad_shape generated is stored to avoid to generate it afterwards.
         """
 
+        RADIUS_MIN = 10e-4
+        RADIUS_MAX_MULTIPLIER = 1.0
+
         def calc_density(radius: float) -> float:
             self.strut_radius = radius
             _generate_cad_find_radius = self._generate_cad()
@@ -125,7 +128,7 @@ class AbstractLattice(Shape):
 
         computed_radius = root_scalar(
             lambda radius: float(calc_density(radius)) - self.density,
-            bracket=[10e-4, 1.0 * self.cell_size],
+            bracket=[RADIUS_MIN, RADIUS_MAX_MULTIPLIER * self.cell_size],
         ).root
 
         self._cad_shape = _generate_cad_find_radius
