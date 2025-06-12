@@ -31,7 +31,7 @@ from ..sphere import Sphere
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
-TOLERANCE = 1e-5
+BALL_POINT_RADIUS_TOLERANCE = 1e-5
 
 
 class AbstractLattice(Shape):

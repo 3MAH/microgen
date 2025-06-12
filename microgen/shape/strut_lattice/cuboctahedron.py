@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import TOLERANCE, AbstractLattice
+from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class Cuboctahedron(AbstractLattice):
@@ -57,7 +57,8 @@ class Cuboctahedron(AbstractLattice):
         pairs = set()
         for i, indices in enumerate(
             tree.query_ball_point(
-                self.base_vertices, r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + TOLERANCE
+                self.base_vertices,
+                r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + BALL_POINT_RADIUS_TOLERANCE,
             )
         ):
             for j in indices:

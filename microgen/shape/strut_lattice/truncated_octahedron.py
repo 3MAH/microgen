@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import TOLERANCE, AbstractLattice
+from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class TruncatedOctahedron(AbstractLattice):
@@ -50,7 +50,7 @@ class TruncatedOctahedron(AbstractLattice):
         """Generate index pairs representing the struts in the truncated octahedron."""
         tree = KDTree(self.base_vertices)
         pairs = set()
-        connection_distance = np.sqrt(2.0) / 4.0 + TOLERANCE
+        connection_distance = np.sqrt(2.0) / 4.0 + BALL_POINT_RADIUS_TOLERANCE
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, connection_distance)
             for j in indices:

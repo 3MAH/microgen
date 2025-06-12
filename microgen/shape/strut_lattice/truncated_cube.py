@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
-from .abstract_lattice import TOLERANCE, AbstractLattice
+from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class TruncatedCube(AbstractLattice):
@@ -56,7 +56,7 @@ class TruncatedCube(AbstractLattice):
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         tree = KDTree(self.base_vertices)
         pairs = set()
-        distance = np.sqrt(2) - 1.0 + TOLERANCE
+        distance = np.sqrt(2) - 1.0 + BALL_POINT_RADIUS_TOLERANCE
 
         for i, vertex in enumerate(self.base_vertices):
             indices = tree.query_ball_point(vertex, distance)
