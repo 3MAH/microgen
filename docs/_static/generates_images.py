@@ -65,6 +65,10 @@ show_example(
     filename=example_path + "3Doperations/repeatGeom/repeated_geometry.stl",
     screenshot=True,
 )
+show_example(filename=example_path + "Lattices/lattices.stl", screenshot=True)
+show_example(
+    filename=example_path + "Lattices/auxetic_custom_lattice.stl", screenshot=True
+)
 show_example(
     filename=example_path + "3Doperations/rasterEllipsoid/rasterEllipsoid.vtk",
     screenshot=True,

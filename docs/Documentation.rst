@@ -9,3 +9,9 @@ Microgen API
 
    modules
    microgen.shape
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Shape Subpackages:
+
+   microgen.shape.strut_lattice
