@@ -19,6 +19,10 @@ if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
+class ImplicitOperationUnavailableForExplicitShapeError(Exception):
+    """Raised when an implicit operation is called on an explicit shape."""
+
+
 class Shape(ABC):
     """Shape class to manage shapes.
 
@@ -41,6 +45,24 @@ class Shape(ABC):
         )
 
     @abstractmethod
+    def fillet_shape(self: Shape, radius: float) -> Shape:
+        """Apply a fillet to the shape.
+
+        :param radius: radius of the fillet
+        :return: Shape with fillet applied
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def round_shape(self: Shape, radius: float) -> Shape:
+        """Round the convex edges of the shape.
+
+        :param radius: radius of the rounding
+        :return: Shape with rounded edges
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def generate(self: Shape, **_: KwargsGenerateType) -> cq.Shape:
         """Generate the CAD shape.
 
@@ -60,3 +82,33 @@ class Shape(ABC):
     def generateVtk(self: Shape, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use generate_vtk instead."""  # noqa: D401
         return self.generate_vtk()
+
+
+class ExplicitShape(Shape):
+    """Explicit shape class to manage shapes with explicit methods.
+
+    This class is used to define shapes that have explicit methods for
+    generating the CAD shape and VTK mesh.
+    """
+
+    def fillet_shape(self: Shape, radius: float) -> ExplicitShape:
+        raise ImplicitOperationUnavailableForExplicitShapeError(
+            "Fillet operation is not available for explicit shapes. "
+        )
+
+    def round_shape(self: Shape, radius: float) -> ExplicitShape:
+        raise ImplicitOperationUnavailableForExplicitShapeError(
+            "Round operation is not available for explicit shapes. "
+        )
+
+
+class ImplicitShape(Shape):
+    """Implicit shape class to manage shapes with implicit methods.
+
+    This class is used to define shapes that have implicit methods for
+    generating the CAD shape and VTK mesh.
+    """
+
+    def fillet_shape(self: Shape, radius: float) -> ImplicitShape: ...
+
+    def round_shape(self: Shape, radius: float) -> ImplicitShape: ...
