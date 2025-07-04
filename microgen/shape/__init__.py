@@ -24,11 +24,12 @@ from typing import TYPE_CHECKING, Callable, Literal, Sequence, Tuple
 from . import surface_functions
 from .box import Box
 from .capsule import Capsule
+from .custom_implicit_shape import CustomImplicitShape
 from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
-from .shape import Shape
+from .shape import ExplicitShape, ImplicitShape, Shape
 from .sphere import Sphere
 from .strut_lattice import (
     AbstractLattice,
@@ -158,8 +159,10 @@ __all__ = [
     "Cylinder",
     "Diamond",
     "Ellipsoid",
+    "ExplicitShape",
     "ExtrudedPolygon",
     "FaceCenteredCubic",
+    "ImplicitShape",
     "Infill",
     "NormedDistance",
     "Octahedron",

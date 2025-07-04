@@ -14,7 +14,9 @@ from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from scipy.spatial.transform import Rotation
 
+from .custom_implicit_shape import CustomImplicitShape
 from .phase import Phase
+from .shape import ImplicitShape
 
 if TYPE_CHECKING:
     import OCP
@@ -22,6 +24,61 @@ if TYPE_CHECKING:
     from .rve import Rve
 
 T = TypeVar("T", Union[cq.Shape, cq.Workplane], pv.PolyData)
+
+
+def boolean_union(*shapes: ImplicitShape) -> CustomImplicitShape:
+    """Perform a boolean union operation on the given shapes.
+
+    :param shapes: ImplicitShape objects to union
+
+    :return: new ImplicitShape representing the union of all given shapes
+    """
+    if not shapes:
+        raise ValueError("At least one shape must be provided for union operation.")
+
+    def union_surface_function(x, y, z):
+        return min(shape.surface_function(x, y, z) for shape in shapes)
+
+    return CustomImplicitShape(surface_function=union_surface_function)
+
+
+def boolean_intersection(*shapes: ImplicitShape) -> CustomImplicitShape:
+    """Perform a boolean intersection operation on the given shapes.
+
+    :param shapes: ImplicitShape objects to intersect
+
+    :return: new ImplicitShape representing the intersection of all given shapes
+    """
+    if not shapes:
+        raise ValueError(
+            "At least one shape must be provided for intersection operation."
+        )
+
+    def intersection_surface_function(p):
+        return max(shape.surface_function(p) for shape in shapes)
+
+    return CustomImplicitShape(surface_function=intersection_surface_function)
+
+
+def boolean_difference(
+    shape: ImplicitShape, *cutting_shapes: ImplicitShape
+) -> CustomImplicitShape:
+    """Perform a boolean difference operation on the given shapes.
+
+    :param shape: ImplicitShape object to subtract from
+    :param cutting_shapes: ImplicitShape objects to subtract
+
+    :return: new ImplicitShape representing the difference of the shapes
+    """
+    if not cutting_shapes:
+        raise ValueError("At least one cutting shape must be provided.")
+
+    def difference_surface_function(p):
+        return shape.surface_function(p) - max(
+            cutting_shape.surface_function(p) for cutting_shape in cutting_shapes
+        )
+
+    return CustomImplicitShape(surface_function=difference_surface_function)
 
 
 def rotate(

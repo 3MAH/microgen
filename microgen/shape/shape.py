@@ -8,8 +8,10 @@ Basic Geometry (:mod:`microgen.shape.shape`)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
+import numpy as np
+import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 
 if TYPE_CHECKING:
@@ -19,8 +21,10 @@ if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
-class ImplicitOperationUnavailableForExplicitShapeError(Exception):
-    """Raised when an implicit operation is called on an explicit shape."""
+Field = Callable[
+    [npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]],
+    npt.NDArray[np.float64],
+]
 
 
 class Shape(ABC):
@@ -43,24 +47,6 @@ class Shape(ABC):
             if isinstance(orientation, Rotation)
             else Rotation.from_euler("ZXZ", orientation, degrees=True)
         )
-
-    @abstractmethod
-    def fillet_shape(self: Shape, radius: float) -> Shape:
-        """Apply a fillet to the shape.
-
-        :param radius: radius of the fillet
-        :return: Shape with fillet applied
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def round_shape(self: Shape, radius: float) -> Shape:
-        """Round the convex edges of the shape.
-
-        :param radius: radius of the rounding
-        :return: Shape with rounded edges
-        """
-        raise NotImplementedError
 
     @abstractmethod
     def generate(self: Shape, **_: KwargsGenerateType) -> cq.Shape:
@@ -91,15 +77,13 @@ class ExplicitShape(Shape):
     generating the CAD shape and VTK mesh.
     """
 
-    def fillet_shape(self: Shape, radius: float) -> ExplicitShape:
-        raise ImplicitOperationUnavailableForExplicitShapeError(
-            "Fillet operation is not available for explicit shapes. "
-        )
-
-    def round_shape(self: Shape, radius: float) -> ExplicitShape:
-        raise ImplicitOperationUnavailableForExplicitShapeError(
-            "Round operation is not available for explicit shapes. "
-        )
+    def __init__(
+        self: ExplicitShape,
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType | Rotation = (0, 0, 0),
+    ) -> None:
+        """Initialize the explicit shape."""
+        super().__init__(center, orientation)
 
 
 class ImplicitShape(Shape):
@@ -109,6 +93,52 @@ class ImplicitShape(Shape):
     generating the CAD shape and VTK mesh.
     """
 
-    def fillet_shape(self: Shape, radius: float) -> ImplicitShape: ...
+    def __init__(
+        self: ImplicitShape,
+        center: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType | Rotation = (0, 0, 0),
+    ) -> None:
+        """Initialize the implicit shape."""
+        super().__init__(center, orientation)
 
-    def round_shape(self: Shape, radius: float) -> ImplicitShape: ...
+    @property
+    @abstractmethod
+    def surface_function(self: ImplicitShape) -> Field:
+        """Get the surface function of the implicit shape.
+
+        :return: Field representing the surface function
+        """
+        raise NotImplementedError
+
+    ##TODO: maybe fillet and round should be in operations.py and return CustomImplicitShape
+    def fillet_shape(self: ImplicitShape, radius: float) -> Field:
+        """Create a fillet shape with the given radius.
+
+        :param radius: radius of the fillet
+        :return: Field representing the filleted surface
+        """
+
+        def filleted_field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            return self.surface_function(x, y, z) - radius
+
+        return filleted_field
+
+    def round_shape(self: ImplicitShape, radius: float) -> Field:
+        """Create a rounded shape with the given radius.
+
+        :param radius: radius of the rounding
+        :return: ImplicitShape with rounding
+        """
+
+        def rounded_field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            return self.surface_function(x, y, z) + radius
+
+        return rounded_field
