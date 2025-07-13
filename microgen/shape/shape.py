@@ -27,6 +27,14 @@ Field = Callable[
 ]
 
 
+class ShellCreationError(Exception):
+    """Error raised when the shell creation fails."""
+
+    def __init__(self: ShellCreationError, message: str) -> None:
+        """Initialize the ShellCreationError."""
+        super().__init__(message)
+
+
 class Shape(ABC):
     """Shape class to manage shapes.
 
@@ -97,9 +105,13 @@ class ImplicitShape(Shape):
         self: ImplicitShape,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType | Rotation = (0, 0, 0),
+        resolution: int = 20,
     ) -> None:
         """Initialize the implicit shape."""
         super().__init__(center, orientation)
+        self.resolution = resolution
+        self.grid: pv.StructuredGrid
+        self._surface: pv.PolyData = None
 
     @property
     @abstractmethod
@@ -109,6 +121,77 @@ class ImplicitShape(Shape):
         :return: Field representing the surface function
         """
         raise NotImplementedError
+
+    @property
+    def surface(self: ImplicitShape) -> pv.PolyData:
+        """Returns isosurface f(x, y, z) = 0."""
+        if self._surface is not None:
+            return self._surface
+
+        self._surface = self.grid.contour(
+            isosurfaces=[0.0],
+            scalars="surface",
+        ).triangulate()
+        return self._surface
+
+    def _create_grid(
+        self: ImplicitShape,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+    ) -> pv.StructuredGrid:
+        """Return the structured cartesian grid of the ImplicitShape."""
+        grid = pv.StructuredGrid(x, y, z)
+        grid["coords"] = np.c_[
+            x.ravel(order="F"),
+            y.ravel(order="F"),
+            z.ravel(order="F"),
+        ]
+        return grid
+
+    def _create_shell(self: ImplicitShape, mesh: pv.PolyData) -> cq.Shell:
+        if not mesh.is_all_triangles:
+            mesh.triangulate(inplace=True)  # useless ?
+        triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+        triangles = np.c_[triangles, triangles[:, 0]]
+
+        faces = []
+        for tri in triangles:
+            lines = [
+                cq.Edge.makeLine(
+                    cq.Vector(*mesh.points[start]),
+                    cq.Vector(*mesh.points[end]),
+                )
+                for start, end in zip(tri[:], tri[1:])
+            ]
+
+            wire = cq.Wire.assembleEdges(lines)
+            faces.append(cq.Face.makeFromWires(wire))
+
+        try:
+            shell = cq.Shell.makeShell(faces)
+        except ValueError as err:
+            err_msg = "Failed to create the shell, \
+                try to increase the resolution or the smoothing."
+            raise ShellCreationError(err_msg) from err
+        return shell
+
+    def _create_surface(
+        self: ImplicitShape,
+        isovalue: float | npt.NDArray[np.float64] = 0.0,
+        smoothing: int = 0,
+    ) -> cq.Shell:
+        """Create an implicit surface for the given isovalue."""
+        if isinstance(isovalue, (int, float)):
+            scalars = self.grid["surface"] - isovalue
+        elif isinstance(isovalue, np.ndarray):
+            scalars = self.grid["surface"] - isovalue.ravel(order="F")
+
+        mesh = self.grid.contour(isosurfaces=[0.0], scalars=scalars)
+        mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
+        mesh.clean(inplace=True)
+
+        return self._create_shell(mesh=mesh)
 
     ##TODO: maybe fillet and round should be in operations.py and return CustomImplicitShape
     def fillet_shape(self: ImplicitShape, radius: float) -> Field:
