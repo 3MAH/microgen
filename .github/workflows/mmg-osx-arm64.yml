@@ -1,0 +1,43 @@
+name: Conda packaging osx-arm64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: MacOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: "latest"
+          auto-update-conda: true
+
+      - name: Configure Conda for osx-arm64
+        shell: bash -l {0}
+        run: |
+          conda config --set subdir osx-arm64
+          echo "CONDA_SUBDIR=osx-arm64" >> $GITHUB_ENV
+
+      - name: Install Dependencies
+        shell: bash -l {0}
+        run: |
+          conda update --all
+          conda clean --all
+          conda install conda-build anaconda-client conda-verify
+          conda config --set anaconda_upload no
+
+      - name: Build Package
+        shell: bash -l {0}
+        run: |
+          conda-build mmg.recipe -c set3mah -c conda-forge --no-test --output-folder  .
+
+      - name: Upload Conda Packages
+        shell: bash -l {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          anaconda upload osx-arm64/*.conda --force
