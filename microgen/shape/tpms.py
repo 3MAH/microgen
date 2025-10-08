@@ -140,7 +140,7 @@ class Tpms(Shape):
         if density is not None and not 0.0 < density <= 1.0:
             err_msg = f"density must be between 0 and 1. Given: {density}"
             raise ValueError(err_msg)
-        self.density = density
+        self._density = density
 
         self._offset: float | npt.NDArray | None
         if density is not None:
@@ -177,11 +177,11 @@ class Tpms(Shape):
         resolution: int | None = None,
     ) -> float:
         """Compute the offset to fit the required density."""
-        if self.density is None:
-            err_msg = f"density must be between 0 and 1. Given: {self.density}"
+        if self._density is None:
+            err_msg = f"density must be between 0 and 1. Given: {self._density}"
             raise ValueError(err_msg)
 
-        if self.density == 1.0:
+        if self._density == 1.0:
             self.offset = (
                 self.offset_lim["sheet"][1]
                 if part_type == "sheet"
@@ -202,7 +202,7 @@ class Tpms(Shape):
 
         part = "skeletal" if "skeletal" in part_type else part_type
         computed_offset = root_scalar(
-            lambda offset: density(offset) - self.density,
+            lambda offset: density(offset) - self._density,
             bracket=self.offset_lim[part],
         ).root
         self.offset = computed_offset
@@ -239,7 +239,7 @@ class Tpms(Shape):
             return self._grid_sheet
         self.offset_updated = False
 
-        if self.density is not None:
+        if self._density is not None:
             self._compute_offset_to_fit_density(part_type="sheet")
 
         self._grid_sheet = self.grid.clip_scalar(
@@ -257,7 +257,7 @@ class Tpms(Shape):
             return self._grid_upper_skeletal
         self.offset_updated = False
 
-        if self.density is not None:
+        if self._density is not None:
             self._compute_offset_to_fit_density(part_type="upper skeletal")
 
         self._grid_upper_skeletal = self.grid.clip_scalar(
@@ -273,7 +273,7 @@ class Tpms(Shape):
             return self._grid_lower_skeletal
         self.offset_updated = False
 
-        if self.density is not None:
+        if self._density is not None:
             self._compute_offset_to_fit_density(part_type="lower skeletal")
 
         self._grid_lower_skeletal = self.grid.clip_scalar(scalars="lower_surface")
@@ -380,6 +380,25 @@ class Tpms(Shape):
 
         self._update_grid_offset()
         self.offset_updated = True
+
+    @property
+    def density(self: Tpms) -> float | None:
+        """Returns the density value.
+
+        If initialized with density, returns that value.
+        If initialized with offset, computes the density from the sheet part volume
+        divided by the bounding box volume.
+        """
+        if self._density is not None:
+            return self._density
+
+        if self._offset is None:
+            return None
+
+        # Compute density from volume ratio
+        sheet_volume = abs(self.grid_sheet.volume)
+        bbox_volume = np.prod(self.cell_size * self.repeat_cell)
+        return sheet_volume / bbox_volume
 
     def _create_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shell:
         if not mesh.is_all_triangles:
@@ -601,14 +620,14 @@ class Tpms(Shape):
         if type_part == "surface":
             if self.offset != 0.0:
                 logging.warning("offset is ignored for 'surface' part")
-            if self.density is not None:
+            if self._density is not None:
                 logging.warning("density is ignored for 'surface' part")
             return self._create_surface(
                 isovalue=0,
                 smoothing=smoothing,
             )
 
-        if self.density is not None:
+        if self._density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
                 resolution=algo_resolution,
@@ -643,7 +662,7 @@ class Tpms(Shape):
                 "'upper skeletal' or 'surface'"
             )
             raise ValueError(err_msg)
-        if self.density is not None:
+        if self._density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
                 resolution=algo_resolution,
@@ -667,7 +686,7 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
-        if self.density is not None:
+        if self._density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
                 resolution=algo_resolution,
