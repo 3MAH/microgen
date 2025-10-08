@@ -689,3 +689,42 @@ def test_tpms_none_offset_and_density_given_must_raise_error() -> None:
     expected_err_msg = "offset or density must be given. Give one of them."
     with pytest.raises(ValueError, match=expected_err_msg):
         microgen.Tpms(surface_function=TEST_DEFAULT_SURFACE_FUNCTION)
+
+
+def test_tpms_density_property_computed_from_offset() -> None:
+    """Test that density property is computed correctly when initialized with offset.
+
+    Addresses issue #105.
+    """
+    # Arrange
+    tpms = microgen.Tpms(
+        surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
+        offset=TEST_DEFAULT_OFFSET,
+        resolution=30,
+    )
+
+    # Act
+    density = tpms.density
+
+    # Assert
+    assert density is not None
+    sheet_volume = abs(tpms.grid_sheet.volume)
+    bbox_volume = np.prod(tpms.cell_size * tpms.repeat_cell)
+    expected_density = sheet_volume / bbox_volume
+    assert np.isclose(density, expected_density, rtol=1e-9)
+
+
+def test_tpms_density_property_returns_initialized_value() -> None:
+    """Test that density property returns the initialized value when created with density."""
+    # Arrange
+    expected_density = 0.3
+    tpms = microgen.Tpms(
+        surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
+        density=expected_density,
+    )
+
+    # Act
+    density = tpms.density
+
+    # Assert
+    assert density == expected_density
