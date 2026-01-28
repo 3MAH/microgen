@@ -272,6 +272,7 @@ Repeat a shape in a grid pattern:
 
    import microgen
    import pyvista as pv
+   import cadquery as cq
 
    # Create a sphere
    sphere = microgen.Sphere(center=(0, 0, 0), radius=0.15)
@@ -282,16 +283,17 @@ Repeat a shape in a grid pattern:
 
    # Repeat the sphere in a 3x3x3 grid
    repeated = microgen.repeat_shape(
-       shape=sphere_cad,
+       unit_geom=sphere_cad,
        rve=rve,
        grid=(3, 3, 3)
    )
 
+   # Export to STL
+   cq.exporters.export(repeated, "repeated.stl")
+
    # Visualize
    plotter = pv.Plotter()
-   for shape in repeated:
-       mesh = microgen.Phase(shape=shape).generate_vtk()
-       plotter.add_mesh(mesh, color='white')
+   plotter.add_mesh(pv.read("repeated.stl"))
    plotter.show()
 
 
