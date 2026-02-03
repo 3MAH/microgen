@@ -306,12 +306,13 @@ Raster a phase to create a periodic pattern:
 
    import numpy as np
 
-   # Create ellipsoid phase
+   # Create ellipsoid and convert to CadQuery shape
    ellipsoid = microgen.Ellipsoid(
        center=(0, 0, 0),
        radii=(0.15, 0.1, 0.08)
    )
-   phase = microgen.Phase(shape=ellipsoid)
+   ellipsoid_cad = ellipsoid.generate()
+   phase = microgen.Phase(shape=ellipsoid_cad)
 
    # Define RVE
    rve = microgen.Rve(dim=(0.5, 0.5, 0.5))
