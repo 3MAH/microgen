@@ -8,56 +8,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Linux:
-    name: Linux
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for Linux
-        shell: bash -l {0}
-        run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build mmg.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload linux-64/*.tar.bz2 --force
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            shell: bash -l {0}
+            subdir: linux-64
+            conda_subdir: ""
+          - name: macOS x64
+            os: macos-13
+            shell: bash -l {0}
+            subdir: osx-64
+            conda_subdir: osx-64
+          - name: macOS ARM64
+            os: macos-latest
+            shell: bash -l {0}
+            subdir: osx-arm64
+            conda_subdir: osx-arm64
+          - name: Windows
+            os: windows-latest
+            shell: pwsh
+            subdir: win-64
+            conda_subdir: ""
 
-  macos:
-    name: MacOS
-    runs-on: "macos-13"
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for MacOS
-        shell: bash -l {0}
-        run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build mmg.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload osx-64/*.tar.bz2 --force
 
-  windows:
-    name: Windows
-    runs-on: "windows-latest"
-    steps:
-      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for Windows
-        shell: pwsh
+          auto-update-conda: true
+
+      - name: Configure Conda subdir
+        if: matrix.conda_subdir != ''
+        shell: ${{ matrix.shell }}
         run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build mmg.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload win-64/*.tar.bz2 --force
+          conda config --set subdir ${{ matrix.conda_subdir }}
+          echo "CONDA_SUBDIR=${{ matrix.conda_subdir }}" >> $GITHUB_ENV
+
+      - name: Install Dependencies
+        shell: ${{ matrix.shell }}
+        run: |
+          conda update --all
+          conda clean --all
+          conda install conda-build anaconda-client conda-verify
+          conda config --set anaconda_upload no
+
+      - name: Build Package
+        shell: ${{ matrix.shell }}
+        run: |
+          conda-build mmg.recipe -c set3mah -c conda-forge --no-test --output-folder .
+
+      - name: Upload to Anaconda
+        shell: ${{ matrix.shell }}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          anaconda upload ${{ matrix.subdir }}/*.conda --force
