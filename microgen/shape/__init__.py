@@ -30,6 +30,22 @@ from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
 from .shape import Shape
 from .sphere import Sphere
+from .strut_lattice import (
+    AbstractLattice,
+    BodyCenteredCubic,
+    Cubic,
+    Cuboctahedron,
+    CustomLattice,
+    Diamond,
+    FaceCenteredCubic,
+    Octahedron,
+    OctetTruss,
+    RhombicCuboctahedron,
+    RhombicDodecahedron,
+    TruncatedCube,
+    TruncatedCuboctahedron,
+    TruncatedOctahedron,
+)
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 from .tpms_grading import NormedDistance
 
@@ -131,19 +147,33 @@ class ShapeError(Exception):
 newGeometry = new_geometry  # noqa: N816
 
 __all__ = [
+    "AbstractLattice",
+    "BodyCenteredCubic",
     "Box",
     "Capsule",
+    "Cubic",
+    "Cuboctahedron",
+    "CustomLattice",
     "CylindricalTpms",
     "Cylinder",
+    "Diamond",
     "Ellipsoid",
     "ExtrudedPolygon",
+    "FaceCenteredCubic",
     "Infill",
     "NormedDistance",
+    "Octahedron",
+    "OctetTruss",
     "Polyhedron",
+    "RhombicCuboctahedron",
+    "RhombicDodecahedron",
     "Shape",
     "SphericalTpms",
     "Sphere",
     "Tpms",
+    "TruncatedCube",
+    "TruncatedCuboctahedron",
+    "TruncatedOctahedron",
     "new_geometry",
     "newGeometry",
     "surface_functions",

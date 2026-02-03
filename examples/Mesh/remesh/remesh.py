@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from microgen import Tpms
-from microgen.remesh import remesh_keeping_periodicity_for_fem
+from microgen.remesh import remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
 
 data_dir = Path(__file__).parent / "data"
@@ -14,7 +14,7 @@ initial_gyroid = tpms.grid_sheet
 initial_gyroid.save(data_dir / "initial_gyroid_mesh.vtk")
 
 max_element_edge_length = 0.02
-remeshed_gyroid = remesh_keeping_periodicity_for_fem(
+remeshed_gyroid = remesh_keeping_boundaries_for_fem(
     initial_gyroid,
     hmax=max_element_edge_length,
 )

@@ -84,6 +84,15 @@ Click on the image to be redirected to the corresponding example on Microgen's d
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/honeycomb.png" height="250">
 </a>
 
+### Strut-based Lattices
+
+<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#presetlattices">
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/lattices.png" height="250">
+</a>
+<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#customlattices">
+    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/auxetic_custom_lattice.png" height="250">
+</a>
+
 ### Triply Periodic Minimal Surfaces (TPMS)
 
 <a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#gyroid">
