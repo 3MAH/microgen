@@ -7,6 +7,10 @@ on:
   release:
     types: [published]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-n-publish:
     name: Build and publish to PyPI and TestPyPI
