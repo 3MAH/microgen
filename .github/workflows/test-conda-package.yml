@@ -3,6 +3,10 @@ name: Test conda package
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-linux:
     name: Linux

@@ -1,15 +1,25 @@
 name: Build Documentation
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - "*"
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
 
   schedule:
     - cron: "0 0 * * *"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-test:
+  build-and-deploy:
     runs-on: "ubuntu-latest"
     env:
       PYVISTA_OFF_SCREEN: "True"
@@ -35,3 +45,32 @@ jobs:
 
       - name: Build docs
         run: make -C docs html
+
+      - name: Upload HTML documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build
+          path: docs/_build/html/
+
+      # Deploy to microgen-docs/main only for main/master branch
+      - name: Deploy HTML documentation (main branch)
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.MICROGEN_DOC_TOKEN }}
+          external_repository: 3MAH/microgen-docs
+          publish_branch: main
+          publish_dir: ./docs/_build/html
+          force_orphan: true
+
+      # Deploy to microgen-docs/PRXX for each pull request
+      - name: Deploy HTML documentation (pull request)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.MICROGEN_DOC_TOKEN }}
+          external_repository: 3MAH/microgen-docs
+          publish_branch: PR${{ github.event.pull_request.number }}
+          publish_dir: ./docs/_build/html
+          force_orphan: true
