@@ -341,6 +341,7 @@ Generate a tetrahedral mesh using Gmsh:
 .. code-block:: python
 
    import microgen
+   import cadquery as cq
 
    # Create a TPMS geometry
    gyroid = microgen.Tpms(
@@ -350,10 +351,14 @@ Generate a tetrahedral mesh using Gmsh:
    )
    shape = gyroid.generate(type_part='sheet')
 
-   # Create mesh
+   # Export to STEP file first
+   cq.exporters.export(cq.Workplane().add(shape), 'gyroid.step')
+
+   # Create mesh from STEP file
    microgen.mesh(
-       cad=shape,
+       mesh_file='gyroid.step',
        size=0.1,
+       order=1,
        output_file='gyroid_mesh.msh'
    )
 
@@ -365,6 +370,8 @@ Generate a periodic mesh suitable for homogenization:
 
 .. code-block:: python
 
+   import cadquery as cq
+
    # Create geometry
    gyroid = microgen.Tpms(
        surface_function=microgen.surface_functions.gyroid,
@@ -374,11 +381,19 @@ Generate a periodic mesh suitable for homogenization:
    )
    shape = gyroid.generate(type_part='sheet')
 
+   # Create a phase from the shape
+   phase = microgen.Phase(shape=shape)
+
+   # Export to STEP file first
+   cq.exporters.export(cq.Workplane().add(shape), 'gyroid.step')
+
    # Create periodic mesh
    microgen.mesh_periodic(
-       cad=shape,
+       mesh_file='gyroid.step',
        rve=microgen.Rve(dim=(1, 1, 1)),
+       list_phases=[phase],
        size=0.05,
+       order=1,
        output_file='gyroid_periodic.msh'
    )
 

@@ -140,5 +140,5 @@ Next Steps
 
 - Explore the :ref:`RST Geometries` for more shape examples
 - Check the :ref:`RST Tpms` for all available TPMS surfaces
-- Learn about :ref:`RST 3D Operations` for repeating and rastering
+- Learn about :ref:`RST 3Dop` for repeating and rastering
 - See :ref:`RST Mesh` for meshing capabilities
