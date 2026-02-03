@@ -23,6 +23,8 @@ Table of contents
 
    Overview
    Install
+   quick_start
+   tutorials
 
 
 .. toctree::
