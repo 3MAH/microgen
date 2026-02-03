@@ -21,7 +21,7 @@ Generation of 3D objects is achievable through functions that utilize Open CASCA
 | -------------- | ---------------- |
 | PyPI package   | [![PyPI](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/) |
 | Conda forge package  | [![Conda](https://anaconda.org/conda-forge/microgen/badges/version.svg)](https://anaconda.org/conda-forge/microgen) |
-| Documentation  | [![Documentation](https://readthedocs.org/projects/microgen/badge/?version=latest)](https://microgen.readthedocs.io/en/latest/?badge=latest) |
+| Documentation  | [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://3mah.github.io/microgen-docs/) |
 | Status         | [![Status](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen) |
 | Citation       | [![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028) |
 | License        | [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) |
@@ -68,73 +68,73 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 
 ### Basic shapes
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#basic-shapes">
+<a href="https://3mah.github.io/microgen-docs/examples/basic_shapes.html#basic-shapes">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/shapes.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/basic_shapes.html#platon-polyhedra">
+<a href="https://3mah.github.io/microgen-docs/examples/basic_shapes.html#platon-polyhedra">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/platon.png" height="250">
 </a>
 
 ### Repeated cells
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#octet-truss">
+<a href="https://3mah.github.io/microgen-docs/examples/lattices.html#octet-truss">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/octettruss.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#honeycomb">
+<a href="https://3mah.github.io/microgen-docs/examples/lattices.html#honeycomb">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/honeycomb.png" height="250">
 </a>
 
 ### Strut-based Lattices
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#presetlattices">
+<a href="https://3mah.github.io/microgen-docs/examples/lattices.html#presetlattices">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/lattices.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/lattices.html#customlattices">
+<a href="https://3mah.github.io/microgen-docs/examples/lattices.html#customlattices">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/auxetic_custom_lattice.png" height="250">
 </a>
 
 ### Triply Periodic Minimal Surfaces (TPMS)
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#gyroid">
+<a href="https://3mah.github.io/microgen-docs/examples/tpms.html#gyroid">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/gyroid.png"height="250"></a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#tpms-available">
+<a href="https://3mah.github.io/microgen-docs/examples/tpms.html#tpms-available">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/tpms.png" height="250"></a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#spherical-gyroid">
+<a href="https://3mah.github.io/microgen-docs/examples/tpms.html#spherical-gyroid">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/tpms_sphere.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/tpms.html#shell">
+<a href="https://3mah.github.io/microgen-docs/examples/tpms.html#shell">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/tpms_shell.png" height="250">
 </a>
 
 ### 3D operations
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#repeating-unit-geometry">
+<a href="https://3mah.github.io/microgen-docs/examples/3d_operations.html#repeating-unit-geometry">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/repeated_geometry.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#raster-ellipsoid">
+<a href="https://3mah.github.io/microgen-docs/examples/3d_operations.html#raster-ellipsoid">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/rasterEllipsoid.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#voronoi">
+<a href="https://3mah.github.io/microgen-docs/examples/3d_operations.html#voronoi">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Voronoi.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/3d_operations.html#voronoi-gyroid">
+<a href="https://3mah.github.io/microgen-docs/examples/3d_operations.html#voronoi-gyroid">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Gyroid-voro.png" height="250">
 </a>
 
 ### Mesh
 
-<a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#id1">
+<a href="https://3mah.github.io/microgen-docs/examples/mesh.html#id1">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Mesh.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#periodic-mesh">
+<a href="https://3mah.github.io/microgen-docs/examples/mesh.html#periodic-mesh">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/meshPeriodic.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#mmg">
+<a href="https://3mah.github.io/microgen-docs/examples/mesh.html#mmg">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/mmg.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#mmg-voronoi">
+<a href="https://3mah.github.io/microgen-docs/examples/mesh.html#mmg-voronoi">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/mmg-voro.png" height="250">
 </a>
-<a href="https://microgen.readthedocs.io/en/latest/examples/mesh.html#periodic-remeshing">
+<a href="https://3mah.github.io/microgen-docs/examples/mesh.html#periodic-remeshing">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/remeshed_mesh.png" height="250">
 </a>
