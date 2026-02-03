@@ -304,7 +304,7 @@ Raster a phase to create a periodic pattern:
 
 .. jupyter-execute::
 
-   import numpy as np
+   import cadquery as cq
 
    # Create ellipsoid and convert to CadQuery shape
    ellipsoid = microgen.Ellipsoid(
@@ -324,10 +324,15 @@ Raster a phase to create a periodic pattern:
        grid=(2, 2, 2)
    )
 
+   # Create compound from all solids and export to STL
+   compound = cq.Compound.makeCompound(
+       [solid for p in rastered for solid in p.solids]
+   )
+   cq.exporters.export(compound, "rastered.stl")
+
    # Visualize
    plotter = pv.Plotter()
-   for p in rastered:
-       plotter.add_mesh(p.generate_vtk(), color='white')
+   plotter.add_mesh(pv.read("rastered.stl"), color='white')
    plotter.show()
 
 
