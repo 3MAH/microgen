@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Literal, Sequence, Tuple
 
-from . import implicit_shape, surface_functions
+from . import implicit_basic_factory, implicit_shape, surface_functions
 from .box import Box
 from .capsule import Capsule
 from .cylinder import Cylinder
@@ -177,6 +177,7 @@ __all__ = [
     "TruncatedCube",
     "TruncatedCuboctahedron",
     "TruncatedOctahedron",
+    "implicit_basic_factory",
     "implicit_shape",
     "new_geometry",
     "newGeometry",
