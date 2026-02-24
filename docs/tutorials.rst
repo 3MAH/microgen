@@ -268,6 +268,25 @@ defined by scalar fields ``f(x, y, z)`` — the surface is at ``f = 0`` and the
 interior is ``f < 0``. This enables smooth blending, exact booleans, and
 composability that is hard to achieve with boundary meshes alone.
 
+Converting Basic Shapes to Implicit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Basic shapes (``Sphere``, ``Box``, ``Capsule``, ``Cylinder``, ``Ellipsoid``)
+can be converted to implicit shapes with ``to_implicit()``, making it easy to
+combine parametric geometry with F-rep boolean operations:
+
+.. jupyter-execute::
+
+   import microgen
+   from microgen.shape.implicit_basic_factory import implicit_box
+
+   sphere = microgen.Sphere(center=(0.3, 0, 0), radius=0.4)
+   sphere_imp = sphere.to_implicit()
+   box_imp = implicit_box(center=(-0.2, 0, 0), half_extents=(0.3, 0.3, 0.3))
+   result = sphere_imp.smooth_union(box_imp, k=0.2)
+   result.generate_vtk(resolution=60).plot(color='white')
+
+
 Primitives
 ^^^^^^^^^^
 
