@@ -260,6 +260,146 @@ Create TPMS on a cylindrical coordinate system:
    cylindrical_gyroid.sheet.plot(color='white')
 
 
+Implicit Shapes (F-rep)
+-----------------------
+
+Microgen includes an implicit (F-rep) modeling framework where shapes are
+defined by scalar fields ``f(x, y, z)`` — the surface is at ``f = 0`` and the
+interior is ``f < 0``. This enables smooth blending, exact booleans, and
+composability that is hard to achieve with boundary meshes alone.
+
+Primitives
+^^^^^^^^^^
+
+Create basic implicit primitives and visualize them with marching cubes:
+
+.. jupyter-execute::
+
+   from microgen.shape.implicit_shape import implicit_sphere, implicit_box
+
+   sphere = implicit_sphere(center=(0, 0, 0), radius=0.4)
+   sphere.generate_vtk(resolution=60).plot(color='white')
+
+.. jupyter-execute::
+
+   box = implicit_box(center=(0, 0, 0), half_extents=(0.3, 0.3, 0.3))
+   box.generate_vtk(resolution=60).plot(color='white')
+
+
+Boolean Operations
+^^^^^^^^^^^^^^^^^^
+
+Combine implicit shapes with standard boolean operators:
+
+.. jupyter-execute::
+
+   from microgen.shape.implicit_shape import implicit_sphere, implicit_box
+
+   sphere = implicit_sphere(center=(0, 0, 0), radius=0.4)
+   box = implicit_box(center=(0, 0, 0), half_extents=(0.3, 0.3, 0.3))
+
+   union = sphere | box
+   union.generate_vtk(resolution=60).plot(color='steelblue')
+
+.. jupyter-execute::
+
+   intersection = sphere & box
+   intersection.generate_vtk(resolution=60).plot(color='coral')
+
+.. jupyter-execute::
+
+   difference = sphere - box
+   difference.generate_vtk(resolution=60).plot(color='mediumseagreen')
+
+
+Smooth Blending
+^^^^^^^^^^^^^^^
+
+Smooth union produces organic-looking junctions controlled by the parameter *k*:
+
+.. jupyter-execute::
+
+   smooth = sphere.smooth_union(box, k=0.3)
+   smooth.generate_vtk(resolution=60).plot(color='orchid')
+
+
+Batch Smooth Union
+^^^^^^^^^^^^^^^^^^
+
+When combining many primitives, use ``batch_smooth_union`` — it evaluates all
+fields in a flat loop, avoiding recursion-depth limits:
+
+.. jupyter-execute::
+
+   import numpy as np
+   from microgen.shape.implicit_shape import implicit_sphere, batch_smooth_union
+
+   rng = np.random.default_rng(42)
+   spheres = [
+       implicit_sphere(center=tuple(rng.uniform(-0.5, 0.5, 3)), radius=0.15)
+       for _ in range(20)
+   ]
+   combined = batch_smooth_union(spheres, k=0.1)
+   combined.generate_vtk(bounds=(-0.8, 0.8) * 3, resolution=80).plot(color='coral')
+
+
+Transforms
+^^^^^^^^^^
+
+Translate, rotate, and scale implicit shapes:
+
+.. jupyter-execute::
+
+   from microgen.shape.implicit_shape import implicit_box
+
+   box = implicit_box(center=(0, 0, 0), half_extents=(0.3, 0.2, 0.1))
+   rotated = box.rotate(angles=(0, 0, 45))
+   rotated.generate_vtk(resolution=60).plot(color='white')
+
+
+Utilities: Shell and Repeat
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``shell`` hollows a shape; ``repeat`` tiles it periodically:
+
+.. jupyter-execute::
+
+   from microgen.shape.implicit_shape import implicit_sphere, shell
+
+   sphere = implicit_sphere(center=(0, 0, 0), radius=0.4)
+   hollow = shell(sphere, thickness=0.05)
+   hollow.generate_vtk(resolution=80).plot(color='white')
+
+.. jupyter-execute::
+
+   from microgen.shape.implicit_shape import implicit_sphere, repeat
+
+   sphere = implicit_sphere(center=(0, 0, 0), radius=0.15)
+   tiled = repeat(sphere, spacing=(0.5, 0.5, 0.5))
+   tiled.generate_vtk(bounds=(-0.8, 0.8) * 3, resolution=80).plot(color='white')
+
+
+TPMS + F-rep Composition
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Combine TPMS implicit fields with F-rep shapes — for example, intersect a
+gyroid with an implicit sphere:
+
+.. jupyter-execute::
+
+   from microgen.shape.implicit_shape import implicit_sphere, from_field
+   from microgen.shape.surface_functions import gyroid
+   import numpy as np
+
+   gyroid_field = from_field(
+       lambda x, y, z: gyroid(x * 2 * np.pi, y * 2 * np.pi, z * 2 * np.pi),
+       bounds=(-0.6, 0.6) * 3,
+   )
+   sphere = implicit_sphere(center=(0, 0, 0), radius=0.5)
+   result = gyroid_field & sphere
+   result.generate_vtk(bounds=(-0.6, 0.6) * 3, resolution=80).plot(color='white')
+
+
 3D Operations
 -------------
 

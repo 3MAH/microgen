@@ -39,6 +39,7 @@ Table of contents
 
    examples/basic_shapes
    examples/lattices
+   examples/implicit_shapes
    examples/tpms
    examples/3d_operations
    examples/mesh
