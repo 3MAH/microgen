@@ -17,6 +17,7 @@ from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.implicit_shape import ImplicitShape
 
 
 class Sphere(Shape):
@@ -67,6 +68,14 @@ class Sphere(Shape):
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
         )
+
+    def to_implicit(self: Sphere) -> ImplicitShape:
+        """Convert this sphere to an :class:`ImplicitShape`."""
+        from .implicit_basic_factory import implicit_sphere
+
+        shape = implicit_sphere(center=(0, 0, 0), radius=self.radius)
+        angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))
+        return shape.rotate(angles).translate(tuple(self.center))
 
     def generateVtk(  # noqa: N802
         self: Sphere,
