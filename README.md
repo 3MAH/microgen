@@ -89,7 +89,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 <a href="https://3mah.github.io/microgen-docs/examples/lattices.html#preset-strut-based-lattices">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/lattices.png" height="250">
 </a>
-<a href="https://3mah.github.io/microgen-docs/examples/lattices.html#customlattices">
+<a href="https://3mah.github.io/microgen-docs/examples/lattices.html#custom-strut-based-lattices">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/auxetic_custom_lattice.png" height="250">
 </a>
 
