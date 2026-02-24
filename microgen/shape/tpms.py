@@ -25,7 +25,7 @@ from scipy.optimize import root_scalar
 
 from microgen.operations import fuseShapes, rotate
 
-from .shape import Shape
+from .implicit_shape import ImplicitShape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
@@ -40,7 +40,7 @@ Field = Callable[
 _DIM = 3
 
 
-class Tpms(Shape):
+class Tpms(ImplicitShape):
     """Triply Periodical Minimal Surfaces.
 
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
@@ -148,6 +148,23 @@ class Tpms(Shape):
         else:
             self.offset = offset  # call setter
         self.offset_updated: bool
+
+        # Set implicit field for ImplicitShape compatibility
+        k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        self._func = lambda x, y, z: self.surface_function(
+            k_x * (x + self.phase_shift[0]),
+            k_y * (y + self.phase_shift[1]),
+            k_z * (z + self.phase_shift[2]),
+        )
+        half_dim = 0.5 * self.cell_size * self.repeat_cell
+        self._bounds = (
+            -half_dim[0],
+            half_dim[0],
+            -half_dim[1],
+            half_dim[1],
+            -half_dim[2],
+            half_dim[2],
+        )
 
     @classmethod
     def offset_from_density(
