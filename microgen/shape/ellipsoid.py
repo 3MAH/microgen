@@ -20,6 +20,7 @@ from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.implicit_shape import ImplicitShape
 
 
 class Ellipsoid(Shape):
@@ -88,6 +89,14 @@ class Ellipsoid(Shape):
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
         return rotate(ellipsoid, self.center, self.orientation)
+
+    def to_implicit(self: Ellipsoid) -> ImplicitShape:
+        """Convert this ellipsoid to an :class:`ImplicitShape`."""
+        from .implicit_basic_factory import implicit_ellipsoid
+
+        shape = implicit_ellipsoid(center=(0, 0, 0), radii=self.radii)
+        angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))
+        return shape.rotate(angles).translate(tuple(self.center))
 
     def generateVtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401

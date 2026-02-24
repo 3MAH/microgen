@@ -18,6 +18,7 @@ from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.implicit_shape import ImplicitShape
 
 
 class Cylinder(Shape):
@@ -71,6 +72,19 @@ class Cylinder(Shape):
             capping=True,
         )
         return rotate(cylinder, self.center, self.orientation)
+
+    def to_implicit(self: Cylinder) -> ImplicitShape:
+        """Convert this cylinder to an :class:`ImplicitShape`."""
+        from .implicit_basic_factory import implicit_cylinder
+
+        shape = implicit_cylinder(
+            center=(0, 0, 0),
+            axis=(1, 0, 0),
+            radius=self.radius,
+            height=self.height,
+        )
+        angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))
+        return shape.rotate(angles).translate(tuple(self.center))
 
     def generateVtk(  # noqa: N802
         self: Cylinder,

@@ -18,6 +18,7 @@ from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.implicit_shape import ImplicitShape
 
 
 class Capsule(Shape):
@@ -107,6 +108,15 @@ class Capsule(Shape):
         ).triangulate()
         capsule = cylinder.boolean_union(sphere_left).boolean_union(sphere_right)
         return rotate(capsule, self.center, self.orientation)
+
+    def to_implicit(self: Capsule) -> ImplicitShape:
+        """Convert this capsule to an :class:`ImplicitShape`."""
+        from .implicit_basic_factory import implicit_capsule
+
+        h = self.height / 2.0
+        shape = implicit_capsule(start=(-h, 0, 0), end=(h, 0, 0), radius=self.radius)
+        angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))
+        return shape.rotate(angles).translate(tuple(self.center))
 
     def generateVtk(  # noqa: N802
         self: Capsule,
