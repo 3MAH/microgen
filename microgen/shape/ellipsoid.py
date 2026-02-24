@@ -92,7 +92,7 @@ class Ellipsoid(Shape):
 
     def to_implicit(self: Ellipsoid) -> ImplicitShape:
         """Convert this ellipsoid to an :class:`ImplicitShape`."""
-        from .implicit_basic_factory import implicit_ellipsoid
+        from .implicit_shape import implicit_ellipsoid
 
         shape = implicit_ellipsoid(center=(0, 0, 0), radii=self.radii)
         angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))

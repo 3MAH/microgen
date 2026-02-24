@@ -278,7 +278,7 @@ combine parametric geometry with F-rep boolean operations:
 .. jupyter-execute::
 
    import microgen
-   from microgen.shape.implicit_basic_factory import implicit_box
+   from microgen.shape.implicit_shape import implicit_box
 
    sphere = microgen.Sphere(center=(0.3, 0, 0), radius=0.4)
    sphere_imp = sphere.to_implicit()

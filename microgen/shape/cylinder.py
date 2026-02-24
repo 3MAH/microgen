@@ -75,7 +75,7 @@ class Cylinder(Shape):
 
     def to_implicit(self: Cylinder) -> ImplicitShape:
         """Convert this cylinder to an :class:`ImplicitShape`."""
-        from .implicit_basic_factory import implicit_cylinder
+        from .implicit_shape import implicit_cylinder
 
         shape = implicit_cylinder(
             center=(0, 0, 0),

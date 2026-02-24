@@ -111,7 +111,7 @@ class Capsule(Shape):
 
     def to_implicit(self: Capsule) -> ImplicitShape:
         """Convert this capsule to an :class:`ImplicitShape`."""
-        from .implicit_basic_factory import implicit_capsule
+        from .implicit_shape import implicit_capsule
 
         h = self.height / 2.0
         shape = implicit_capsule(start=(-h, 0, 0), end=(h, 0, 0), radius=self.radius)

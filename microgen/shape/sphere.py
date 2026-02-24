@@ -71,7 +71,7 @@ class Sphere(Shape):
 
     def to_implicit(self: Sphere) -> ImplicitShape:
         """Convert this sphere to an :class:`ImplicitShape`."""
-        from .implicit_basic_factory import implicit_sphere
+        from .implicit_shape import implicit_sphere
 
         shape = implicit_sphere(center=(0, 0, 0), radius=self.radius)
         angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))

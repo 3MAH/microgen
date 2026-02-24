@@ -88,7 +88,7 @@ class Box(Shape):
 
     def to_implicit(self: Box) -> ImplicitShape:
         """Convert this box to an :class:`ImplicitShape`."""
-        from .implicit_basic_factory import implicit_box
+        from .implicit_shape import implicit_box
 
         half = (self.dim[0] / 2, self.dim[1] / 2, self.dim[2] / 2)
         shape = implicit_box(center=(0, 0, 0), half_extents=half)
