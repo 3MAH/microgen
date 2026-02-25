@@ -27,6 +27,7 @@ from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
 USE_MULTI_RAY = True
 
+
 class ClosestCellsOnBoundaries(NamedTuple):
     """
     Class to manage closest cells on boundaries
