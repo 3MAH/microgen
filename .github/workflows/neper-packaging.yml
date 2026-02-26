@@ -21,10 +21,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install python=3.12 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload linux-64/*.tar.bz2 --force
+          conda-build neper.recipe -c conda-forge -c set3mah --output-folder .
+          anaconda --token ${{ secrets.ANACONDA_API_TOKEN }} upload linux-64/*.tar.bz2 --force
 
   macos:
     name: MacOS
@@ -39,10 +37,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install python=3.12 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload osx-arm64/*.tar.bz2 --force
+          conda-build neper.recipe -c conda-forge -c set3mah --output-folder .
+          anaconda --token ${{ secrets.ANACONDA_API_TOKEN }} upload osx-arm64/*.tar.bz2 --force
 
   windows:
     name: Windows
@@ -57,7 +53,5 @@ jobs:
         shell: pwsh
         run: |
           conda install python=3.12 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload win-64/*.tar.bz2 --force
+          conda-build neper.recipe -c conda-forge -c set3mah --output-folder .
+          anaconda --token ${{ secrets.ANACONDA_API_TOKEN }} upload win-64/*.tar.bz2 --force
