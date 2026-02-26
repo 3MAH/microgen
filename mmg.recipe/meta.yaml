@@ -20,9 +20,9 @@ requirements:
     - make # [unix]
   host:
     - cmake
-    - scotch 6.0.*
+    - scotch
   run:
-    - scotch 6.0.*
+    - scotch
 
 about:
   home: https://github.com/MmgTools/mmg

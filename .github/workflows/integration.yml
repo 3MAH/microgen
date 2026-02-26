@@ -52,6 +52,11 @@ jobs:
         run: python examples/run_examples.py -n auto
         shell: micromamba-shell {0}
 
+      - name: Replace conda VTK with PyPI VTK for Windows
+        if: runner.os == 'Windows'
+        run: pip install vtk
+        shell: pwsh
+
       - name: Install microgen for Windows
         if: runner.os == 'Windows'
         run: pip install . --no-deps
