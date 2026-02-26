@@ -20,7 +20,7 @@ jobs:
       - name: Conda build for Linux
         shell: bash -l {0}
         run: |
-          conda install python=3.9 conda-build anaconda-client
+          conda install python=3.12 conda-build anaconda-client
           anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build mmg.recipe -c conda-forge -c set3mah --output-folder  .
@@ -38,11 +38,11 @@ jobs:
       - name: Conda build for MacOS
         shell: bash -l {0}
         run: |
-          conda install python=3.9 conda-build anaconda-client
+          conda install python=3.12 conda-build anaconda-client
           anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build mmg.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload osx-64/*.tar.bz2 --force
+          anaconda upload osx-arm64/*.tar.bz2 --force
 
   windows:
     name: Windows
@@ -56,7 +56,7 @@ jobs:
       - name: Conda build for Windows
         shell: pwsh
         run: |
-          conda install python=3.9 conda-build anaconda-client
+          conda install python=3.12 conda-build anaconda-client
           anaconda logout
           anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
           conda-build mmg.recipe -c conda-forge -c set3mah --output-folder  .
