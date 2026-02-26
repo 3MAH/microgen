@@ -44,6 +44,10 @@ docs = [
     'mock',
     'myst-parser',
 ]
+ray = [
+    "trimesh",
+    "embreex",
+]
 jupyter = [
     "jupyterlab<4.3",
     "jupyter-cadquery",
@@ -52,7 +56,7 @@ jupyter = [
     "sidecar",
     "jupyterview",
 ]
-all = ["microgen[dev, docs, jupyter]"]
+all = ["microgen[dev, docs, jupyter, ray]"]
 
 [project.urls]
 Documentation = 'https://microgen.readthedocs.io/en/latest'
