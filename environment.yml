@@ -5,8 +5,7 @@ channels:
 
 dependencies:
   - numpy
-  - vtk >=9.4
-  - pyvista
+  - pyvista <0.46.5
   - scipy
   - python-gmsh
   - meshio
