@@ -23,7 +23,7 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.operations import fuseShapes, rotateEuler, rotatePvEuler
+from microgen.operations import fuseShapes, rotate
 
 from .shape import Shape
 
@@ -228,8 +228,7 @@ class Tpms(Shape):
             self.repeat_cell = np.array(repeat_cell)
         else:
             err_msg = (
-                "`repeat_cell` must have a length of 3 integers. "
-                f"Given: {repeat_cell}"
+                f"`repeat_cell` must have a length of 3 integers. Given: {repeat_cell}"
             )
             raise ValueError(err_msg)
 
@@ -619,13 +618,7 @@ class Tpms(Shape):
 
         shape = self._extract_part_from_box(type_part, smoothing)
 
-        shape = rotateEuler(
-            obj=shape,
-            center=(0, 0, 0),
-            psi=self.orientation[0],
-            theta=self.orientation[1],
-            phi=self.orientation[2],
-        )
+        shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
         return shape.translate(self.center)
 
     def generate_vtk(
@@ -655,15 +648,9 @@ class Tpms(Shape):
                 part_type=type_part,
                 resolution=algo_resolution,
             )
-        polydata = getattr(self, type_part.replace(" ", "_"))
+        polydata: pv.PolyData = getattr(self, type_part.replace(" ", "_"))
 
-        polydata = rotatePvEuler(
-            polydata,
-            center=(0, 0, 0),
-            psi=self.orientation[0],
-            theta=self.orientation[1],
-            phi=self.orientation[2],
-        )
+        polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
 
     def generate_grid_vtk(

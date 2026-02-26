@@ -10,6 +10,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from scipy.spatial.transform import Rotation
+
 if TYPE_CHECKING:
     import cadquery as cq
     import pyvista as pv
@@ -28,11 +30,15 @@ class Shape(ABC):
     def __init__(
         self: Shape,
         center: Vector3DType = (0, 0, 0),
-        orientation: Vector3DType = (0, 0, 0),
+        orientation: Vector3DType | Rotation = (0, 0, 0),
     ) -> None:
         """Initialize the shape."""
         self.center = center
-        self.orientation = orientation
+        self.orientation = (
+            orientation
+            if isinstance(orientation, Rotation)
+            else Rotation.from_euler("ZXZ", orientation, degrees=True)
+        )
 
     @abstractmethod
     def generate(self: Shape, **_: KwargsGenerateType) -> cq.Shape:

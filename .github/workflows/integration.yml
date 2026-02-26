@@ -9,6 +9,10 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   run-examples:
     runs-on: ${{ matrix.os }}
@@ -21,10 +25,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pyvista/setup-headless-display-action@v3
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         with:
           generate-run-shell: true
-          micromamba-version: "1.5.8-0" # any version from https://github.com/mamba-org/micromamba-releases
+          micromamba-version: "2.0.4-0" # any version from https://github.com/mamba-org/micromamba-releases
           environment-file: environment.yml
           create-args: python=${{ matrix.python-version }}
           init-shell: powershell bash

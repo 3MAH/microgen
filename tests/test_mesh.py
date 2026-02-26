@@ -6,7 +6,7 @@ import cadquery as cq
 import numpy as np
 import pyvista as pv
 
-from microgen import Phase, Rve, Sphere, mesh, rasterPhase
+from microgen import Phase, Rve, Sphere, mesh, raster_phase
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 
@@ -18,7 +18,7 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells() -> None:
     Path("tests/data").mkdir(parents=True, exist_ok=True)
 
     grid = [3 for _ in range(3)]
-    phases = rasterPhase(
+    phases = raster_phase(
         phase=Phase(shape=Sphere(radius=0.5).generate()),
         rve=Rve(),
         grid=grid,

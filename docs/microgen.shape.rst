@@ -5,6 +5,7 @@ microgen.shape package
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: AbstractLattice, BodyCenteredCubic, Cubic, Cuboctahedron, CustomLattice, Diamond, FaceCenteredCubic, Octahedron, OctetTruss, RhombicCuboctahedron, RhombicDodecahedron, TruncatedCube, TruncatedOctahedron, TruncatedCuboctahedron
 
 .. automodule:: microgen.shape.shape
    :members:
