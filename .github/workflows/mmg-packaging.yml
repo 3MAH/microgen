@@ -22,7 +22,7 @@ jobs:
         run: |
           conda install python=3.12 conda-build anaconda-client
           conda-build mmg.recipe -c conda-forge -c set3mah --output-folder .
-          anaconda --token ${{ secrets.ANACONDA_API_TOKEN }} upload linux-64/mmg-*.conda --force
+          anaconda upload --token ${{ secrets.ANACONDA_API_TOKEN }} linux-64/mmg-*.conda --force
 
   macos:
     name: MacOS
@@ -38,7 +38,7 @@ jobs:
         run: |
           conda install python=3.12 conda-build anaconda-client
           conda-build mmg.recipe -c conda-forge -c set3mah --output-folder .
-          anaconda --token ${{ secrets.ANACONDA_API_TOKEN }} upload osx-arm64/mmg-*.conda --force
+          anaconda upload --token ${{ secrets.ANACONDA_API_TOKEN }} osx-arm64/mmg-*.conda --force
 
   windows:
     name: Windows
@@ -54,4 +54,4 @@ jobs:
         run: |
           conda install python=3.12 conda-build anaconda-client
           conda-build mmg.recipe -c conda-forge -c set3mah --output-folder .
-          anaconda --token ${{ secrets.ANACONDA_API_TOKEN }} upload win-64/mmg-*.conda --force
+          anaconda upload --token ${{ secrets.ANACONDA_API_TOKEN }} win-64/mmg-*.conda --force
