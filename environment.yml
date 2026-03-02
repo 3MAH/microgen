@@ -5,6 +5,7 @@ channels:
 
 dependencies:
   - numpy
+  - vtk >=9.4
   - pyvista
   - matplotlib
   - scipy
