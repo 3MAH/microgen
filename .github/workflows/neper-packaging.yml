@@ -8,56 +8,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Linux:
-    name: Linux
-    runs-on: "ubuntu-latest"
+  build:
+    name: ${{ matrix.os }} (${{ matrix.conda_platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            runner: ubuntu-latest
+            conda_platform: linux-64
+          - os: MacOS
+            runner: macos-latest
+            conda_platform: osx-arm64
+          - os: Windows
+            runner: windows-latest
+            conda_platform: win-64
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: "latest"
+          miniforge-version: latest
           activate-environment: packaging
-      - name: Conda build for Linux
+          auto-update-conda: true
+          conda-solver: libmamba
+
+      - name: Build Package
         shell: bash -l {0}
         run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload linux-64/*.tar.bz2 --force
+          conda install -y conda-build
+          conda config --set anaconda_upload no
+          conda-build neper.recipe -c conda-forge -c set3mah --no-test --output-folder .
 
-  macos:
-    name: MacOS
-    runs-on: "macos-13"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for MacOS
+      - name: Upload to Anaconda
         shell: bash -l {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
         run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload osx-64/*.tar.bz2 --force
-
-  windows:
-    name: Windows
-    runs-on: "windows-latest"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for Windows
-        shell: pwsh
-        run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload win-64/*.tar.bz2 --force
+          conda install -y anaconda-client
+          anaconda upload ${{ matrix.conda_platform }}/*.conda --force --no-progress

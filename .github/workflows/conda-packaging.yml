@@ -10,26 +10,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  conda-packaging:
-    name: Conda packaging
-    runs-on: "windows-latest"
+  build:
+    name: ${{ matrix.os }} (${{ matrix.conda_platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            runner: ubuntu-latest
+            conda_platform: noarch
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: "latest"
+          miniforge-version: latest
           activate-environment: packaging
+          auto-update-conda: true
+          conda-solver: libmamba
 
-      - name: Conda build
-        shell: pwsh
+      - name: Build Package
+        shell: bash -l {0}
         run: |
-          # export PACKAGE_VERSION="${BRANCH_NAME//-/_}"
-          $env:PACKAGE_VERSION = $env:BRANCH_NAME -replace "-", "_"
-          conda install python conda-build conda-verify anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build conda.recipe -c conda-forge --output-folder  .
-          anaconda upload noarch/*.tar.bz2 --force
-          anaconda logout
+          conda install -y conda-build conda-verify
+          conda config --set anaconda_upload no
+          conda-build conda.recipe -c conda-forge --output-folder .
+
+      - name: Upload to Anaconda
+        shell: bash -l {0}
         env:
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          conda install -y anaconda-client
+          anaconda upload ${{ matrix.conda_platform }}/*.conda --force --no-progress

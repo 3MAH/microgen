@@ -9,64 +9,43 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} (${{ matrix.conda_platform }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Linux
-            os: ubuntu-latest
-            shell: bash -l {0}
-            subdir: linux-64
-            conda_subdir: ""
-          - name: macOS x64
-            os: macos-13
-            shell: bash -l {0}
-            subdir: osx-64
-            conda_subdir: osx-64
-          - name: macOS ARM64
-            os: macos-latest
-            shell: bash -l {0}
-            subdir: osx-arm64
-            conda_subdir: osx-arm64
-          - name: Windows
-            os: windows-latest
-            shell: pwsh
-            subdir: win-64
-            conda_subdir: ""
+          - os: Linux
+            runner: ubuntu-latest
+            conda_platform: linux-64
+          - os: MacOS
+            runner: macos-latest
+            conda_platform: osx-arm64
+          - os: Windows
+            runner: windows-latest
+            conda_platform: win-64
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: "latest"
+          miniforge-version: latest
+          activate-environment: packaging
           auto-update-conda: true
-
-      - name: Configure Conda subdir
-        if: matrix.conda_subdir != ''
-        shell: ${{ matrix.shell }}
-        run: |
-          conda config --set subdir ${{ matrix.conda_subdir }}
-          echo "CONDA_SUBDIR=${{ matrix.conda_subdir }}" >> $GITHUB_ENV
-
-      - name: Install Dependencies
-        shell: ${{ matrix.shell }}
-        run: |
-          conda update --all
-          conda clean --all
-          conda install conda-build anaconda-client conda-verify
-          conda config --set anaconda_upload no
+          conda-solver: libmamba
 
       - name: Build Package
-        shell: ${{ matrix.shell }}
+        shell: bash -l {0}
         run: |
+          conda install -y conda-build
+          conda config --set anaconda_upload no
           conda-build mmg.recipe -c set3mah -c conda-forge --no-test --output-folder .
 
       - name: Upload to Anaconda
-        shell: ${{ matrix.shell }}
+        shell: bash -l {0}
         env:
-          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
         run: |
-          anaconda upload ${{ matrix.subdir }}/*.conda --force
+          conda install -y anaconda-client
+          anaconda upload ${{ matrix.conda_platform }}/*.conda --force --no-progress
