@@ -38,10 +38,11 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
+      - run: uv sync --extra dev
+
       - name: Install cadquery-vtk for Python 3.13 (VTK 9.3.1 has no 3.13 wheel)
         if: matrix.python-version == '3.13'
         run: uv pip install cadquery-vtk
 
-      - run: uv sync --extra dev
       - run: uv pip install .
       - run: uv run pytest --numprocesses=auto
