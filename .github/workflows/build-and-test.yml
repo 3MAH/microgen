@@ -26,7 +26,7 @@ jobs:
             # "macos-13", # x86_64
             "macos-latest", # arm64
           ]
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.10", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,10 @@ jobs:
 
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
+
+      - name: Install cadquery-vtk for Python 3.13 (VTK 9.3.1 has no 3.13 wheel)
+        if: matrix.python-version == '3.13'
+        run: uv pip install cadquery-vtk
 
       - run: uv sync --extra dev
       - run: uv pip install .
