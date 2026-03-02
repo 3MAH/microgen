@@ -4,8 +4,9 @@ channels:
   - set3mah
 
 dependencies:
-  - numpy <2
+  - numpy
   - pyvista
+  - matplotlib
   - scipy
   - python-gmsh
   - meshio

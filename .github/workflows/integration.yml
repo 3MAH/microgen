@@ -24,6 +24,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@v3
       - uses: mamba-org/setup-micromamba@v2
         with:
           generate-run-shell: true
