@@ -21,9 +21,9 @@ requirements:
     - make # [unix]
   host:
     - cmake
-    - scotch
+    - scotch  # [not win]
   run:
-    - scotch
+    - scotch  # [not win]
 
 about:
   home: https://github.com/MmgTools/mmg
