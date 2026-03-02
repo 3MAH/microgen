@@ -6,6 +6,7 @@ channels:
 dependencies:
   - numpy
   - pyvista
+  - matplotlib
   - scipy
   - python-gmsh
   - meshio
