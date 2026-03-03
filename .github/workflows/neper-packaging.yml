@@ -20,15 +20,19 @@ jobs:
       - name: Conda build for Linux
         shell: bash -l {0}
         run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload linux-64/*.tar.bz2 --force
+          conda install python=3.12 conda-build anaconda-client
+          conda config --set anaconda_upload no
+          conda-build neper.recipe -c conda-forge -c set3mah --output-folder .
+      - name: Upload to Anaconda
+        shell: bash -l {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          anaconda upload linux-64/*.conda --force --no-progress
 
   macos:
     name: MacOS
-    runs-on: "macos-13"
+    runs-on: "macos-latest"
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v3
@@ -38,11 +42,15 @@ jobs:
       - name: Conda build for MacOS
         shell: bash -l {0}
         run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload osx-64/*.tar.bz2 --force
+          conda install python=3.12 conda-build anaconda-client
+          conda config --set anaconda_upload no
+          conda-build neper.recipe -c conda-forge -c set3mah --output-folder .
+      - name: Upload to Anaconda
+        shell: bash -l {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          anaconda upload osx-arm64/*.conda --force --no-progress
 
   windows:
     name: Windows
@@ -54,10 +62,14 @@ jobs:
           miniconda-version: "latest"
           activate-environment: packaging
       - name: Conda build for Windows
-        shell: pwsh
+        shell: bash -l {0}
         run: |
-          conda install python=3.9 conda-build anaconda-client
-          anaconda logout
-          anaconda login --username ${{ secrets.ANACONDA_USERNAME }} --password ${{ secrets.ANACONDA_PASSWORD }}
-          conda-build neper.recipe -c conda-forge -c set3mah --output-folder  .
-          anaconda upload win-64/*.tar.bz2 --force
+          conda install python=3.12 conda-build anaconda-client
+          conda config --set anaconda_upload no
+          conda-build neper.recipe -c conda-forge -c set3mah --output-folder .
+      - name: Upload to Anaconda
+        shell: bash -l {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          anaconda upload win-64/*.conda --force --no-progress

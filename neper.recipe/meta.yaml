@@ -23,13 +23,13 @@ requirements:
     - libblas
     - llvm-openmp  # [osx]
     - gsl
-    - scotch 6.0.*
+    - scotch
     - nlopt
     - openmp #[not osx]
     - occt 7.7.0
   run:
     - gsl
-    - scotch 6.*
+    - scotch
     - llvm-openmp  # [osx]
     - nlopt
     - openmp #[not osx]
