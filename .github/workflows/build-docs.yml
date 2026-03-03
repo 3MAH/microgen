@@ -34,14 +34,13 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - uses: pyvista/setup-headless-display-action@v3
+
       - name: Install libGLU
         run: sudo apt-get install libglu1-mesa
 
       - name: Install
         run: pip install .[docs]
-
-      - name: Install vtk
-        run: pip uninstall vtk -y && pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
 
       - name: Build docs
         run: make -C docs html
