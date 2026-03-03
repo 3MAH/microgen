@@ -33,28 +33,15 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - uses: pyvista/setup-headless-display-action@v3
+
       - name: Install libGLU
         run: sudo apt-get install -y libglu1-mesa
 
       - name: Install package with docs dependencies
         run: pip install .[docs]
 
-      - name: Install VTK-OSMesa for headless rendering
-        run: |
-          pip uninstall vtk -y
-          pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
-
-      - name: Cache Sphinx build directory
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true'
-        with:
-          path: docs/_build/
-          key: doc-build-${{ hashFiles('microgen/__init__.py') }}-${{ hashFiles('docs/**/*.rst') }}
-          restore-keys: |
-            doc-build-${{ hashFiles('microgen/__init__.py') }}-
-            doc-build-
-
-      - name: Build Documentation
+      - name: Build docs
         run: make -C docs html
 
       - name: Upload HTML documentation

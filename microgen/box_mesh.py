@@ -14,7 +14,12 @@ from scipy.spatial import KDTree
 from .rve import Rve
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
 
-USE_MULTI_RAY = False
+try:
+    import trimesh
+
+    USE_MULTI_RAY = trimesh.ray.has_embree
+except ImportError:
+    USE_MULTI_RAY = False
 
 AXES = ("x", "y", "z")
 AXES_PAIRS = (("x", "y"), ("x", "z"), ("y", "z"))
@@ -573,6 +578,7 @@ class BoxMesh(SingleMesh):
                 raytraceresult = surface_p.multi_ray_trace(
                     origins=face,
                     directions=directions,
+                    retry=True,
                 )
             else:
                 intersection_points = []
