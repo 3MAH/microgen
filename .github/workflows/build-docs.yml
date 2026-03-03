@@ -11,9 +11,6 @@ on:
       - main
       - master
 
-env:
-  USE_CACHE: "true"
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
