@@ -578,6 +578,7 @@ class BoxMesh(SingleMesh):
                 raytraceresult = surface_p.multi_ray_trace(
                     origins=face,
                     directions=directions,
+                    retry=True,
                 )
             else:
                 intersection_points = []

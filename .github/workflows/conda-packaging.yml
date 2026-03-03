@@ -22,6 +22,9 @@ jobs:
 
       - name: Conda build
         shell: bash -l {0}
+        env:
+          PACKAGE_VERSION: ${{ github.ref_name }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
           conda install -y conda-build anaconda-client
           conda config --set anaconda_upload no

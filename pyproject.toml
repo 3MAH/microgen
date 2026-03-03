@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    # Python 3.13 not yet supported via pip (VTK 9.3.1 has no 3.13 wheel on PyPI)
 ]
 dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy", "nlopt"]
 
