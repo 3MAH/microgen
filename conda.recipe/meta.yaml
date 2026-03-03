@@ -19,7 +19,7 @@ requirements:
     - python >=3.9,<3.13
     - numpy
     - vtk
-    - pyvista
+    - pyvista <0.47
     - python-gmsh
     - meshio
     - cadquery
