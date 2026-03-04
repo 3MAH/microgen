@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYVISTA_OFF_SCREEN: "True"
+
 jobs:
   run-examples:
     runs-on: ${{ matrix.os }}

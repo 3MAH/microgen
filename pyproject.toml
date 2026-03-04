@@ -53,7 +53,7 @@ jupyter = [
 all = ["microgen[dev, docs, jupyter, ray]"]
 
 [project.urls]
-Documentation = 'https://microgen.readthedocs.io/en/latest'
+Documentation = 'https://3mah.github.io/microgen-docs/'
 "Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
 "Source Code" = 'https://github.com/3MAH/microgen'
 

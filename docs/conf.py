@@ -67,7 +67,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 #
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {
-    "canonical_url": "https://microgen.readthedocs.io/en/latest/",
+    "canonical_url": "https://3mah.github.io/microgen-docs/",
     # 'logo_only': False,
     # 'display_version': True,
     # 'prev_next_buttons_location': 'bottom',
