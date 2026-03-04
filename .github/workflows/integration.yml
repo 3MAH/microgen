@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYVISTA_OFF_SCREEN: "True"
+
 jobs:
   run-examples:
     runs-on: ${{ matrix.os }}
@@ -20,10 +23,11 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.12"]
+        python-version: ["3.10", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@v3
       - uses: mamba-org/setup-micromamba@v2
         with:
           generate-run-shell: true

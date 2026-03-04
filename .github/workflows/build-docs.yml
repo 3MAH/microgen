@@ -1,4 +1,4 @@
-name: Build Documentation
+name: Documentation
 
 on:
   workflow_dispatch:
@@ -11,20 +11,16 @@ on:
       - main
       - master
 
-  schedule:
-    - cron: "0 0 * * *"
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build-doc:
     runs-on: "ubuntu-latest"
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
-      SHELLOPTS: "errexit:pipefail"
 
     steps:
       - uses: actions/checkout@v4
@@ -34,14 +30,13 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - uses: pyvista/setup-headless-display-action@v3
+
       - name: Install libGLU
-        run: sudo apt-get install libglu1-mesa
+        run: sudo apt-get install -y libglu1-mesa
 
-      - name: Install
+      - name: Install package with docs dependencies
         run: pip install .[docs]
-
-      - name: Install vtk
-        run: pip uninstall vtk -y && pip install vtk-osmesa --extra-index-url https://wheels.vtk.org
 
       - name: Build docs
         run: make -C docs html

@@ -11,15 +11,8 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.os }} (${{ matrix.conda_platform }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: Linux
-            runner: ubuntu-latest
-            conda_platform: noarch
+    name: Conda packaging (noarch)
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -28,13 +21,15 @@ jobs:
         with:
           miniforge-version: latest
           activate-environment: packaging
-          auto-update-conda: true
           conda-solver: libmamba
 
       - name: Build Package
         shell: bash -l {0}
+        env:
+          PACKAGE_VERSION: ${{ github.ref_name }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          conda install -y conda-build conda-verify
+          conda install -y conda-build
           conda config --set anaconda_upload no
           conda-build conda.recipe -c conda-forge --output-folder .
 
@@ -44,4 +39,4 @@ jobs:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
         run: |
           conda install -y anaconda-client
-          anaconda upload ${{ matrix.conda_platform }}/*.conda --force --no-progress
+          anaconda upload noarch/*.conda --force --no-progress

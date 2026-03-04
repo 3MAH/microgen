@@ -4,7 +4,7 @@ version = "1.4.0.dev0"
 authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation and meshing"
 readme = "README.md"
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.10"
 keywords = ["microstructure", "lattice", "periodic", "TPMS", "mesh"]
 license = { text = "GPLv3" }
 classifiers = [
@@ -13,20 +13,12 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX',
     'Operating System :: MacOS',
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    # Python 3.13 not yet supported via pip (VTK 9.3.1 has no 3.13 wheel on PyPI)
 ]
-
-dependencies = [
-    "cadquery>=2.5.0,<2.6",
-    "gmsh>=4.13.1,<5",
-    "meshio>=5.3.5,<6",
-    "numpy>1.24.0,<3",
-    "pyvista>=0.44.2,<0.47",
-    "scipy>=1.13.1,<1.16",
-]
+dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy", "nlopt"]
 
 [project.optional-dependencies]
 dev = [
@@ -46,18 +38,22 @@ docs = [
     "mock>=5.1.0",
     "myst-parser>=3.0.1",
 ]
+ray = [
+    "trimesh",
+    "embreex",
+]
 jupyter = [
-    "jupyterlab>=3.6.8,<4.4",
+    "jupyterlab>=3.6.8,<4.6",
     "jupyter-cadquery>=2.2.1",
     "ipyvtklink>=0.2.3",
     "ipygany>=0.5.0",
     "sidecar>=0.5.2",
     "jupyterview>=0.7.0",
 ]
-all = ["microgen[dev, docs, jupyter]"]
+all = ["microgen[dev, docs, jupyter, ray]"]
 
 [project.urls]
-Documentation = 'https://microgen.readthedocs.io/en/latest'
+Documentation = 'https://3mah.github.io/microgen-docs/'
 "Bug Tracker" = 'https://github.com/3MAH/microgen/issues'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
@@ -75,7 +71,7 @@ module = ["gmsh", "scipy.spatial"]
 ignore_missing_imports = true
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 
 [tool.ruff.lint]
 exclude = [

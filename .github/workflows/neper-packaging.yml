@@ -32,7 +32,6 @@ jobs:
         with:
           miniforge-version: latest
           activate-environment: packaging
-          auto-update-conda: true
           conda-solver: libmamba
 
       - name: Build Package
