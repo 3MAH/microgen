@@ -52,6 +52,11 @@ microgen.shape package
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: microgen.shape.implicit_shape
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: microgen.shape.surface_functions
    :members:
    :undoc-members:

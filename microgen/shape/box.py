@@ -19,6 +19,7 @@ from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.implicit_shape import ImplicitShape
 
 
 class Box(Shape):
@@ -84,6 +85,15 @@ class Box(Shape):
             quads=True,
         )
         return rotate(box, self.center, self.orientation)
+
+    def to_implicit(self: Box) -> ImplicitShape:
+        """Convert this box to an :class:`ImplicitShape`."""
+        from .implicit_shape import implicit_box
+
+        half = (self.dim[0] / 2, self.dim[1] / 2, self.dim[2] / 2)
+        shape = implicit_box(center=(0, 0, 0), half_extents=half)
+        angles = tuple(self.orientation.as_euler("ZXZ", degrees=True))
+        return shape.rotate(angles).translate(tuple(self.center))
 
     def generateVtk(self: Box, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
