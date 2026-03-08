@@ -8,68 +8,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Linux:
-    name: Linux
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for Linux
-        shell: bash -l {0}
-        run: |
-          conda install python=3.12 conda-build anaconda-client
-          conda config --set anaconda_upload no
-          conda-build mmg.recipe -c conda-forge -c set3mah --output-folder .
-      - name: Upload to Anaconda
-        shell: bash -l {0}
-        env:
-          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
-        run: |
-          anaconda upload linux-64/*.conda --force --no-progress
+  build:
+    name: ${{ matrix.os }} (${{ matrix.conda_platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            runner: ubuntu-latest
+            conda_platform: linux-64
+          - os: MacOS
+            runner: macos-latest
+            conda_platform: osx-arm64
+          - os: Windows
+            runner: windows-latest
+            conda_platform: win-64
 
-  macos:
-    name: MacOS
-    runs-on: "macos-latest"
     steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          activate-environment: packaging
-      - name: Conda build for MacOS
-        shell: bash -l {0}
-        run: |
-          conda install python=3.12 conda-build anaconda-client
-          conda config --set anaconda_upload no
-          conda-build mmg.recipe -c conda-forge -c set3mah --output-folder .
-      - name: Upload to Anaconda
-        shell: bash -l {0}
-        env:
-          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
-        run: |
-          anaconda upload osx-arm64/*.conda --force --no-progress
+      - uses: actions/checkout@v6
 
-  windows:
-    name: Windows
-    runs-on: "windows-latest"
-    steps:
-      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: "latest"
+          miniforge-version: latest
           activate-environment: packaging
-      - name: Conda build for Windows
+          conda-solver: libmamba
+
+      - name: Build Package
         shell: bash -l {0}
         run: |
-          conda install python=3.12 conda-build anaconda-client
+          conda install -y conda-build
           conda config --set anaconda_upload no
-          conda-build mmg.recipe -c conda-forge -c set3mah --output-folder .
+          conda-build mmg.recipe -c set3mah -c conda-forge --no-test --output-folder .
+
       - name: Upload to Anaconda
         shell: bash -l {0}
         env:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
         run: |
-          anaconda upload win-64/*.conda --force --no-progress
+          conda install -y anaconda-client
+          anaconda upload ${{ matrix.conda_platform }}/*.conda --force --no-progress
