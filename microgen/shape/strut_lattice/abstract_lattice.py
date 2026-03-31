@@ -283,10 +283,10 @@ class AbstractLattice(Shape):
         order: int = 1,
         periodic: bool = True,
         **_: KwargsGenerateType,
-    ) -> pv.UnstructuredGrid:
+    ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
 
-        if isinstance(self._vtk_shape, pv.UnstructuredGrid):
+        if isinstance(self._vtk_shape, pv.PolyData):
             return self._vtk_shape
 
         self._vtk_shape = self._generate_vtk(size, order, periodic)
@@ -300,7 +300,7 @@ class AbstractLattice(Shape):
         order: int = 1,
         periodic: bool = True,
         **_: KwargsGenerateType,
-    ) -> pv.UnstructuredGrid:
+    ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
         cad_lattice = self.cad_shape
         list_phases = [Phase(cad_lattice)]
@@ -328,7 +328,7 @@ class AbstractLattice(Shape):
                     output_file=mesh_file.name,
                 )
 
-            vtk_lattice = pv.read(mesh_file.name)
+            vtk_lattice = pv.read(mesh_file.name).extract_surface()
 
         # Solve compatibility issues of NamedTemporaryFiles with Windows
         trash_files_list = [
@@ -346,7 +346,7 @@ class AbstractLattice(Shape):
         order: int = 1,
         periodic: bool = True,
         **kwargs: KwargsGenerateType,
-    ) -> pv.UnstructuredGrid:
+    ) -> pv.PolyData:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
             size=size,

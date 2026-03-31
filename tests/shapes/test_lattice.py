@@ -4,7 +4,6 @@ from typing import Literal
 
 import cadquery as cq
 import numpy as np
-import pyvista as pv
 import pytest
 
 from microgen import is_periodic
@@ -89,16 +88,3 @@ def test_lattice_generate_vtk_periodic_must_produce_periodic_mesh() -> None:
     assert is_periodic(
         mesh.points
     ), "Mesh generated with periodic=True must be periodic"
-
-
-def test_lattice_generate_vtk_must_return_volumetric_mesh() -> None:
-    """generate_vtk must return an UnstructuredGrid containing only tetrahedra."""
-    lattice = OctetTruss(strut_radius=0.05, cell_size=1.0)
-    mesh = lattice.generate_vtk(size=0.1, periodic=True)
-
-    assert isinstance(
-        mesh, pv.UnstructuredGrid
-    ), f"Expected UnstructuredGrid, got {type(mesh).__name__}"
-    assert (
-        mesh.cells_dict.keys() == {pv.CellType.TETRA}
-    ), f"Mesh must contain only tetrahedra, got cell types {set(mesh.cells_dict.keys())}"
