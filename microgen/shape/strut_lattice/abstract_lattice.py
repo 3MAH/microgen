@@ -283,10 +283,10 @@ class AbstractLattice(Shape):
         order: int = 1,
         periodic: bool = True,
         **_: KwargsGenerateType,
-    ) -> pv.PolyData:
+    ) -> pv.UnstructuredGrid:
         """Generate a strut-based lattice VTK shape using the given parameters."""
 
-        if isinstance(self._vtk_shape, pv.PolyData):
+        if isinstance(self._vtk_shape, pv.UnstructuredGrid):
             return self._vtk_shape
 
         self._vtk_shape = self._generate_vtk(size, order, periodic)
@@ -300,7 +300,7 @@ class AbstractLattice(Shape):
         order: int = 1,
         periodic: bool = True,
         **_: KwargsGenerateType,
-    ) -> pv.PolyData:
+    ) -> pv.UnstructuredGrid:
         """Generate a strut-based lattice VTK shape using the given parameters."""
         cad_lattice = self.cad_shape
         list_phases = [Phase(cad_lattice)]
@@ -319,15 +319,16 @@ class AbstractLattice(Shape):
                     order=order,
                     output_file=mesh_file.name,
                 )
-            mesh(
-                mesh_file=cad_step_file.name,
-                list_phases=list_phases,
-                size=size,
-                order=order,
-                output_file=mesh_file.name,
-            )
+            else:
+                mesh(
+                    mesh_file=cad_step_file.name,
+                    list_phases=list_phases,
+                    size=size,
+                    order=order,
+                    output_file=mesh_file.name,
+                )
 
-            vtk_lattice = pv.read(mesh_file.name).extract_surface()
+            vtk_lattice = pv.read(mesh_file.name)
 
         # Solve compatibility issues of NamedTemporaryFiles with Windows
         trash_files_list = [
@@ -345,7 +346,7 @@ class AbstractLattice(Shape):
         order: int = 1,
         periodic: bool = True,
         **kwargs: KwargsGenerateType,
-    ) -> pv.PolyData:
+    ) -> pv.UnstructuredGrid:
         """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
             size=size,
