@@ -285,12 +285,15 @@ class AbstractLattice(Shape):
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
+        key = (size, order, periodic)
+        if self._vtk_shape is not None:
+            cached_key, cached_mesh = self._vtk_shape
+            if cached_key == key:
+                return cached_mesh
 
-        if isinstance(self._vtk_shape, pv.PolyData):
-            return self._vtk_shape
-
-        self._vtk_shape = self._generate_vtk(size, order, periodic)
-        return self._vtk_shape
+        mesh = self._generate_vtk(size, order, periodic)
+        self._vtk_shape = (key, mesh)
+        return mesh
 
     vtk_shape = property(generate_vtk)
 
