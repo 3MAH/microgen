@@ -96,7 +96,7 @@ class AbstractLattice(Shape):
 
         self._validate_inputs()
         self._cad_shape = None
-        self._vtk_shape = None
+        self._vtk_shape: tuple[tuple[float, int, bool], pv.PolyData] | None = None
 
         if density is not None and not 0.0 < density <= 1.0:
             err_msg = f"density must be between 0 and 1. Given: {density}"
@@ -285,14 +285,14 @@ class AbstractLattice(Shape):
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
-        key = (size, order, periodic)
+        lattice_params = (size, order, periodic)
         if self._vtk_shape is not None:
-            cached_key, cached_mesh = self._vtk_shape
-            if cached_key == key:
+            cached_params, cached_mesh = self._vtk_shape
+            if cached_params == lattice_params:
                 return cached_mesh
 
-        mesh = self._generate_vtk(size, order, periodic)
-        self._vtk_shape = (key, mesh)
+        mesh = self._generate_vtk(*lattice_params)
+        self._vtk_shape = (lattice_params, mesh)
         return mesh
 
     vtk_shape = property(generate_vtk)
