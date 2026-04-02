@@ -96,7 +96,7 @@ class AbstractLattice(Shape):
 
         self._validate_inputs()
         self._cad_shape = None
-        self._vtk_shape = None
+        self._vtk_shape: tuple[tuple[float, int, bool], pv.PolyData] | None = None
 
         if density is not None and not 0.0 < density <= 1.0:
             err_msg = f"density must be between 0 and 1. Given: {density}"
@@ -285,12 +285,15 @@ class AbstractLattice(Shape):
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
         """Generate a strut-based lattice VTK shape using the given parameters."""
+        lattice_params = (size, order, periodic)
+        if self._vtk_shape is not None:
+            cached_params, cached_mesh = self._vtk_shape
+            if cached_params == lattice_params:
+                return cached_mesh
 
-        if isinstance(self._vtk_shape, pv.PolyData):
-            return self._vtk_shape
-
-        self._vtk_shape = self._generate_vtk(size, order, periodic)
-        return self._vtk_shape
+        mesh = self._generate_vtk(*lattice_params)
+        self._vtk_shape = (lattice_params, mesh)
+        return mesh
 
     vtk_shape = property(generate_vtk)
 
@@ -319,13 +322,14 @@ class AbstractLattice(Shape):
                     order=order,
                     output_file=mesh_file.name,
                 )
-            mesh(
-                mesh_file=cad_step_file.name,
-                list_phases=list_phases,
-                size=size,
-                order=order,
-                output_file=mesh_file.name,
-            )
+            else:
+                mesh(
+                    mesh_file=cad_step_file.name,
+                    list_phases=list_phases,
+                    size=size,
+                    order=order,
+                    output_file=mesh_file.name,
+                )
 
             vtk_lattice = pv.read(mesh_file.name).extract_surface()
 
