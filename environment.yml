@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   - numpy
-  - pyvista
+  - pyvista <0.47  # pyvista 0.47 requires vtkRenderingMatplotlib, missing from conda VTK on Windows
   - matplotlib
   - scipy
   - python-gmsh
