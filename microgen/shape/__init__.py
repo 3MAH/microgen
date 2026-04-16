@@ -21,13 +21,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Literal, Sequence, Tuple
 
-from . import surface_functions
+from . import implicit_ops, surface_functions
 from .box import Box
 from .capsule import Capsule
 from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
 from .polyhedron import Polyhedron
+from .implicit_ops import batch_smooth_union, from_field
 from .shape import Shape
 from .sphere import Sphere
 from .strut_lattice import (
@@ -161,6 +162,9 @@ __all__ = [
     "ExtrudedPolygon",
     "FaceCenteredCubic",
     "Infill",
+    "batch_smooth_union",
+    "from_field",
+    "implicit_ops",
     "NormedDistance",
     "Octahedron",
     "OctetTruss",
