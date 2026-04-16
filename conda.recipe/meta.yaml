@@ -24,6 +24,8 @@ requirements:
     - meshio
     - cadquery
     - scipy
+    - pip:
+      - autograd
 
 test:
   imports:
