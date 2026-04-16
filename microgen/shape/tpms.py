@@ -123,6 +123,7 @@ class Tpms(Shape):
         self.resolution = resolution
 
         self._compute_tpms_field()
+        self._setup_frep_field()
 
         min_field = np.min(self.grid["surface"])
         max_field = np.max(self.grid["surface"])
@@ -353,6 +354,70 @@ class Tpms(Shape):
         )
 
         self.grid["surface"] = tpms_field.ravel(order="F")
+
+    def _setup_frep_field(self: Tpms) -> None:
+        """Build the F-rep implicit field (SDF-normalized) for this TPMS."""
+        from .implicit_ops import from_field, normalize_to_sdf  # noqa: PLC0415
+
+        k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        ps = self.phase_shift
+
+        def _raw_field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            return self.surface_function(
+                k_x * (x + ps[0]),
+                k_y * (y + ps[1]),
+                k_z * (z + ps[2]),
+            )
+
+        self._raw_field_func = _raw_field
+
+        raw_shape = from_field(_raw_field)
+        sdf_shape = normalize_to_sdf(raw_shape)
+        self._func = sdf_shape.func
+
+        half = 0.5 * self.cell_size * self.repeat_cell
+        self._bounds = (
+            -half[0], half[0],
+            -half[1], half[1],
+            -half[2], half[2],
+        )
+
+    @property
+    def raw_field(self: Tpms) -> Field:
+        """The raw (non-SDF-normalized) TPMS field callable."""
+        return self._raw_field_func
+
+    def as_sheet(self: Tpms, thickness: float | None = None) -> Shape:
+        """Return an F-rep Shape representing a uniform-thickness TPMS sheet.
+
+        Uses the SDF-normalized field, so *thickness* is in physical units.
+        If *thickness* is ``None``, uses ``self.offset``.
+        """
+        from .implicit_ops import shell  # noqa: PLC0415
+        from .shape import Shape  # noqa: PLC0415
+
+        t = thickness if thickness is not None else self._offset
+        return shell(
+            Shape(func=self._func, bounds=self._bounds),
+            float(t),
+        )
+
+    def as_upper_skeletal(self: Tpms) -> Shape:
+        """Return F-rep Shape for the upper skeletal (f > 0 side)."""
+        from .implicit_ops import complement  # noqa: PLC0415
+        from .shape import Shape  # noqa: PLC0415
+
+        return complement(Shape(func=self._func, bounds=self._bounds))
+
+    def as_lower_skeletal(self: Tpms) -> Shape:
+        """Return F-rep Shape for the lower skeletal (f < 0 side)."""
+        from .implicit_ops import from_field  # noqa: PLC0415
+
+        return from_field(func=self._func, bounds=self._bounds)
 
     def _update_grid_offset(self: Tpms) -> None:
         self.grid["lower_surface"] = self.grid["surface"] + 0.5 * self.offset
@@ -629,7 +694,10 @@ class Tpms(Shape):
     ) -> pv.PolyData:
         """Generate VTK PolyData object of the required TPMS part.
 
-        :param type_part: part of the TPMS desireds
+        Uses the SDF-normalized implicit field with F-rep operations:
+        sheet = ``shell(sdf, thickness)``, skeletal = one side of the SDF.
+
+        :param type_part: part of the TPMS desired
         :param algo_resolution: if offset must be computed to fit density, \
             resolution of the temporary TPMS used to compute the offset
 
@@ -643,12 +711,25 @@ class Tpms(Shape):
                 "'upper skeletal' or 'surface'"
             )
             raise ValueError(err_msg)
+
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
                 resolution=algo_resolution,
             )
-        polydata: pv.PolyData = getattr(self, type_part.replace(" ", "_"))
+        self._check_offset(type_part)
+
+        if type_part == "sheet":
+            part = self.as_sheet()
+        elif type_part == "upper skeletal":
+            part = self.as_upper_skeletal()
+        else:  # lower skeletal
+            part = self.as_lower_skeletal()
+
+        polydata = part.generate_vtk(
+            bounds=self._bounds,
+            resolution=self.resolution * max(self.repeat_cell),
+        )
 
         polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
@@ -774,6 +855,39 @@ class CylindricalTpms(Tpms):
         ]
         return grid
 
+    def _setup_frep_field(self: CylindricalTpms) -> None:
+        """Build F-rep field in Cartesian coordinates (inverse cylindrical mapping)."""
+        from .implicit_ops import from_field, normalize_to_sdf  # noqa: PLC0415
+
+        k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        ps = self.phase_shift
+        cyl_r = self.cylinder_radius
+        unit_theta = self.unit_theta
+
+        def _raw_field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            rho = np.sqrt(x**2 + y**2) - cyl_r
+            theta = np.arctan2(y, x) / unit_theta
+            return self.surface_function(
+                k_x * (rho + ps[0]),
+                k_y * (theta + ps[1]),
+                k_z * (z + ps[2]),
+            )
+
+        self._raw_field_func = _raw_field
+
+        raw_shape = from_field(_raw_field)
+        sdf_shape = normalize_to_sdf(raw_shape)
+        self._func = sdf_shape.func
+
+        # Bounds in Cartesian space
+        r_max = cyl_r + 0.5 * self.cell_size[0] * self.repeat_cell[0]
+        half_z = 0.5 * self.cell_size[2] * self.repeat_cell[2]
+        self._bounds = (-r_max, r_max, -r_max, r_max, -half_z, half_z)
+
 
 class SphericalTpms(Tpms):
     """Class used to generate spherical TPMS geometries (sheet or skeletals parts)."""
@@ -871,6 +985,42 @@ class SphericalTpms(Tpms):
             z.ravel(order="F"),
         ]
         return grid
+
+    def _setup_frep_field(self: SphericalTpms) -> None:
+        """Build F-rep field in Cartesian coordinates (inverse spherical mapping)."""
+        from .implicit_ops import from_field, normalize_to_sdf  # noqa: PLC0415
+
+        k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        ps = self.phase_shift
+        sph_r = self.sphere_radius
+        unit_theta = self.unit_theta
+        unit_phi = self.unit_phi
+
+        def _raw_field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            rho_cart = np.sqrt(x**2 + y**2 + z**2)
+            rho = rho_cart - sph_r
+            theta = (np.arccos(np.clip(z / np.maximum(rho_cart, 1e-30), -1, 1))
+                     - np.pi / 2.0) / unit_theta
+            phi = np.arctan2(y, x) / unit_phi
+            return self.surface_function(
+                k_x * (rho + ps[0]),
+                k_y * (theta + ps[1]),
+                k_z * (phi + ps[2]),
+            )
+
+        self._raw_field_func = _raw_field
+
+        raw_shape = from_field(_raw_field)
+        sdf_shape = normalize_to_sdf(raw_shape)
+        self._func = sdf_shape.func
+
+        # Bounds in Cartesian space
+        r_max = sph_r + 0.5 * self.cell_size[0] * self.repeat_cell[0]
+        self._bounds = (-r_max, r_max, -r_max, r_max, -r_max, r_max)
 
 
 class Infill(Tpms):
