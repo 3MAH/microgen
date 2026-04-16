@@ -133,8 +133,7 @@ class Shape:
         """
         if self._func is None:
             err_msg = (
-                "No implicit field defined — "
-                "subclasses must override generate_vtk()"
+                "No implicit field defined — subclasses must override generate_vtk()"
             )
             raise NotImplementedError(err_msg)
 
@@ -185,10 +184,7 @@ class Shape:
         :return: CadQuery Shape
         """
         if self._func is None:
-            err_msg = (
-                "No implicit field defined — "
-                "subclasses must override generate()"
-            )
+            err_msg = "No implicit field defined — subclasses must override generate()"
             raise NotImplementedError(err_msg)
 
         import cadquery as cq  # noqa: PLC0415
@@ -301,7 +297,9 @@ class Shape:
             )
         return Shape(
             func=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
-                x - _dx, y - _dy, z - _dz,
+                x - _dx,
+                y - _dy,
+                z - _dz,
             ),
             bounds=new_bounds,
         )
