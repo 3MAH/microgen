@@ -1,7 +1,7 @@
 """TPMS surface functions."""
 
-import numpy as np
-from numpy import cos, sin
+import autograd.numpy as np
+from autograd.numpy import cos, sin
 
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
