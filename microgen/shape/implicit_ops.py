@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from . import shape as _shape
+
 if TYPE_CHECKING:
     from .shape import BoundsType, Field, Shape
 
@@ -26,10 +28,8 @@ if TYPE_CHECKING:
 
 
 def _make_shape(func: Field, bounds: BoundsType | None) -> Shape:
-    """Create a Shape with an implicit field (single deferred import)."""
-    from .shape import Shape  # noqa: PLC0415
-
-    return Shape(func=func, bounds=bounds)
+    """Create a bare Shape with only an implicit scalar field."""
+    return _shape.Shape(func=func, bounds=bounds)
 
 
 def _smooth_min(

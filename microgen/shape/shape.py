@@ -18,6 +18,8 @@ from scipy.spatial.transform import Rotation
 
 from microgen.operations import rotate as rotate_mesh
 
+from . import implicit_ops as _ops
+
 if TYPE_CHECKING:
     import cadquery as cq
 
@@ -232,27 +234,19 @@ class Shape:
 
     def __or__(self: Shape, other: Shape) -> Shape:
         """Union (``a | b``): inside where either field is negative."""
-        from .implicit_ops import union  # noqa: PLC0415
-
-        return union(self, other)
+        return _ops.union(self, other)
 
     def __and__(self: Shape, other: Shape) -> Shape:
         """Intersection (``a & b``): inside where both fields are negative."""
-        from .implicit_ops import intersection  # noqa: PLC0415
-
-        return intersection(self, other)
+        return _ops.intersection(self, other)
 
     def __sub__(self: Shape, other: Shape) -> Shape:
         """Difference (``a - b``): inside *a* but not *b*."""
-        from .implicit_ops import difference  # noqa: PLC0415
-
-        return difference(self, other)
+        return _ops.difference(self, other)
 
     def __invert__(self: Shape) -> Shape:
         """Complement (``~a``): negate the field."""
-        from .implicit_ops import complement  # noqa: PLC0415
-
-        return complement(self)
+        return _ops.complement(self)
 
     # ------------------------------------------------------------------
     # Smooth booleans
@@ -260,21 +254,15 @@ class Shape:
 
     def smooth_union(self: Shape, other: Shape, k: float) -> Shape:
         """Smooth union with blending radius *k*."""
-        from .implicit_ops import smooth_union  # noqa: PLC0415
-
-        return smooth_union(self, other, k)
+        return _ops.smooth_union(self, other, k)
 
     def smooth_intersection(self: Shape, other: Shape, k: float) -> Shape:
         """Smooth intersection with blending radius *k*."""
-        from .implicit_ops import smooth_intersection  # noqa: PLC0415
-
-        return smooth_intersection(self, other, k)
+        return _ops.smooth_intersection(self, other, k)
 
     def smooth_difference(self: Shape, other: Shape, k: float) -> Shape:
         """Smooth difference with blending radius *k*."""
-        from .implicit_ops import smooth_difference  # noqa: PLC0415
-
-        return smooth_difference(self, other, k)
+        return _ops.smooth_difference(self, other, k)
 
     # ------------------------------------------------------------------
     # Implicit field transforms
