@@ -106,6 +106,11 @@ class Shape:
     ) -> npt.NDArray[np.float64]:
         """Evaluate the implicit scalar field at the given coordinates.
 
+        Coordinates are in the **field's local frame** — ``center`` and
+        ``orientation`` are NOT applied here (they only affect mesh output
+        in :meth:`generate_vtk`).  Use :meth:`translate` / :meth:`rotate`
+        to bake transforms into the field itself.
+
         :param x: x coordinates
         :param y: y coordinates
         :param z: z coordinates
@@ -301,11 +306,27 @@ class Shape:
         f = self.require_func()
         rot = Rotation.from_euler(convention, angles, degrees=True)
         inv_matrix = rot.inv().as_matrix()
+        # Recompute AABB by rotating the 8 corners of the original box
+        new_bounds = None
+        if self._bounds is not None:
+            b = self._bounds
+            corners = np.array(
+                list(itertools.product(b[0:2], b[2:4], b[4:6])),
+            )
+            rotated = (rot.as_matrix() @ corners.T).T
+            new_bounds = (
+                float(rotated[:, 0].min()),
+                float(rotated[:, 0].max()),
+                float(rotated[:, 1].min()),
+                float(rotated[:, 1].max()),
+                float(rotated[:, 2].min()),
+                float(rotated[:, 2].max()),
+            )
         return Shape(
             func=lambda x, y, z, _f=f, _m=inv_matrix: _f(
                 *(_m @ np.array([x, y, z])),
             ),
-            bounds=self._bounds,  # conservative: keep original bounds
+            bounds=new_bounds,
         )
 
     def scale(self: Shape, factor: float) -> Shape:
@@ -322,6 +343,16 @@ class Shape:
                 b[4] * factor,
                 b[5] * factor,
             )
+            if factor < 0:
+                # Negative factor inverts min/max — swap each axis pair
+                new_bounds = (
+                    new_bounds[1],
+                    new_bounds[0],
+                    new_bounds[3],
+                    new_bounds[2],
+                    new_bounds[5],
+                    new_bounds[4],
+                )
         return Shape(
             func=lambda x, y, z, _f=f, _s=factor: _f(x / _s, y / _s, z / _s) * _s,
             bounds=new_bounds,

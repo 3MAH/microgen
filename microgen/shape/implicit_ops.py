@@ -357,9 +357,13 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
         dfdy = elementwise_grad(f, argnum=1)
         dfdz = elementwise_grad(f, argnum=2)
 
-        # Probe with a tiny array to detect deferred failures
+        # Probe all three gradients to detect deferred failures
+        # (autograd wraps only the argnum-th arg, so a non-autograd op
+        # on y/z would pass the dfdx probe but crash in dfdy/dfdz)
         _probe = np.array([0.0])
         dfdx(_probe, _probe, _probe)
+        dfdy(_probe, _probe, _probe)
+        dfdz(_probe, _probe, _probe)
 
         def sdf(
             x: npt.NDArray[np.float64],
