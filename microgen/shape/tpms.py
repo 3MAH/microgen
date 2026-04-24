@@ -958,9 +958,7 @@ class Infill(Tpms):
         return grid
 
 
-class ShellCreationError(Exception):
-    """Error raised when the shell creation fails."""
+# Re-export for backward compatibility
+from .shape import ShellCreationError  # noqa: E402
 
-    def __init__(self: ShellCreationError, message: str) -> None:
-        """Initialize the ShellCreationError."""
-        super().__init__(message)
+__all__ = ["CylindricalTpms", "Infill", "ShellCreationError", "SphericalTpms", "Tpms"]
