@@ -18,6 +18,8 @@ from scipy.spatial.transform import Rotation
 
 from microgen.operations import rotate as rotate_mesh
 
+from . import implicit_ops as _ops
+
 if TYPE_CHECKING:
     import cadquery as cq
 
@@ -104,6 +106,11 @@ class Shape:
     ) -> npt.NDArray[np.float64]:
         """Evaluate the implicit scalar field at the given coordinates.
 
+        Coordinates are in the **field's local frame** — ``center`` and
+        ``orientation`` are NOT applied here (they only affect mesh output
+        in :meth:`generate_vtk`).  Use :meth:`translate` / :meth:`rotate`
+        to bake transforms into the field itself.
+
         :param x: x coordinates
         :param y: y coordinates
         :param z: z coordinates
@@ -133,8 +140,7 @@ class Shape:
         """
         if self._func is None:
             err_msg = (
-                "No implicit field defined — "
-                "subclasses must override generate_vtk()"
+                "No implicit field defined — subclasses must override generate_vtk()"
             )
             raise NotImplementedError(err_msg)
 
@@ -185,10 +191,7 @@ class Shape:
         :return: CadQuery Shape
         """
         if self._func is None:
-            err_msg = (
-                "No implicit field defined — "
-                "subclasses must override generate()"
-            )
+            err_msg = "No implicit field defined — subclasses must override generate()"
             raise NotImplementedError(err_msg)
 
         import cadquery as cq  # noqa: PLC0415
@@ -236,27 +239,19 @@ class Shape:
 
     def __or__(self: Shape, other: Shape) -> Shape:
         """Union (``a | b``): inside where either field is negative."""
-        from .implicit_ops import union  # noqa: PLC0415
-
-        return union(self, other)
+        return _ops.union(self, other)
 
     def __and__(self: Shape, other: Shape) -> Shape:
         """Intersection (``a & b``): inside where both fields are negative."""
-        from .implicit_ops import intersection  # noqa: PLC0415
-
-        return intersection(self, other)
+        return _ops.intersection(self, other)
 
     def __sub__(self: Shape, other: Shape) -> Shape:
         """Difference (``a - b``): inside *a* but not *b*."""
-        from .implicit_ops import difference  # noqa: PLC0415
-
-        return difference(self, other)
+        return _ops.difference(self, other)
 
     def __invert__(self: Shape) -> Shape:
         """Complement (``~a``): negate the field."""
-        from .implicit_ops import complement  # noqa: PLC0415
-
-        return complement(self)
+        return _ops.complement(self)
 
     # ------------------------------------------------------------------
     # Smooth booleans
@@ -264,21 +259,15 @@ class Shape:
 
     def smooth_union(self: Shape, other: Shape, k: float) -> Shape:
         """Smooth union with blending radius *k*."""
-        from .implicit_ops import smooth_union  # noqa: PLC0415
-
-        return smooth_union(self, other, k)
+        return _ops.smooth_union(self, other, k)
 
     def smooth_intersection(self: Shape, other: Shape, k: float) -> Shape:
         """Smooth intersection with blending radius *k*."""
-        from .implicit_ops import smooth_intersection  # noqa: PLC0415
-
-        return smooth_intersection(self, other, k)
+        return _ops.smooth_intersection(self, other, k)
 
     def smooth_difference(self: Shape, other: Shape, k: float) -> Shape:
         """Smooth difference with blending radius *k*."""
-        from .implicit_ops import smooth_difference  # noqa: PLC0415
-
-        return smooth_difference(self, other, k)
+        return _ops.smooth_difference(self, other, k)
 
     # ------------------------------------------------------------------
     # Implicit field transforms
@@ -301,7 +290,9 @@ class Shape:
             )
         return Shape(
             func=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
-                x - _dx, y - _dy, z - _dz,
+                x - _dx,
+                y - _dy,
+                z - _dz,
             ),
             bounds=new_bounds,
         )
@@ -315,11 +306,27 @@ class Shape:
         f = self.require_func()
         rot = Rotation.from_euler(convention, angles, degrees=True)
         inv_matrix = rot.inv().as_matrix()
+        # Recompute AABB by rotating the 8 corners of the original box
+        new_bounds = None
+        if self._bounds is not None:
+            b = self._bounds
+            corners = np.array(
+                list(itertools.product(b[0:2], b[2:4], b[4:6])),
+            )
+            rotated = (rot.as_matrix() @ corners.T).T
+            new_bounds = (
+                float(rotated[:, 0].min()),
+                float(rotated[:, 0].max()),
+                float(rotated[:, 1].min()),
+                float(rotated[:, 1].max()),
+                float(rotated[:, 2].min()),
+                float(rotated[:, 2].max()),
+            )
         return Shape(
             func=lambda x, y, z, _f=f, _m=inv_matrix: _f(
                 *(_m @ np.array([x, y, z])),
             ),
-            bounds=self._bounds,  # conservative: keep original bounds
+            bounds=new_bounds,
         )
 
     def scale(self: Shape, factor: float) -> Shape:
@@ -336,6 +343,16 @@ class Shape:
                 b[4] * factor,
                 b[5] * factor,
             )
+            if factor < 0:
+                # Negative factor inverts min/max — swap each axis pair
+                new_bounds = (
+                    new_bounds[1],
+                    new_bounds[0],
+                    new_bounds[3],
+                    new_bounds[2],
+                    new_bounds[5],
+                    new_bounds[4],
+                )
         return Shape(
             func=lambda x, y, z, _f=f, _s=factor: _f(x / _s, y / _s, z / _s) * _s,
             bounds=new_bounds,

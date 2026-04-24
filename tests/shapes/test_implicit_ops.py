@@ -235,9 +235,13 @@ class TestTransforms:
         box = Shape(func=func, bounds=bounds)
         rotated = box.rotate((0, 0, 90), convention="xyz")
         # Point along y axis should be inside
-        assert rotated.evaluate(np.array([0.0]), np.array([0.5]), np.array([0.0]))[0] < 0
+        assert (
+            rotated.evaluate(np.array([0.0]), np.array([0.5]), np.array([0.0]))[0] < 0
+        )
         # Point along x axis (was inside, now outside)
-        assert rotated.evaluate(np.array([0.5]), np.array([0.0]), np.array([0.0]))[0] > 0
+        assert (
+            rotated.evaluate(np.array([0.5]), np.array([0.0]), np.array([0.0]))[0] > 0
+        )
 
     def test_scale(self):
         s = _make_sphere()
