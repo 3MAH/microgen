@@ -51,6 +51,8 @@ conda install conda-forge::microgen          # core
 conda install conda-forge::microgen ocp      # core + CAD
 ```
 
+**Python version notes:** core supports Python 3.10 – 3.14. The `[cad]` extra on PyPI follows `cadquery-ocp`'s wheel availability (typically 2–6 months behind a new Python release); if PyPI says "No matching distribution for cadquery-ocp", install through conda-forge instead — `conda install -c conda-forge ocp` usually ships wheels for newer Pythons ahead of PyPI.
+
 What you can do in each mode:
 
 |                                       | Core install | `[cad]` install |
