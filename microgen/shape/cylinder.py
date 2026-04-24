@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import cadquery as cq
 import pyvista as pv
 
 from microgen.operations import rotate
@@ -18,6 +17,7 @@ from microgen.operations import rotate
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
@@ -45,18 +45,17 @@ class Cylinder(Shape):
         self.radius = radius
         self.height = height
 
-    def generate(self: Cylinder, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate a cylinder CAD shape using the given parameters."""
-        cylinder = (
-            cq.Workplane("YZ")
-            .circle(self.radius)
-            .extrude(self.height)
-            .translate(
-                (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
-            )
+    def generate(self: Cylinder, **_: KwargsGenerateType) -> CadShape:
+        """Generate a cylinder CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_cylinder  # noqa: PLC0415
+
+        shape = make_cylinder(
+            radius=self.radius,
+            height=self.height,
+            center=self.center,
+            axis=(1.0, 0.0, 0.0),
         )
-        cylinder = rotate(cylinder, self.center, self.orientation)
-        return cq.Shape(cylinder.val().wrapped)
+        return rotate(shape, self.center, self.orientation)
 
     def generate_vtk(
         self: Cylinder,

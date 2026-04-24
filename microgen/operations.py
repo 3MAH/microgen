@@ -1,41 +1,44 @@
-"""Boolean operations."""
+"""Boolean operations.
+
+All OCP imports are deferred so the module loads cleanly in a mesh-only
+install.  Functions that use OCCT raise a clear ``ImportError`` (via
+:func:`microgen.cad.require_cad`) if the ``[cad]`` extra isn't installed.
+"""
 
 from __future__ import annotations
 
 import itertools
 import warnings
-from typing import TYPE_CHECKING, Sequence, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Sequence
 
-import cadquery as cq
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
-from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
-from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from scipy.spatial.transform import Rotation
 
-from .phase import Phase
+from .cad import CadShape, require_cad
 
 if TYPE_CHECKING:
     import OCP
 
+    from .phase import Phase
     from .rve import Rve
-
-T = TypeVar("T", Union[cq.Shape, cq.Workplane], pv.PolyData)
 
 
 def rotate(
-    obj: T,
+    obj: Any,
     center: npt.NDArray[np.float64] | Sequence[float],
     rotation: Rotation,
-) -> T:
+) -> Any:
     """Rotate object according to given rotation.
+
+    Supports :class:`microgen.cad.CadShape` and :class:`pyvista.PolyData`.
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
     :param rotation: scipy Rotation object
 
-    :return: Rotated object
+    :return: Rotated object (same type as input)
 
     :raises ValueError: if object type is not supported
 
@@ -46,13 +49,12 @@ def rotate(
         return obj
     axis = rotvec / angle
 
-    if isinstance(obj, cq.Shape) or isinstance(obj, cq.Workplane):
-        center = cq.Vector(*center)
-        return obj.rotate(center, center + cq.Vector(*axis), angle)
+    if isinstance(obj, CadShape):
+        return obj.rotate(center, axis, float(angle))
     if isinstance(obj, pv.PolyData):
         return obj.rotate_vector(axis, angle, center)
 
-    err_msg = "Object type not supported."
+    err_msg = f"rotate(): object type {type(obj).__name__} not supported."
     raise ValueError(err_msg)
 
 
@@ -82,11 +84,13 @@ def _get_rotation_axes(
 
 
 def rotate_euler(
-    obj: cq.Shape | cq.Workplane,
+    obj: Any,
     center: npt.NDArray[np.float64] | Sequence[float],
     angles_or_rotation: Sequence[float] | Rotation,
-) -> cq.Shape | cq.Workplane:
+) -> Any:
     """Rotate object according to ZXZ Euler angle convention.
+
+    Accepts :class:`~microgen.cad.CadShape` or :class:`pyvista.PolyData`.
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
@@ -94,19 +98,11 @@ def rotate_euler(
 
     :return: Rotated object
     """
-    center_vector = cq.Vector(*center)
-
     if isinstance(angles_or_rotation, Rotation):
         rotation = angles_or_rotation
     else:
         rotation = Rotation.from_euler("ZXZ", angles_or_rotation, degrees=True)
-
-    rotvec = rotation.as_rotvec(degrees=True)
-    angle = np.linalg.norm(rotvec)
-    if angle == 0:
-        return obj
-    axis = rotvec / angle
-    return obj.rotate(center_vector, center_vector + cq.Vector(*axis), angle)
+    return rotate(obj, center, rotation)
 
 
 def rotate_pv_euler(
@@ -141,54 +137,52 @@ def rotate_pv_euler(
     )
 
 
-def rescale(shape: cq.Shape, scale: float | tuple[float, float, float]) -> cq.Shape:
-    """Rescale given object according to scale parameters [dim_x, dim_y, dim_z].
+def rescale(shape: CadShape, scale: float | tuple[float, float, float]) -> CadShape:
+    """Rescale given object according to scale parameters [dim_x, dim_y, dim_z]."""
+    from .phase import Phase  # noqa: PLC0415
 
-    :param shape: Shape
-    :param scale: float or list of scale factor in each direction
-
-    :return shape: rescaled Shape
-    """
     return Phase.rescaleShape(shape, scale)
 
 
-def _unify_solids(solids: list[OCP.TopoDS_Shape]) -> cq.Shape:
-    unify_edges = True
-    unify_faces = True
-    concat_bsplines = True
+def _unify_solids(shape: Any) -> CadShape:
+    require_cad()
+    from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain  # noqa: PLC0415
+
     upgrader = ShapeUpgrade_UnifySameDomain(
-        solids,
-        unify_edges,
-        unify_faces,
-        concat_bsplines,
+        shape,
+        True,   # unify edges
+        True,   # unify faces
+        True,   # concat bsplines
     )
     upgrader.Build()
-    shape: OCP.TopoDS_Shape = upgrader.Shape()
-    return cq.Shape(shape)
+    return CadShape(upgrader.Shape())
 
 
-def fuse_shapes(shapes: list[cq.Shape], *, retain_edges: bool) -> cq.Shape:
-    """Fuse all shapes in cqShapeList.
+def fuse_shapes(shapes: list[CadShape], *, retain_edges: bool) -> CadShape:
+    """Fuse all shapes in the list.
 
     :param shapes: list of shapes to fuse
     :param retain_edges: retain intersecting edges
 
-    :return fused object
+    :return: fused shape
     """
+    require_cad()
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse  # noqa: PLC0415
+
     fused = shapes[0].wrapped
     for i in range(1, len(shapes)):
         fused = BRepAlgoAPI_Fuse(fused, shapes[i].wrapped).Shape()
 
     if retain_edges:
-        return cq.Shape(fused)
+        return CadShape(fused)
 
     try:
         return _unify_solids(fused)
-    except Exception:  # which exception?
-        return cq.Shape(fused)
+    except Exception:  # noqa: BLE001
+        return CadShape(fused)
 
 
-def cut_phases_by_shape(phases: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
+def cut_phases_by_shape(phases: list[Phase], cut_obj: CadShape) -> list[Phase]:
     """Cut list of phases by a given shape.
 
     :param phases: list of phases to cut
@@ -196,16 +190,21 @@ def cut_phases_by_shape(phases: list[Phase], cut_obj: cq.Shape) -> list[Phase]:
 
     :return phase_cut: final result
     """
+    require_cad()
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut  # noqa: PLC0415
+
+    from .phase import Phase  # noqa: PLC0415
+
     phase_cut: list[Phase] = []
 
     for phase in phases:
-        cut = cq.Shape(BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped).Shape())
+        cut = CadShape(BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped).Shape())
         if len(cut.Solids()) > 0:
             phase_cut.append(Phase(shape=cut))
     return phase_cut
 
 
-def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[cq.Shape]) -> Phase:
+def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[CadShape]) -> Phase:
     """Cut a phase by a list of shapes.
 
     :param phase_to_cut: phase to cut
@@ -213,31 +212,39 @@ def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[cq.Shape]) -> Phas
 
     :return resultCut: cut phase
     """
+    require_cad()
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut  # noqa: PLC0415
+
+    from .phase import Phase  # noqa: PLC0415
+
     result = phase_to_cut.shape
     for shape in shapes:
-        result = cq.Shape(BRepAlgoAPI_Cut(result.wrapped, shape.wrapped).Shape())
+        result = CadShape(BRepAlgoAPI_Cut(result.wrapped, shape.wrapped).Shape())
     return Phase(shape=result)
 
 
-def cut_shapes(shapes: list[cq.Shape], *, reverse_order: bool = True) -> list[cq.Shape]:
+def cut_shapes(shapes: list[CadShape], *, reverse_order: bool = True) -> list[CadShape]:
     """Cut list of shapes in the given order (or reverse) and fuse them.
 
-    :param shapes: list of CQ Shape to cut
+    :param shapes: list of shapes to cut
     :param reverse_order: bool, order for cutting shapes, \
         when True: the last shape of the list is not cut
 
-    :return cutted_shapes: list of CQ Shape
+    :return cutted_shapes: list of CadShape
     """
-    cutted_shapes: list[cq.Shape] = []
+    require_cad()
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse  # noqa: PLC0415
 
-    shapes_inv = reversed(shapes) if reverse_order else shapes
+    cutted_shapes: list[CadShape] = []
+
+    shapes_inv = list(reversed(shapes)) if reverse_order else list(shapes)
 
     cut_shape = shapes_inv[0].copy()
     cutted_shapes.append(cut_shape)
 
-    for shape in shapes_inv[1::]:
-        copy = shape.copy()
-        cut = cq.Shape(BRepAlgoAPI_Cut(copy.wrapped, cut_shape.wrapped).Shape())
+    for shape in shapes_inv[1:]:
+        copy_shape = shape.copy()
+        cut = CadShape(BRepAlgoAPI_Cut(copy_shape.wrapped, cut_shape.wrapped).Shape())
         cutted_shapes.append(cut)
 
         fused = BRepAlgoAPI_Fuse(cut_shape.wrapped, shape.wrapped).Shape()
@@ -257,6 +264,8 @@ def cut_phases(phases: list[Phase], *, reverse_order: bool = True) -> list[Phase
 
     :return list of phases
     """
+    from .phase import Phase  # noqa: PLC0415
+
     shapes = [phase.shape for phase in phases]
     cutted_shapes = cut_shapes(shapes, reverse_order=reverse_order)
 
@@ -279,14 +288,16 @@ def raster_phase(
 
     :return: Phase or list of Phases
     """
-    solids: list[cq.Solid] = phase.split_solids(rve, grid)
+    from .phase import Phase  # noqa: PLC0415
+
+    solids = phase.split_solids(rve, grid)
 
     if phase_per_raster:
         return Phase.generate_phase_per_raster(solids, rve, grid)
     return Phase(solids=solids)
 
 
-def repeat_shape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:
+def repeat_shape(unit_geom: CadShape, rve: Rve, grid: tuple[int, int, int]) -> CadShape:
     """Repeat unit geometry in each direction according to the given grid.
 
     :param unit_geom: Shape to repeat
@@ -295,6 +306,8 @@ def repeat_shape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> c
 
     :return: cq shape of the repeated geometry
     """
+    from .phase import Phase  # noqa: PLC0415
+
     return Phase.repeat_shape(unit_geom, rve, grid)
 
 
@@ -326,12 +339,12 @@ def repeat_polydata(
 
 # Deprecated functions
 def rotateEuler(  # noqa: N802
-    obj: cq.Shape | cq.Workplane,
+    obj: Any,
     center: np.ndarray | tuple[float, float, float],
     psi: float,
     theta: float,
     phi: float,
-) -> cq.Shape | cq.Workplane:
+) -> Any:
     """See rotate_euler.
 
     Deprecated in favor of rotate_euler.
@@ -363,7 +376,7 @@ def rotatePvEuler(  # noqa: N802
     return rotate_pv_euler(obj, center, (psi, theta, phi))
 
 
-def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:  # noqa: N802, N803, FBT001
+def fuseShapes(cqShapeList: list[CadShape], retain_edges: bool) -> CadShape:  # noqa: N802, N803, FBT001
     """See fuse_shapes.
 
     Deprecated in favor of fuse_shapes.
@@ -376,7 +389,7 @@ def fuseShapes(cqShapeList: list[cq.Shape], retain_edges: bool) -> cq.Shape:  # 
     return fuse_shapes(cqShapeList, retain_edges=retain_edges)
 
 
-def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]:  # noqa: N802, N803
+def cutPhasesByShape(phaseList: list[Phase], cut_obj: CadShape) -> list[Phase]:  # noqa: N802, N803
     """See cut_phases_by_shape.
 
     Deprecated in favor of cut_phases_by_shape.
@@ -389,7 +402,7 @@ def cutPhasesByShape(phaseList: list[Phase], cut_obj: cq.Shape) -> list[Phase]: 
     return cut_phases_by_shape(phaseList, cut_obj)
 
 
-def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase:  # noqa: N802, N803
+def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[CadShape]) -> Phase:  # noqa: N802, N803
     """See cut_phase_by_shape_list.
 
     Deprecated in favor of cut_phase_by_shape_list.
@@ -402,7 +415,7 @@ def cutPhaseByShapeList(phaseToCut: Phase, cqShapeList: list[cq.Shape]) -> Phase
     return cut_phase_by_shape_list(phaseToCut, cqShapeList)
 
 
-def cutShapes(cqShapeList: list[cq.Shape], reverseOrder: bool = True) -> list[cq.Shape]:  # noqa: N802, N803, FBT001, FBT002
+def cutShapes(cqShapeList: list[CadShape], reverseOrder: bool = True) -> list[CadShape]:  # noqa: N802, N803, FBT001, FBT002
     """See cut_shapes.
 
     Deprecated in favor of cut_shapes.
@@ -446,7 +459,7 @@ def rasterPhase(  # noqa: N802
     return raster_phase(phase, rve, grid, phase_per_raster=phasePerRaster)
 
 
-def repeatShape(unit_geom: cq.Shape, rve: Rve, grid: tuple[int, int, int]) -> cq.Shape:  # noqa: N802
+def repeatShape(unit_geom: CadShape, rve: Rve, grid: tuple[int, int, int]) -> CadShape:  # noqa: N802
     """See repeat_shape.
 
     Deprecated in favor of repeat_shape.

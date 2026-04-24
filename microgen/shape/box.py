@@ -11,7 +11,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-import cadquery as cq
 import pyvista as pv
 
 from microgen.operations import rotate
@@ -19,6 +18,7 @@ from microgen.operations import rotate
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
@@ -61,11 +61,12 @@ class Box(Shape):
             self.dim = (dim_x, dim_y, dim_z)
         self.dim = dim
 
-    def generate(self: Box, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate a box CAD shape using the given parameters."""
-        box = cq.Workplane().box(*self.dim).translate(self.center)
-        box = rotate(box, self.center, self.orientation)
-        return cq.Shape(box.val().wrapped)
+    def generate(self: Box, **_: KwargsGenerateType) -> CadShape:
+        """Generate a box CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_box  # noqa: PLC0415
+
+        shape = make_box(self.dim, self.center)
+        return rotate(shape, self.center, self.orientation)
 
     def generate_vtk(
         self: Box,

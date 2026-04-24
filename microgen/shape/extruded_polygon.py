@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-import cadquery as cq
 import numpy as np
 import pyvista as pv
 
@@ -20,6 +19,7 @@ from microgen.operations import rotate
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
@@ -66,19 +66,16 @@ class ExtrudedPolygon(Shape):
             self.list_corners = list_corners
         self.height = height
 
-    def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate an extruded polygon CAD shape using the given parameters."""
-        poly = (
-            cq.Workplane("YZ")
-            .polyline(self.list_corners)
-            .close()
-            .extrude(self.height)
-            .translate(
-                (self.center[0] - self.height / 2.0, self.center[1], self.center[2]),
-            )
+    def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
+        """Generate an extruded polygon CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_extruded_polygon  # noqa: PLC0415
+
+        shape = make_extruded_polygon(
+            list_corners=self.list_corners,
+            height=self.height,
+            center=self.center,
         )
-        poly = rotate(poly, self.center, self.orientation)
-        return cq.Shape(poly.val().wrapped)
+        return rotate(shape, self.center, self.orientation)
 
     def generate_vtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate an extruded polygon VTK shape using the given parameters."""

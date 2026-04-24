@@ -1,30 +1,64 @@
-"""Phase class to manage list of solids belonging to the same phase."""
+"""Phase class: a collection of OCCT solids belonging to the same phase.
+
+The CAD path goes through OCCT directly via ``OCP`` (installed as the
+``[cad]`` extra — ``cadquery-ocp``); no ``cadquery`` anywhere.  Shapes are
+stored as :class:`microgen.cad.CadShape` and solids as raw OCCT
+``TopoDS_Solid``.
+"""
 
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
 
-import cadquery as cq
 import numpy as np
 import numpy.typing as npt
-from OCP.BRepGProp import BRepGProp
-from OCP.GProp import GProp_GProps
+
+from .cad import (
+    CadShape,
+    enumerate_solids,
+    make_compound_from_solids,
+    make_plane_face,
+    split_shape,
+    transform_geometry,
+    translate_solid,
+)
 
 if TYPE_CHECKING:
     from .rve import Rve
 
 
+def _require_ocp() -> None:
+    """Raise :class:`ImportError` with an install hint if OCP isn't available."""
+    try:
+        import OCP  # noqa: F401, PLC0415
+    except ImportError as err:
+        err_msg = (
+            "This Phase operation requires the CAD extra: "
+            "pip install 'microgen[cad]'"
+        )
+        raise ImportError(err_msg) from err
+
+
+def _to_cad_shape(obj: Any) -> CadShape:
+    """Coerce a ``CadShape`` or raw ``TopoDS_Shape`` into a :class:`CadShape`."""
+    if isinstance(obj, CadShape):
+        return obj
+    return CadShape(obj.wrapped if hasattr(obj, "wrapped") else obj)
+
+
 class Phase:
-    """Phase class to manage list of solids belonging to the same phase properties.
+    """Phase class: a collection of solids with shared material properties.
 
-    - centerOfMass
-    - inertiaMatrix
-    - shape
-    - solids
+    Exposes:
 
-    :param shape: Shape object
-    :param solids: list of cq.Solid or list of list
+    - :attr:`center_of_mass`
+    - :attr:`inertia_matrix`
+    - :attr:`shape` (a :class:`~microgen.cad.CadShape`)
+    - :attr:`solids` (a list of raw OCCT ``TopoDS_Solid``)
+
+    :param shape: a :class:`~microgen.cad.CadShape` or raw ``TopoDS_Shape``
+    :param solids: list of raw OCCT solids
     :param center: center
     :param orientation: orientation
     """
@@ -33,14 +67,16 @@ class Phase:
 
     def __init__(
         self: Phase,
-        shape: cq.Shape | None = None,
-        solids: list[cq.Solid] | None = None,
+        shape: CadShape | Any | None = None,
+        solids: list[Any] | None = None,
         center: tuple[float, float, float] | None = None,
         orientation: tuple[float, float, float] | None = None,
     ) -> None:
         """Initialize the phase object."""
-        self._shape = shape
-        self._solids: list[cq.Solid] = solids if solids is not None else []
+        self._shape: CadShape | None = (
+            _to_cad_shape(shape) if shape is not None else None
+        )
+        self._solids: list[Any] = solids if solids is not None else []
         self.center = center
         self.orientation = orientation
 
@@ -59,7 +95,7 @@ class Phase:
         *,
         compute: bool = True,
     ) -> npt.NDArray[np.float64]:
-        """Return the center of 'mass' of an object.
+        """Return the center of 'mass' of the phase.
 
         :param compute: if False and centerOfMass already exists, \
             does not compute it (use carefully)
@@ -73,9 +109,13 @@ class Phase:
     center_of_mass = property(get_center_of_mass)
 
     def _compute_center_of_mass(self: Phase) -> None:
-        """Calculate the center of 'mass' of an object."""
+        """Calculate the center of 'mass' of the phase."""
+        _require_ocp()
+        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
+        from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
         properties = GProp_GProps()
-        BRepGProp.VolumeProperties_s(self._shape.wrapped, properties)
+        BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
 
         com = properties.CentreOfMass()
         self._center_of_mass = np.array([com.X(), com.Y(), com.Z()])
@@ -85,7 +125,7 @@ class Phase:
         *,
         compute: bool = True,
     ) -> npt.NDArray[np.float64]:
-        """Calculate the inertia Matrix of an object.
+        """Calculate the inertia matrix of the phase.
 
         :param compute: if False and inertiaMatrix already exists, \
             does not compute it (use carefully)
@@ -99,9 +139,13 @@ class Phase:
     inertia_matrix = property(get_inertia_matrix)
 
     def _compute_inertia_matrix(self: Phase) -> None:
-        """Calculate the inertia Matrix of an object."""
+        """Calculate the inertia matrix of the phase."""
+        _require_ocp()
+        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
+        from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
         properties = GProp_GProps()
-        BRepGProp.VolumeProperties_s(self._shape.wrapped, properties)
+        BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
 
         inm = properties.MatrixOfInertia()
         self._inertia_matrix = np.array(
@@ -113,119 +157,117 @@ class Phase:
         )
 
     @property
-    def shape(self: Phase) -> cq.Shape | None:
-        """Return the shape of the phase."""
+    def shape(self: Phase) -> CadShape | None:
+        """Return the shape of the phase as a :class:`~microgen.cad.CadShape`."""
         if self._shape is not None:
             return self._shape
         if len(self._solids) > 0:
-            # there may be a faster way
-            compound = cq.Compound.makeCompound(self._solids)
-            self._shape = cq.Shape(compound.wrapped)
+            self._shape = make_compound_from_solids(self._solids)
             return self._shape
 
         warnings.warn("No shape or solids", stacklevel=2)
         return None
 
     @property
-    def solids(self: Phase) -> list[cq.Solid]:
-        """Return the list of solids of the phase."""
+    def solids(self: Phase) -> list[Any]:
+        """Return the list of OCCT ``TopoDS_Solid`` in the phase."""
         if len(self._solids) > 0:
             return self._solids
         if self._shape is not None:
-            self._solids = self._shape.Solids()
+            self._solids = enumerate_solids(self._shape)
             return self._solids
 
         warnings.warn("No solids or shape", stacklevel=2)
         return []
 
     def translate(self: Phase, vec: Sequence[float]) -> None:
-        """Translate phase by a given vector."""
-        self._shape.move(cq.Location(cq.Vector(*vec)))
+        """Translate phase by a given vector (in place)."""
+        if self._shape is None:
+            err_msg = "Cannot translate a phase with no shape"
+            raise ValueError(err_msg)
+        self._shape = self._shape.translate(vec)
         self._compute_center_of_mass()
 
     @staticmethod
     def rescale_shape(
-        shape: cq.Shape,
+        shape: CadShape | Any,
         scale: float | tuple[float, float, float],
-    ) -> cq.Shape:
-        """Rescale given object according to scale parameters [dim_x, dim_y, dim_z].
+    ) -> CadShape:
+        """Rescale ``shape`` by ``scale`` = ``(sx, sy, sz)`` (or a scalar).
 
-        :param shape: Shape
-        :param scale: float or list of scale factor in each direction
-
-        :return shape: rescaled Shape
+        Preserves the shape's center of mass — scaling is performed about it.
         """
+        shape = _to_cad_shape(shape)
         if isinstance(scale, float):
             scale = (scale, scale, scale)
 
         center = shape.Center()
+        cx, cy, cz = center.x, center.y, center.z
+        sx, sy, sz = (float(s) for s in scale)
 
-        # move the shape at (0, 0, 0) to rescale it
-        shape.move(cq.Location(cq.Vector(-center.x, -center.y, -center.z)))
-
-        # then move it back to its center with transform Matrix
-        transform_mat = cq.Matrix(
+        # Equivalent to: translate(-c) → scale about origin → translate(+c)
+        # Expressed as a single 3x4 affine matrix for BRepBuilderAPI_GTransform.
+        matrix = np.array(
             [
-                [scale[0], 0, 0, center.x],
-                [0, scale[1], 0, center.y],
-                [0, 0, scale[2], center.z],
+                [sx, 0.0, 0.0, cx - sx * cx],
+                [0.0, sy, 0.0, cy - sy * cy],
+                [0.0, 0.0, sz, cz - sz * cz],
             ],
+            dtype=np.float64,
         )
-
-        return shape.transformGeometry(transform_mat)
+        return transform_geometry(shape, matrix)
 
     def rescale(self: Phase, scale: float | tuple[float, float, float]) -> None:
-        """Rescale phase according to scale parameters [dim_x, dim_y, dim_z].
-
-        :param scale: float or list of scale factor in each direction
-        """
+        """Rescale phase (in place) by ``scale = (sx, sy, sz)`` or a scalar."""
+        if self._shape is None:
+            err_msg = "Cannot rescale a phase with no shape"
+            raise ValueError(err_msg)
         self._shape = self.rescale_shape(self._shape, scale)
 
     @staticmethod
     def repeat_shape(
-        unit_geom: cq.Shape,
+        unit_geom: CadShape | Any,
         rve: Rve,
         grid: tuple[int, int, int],
-    ) -> cq.Shape:
-        """Repeat unit geometry in each direction according to the given grid.
+    ) -> CadShape:
+        """Repeat ``unit_geom`` on a ``grid`` within the ``rve`` periodicity cell.
 
-        :param unit_geom: Shape to repeat
-        :param rve: RVE of the geometry to repeat
-        :param grid: list of number of geometry repetitions in each direction
-
-        :return: cq shape of the repeated geometry
+        Returns a :class:`~microgen.cad.CadShape` wrapping an OCCT compound
+        of translated copies of ``unit_geom``.
         """
+        unit_geom = _to_cad_shape(unit_geom)
         center = np.array(unit_geom.Center().toTuple())
 
-        xyz_repeat = cq.Assembly()
+        copies: list[Any] = []
         for idx in np.ndindex(*grid):
             pos = center - rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
-            xyz_repeat.add(unit_geom, loc=cq.Location(cq.Vector(*pos)))
-
-        return cq.Shape(xyz_repeat.toCompound().wrapped)
+            copies.append(translate_solid(unit_geom.wrapped, pos))
+        return make_compound_from_solids(copies)
 
     def repeat(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> None:
-        """Repeat phase in each direction according to the given grid.
-
-        :param rve: RVE of the phase to repeat
-        :param grid: list of number of phase repetitions in each direction
-        """
+        """Repeat phase in place on a ``grid`` within the ``rve`` periodicity cell."""
+        if self.shape is None:
+            err_msg = "Cannot repeat a phase with no shape"
+            raise ValueError(err_msg)
         self._shape = self.repeat_shape(self.shape, rve, grid)
 
-    def split_solids(self: Phase, rve: Rve, grid: list[int]) -> list[cq.Solid]:
+    def split_solids(self: Phase, rve: Rve, grid: list[int]) -> list[Any]:
         """Split solids from phase according to the rve divided by the given grid.
 
+        Each solid is split by the (grid-1) interior planes along each axis;
+        planes are constructed with :func:`microgen.cad.make_plane_face` and
+        applied through OCCT's ``BRepAlgoAPI_Splitter``.
+
         :param rve: RVE divided by the given grid
-        :param grid: number of divisions in each direction [x, y, z]
+        :param grid: number of divisions in each direction ``[x, y, z]``
 
-        :return: list of solids
+        :return: list of raw OCCT ``TopoDS_Solid``
         """
-        solids: list[cq.Solid] = []
-
+        result: list[Any] = []
         for solid in self.solids:
-            wk_plane = cq.Workplane().add(solid)
+            current = CadShape(solid)
             for dim in range(3):
-                direction = cq.Vector([int(dim == i) for i in range(3)])
+                direction = tuple(int(dim == i) for i in range(3))
                 coords = np.linspace(
                     start=rve.min_point[dim],
                     stop=rve.max_point[dim],
@@ -233,12 +275,11 @@ class Phase:
                     endpoint=False,
                 )[1:]
                 for pos in coords:
-                    point = pos * direction
-                    plane = cq.Face.makePlane(basePnt=point, dir=direction)
-                    wk_plane = wk_plane.split(plane)
-
-            solids += wk_plane.val().Solids()
-        return solids
+                    base_pnt = tuple(float(pos) * direction[k] for k in range(3))
+                    plane = make_plane_face(base_pnt, direction)
+                    current = split_shape(current, plane)
+            result.extend(enumerate_solids(current))
+        return result
 
     def rasterize(
         self: Phase,
@@ -264,55 +305,60 @@ class Phase:
             )
             phase_per_raster = phasePerRaster
 
-        solids: list[cq.Solid] = self.split_solids(rve, grid)
+        solids = self.split_solids(rve, grid)
 
         if phase_per_raster:
             return self.generate_phase_per_raster(solids, rve, grid)
         self._solids = solids
-        compound = cq.Compound.makeCompound(self._solids)
-        self._shape = cq.Shape(compound.wrapped)
+        self._shape = make_compound_from_solids(self._solids)
         return None
 
     @classmethod
     def generate_phase_per_raster(
         cls: type[Phase],
-        solids: list[cq.Solid],
+        solids: list[Any],
         rve: Rve,
         grid: list[int],
     ) -> list[Phase]:
-        """Raster solids from phase according to the rve divided by the given grid.
+        """Raster solids into per-grid-cell Phases.
 
-        :param solidList: list of solids
-        :param grid: number of divisions in each direction [x, y, z]
+        :param solids: list of OCCT solids
         :param rve: RVE divided by the given grid
+        :param grid: number of divisions in each direction ``[x, y, z]``
 
-        :return: list of Phases
+        :return: list of :class:`Phase`
         """
-        grid = np.array(grid)
-        solids_phases: list[list[cq.Solid]] = [[] for _ in range(np.prod(grid))]
+        _require_ocp()
+        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
+        from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
+        grid_arr = np.array(grid)
+        solids_phases: list[list[Any]] = [[] for _ in range(int(np.prod(grid_arr)))]
         for solid in solids:
-            center = np.array(solid.Center().toTuple())
-            i, j, k = np.floor(grid * (center - rve.min_point) / rve.dim).astype(int)
-            ind = i + grid[0] * j + grid[0] * grid[1] * k
-            solids_phases[ind].append(solid)
+            props = GProp_GProps()
+            BRepGProp.VolumeProperties_s(solid, props)
+            com = props.CentreOfMass()
+            center = np.array([com.X(), com.Y(), com.Z()])
+            i, j, k = np.floor(
+                grid_arr * (center - rve.min_point) / rve.dim,
+            ).astype(int)
+            ind = i + grid_arr[0] * j + grid_arr[0] * grid_arr[1] * k
+            solids_phases[int(ind)].append(solid)
         return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
 
-    # Deprecated methods
+    # -- Deprecated camelCase aliases --------------------------------------
 
     @classmethod
     def generatePhasePerRaster(  # noqa: N802
         cls: type[Phase],
-        solidList: list[cq.Solid],  # noqa: N803
+        solidList: list[Any],  # noqa: N803
         rve: Rve,
         grid: list[int],
     ) -> list[Phase]:
-        """See generate_phase_per_raster.
-
-        Deprecated in favor of generate_phase_per_raster.
-        """
+        """See :meth:`generate_phase_per_raster`."""
         warnings.warn(
-            "generatePhasePerRaster is deprecated, \
-                use generate_phase_per_raster instead",
+            "generatePhasePerRaster is deprecated, "
+            "use generate_phase_per_raster instead",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -320,14 +366,11 @@ class Phase:
 
     @staticmethod
     def repeatShape(  # noqa: N802
-        unit_geom: cq.Shape,
+        unit_geom: Any,
         rve: Rve,
         grid: tuple[int, int, int],
-    ) -> cq.Shape:
-        """See repeat_shape.
-
-        Deprecated in favor of repeat_shape.
-        """
+    ) -> CadShape:
+        """See :meth:`repeat_shape`."""
         warnings.warn(
             "repeatShape is deprecated, use repeat_shape instead",
             DeprecationWarning,
@@ -337,13 +380,10 @@ class Phase:
 
     @staticmethod
     def rescaleShape(  # noqa: N802
-        shape: cq.Shape,
+        shape: Any,
         scale: float | tuple[float, float, float],
-    ) -> cq.Shape:
-        """See rescale_shape.
-
-        Deprecated in favor of rescale_shape.
-        """
+    ) -> CadShape:
+        """See :meth:`rescale_shape`."""
         warnings.warn(
             "rescaleShape is deprecated, use rescale_shape instead",
             DeprecationWarning,
@@ -352,10 +392,7 @@ class Phase:
         return Phase.rescale_shape(shape, scale)
 
     def getCenterOfMass(self: Phase, compute: bool = True) -> np.ndarray:  # noqa: N802, FBT001, FBT002
-        """See get_center_of_mass.
-
-        Deprecated in favor of get_center_of_mass.
-        """
+        """See :meth:`get_center_of_mass`."""
         warnings.warn(
             "centerOfMass is deprecated, use center_of_mass instead",
             DeprecationWarning,
@@ -366,10 +403,7 @@ class Phase:
     centerOfMass = property(getCenterOfMass)  # noqa: N815
 
     def getInertiaMatrix(self: Phase, compute: bool = True) -> np.ndarray:  # noqa: N802, FBT001, FBT002
-        """See get_inertia_matrix.
-
-        Deprecated in favor of get_inertia_matrix.
-        """
+        """See :meth:`get_inertia_matrix`."""
         warnings.warn(
             "inertiaMatrix is deprecated, use inertia_matrix instead",
             DeprecationWarning,

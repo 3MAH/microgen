@@ -13,16 +13,16 @@ build:
 
 requirements:
   host:
-    - python >=3.10,<3.13
+    - python >=3.10,<3.14
     - pip
   run:
-    - python >=3.10,<3.13
+    - python >=3.10,<3.14
     - numpy
-    - vtk
-    - pyvista <0.47
+    - vtk                 # unpinned — VTK 9.4+ unblocked (cadquery removed)
+    - pyvista             # unpinned — same reason
     - python-gmsh
     - meshio
-    - cadquery
+    - ocp                 # OCCT Python binding — enables the CAD path
     - scipy
     - pip:
       - autograd

@@ -22,8 +22,7 @@ from microgen.operations import rotate as rotate_mesh
 from . import implicit_ops as _ops
 
 if TYPE_CHECKING:
-    import cadquery as cq
-
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 Field = Callable[
@@ -35,7 +34,7 @@ BoundsType = tuple[float, float, float, float, float, float]
 
 
 class ShellCreationError(Exception):
-    """Raised when a CadQuery shell cannot be created from a mesh."""
+    """Raised when an OCCT shell cannot be created from a mesh."""
 
 
 class Shape:
@@ -183,23 +182,25 @@ class Shape:
         bounds: BoundsType | None = None,
         resolution: int = 50,
         **_: KwargsGenerateType,
-    ) -> cq.Shape:
-        """
-        Generate a CAD shape.
+    ) -> CadShape:
+        """Generate a CAD shape.
 
-        The default implementation builds a CadQuery shape from the
-        implicit-field VTK mesh.  Subclasses override this with native
-        CAD construction.
+        The default implementation builds an OCCT tessellated BREP from the
+        implicit-field VTK mesh, via :func:`microgen.cad.mesh_to_shape`
+        (single ``TopoDS_Face`` carrying a ``Poly_Triangulation``).  Subclasses
+        override this with native primitive construction.
+
+        Requires the optional ``[cad]`` install extra (``cadquery-ocp``).
 
         :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
         :param resolution: number of grid points per axis
-        :return: CadQuery Shape
+        :return: :class:`microgen.cad.CadShape` wrapping an OCCT ``TopoDS_Shell``
         """
         if self._func is None:
             err_msg = "No implicit field defined — subclasses must override generate()"
             raise NotImplementedError(err_msg)
 
-        import cadquery as cq
+        from microgen.cad import mesh_to_shape  # noqa: PLC0415
 
         mesh = self.generate_vtk(bounds=bounds, resolution=resolution)
         if mesh.n_cells == 0:
@@ -209,30 +210,16 @@ class Shape:
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
-        triangles = np.c_[triangles, triangles[:, 0]]
-
-        faces = []
-        for tri in triangles:
-            lines = [
-                cq.Edge.makeLine(
-                    cq.Vector(*mesh.points[start]),
-                    cq.Vector(*mesh.points[end]),
-                )
-                for start, end in itertools.pairwise(tri)
-            ]
-            wire = cq.Wire.assembleEdges(lines)
-            faces.append(cq.Face.makeFromWires(wire))
+        points = np.asarray(mesh.points, dtype=np.float64)
 
         try:
-            shell = cq.Shell.makeShell(faces)
-        except ValueError as err:
+            return mesh_to_shape(points, triangles)
+        except Exception as err:
             err_msg = (
-                "Failed to create the shell, "
+                "Failed to build the OCCT shell from the mesh; "
                 "try to increase the resolution or adjust bounds."
             )
             raise ShellCreationError(err_msg) from err
-
-        return cq.Shape(shell.wrapped)
 
     def generateVtk(self: Shape, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
         """Deprecated. Use :meth:`generate_vtk` instead."""

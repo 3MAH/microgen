@@ -19,17 +19,17 @@ import logging
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Literal
 
-import cadquery as cq
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.operations import fuseShapes, rotate
+from microgen.operations import fuse_shapes, rotate
 
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
 from .tpms_grading import OffsetGrading
 
@@ -668,45 +668,30 @@ class Tpms(Shape):
         self._update_grid_offset()
         self.offset_updated = True
 
-    def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shape:
-        """
-        Convert a triangulated PyVista mesh to a CadQuery ``Shape``.
+    def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
+        """Convert a triangulated PyVista mesh to an OCCT ``CadShape``.
 
-        Builds one ``cq.Face`` per triangle, then *sews* them with OCCT's
-        ``BRepBuilderAPI_Sewing`` so adjacent triangles share edges — without
-        sewing, ``Shell.makeShell`` returns a disjoint compound and the result
-        cannot be turned into a Solid.  Returns the sewn shape (a
-        ``TopoDS_Shell`` if sewing succeeded into one shell, otherwise the
-        compound that sewing produced).
+        Delegates to :func:`microgen.cad.mesh_to_shell_brep` (one planar BREP
+        face per triangle), the slower-but-correct path that produces a shell
+        with real surface geometry — required because downstream callers may
+        use the result as a cutting tool in boolean ops.
         """
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
+        from microgen.cad import ShellCreationError as _CadShellError  # noqa: PLC0415
+        from microgen.cad import mesh_to_shell_brep  # noqa: PLC0415
 
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
-        triangles = np.c_[triangles, triangles[:, 0]]
+        points = np.asarray(mesh.points, dtype=np.float64)
 
-        faces = []
-        for tri in triangles:
-            lines = [
-                cq.Edge.makeLine(
-                    cq.Vector(*mesh.points[start]),
-                    cq.Vector(*mesh.points[end]),
-                )
-                for start, end in zip(tri[:], tri[1:], strict=False)
-            ]
-            wire = cq.Wire.assembleEdges(lines)
-            faces.append(cq.Face.makeFromWires(wire))
-
-        if not faces:
-            err_msg = "Mesh has no triangles to convert into a shell"
-            raise ShellCreationError(err_msg)
-
-        sewing = BRepBuilderAPI_Sewing()
-        for f in faces:
-            sewing.Add(f.wrapped)
-        sewing.Perform()
-        return cq.Shape(sewing.SewedShape())
+        try:
+            return mesh_to_shell_brep(points, triangles)
+        except _CadShellError as err:
+            err_msg = (
+                "Failed to create the shell; "
+                "try to increase the resolution or the smoothing."
+            )
+            raise ShellCreationError(err_msg) from err
 
     def _check_offset(
         self: Tpms,
@@ -810,21 +795,24 @@ class Tpms(Shape):
         smoothing: int = 0,
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
-    ) -> cq.Shape:
-        """
-        Generate the OCCT/CadQuery shape of the requested TPMS part.
+    ) -> CadShape:
+        """Generate an OCCT CAD shape of the requested TPMS part.
 
         Pure F-rep pipeline: pick the SDF Shape via :meth:`_frep_part`, run
         marching cubes through :meth:`Shape.generate_vtk`, optionally smooth,
-        then build a CadQuery ``Shell``.  The same SDF + same marching-cubes
-        grid is used by :meth:`generate_vtk`, so volumes converge to identical
-        values up to discretization.
+        then build an OCCT ``Shell`` via :func:`microgen.cad.mesh_to_shell_brep`.
+        The same SDF + same marching-cubes grid is used by :meth:`generate_vtk`,
+        so volumes converge to identical values up to discretisation.
+
+        Requires the optional ``[cad]`` install extra (``cadquery-ocp``).
 
         :param type_part: ``"sheet"``, ``"lower skeletal"``, ``"upper skeletal"``
             or ``"surface"`` (open zero-isosurface, no thickness)
         :param smoothing: number of Laplacian smoothing iterations on the mesh
         :param algo_resolution: temporary-TPMS resolution for density→offset
             search (only used when ``self.density`` is set)
+        :return: :class:`microgen.cad.CadShape` wrapping an OCCT ``TopoDS_Shell``
+            (or a ``TopoDS_Solid`` when sewing succeeded into a closed shell).
         """
         if type_part not in self._VALID_PARTS:
             err_msg = (
@@ -874,35 +862,35 @@ class Tpms(Shape):
         return shape.translate(self.center)
 
     @staticmethod
-    def _try_make_solid(shape: cq.Shape) -> cq.Shape:
-        """
-        Best-effort upgrade of a sewn shell into a closed Solid.
+    def _try_make_solid(shape: CadShape) -> CadShape:
+        """Best-effort upgrade of a sewn shell into a closed Solid.
 
         Returns the original shape unchanged if the sewn result is a Compound
         (multiple disjoint shells, can't be a single solid) or if OCCT refuses
         the conversion.
         """
-        from OCP.TopAbs import TopAbs_SHELL
-        from OCP.TopExp import TopExp_Explorer
-        from OCP.TopoDS import TopoDS
+        from microgen.cad import CadShape as _CadShape  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid  # noqa: PLC0415
+        from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
+        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
+        from OCP.TopoDS import TopoDS  # noqa: PLC0415
 
         wrapped = shape.wrapped
         # Already a Shell? Try to make a Solid directly.
         if wrapped.ShapeType() == TopAbs_SHELL:
             try:
                 shell = TopoDS.Shell_s(wrapped)
-                return cq.Shape(cq.Solid.makeSolid(cq.Shell(shell)).wrapped)
+                return _CadShape(BRepBuilderAPI_MakeSolid(shell).Solid())
             except (ValueError, RuntimeError):
                 return shape
 
         # Compound: extract Shells, build a Solid per closed shell, fuse.
         exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
-        solids: list[cq.Shape] = []
+        solids: list[CadShape] = []
         while exp.More():
             try:
                 shell = TopoDS.Shell_s(exp.Current())
-                solid = cq.Solid.makeSolid(cq.Shell(shell))
-                solids.append(cq.Shape(solid.wrapped))
+                solids.append(_CadShape(BRepBuilderAPI_MakeSolid(shell).Solid()))
             except (ValueError, RuntimeError):
                 pass
             exp.Next()
@@ -911,7 +899,7 @@ class Tpms(Shape):
             return shape
         if len(solids) == 1:
             return solids[0]
-        return fuseShapes(cqShapeList=solids, retain_edges=False)
+        return fuse_shapes(solids, retain_edges=False)
 
     def generate_vtk(
         self: Tpms,

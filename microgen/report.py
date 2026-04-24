@@ -74,9 +74,8 @@ class Report(scooby.Report):
             "numpy",
             "scooby",
             "gmsh",
-            "cadquery",
         ]
-        optional_packages = ["matplotlib", "pytest-cov", "meshio"]
+        optional_packages = ["matplotlib", "pytest-cov", "meshio", "OCP"]
 
         scooby.Report.__init__(
             self,
