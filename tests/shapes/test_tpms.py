@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from inspect import getmembers, isfunction
+from inspect import getmembers, isfunction, signature
 from typing import Literal
 
 import numpy as np
@@ -21,11 +21,18 @@ TEST_DEFAULT_SURFACE_FUNCTION = microgen.surface_functions.gyroid
 
 
 def _get_microgen_surface_functions() -> list[str]:
-    # Dont take into account deprecated surface functions named in camelCase
+    """List the actual TPMS surface functions in microgen.surface_functions.
+
+    Filters out:
+    - deprecated camelCase aliases (any uppercase letter)
+    - non-TPMS callables exposed via re-import (autograd ``cos``/``sin``) —
+      they take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
+    """
     return [
-        func[0]
-        for func in getmembers(microgen.surface_functions, isfunction)
-        if not any(ele.isupper() for ele in func[0])
+        name
+        for name, fn in getmembers(microgen.surface_functions, isfunction)
+        if not any(c.isupper() for c in name)
+        and len(signature(fn).parameters) == 3
     ]
 
 

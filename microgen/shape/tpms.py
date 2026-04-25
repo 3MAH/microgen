@@ -110,6 +110,11 @@ class Tpms(Shape):
 
         self.surface_function = surface_function
         self._offset = offset if offset is not None else 0.0
+        # Stores the offset callable when one is provided, so the F-rep path
+        # can re-evaluate variable thickness on its own marching-cubes grid.
+        self._offset_func: Field | None = (
+            offset if (offset is not None and callable(offset) and not isinstance(offset, OffsetGrading)) else None
+        )
         self.phase_shift = phase_shift
 
         self.grid: pv.StructuredGrid
@@ -177,11 +182,20 @@ class Tpms(Shape):
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
         resolution: int | None = None,
     ) -> float:
-        """Compute the offset to fit the required density."""
+        """Compute the offset that yields the requested density.
+
+        Searches with the same F-rep ``generate_vtk`` pipeline the user
+        invokes, so the offset returned actually reproduces the requested
+        density at the user-facing resolution.  When the target density is
+        too high to reach at this resolution (marching cubes saturates
+        slightly below 1.0 due to surface-grid discretization), falls back
+        to the offset limit instead of failing the bracket.
+        """
         if self.density is None:
             err_msg = f"density must be between 0 and 1. Given: {self.density}"
             raise ValueError(err_msg)
 
+        part = "skeletal" if "skeletal" in part_type else part_type
         if self.density == 1.0:
             self.offset = (
                 self.offset_lim["sheet"][1]
@@ -193,19 +207,31 @@ class Tpms(Shape):
         temp_tpms = Tpms(
             surface_function=self.surface_function,
             offset=0.0,
+            cell_size=self.cell_size,
+            repeat_cell=self.repeat_cell,
             resolution=resolution if resolution is not None else self.resolution,
         )
+        cell_volume = abs(temp_tpms.grid.volume)
 
         def density(offset: float) -> float:
             temp_tpms.offset = offset
-            grid_part = getattr(temp_tpms, f"grid_{part_type.replace(' ', '_')}")
-            return abs(grid_part.volume)
+            mesh = temp_tpms.generate_vtk(type_part=part_type)
+            return abs(mesh.volume) / cell_volume
 
-        part = "skeletal" if "skeletal" in part_type else part_type
-        computed_offset = root_scalar(
-            lambda offset: density(offset) - self.density,
-            bracket=self.offset_lim[part],
-        ).root
+        bracket = self.offset_lim[part]
+        try:
+            computed_offset = root_scalar(
+                lambda offset: density(offset) - self.density,
+                bracket=bracket,
+            ).root
+        except ValueError:
+            # Bracket sign mismatch — usually because target density exceeds
+            # the achievable max at this resolution.  Pick the bracket
+            # endpoint that lies on the side of self.density.
+            d_lo = density(bracket[0]) - self.density
+            d_hi = density(bracket[1]) - self.density
+            computed_offset = bracket[1] if abs(d_hi) <= abs(d_lo) else bracket[0]
+
         self.offset = computed_offset
         return computed_offset
 
@@ -396,31 +422,126 @@ class Tpms(Shape):
         return self._raw_field_func
 
     def as_sheet(self: Tpms, thickness: float | None = None) -> Shape:
-        """Return an F-rep Shape representing a uniform-thickness TPMS sheet.
+        """Return an F-rep Shape representing a TPMS sheet of given thickness.
 
         Uses the SDF-normalized field, so *thickness* is in physical units.
-        If *thickness* is ``None``, uses ``self.offset``.
+        If *thickness* is ``None``, uses ``self.offset`` (which may be a
+        scalar, an array sampled on ``self.grid``, or a callable in which
+        case the callable form is used directly).
         """
         from .implicit_ops import shell  # noqa: PLC0415
         from .shape import Shape  # noqa: PLC0415
 
-        t = thickness if thickness is not None else self._offset
-        # Wrap in plain Shape so generate_vtk uses Shape's marching cubes,
-        # not Tpms.generate_vtk (which would recurse back here).
-        return shell(Shape(func=self._func, bounds=self._bounds), float(t))
+        if thickness is not None:
+            t: float | npt.NDArray | Field = float(thickness)
+        elif self._offset_func is not None:
+            t = self._offset_func
+        else:
+            t = self._offset
+        return shell(Shape(func=self._func, bounds=self._bounds), t)
+
+    def _half_offset_field(self: Tpms) -> Field | float:
+        """Return half the offset as a callable (variable) or scalar (constant).
+
+        Variable offset stored as a callable can be re-evaluated on the
+        marching-cubes grid; an array offset (sampled on ``self.grid``)
+        cannot be remapped to arbitrary points, so the only safe fallback
+        for arrays is to use a scalar 0 (sheet/skeletal degenerate to the
+        zero-isosurface).
+        """
+        if self._offset_func is not None:
+            f = self._offset_func
+
+            def _half(x, y, z, _f=f):  # noqa: ANN001
+                return 0.5 * _f(x, y, z)
+
+            return _half
+        if isinstance(self._offset, (int, float)):
+            return 0.5 * float(self._offset)
+        # array — no safe re-evaluation; degenerate to zero (skeletal at f=0).
+        return 0.0
 
     def as_upper_skeletal(self: Tpms) -> Shape:
-        """Return F-rep Shape for the upper skeletal (f > 0 side)."""
-        from .implicit_ops import complement  # noqa: PLC0415
-        from .shape import Shape  # noqa: PLC0415
+        """F-rep Shape for the *upper* skeletal: ``{p : f(p) > offset/2}``.
 
-        return complement(Shape(func=self._func, bounds=self._bounds))
+        Volume scales with the chosen offset (smaller offset ⇒ larger
+        skeletal), matching the historical CadQuery behaviour and the VTK
+        grid-clip path.
+        """
+        from .implicit_ops import from_field  # noqa: PLC0415
+
+        f = self._func
+        h = self._half_offset_field()
+        if callable(h):
+
+            def _upper(x, y, z, _f=f, _h=h):  # noqa: ANN001
+                return -_f(x, y, z) + _h(x, y, z)
+
+        else:
+
+            def _upper(x, y, z, _f=f, _h=h):  # noqa: ANN001
+                return -_f(x, y, z) + _h
+
+        return from_field(func=_upper, bounds=self._bounds)
 
     def as_lower_skeletal(self: Tpms) -> Shape:
-        """Return F-rep Shape for the lower skeletal (f < 0 side)."""
+        """F-rep Shape for the *lower* skeletal: ``{p : f(p) < -offset/2}``."""
+        from .implicit_ops import from_field  # noqa: PLC0415
+
+        f = self._func
+        h = self._half_offset_field()
+        if callable(h):
+
+            def _lower(x, y, z, _f=f, _h=h):  # noqa: ANN001
+                return _f(x, y, z) + _h(x, y, z)
+
+        else:
+
+            def _lower(x, y, z, _f=f, _h=h):  # noqa: ANN001
+                return _f(x, y, z) + _h
+
+        return from_field(func=_lower, bounds=self._bounds)
+
+    def as_surface(self: Tpms) -> Shape:
+        """Return F-rep Shape for the (open) zero-isosurface, no thickness.
+
+        Same field as :meth:`as_lower_skeletal`; meant for ``type_part="surface"``.
+        Marching cubes will produce an open shell — there is no enclosed volume.
+        """
         from .implicit_ops import from_field  # noqa: PLC0415
 
         return from_field(func=self._func, bounds=self._bounds)
+
+    def _cell_box(self: Tpms) -> Shape:
+        """SDF Shape of this TPMS' cell (cell_size × repeat_cell, centered origin)."""
+        from .implicit_ops import box  # noqa: PLC0415
+
+        dims = tuple(float(d) for d in (self.cell_size * self.repeat_cell))
+        return box(dims=dims, center=(0.0, 0.0, 0.0))
+
+    def _clipped_sheet(self: Tpms) -> Shape:
+        """Sheet F-rep clipped to the cell box.
+
+        When the offset approaches its upper limit the sheet field is
+        uniformly negative inside the cell and marching cubes finds no
+        boundary — clipping by the cell box makes the box face the closed
+        boundary, yielding a full-cell mesh as expected.
+        """
+        from .implicit_ops import intersection  # noqa: PLC0415
+
+        return intersection(self.as_sheet(), self._cell_box())
+
+    def _clipped_upper_skeletal(self: Tpms) -> Shape:
+        """Upper skeletal F-rep clipped to the cell box (closed under marching cubes)."""
+        from .implicit_ops import intersection  # noqa: PLC0415
+
+        return intersection(self.as_upper_skeletal(), self._cell_box())
+
+    def _clipped_lower_skeletal(self: Tpms) -> Shape:
+        """Lower skeletal F-rep clipped to the cell box (closed under marching cubes)."""
+        from .implicit_ops import intersection  # noqa: PLC0415
+
+        return intersection(self.as_lower_skeletal(), self._cell_box())
 
     def _update_grid_offset(self: Tpms) -> None:
         self.grid["lower_surface"] = self.grid["surface"] + 0.5 * self.offset
@@ -436,11 +557,16 @@ class Tpms(Shape):
         self: Tpms,
         offset: float | npt.NDArray[np.float64] | OffsetGrading | Field,
     ) -> None:
+        # Reset cached callable form on every assignment.
+        self._offset_func = None
         if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
         elif isinstance(offset, OffsetGrading):
             self._offset = offset.compute_offset(self.grid)
         elif callable(offset):
+            # Keep the callable so the F-rep path can re-evaluate it on the
+            # marching-cubes grid (which differs from ``self.grid``).
+            self._offset_func = offset
             self._offset = offset(self.grid.x, self.grid.y, self.grid.z).ravel("F")
         else:
             err_msg = "offset must be a float, a numpy array or a callable"
@@ -449,9 +575,20 @@ class Tpms(Shape):
         self._update_grid_offset()
         self.offset_updated = True
 
-    def _create_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shell:
+    def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shape:
+        """Convert a triangulated PyVista mesh to a CadQuery ``Shape``.
+
+        Builds one ``cq.Face`` per triangle, then *sews* them with OCCT's
+        ``BRepBuilderAPI_Sewing`` so adjacent triangles share edges — without
+        sewing, ``Shell.makeShell`` returns a disjoint compound and the result
+        cannot be turned into a Solid.  Returns the sewn shape (a
+        ``TopoDS_Shell`` if sewing succeeded into one shell, otherwise the
+        compound that sewing produced).
+        """
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing  # noqa: PLC0415
+
         if not mesh.is_all_triangles:
-            mesh.triangulate(inplace=True)  # useless ?
+            mesh.triangulate(inplace=True)
         triangles = mesh.faces.reshape(-1, 4)[:, 1:]
         triangles = np.c_[triangles, triangles[:, 0]]
 
@@ -464,147 +601,18 @@ class Tpms(Shape):
                 )
                 for start, end in zip(tri[:], tri[1:])
             ]
-
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
 
-        try:
-            shell = cq.Shell.makeShell(faces)
-        except ValueError as err:
-            err_msg = "Failed to create the shell, \
-                try to increase the resolution or the smoothing."
-            raise ShellCreationError(err_msg) from err
-        return shell
+        if not faces:
+            err_msg = "Mesh has no triangles to convert into a shell"
+            raise ShellCreationError(err_msg)
 
-    def _create_surface(
-        self: Tpms,
-        isovalue: float | npt.NDArray[np.float64] = 0.0,
-        smoothing: int = 0,
-    ) -> cq.Shell:
-        """Create a TPMS surface for the given isovalue."""
-        if isinstance(isovalue, (int, float)):
-            scalars = self.grid["surface"] - isovalue
-        elif isinstance(isovalue, np.ndarray):
-            scalars = self.grid["surface"] - isovalue.ravel(order="F")
-
-        mesh = self.grid.contour(isosurfaces=[0.0], scalars=scalars)
-        mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
-        mesh.clean(inplace=True)
-
-        return self._create_shell(mesh=mesh)
-
-    def _create_surfaces(
-        self: Tpms,
-        isovalues: list[float],
-        smoothing: int = 0,
-    ) -> list[cq.Shell]:
-        """Create TPMS surfaces for the corresponding isovalue.
-
-        :param isovalues: list of isovalues corresponding to the required surfaces
-        :param smoothing: smoothing loop iterations
-        :param verbose: display progressbar of the conversion to CadQuery object
-
-        :return: list of CadQuery Shell objects of the required TPMS surfaces
-        """
-        shells = []
-        for i, isovalue in enumerate(isovalues):
-            logging.info("\nGenerating surface (%d/%d)", i + 1, len(isovalues))
-            shell = self._create_surface(
-                isovalue=isovalue,
-                smoothing=smoothing,
-            )
-            shells.append(shell)
-
-        return shells
-
-    def _generate_sheet_surfaces(
-        self: Tpms,
-        smoothing: int,
-    ) -> tuple[cq.Shape, cq.Shape]:
-        """Generate the surfaces to create the sheet part of the TPMS."""
-        isovalues = [
-            -0.5 * self.offset,
-            -0.25 * self.offset,
-            0.25 * self.offset,
-            0.5 * self.offset,
-        ]
-
-        shells = self._create_surfaces(isovalues, smoothing)
-
-        lower_surface = shells[0]
-        lower_test_surface = shells[1]
-        upper_test_surface = shells[2]
-        upper_surface = shells[3]
-
-        surface = lower_surface.fuse(upper_surface)
-        test_surface = lower_test_surface.fuse(upper_test_surface)
-        return surface, test_surface
-
-    def _generate_lower_skeletal_surfaces(
-        self: Tpms,
-        smoothing: int,
-    ) -> tuple[cq.Shape, cq.Shape]:
-        """Generate the surfaces to create the lower skeletal part of the TPMS."""
-        min_offset = 2.0 * np.min(self.grid["surface"])
-        isovalues = [
-            -0.5 * self.offset,
-            -0.25 * (self.offset - min_offset),
-        ]
-
-        shells = self._create_surfaces(isovalues, smoothing)
-
-        surface = shells[0]
-        test_surface = shells[1]
-        return surface, test_surface
-
-    def _generate_upper_skeletal_surfaces(
-        self: Tpms,
-        smoothing: int,
-    ) -> tuple[cq.Shape, cq.Shape]:
-        """Generate the surfaces to create the upper skeletal part of the TPMS."""
-        min_offset = 2.0 * np.min(self.grid["surface"])
-        isovalues = [
-            0.5 * self.offset,
-            0.25 * (self.offset - min_offset),
-        ]
-
-        shells = self._create_surfaces(isovalues, smoothing)
-
-        surface = shells[0]
-        test_surface = shells[1]
-        return surface, test_surface
-
-    def _extract_part_from_box(
-        self: Tpms,
-        type_part: TpmsPartType,
-        smoothing: int,
-    ) -> cq.Shape:
-        """Extract the required part from the box."""
-        box = cq.Workplane("front").box(*(self.cell_size * self.repeat_cell))
-
-        surface, test_surface = getattr(
-            self,
-            f"_generate_{type_part.replace(' ', '_')}_surfaces",
-        )(smoothing)
-
-        splitted_box = box.split(surface)
-        tpms_solids = splitted_box.solids().all()
-
-        # split each solid with the test surface to identify
-        # to what part type the solid belongs to
-        list_solids = [
-            (solid.split(test_surface).solids().size(), solid.val())
-            for solid in tpms_solids
-        ]
-
-        # if the number of shapes is greater than 1, it means that the solid is split
-        # so it belongs to the required part
-        part_solids = [solid for (number, solid) in list_solids if number > 1]
-        part_shapes = [cq.Shape(solid.wrapped) for solid in part_solids]
-        return fuseShapes(
-            cqShapeList=part_shapes,
-            retain_edges=False,  # True or False ?
-        )
+        sewing = BRepBuilderAPI_Sewing()
+        for f in faces:
+            sewing.Add(f.wrapped)
+        sewing.Perform()
+        return cq.Shape(sewing.SewedShape())
 
     def _check_offset(
         self: Tpms,
@@ -641,6 +649,35 @@ class Tpms(Shape):
                 generate '{type_part}' part and lower than {self.offset_lim[part][1]}"
             raise ValueError(err_msg)
 
+    _VALID_PARTS = ("sheet", "lower skeletal", "upper skeletal", "surface")
+
+    def _frep_part(self: Tpms, type_part: TpmsPartType) -> Shape:
+        """Pick the F-rep :class:`Shape` for *type_part*.
+
+        Skeletals are intersected with the cell box so marching cubes
+        produces a *closed* shell (the unclipped skeletal field is
+        unbounded).  ``"surface"`` and ``"sheet"`` are already bounded by
+        construction (zero-isosurface and `shell()`-clipped, respectively).
+        """
+        if type_part == "sheet":
+            return self._clipped_sheet()
+        if type_part == "upper skeletal":
+            return self._clipped_upper_skeletal()
+        if type_part == "lower skeletal":
+            return self._clipped_lower_skeletal()
+        if type_part == "surface":
+            return self.as_surface()
+        err_msg = f"type_part {type_part!r} must be one of {self._VALID_PARTS}"
+        raise ValueError(err_msg)
+
+    def _isotropic_resolution(self: Tpms) -> int:
+        """Map ``self.resolution`` (per-axis) to an isotropic Shape resolution.
+
+        ``Shape.generate_vtk`` takes a single resolution; we use the geometric
+        mean of the per-axis cell counts so total grid points stay proportional.
+        """
+        return max(int(self.resolution * np.cbrt(np.prod(self.repeat_cell))), 10)
+
     def generate(
         self: Tpms,
         type_part: TpmsPartType = "sheet",
@@ -648,18 +685,21 @@ class Tpms(Shape):
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> cq.Shape:
-        """Generate CadQuery Shape object of the required TPMS part.
+        """Generate the OCCT/CadQuery shape of the requested TPMS part.
 
-        :param type_part: part of the TPMS desired \
-            ('sheet', 'lower skeletal', 'upper skeletal' or 'surface')
-        :param smoothing: smoothing loop iterations
-        :param verbose: display progressbar of the conversion to CadQuery object
-        :param algo_resolution: if offset must be computed to fit density, \
-            resolution of the temporary TPMS used to compute the offset
+        Pure F-rep pipeline: pick the SDF Shape via :meth:`_frep_part`, run
+        marching cubes through :meth:`Shape.generate_vtk`, optionally smooth,
+        then build a CadQuery ``Shell``.  The same SDF + same marching-cubes
+        grid is used by :meth:`generate_vtk`, so volumes converge to identical
+        values up to discretization.
 
-        :return: CadQuery Shape object of the required TPMS part
+        :param type_part: ``"sheet"``, ``"lower skeletal"``, ``"upper skeletal"``
+            or ``"surface"`` (open zero-isosurface, no thickness)
+        :param smoothing: number of Laplacian smoothing iterations on the mesh
+        :param algo_resolution: temporary-TPMS resolution for density→offset
+            search (only used when ``self.density`` is set)
         """
-        if type_part not in ["sheet", "lower skeletal", "upper skeletal", "surface"]:
+        if type_part not in self._VALID_PARTS:
             err_msg = (
                 f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
                 "'upper skeletal' or 'surface'"
@@ -671,23 +711,79 @@ class Tpms(Shape):
                 logging.warning("offset is ignored for 'surface' part")
             if self.density is not None:
                 logging.warning("density is ignored for 'surface' part")
-            return self._create_surface(
-                isovalue=0,
-                smoothing=smoothing,
+        else:
+            if self.density is not None:
+                self._compute_offset_to_fit_density(
+                    part_type=type_part,
+                    resolution=algo_resolution,
+                )
+            self._check_offset(type_part)
+
+        frep = self._frep_part(type_part)
+        mesh = frep.generate_vtk(
+            bounds=self._bounds,
+            resolution=self._isotropic_resolution(),
+        )
+        if smoothing > 0:
+            mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
+            mesh.clean(inplace=True)
+
+        if mesh.n_cells == 0:
+            err_msg = (
+                f"Marching cubes produced an empty mesh for '{type_part}'; "
+                "check offset / density / resolution."
             )
+            raise ShellCreationError(err_msg)
 
-        if self.density is not None:
-            self._compute_offset_to_fit_density(
-                part_type=type_part,
-                resolution=algo_resolution,
-            )
+        shape = self._mesh_to_shell(mesh)
 
-        self._check_offset(type_part)
-
-        shape = self._extract_part_from_box(type_part, smoothing)
+        if type_part != "surface":
+            # Closed shell ⇒ try to upgrade into a Solid so volume queries and
+            # downstream booleans behave correctly.  If sewing produced a
+            # compound (non-manifold patches) or OCCT refuses, keep the shell.
+            shape = self._try_make_solid(shape)
 
         shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
         return shape.translate(self.center)
+
+    @staticmethod
+    def _try_make_solid(shape: cq.Shape) -> cq.Shape:
+        """Best-effort upgrade of a sewn shell into a closed Solid.
+
+        Returns the original shape unchanged if the sewn result is a Compound
+        (multiple disjoint shells, can't be a single solid) or if OCCT refuses
+        the conversion.
+        """
+        from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
+        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
+        from OCP.TopoDS import TopoDS  # noqa: PLC0415
+
+        wrapped = shape.wrapped
+        # Already a Shell? Try to make a Solid directly.
+        if wrapped.ShapeType() == TopAbs_SHELL:
+            try:
+                shell = TopoDS.Shell_s(wrapped)
+                return cq.Shape(cq.Solid.makeSolid(cq.Shell(shell)).wrapped)
+            except (ValueError, RuntimeError):
+                return shape
+
+        # Compound: extract Shells, build a Solid per closed shell, fuse.
+        exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
+        solids: list[cq.Shape] = []
+        while exp.More():
+            try:
+                shell = TopoDS.Shell_s(exp.Current())
+                solid = cq.Solid.makeSolid(cq.Shell(shell))
+                solids.append(cq.Shape(solid.wrapped))
+            except (ValueError, RuntimeError):
+                pass
+            exp.Next()
+
+        if not solids:
+            return shape
+        if len(solids) == 1:
+            return solids[0]
+        return fuseShapes(cqShapeList=solids, retain_edges=False)
 
     def generate_vtk(
         self: Tpms,
@@ -695,16 +791,16 @@ class Tpms(Shape):
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Generate VTK PolyData object of the required TPMS part.
+        """Generate the PyVista mesh of the requested TPMS part.
 
-        Uses the SDF-normalized implicit field with F-rep operations:
-        sheet = ``shell(sdf, thickness)``, skeletal = one side of the SDF.
+        Same F-rep pipeline as :meth:`generate` (skeletals are clipped to the
+        cell box), so the two outputs share the exact same triangulation and
+        therefore the same volume.
 
-        :param type_part: part of the TPMS desired
-        :param algo_resolution: if offset must be computed to fit density, \
-            resolution of the temporary TPMS used to compute the offset
-
-        :return: VTK PolyData object of the required TPMS part
+        :param type_part: ``"sheet"``, ``"lower skeletal"``, ``"upper skeletal"``
+            or ``"surface"``
+        :param algo_resolution: temporary-TPMS resolution for density→offset
+            search (only used when ``self.density`` is set)
         """
         if type_part == "surface":
             return self.surface
@@ -715,27 +811,29 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        if self.density == 1.0:
+            # Short-circuit: at full density the part fills the whole cell,
+            # return the cell-box mesh directly (exact volume — the
+            # marching-cubes path would give a slight discretization gap).
+            box = pv.Box(bounds=self._bounds, level=0, quads=False)
+            box = box.extract_surface().clean().triangulate()
+            box = rotate(box, center=(0, 0, 0), rotation=self.orientation)
+            return box.translate(xyz=self.center)
+
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
                 resolution=algo_resolution,
             )
-        self._check_offset(type_part)
+        # Note: no `_check_offset` here — the F-rep VTK path handles negative
+        # / zero / variable offsets gracefully.  ``generate()`` still applies
+        # the historical CAD-side restriction.
 
-        if type_part == "sheet":
-            part = self.as_sheet()
-        elif type_part == "upper skeletal":
-            part = self.as_upper_skeletal()
-        else:  # lower skeletal
-            part = self.as_lower_skeletal()
-
-        # Match the grid resolution: resolution * repeat_cell per axis.
-        # Shape.generate_vtk takes a single isotropic resolution, so use the
-        # geometric mean to keep total point count proportional.
-        iso_res = int(
-            self.resolution * np.cbrt(np.prod(self.repeat_cell))
+        frep = self._frep_part(type_part)
+        polydata = frep.generate_vtk(
+            bounds=self._bounds,
+            resolution=self._isotropic_resolution(),
         )
-        polydata = part.generate_vtk(bounds=self._bounds, resolution=max(iso_res, 10))
 
         polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
