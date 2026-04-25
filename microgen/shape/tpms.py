@@ -177,6 +177,17 @@ class Tpms(Shape):
             density=density,
         )._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
 
+    def _density_envelope_volume(self: Tpms) -> float:
+        """Return the *envelope* volume that ``density`` is measured against.
+
+        For a plain :class:`Tpms` this is the cartesian cell volume.  Subclasses
+        with a non-cartesian envelope (:class:`Infill`, :class:`Conformal`)
+        override this to use ``obj.volume`` / ``envelope.volume``, so that
+        ``density`` consistently means *fraction of the envelope filled by the
+        TPMS part* — not fraction of the cartesian bounding box.
+        """
+        return abs(self.grid.volume)
+
     def _compute_offset_to_fit_density(
         self: Tpms,
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
@@ -190,6 +201,10 @@ class Tpms(Shape):
         too high to reach at this resolution (marching cubes saturates
         slightly below 1.0 due to surface-grid discretization), falls back
         to the offset limit instead of failing the bracket.
+
+        Density is measured against :meth:`_density_envelope_volume`, so that
+        :class:`Infill` / :class:`Conformal` density is relative to the input
+        envelope volume rather than the cartesian bbox.
         """
         if self.density is None:
             err_msg = f"density must be between 0 and 1. Given: {self.density}"
@@ -204,33 +219,36 @@ class Tpms(Shape):
             )
             return self.offset
 
-        temp_tpms = Tpms(
-            surface_function=self.surface_function,
-            offset=0.0,
-            cell_size=self.cell_size,
-            repeat_cell=self.repeat_cell,
-            resolution=resolution if resolution is not None else self.resolution,
-        )
-        cell_volume = abs(temp_tpms.grid.volume)
+        # Density is measured directly on ``self`` so subclass envelopes are
+        # respected without having to clone the instance.  ``self.density``
+        # is cleared during the search so that ``generate_vtk`` does NOT
+        # recurse back into this method.  The final ``computed_offset`` is
+        # set as the permanent offset before returning (and ``self.density``
+        # is restored so that downstream callers can re-query it).
+        envelope_volume = self._density_envelope_volume()
+        target_density = self.density
+        self.density = None
 
         def density(offset: float) -> float:
-            temp_tpms.offset = offset
-            mesh = temp_tpms.generate_vtk(type_part=part_type)
-            return abs(mesh.volume) / cell_volume
+            self.offset = offset  # setter; also clears _offset_func
+            mesh = self.generate_vtk(type_part=part_type)
+            return abs(mesh.volume) / envelope_volume
 
         bracket = self.offset_lim[part]
         try:
             computed_offset = root_scalar(
-                lambda offset: density(offset) - self.density,
+                lambda offset: density(offset) - target_density,
                 bracket=bracket,
             ).root
         except ValueError:
             # Bracket sign mismatch — usually because target density exceeds
-            # the achievable max at this resolution.  Pick the bracket
-            # endpoint that lies on the side of self.density.
-            d_lo = density(bracket[0]) - self.density
-            d_hi = density(bracket[1]) - self.density
+            # the achievable max at this resolution (or the envelope shape).
+            # Pick the bracket endpoint that lies on the side of target_density.
+            d_lo = density(bracket[0]) - target_density
+            d_hi = density(bracket[1]) - target_density
             computed_offset = bracket[1] if abs(d_hi) <= abs(d_lo) else bracket[0]
+        finally:
+            self.density = target_density
 
         self.offset = computed_offset
         return computed_offset
@@ -1201,8 +1219,263 @@ class Infill(Tpms):
         logging.info("Grid resolution: %s points", grid.n_points)
         return grid
 
+    def _density_envelope_volume(self: Infill) -> float:
+        """Density is measured against the input object's volume."""
+        return abs(self.obj.volume)
+
+    def _cell_box(self: Infill) -> Shape:
+        """Override the cell-box clip with the *object envelope* SDF.
+
+        Without this override the F-rep marching cubes path (used by
+        :meth:`Tpms.generate_vtk` and :meth:`Tpms.generate`) would clip the
+        TPMS to the cartesian bounding box rather than to the input object —
+        producing volumes well above ``obj.volume`` and corrupting density.
+        """
+        from .implicit_ops import from_field  # noqa: PLC0415
+
+        bounds_arr = np.array(self.obj.bounds)
+        bounds: BoundsType = tuple(bounds_arr.tolist())
+
+        envelope = self.obj
+
+        def _envelope_sdf(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            pts = pv.PolyData(np.column_stack([x.ravel(), y.ravel(), z.ravel()]))
+            pts.compute_implicit_distance(envelope, inplace=True)
+            return np.asarray(pts["implicit_distance"]).reshape(x.shape)
+
+        return from_field(_envelope_sdf, bounds=bounds)
+
+
+class Conformal(Tpms):
+    """TPMS that conforms to the local frame of an envelope surface.
+
+    Where :class:`CylindricalTpms` and :class:`SphericalTpms` use a closed-form
+    inverse coordinate map to wrap the TPMS around a known surface (cylinder /
+    sphere), :class:`Conformal` does the same for *any* envelope surface
+    (PolyData) by using the signed distance to the envelope as the radial
+    coordinate.
+
+    Local frame at every Cartesian point ``p``:
+
+    - ``w(p) = signed_distance(p, envelope)`` — *radial* coordinate; ``w=0`` on
+      the envelope surface, ``w<0`` inside, ``w>0`` outside.  Computed by
+      :meth:`pyvista.PolyData.compute_implicit_distance`.
+    - ``u(p) = (p - center) · t``, ``v(p) = (p - center) · b`` — *tangential*
+      coordinates expressed in the global frame ``(t, b, n=default_axis)``,
+      where ``t`` and ``b`` are the two axes of the plane perpendicular to
+      ``default_tangent_axis``.  Default tangent axis is ``(1, 0, 0)``.
+
+    The TPMS field is then ``surface_function(k_w · w, k_u · u, k_v · v)``,
+    so unit cells stack along the envelope normal direction (concentric
+    "shells" at distance ``±cell_size``, ``±2·cell_size``, …) and tile the
+    perpendicular plane in the other two axes.  Compared to a Cartesian
+    :class:`Infill`, this produces shells that *follow* the envelope shape
+    rather than being sliced by it.
+
+    Tangentially-intrinsic (true conformal) parametrizations require
+    per-point local-tangent rotation; that's a follow-up — this class is the
+    minimum useful step.
+    """
+
+    def __init__(  # noqa: PLR0913
+        self: Conformal,
+        envelope: pv.PolyData,
+        surface_function: Field,
+        offset: float | OffsetGrading | Field | None = None,
+        cell_size: float | Sequence[float] | npt.NDArray[np.float64] | None = None,
+        repeat_cell: int | Sequence[int] | npt.NDArray[np.int8] | None = None,
+        phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
+        resolution: int = 20,
+        density: float | None = None,
+        default_tangent_axis: Sequence[float] = (1.0, 0.0, 0.0),
+        clip_to_envelope: bool = True,
+    ) -> None:
+        """Build a TPMS that wraps an envelope surface.
+
+        :param envelope: the surface (``pv.PolyData``) the TPMS will follow.
+            Volumes are computed relative to the envelope volume when
+            ``clip_to_envelope=True``.
+        :param surface_function: tpms function or custom function ``f(x,y,z)=0``
+        :param offset: offset / thickness of the TPMS sheet
+        :param cell_size: unit cell size; auto-derived from envelope bounds if None
+        :param repeat_cell: number of cells per axis; auto-derived if None
+        :param phase_shift: phase shift in the (w, u, v) local frame
+        :param resolution: per-axis grid resolution
+        :param density: target density relative to envelope volume (mutex with
+            ``offset``)
+        :param default_tangent_axis: world axis used to define the tangential
+            plane for ``(u, v)``.  Default ``(1, 0, 0)`` ⇒ ``u = y - cy``,
+            ``v = z - cz``.
+        :param clip_to_envelope: if ``True``, the resulting grid / mesh is
+            clipped by the envelope surface (TPMS only fills the interior).
+        """
+        self.envelope = envelope
+        self.clip_to_envelope = clip_to_envelope
+
+        # Frame: n = default_tangent_axis (radial-projection axis), then build
+        # an orthonormal (t, b) basis for the perpendicular plane.
+        n = np.asarray(default_tangent_axis, dtype=np.float64)
+        n_norm = np.linalg.norm(n)
+        if n_norm < 1e-12:
+            err_msg = "default_tangent_axis must be a non-zero vector"
+            raise ValueError(err_msg)
+        n /= n_norm
+        # Pick a stable secondary direction not parallel to n.
+        helper = np.array([0.0, 0.0, 1.0]) if abs(n[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+        t = helper - np.dot(helper, n) * n
+        t /= np.linalg.norm(t)
+        b = np.cross(n, t)
+        self._frame_n = n
+        self._frame_t = t
+        self._frame_b = b
+        self.default_tangent_axis = tuple(n.tolist())
+
+        # Auto-derive cell_size / repeat_cell from envelope bbox if missing.
+        bounds = np.array(envelope.bounds)
+        margin = 1.001
+        envelope_dim = margin * (bounds[1::2] - bounds[::2])
+
+        if cell_size is not None and repeat_cell is not None:
+            err_msg = (
+                "cell_size and repeat_cell cannot be given at the same time, "
+                "one is computed from the other."
+            )
+            raise ValueError(err_msg)
+        if cell_size is None and repeat_cell is None:
+            repeat_cell = (4, 4, 4)
+        if cell_size is not None:
+            repeat_cell = np.maximum(
+                np.round(envelope_dim / np.asarray(cell_size, dtype=float)).astype(int),
+                1,
+            )
+        elif repeat_cell is not None:
+            cell_size = envelope_dim / np.asarray(repeat_cell, dtype=float)
+
+        self._envelope_center = np.asarray(envelope.center, dtype=np.float64)
+
+        super().__init__(
+            surface_function=surface_function,
+            offset=offset,
+            phase_shift=phase_shift,
+            cell_size=cell_size,
+            repeat_cell=repeat_cell,
+            resolution=resolution,
+            density=density,
+        )
+
+    # -- Local-frame field -------------------------------------------------
+
+    def _envelope_distance(
+        self: Conformal,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        """Vectorized signed distance to the envelope (negative inside)."""
+        pts = pv.PolyData(np.column_stack([x.ravel(), y.ravel(), z.ravel()]))
+        pts.compute_implicit_distance(self.envelope, inplace=True)
+        return np.asarray(pts["implicit_distance"]).reshape(x.shape)
+
+    def _local_coords(
+        self: Conformal,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+    ) -> tuple[
+        npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]
+    ]:
+        """Project Cartesian ``(x, y, z)`` onto the conformal local frame.
+
+        - ``w`` = signed distance to the envelope (radial coord)
+        - ``u`` = ``(p - envelope_center) · t``
+        - ``v`` = ``(p - envelope_center) · b``
+        """
+        cx, cy, cz = self._envelope_center
+        dx, dy, dz = x - cx, y - cy, z - cz
+        u = dx * self._frame_t[0] + dy * self._frame_t[1] + dz * self._frame_t[2]
+        v = dx * self._frame_b[0] + dy * self._frame_b[1] + dz * self._frame_b[2]
+        w = self._envelope_distance(x, y, z)
+        return u, v, w
+
+    def _setup_frep_field(self: Conformal) -> None:
+        """Build F-rep field that evaluates the surface function in (w, u, v)."""
+        k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
+        ps = self.phase_shift
+
+        def _raw_field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            u, v, w = self._local_coords(x, y, z)
+            return self.surface_function(
+                k_x * (w + ps[0]),
+                k_y * (u + ps[1]),
+                k_z * (v + ps[2]),
+            )
+
+        bounds_arr = np.array(self.envelope.bounds)
+        bounds: BoundsType = tuple(bounds_arr.tolist())
+        self._finalize_frep(_raw_field, bounds)
+
+    # -- Override grid creation to clip to the envelope --------------------
+
+    def _create_grid(
+        self: Conformal,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+    ) -> pv.StructuredGrid:
+        """Cartesian grid covering the envelope bbox, optionally clipped."""
+        cx, cy, cz = self._envelope_center
+        grid = super()._create_grid(x + cx, y + cy, z + cz)
+        if self.clip_to_envelope:
+            grid = grid.clip_surface(self.envelope)
+            logging.info(
+                "Conformal grid clipped to envelope: %d points", grid.n_points,
+            )
+        return grid
+
+    def _density_envelope_volume(self: Conformal) -> float:
+        """Density is measured against the envelope volume."""
+        return abs(self.envelope.volume)
+
+    # -- Override the F-rep "cell box" with the envelope itself ------------
+
+    def _cell_box(self: Conformal) -> Shape:
+        """SDF Shape of the envelope (used to clip TPMS parts to the interior).
+
+        Replaces the parent's axis-aligned cell-box clip — the natural cell of
+        a Conformal TPMS *is* the envelope.  Returns a Shape whose field is
+        ``signed_distance(p, envelope)`` (negative inside).
+        """
+        from .implicit_ops import from_field  # noqa: PLC0415
+
+        bounds_arr = np.array(self.envelope.bounds)
+        bounds: BoundsType = tuple(bounds_arr.tolist())
+
+        def _envelope_sdf(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            return self._envelope_distance(x, y, z)
+
+        return from_field(_envelope_sdf, bounds=bounds)
+
 
 # Re-export for backward compatibility
-from .shape import ShellCreationError  # noqa: E402
+from .shape import BoundsType, ShellCreationError  # noqa: E402
 
-__all__ = ["CylindricalTpms", "Infill", "ShellCreationError", "SphericalTpms", "Tpms"]
+__all__ = [
+    "Conformal",
+    "CylindricalTpms",
+    "Infill",
+    "ShellCreationError",
+    "SphericalTpms",
+    "Tpms",
+]
