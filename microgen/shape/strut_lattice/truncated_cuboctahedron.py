@@ -53,7 +53,8 @@ class TruncatedCuboctahedron(AbstractLattice):
         pairs = []
         for i in range(len(self.base_vertices)):
             neighbors = kdtree.query_ball_point(
-                self.base_vertices[i], threshold_distance
+                self.base_vertices[i],
+                threshold_distance,
             )
             for j in neighbors:
                 if i < j:

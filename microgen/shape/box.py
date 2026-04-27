@@ -1,4 +1,5 @@
-"""Box.
+"""
+Box.
 
 ===============================
 Box (:mod:`microgen.shape.box`)
@@ -22,7 +23,8 @@ if TYPE_CHECKING:
 
 
 class Box(Shape):
-    """Class to generate a box.
+    """
+    Class to generate a box.
 
     .. jupyter-execute::
        :hide-code:
@@ -86,5 +88,5 @@ class Box(Shape):
         return rotate(box, self.center, self.orientation)
 
     def generateVtk(self: Box, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        """Deprecated. Use :meth:`generate_vtk` instead."""
         return self.generate_vtk(**kwargs)

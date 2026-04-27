@@ -11,9 +11,7 @@ from .abstract_lattice import AbstractLattice
 
 
 class CustomLattice(AbstractLattice):
-    """
-    Class to create a custom lattice with user-defined base vertices and strut vertex pairs
-    """
+    """Class to create a custom lattice with user-defined base vertices and strut vertex pairs"""
 
     def __init__(
         self,

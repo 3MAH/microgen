@@ -1,4 +1,5 @@
-"""F-rep Implicit Operations.
+"""
+F-rep Implicit Operations.
 
 ==========================================================
 Implicit Operations (:mod:`microgen.shape.implicit_ops`)
@@ -187,7 +188,8 @@ def batch_smooth_union(
     shapes: list[Shape],
     k: float = 0.0,
 ) -> Shape:
-    """Combine many shapes with smooth union in a flat loop (no recursion).
+    """
+    Combine many shapes with smooth union in a flat loop (no recursion).
 
     This avoids the recursion-depth limit that arises when chaining hundreds
     of binary ``smooth_union`` calls, each wrapping the previous in a lambda.
@@ -224,10 +226,24 @@ def batch_smooth_union(
 # ---------------------------------------------------------------------------
 
 
-def shell(shape: Shape, thickness: float) -> Shape:
-    """Hollow shell: ``|f(p)| - thickness / 2``."""
+def shell(shape: Shape, thickness: float | Field) -> Shape:
+    """
+    Hollow shell: ``|f(p)| - thickness(p) / 2``.
+
+    ``thickness`` may be a constant (scalar) or a callable
+    ``thickness(x, y, z) -> array`` for spatially-varying shells.  Negative or
+    zero thickness at a point yields no inclusion in the shell at that point.
+    """
     f = shape.require_func()
-    half_t = thickness / 2.0
+    if callable(thickness):
+        t_func = thickness
+
+        def _shell_field(x, y, z, _f=f, _t=t_func):
+            return np.abs(_f(x, y, z)) - _t(x, y, z) / 2.0
+
+        return _make_shape(func=_shell_field, bounds=shape.bounds)
+
+    half_t = float(thickness) / 2.0
     return _make_shape(
         func=lambda x, y, z, _f=f, _ht=half_t: np.abs(_f(x, y, z)) - _ht,
         bounds=shape.bounds,
@@ -239,7 +255,8 @@ def repeat(
     spacing: tuple[float, float, float],
     k: float = 0.0,
 ) -> Shape:
-    """Infinite repetition via coordinate modulo.
+    """
+    Infinite repetition via coordinate modulo.
 
     :param shape: unit cell shape to tile
     :param spacing: ``(sx, sy, sz)`` repetition period per axis
@@ -312,6 +329,38 @@ def from_field(
     return _make_shape(func=func, bounds=bounds)
 
 
+def box(
+    dims: tuple[float, float, float],
+    center: tuple[float, float, float] = (0.0, 0.0, 0.0),
+) -> Shape:
+    """
+    Axis-aligned box as an F-rep Shape.
+
+    SDF formula ``max(|x-cx|-hx, |y-cy|-hy, |z-cz|-hz)``: signed distance to
+    the box surface (negative inside, positive outside, zero on the surface).
+    Useful as a clipping primitive — e.g. ``intersection(skeletal, box(...))``
+    bounds an unbounded TPMS skeletal field to a single cell.
+
+    :param dims: full side lengths ``(dx, dy, dz)``
+    :param center: box center (default origin)
+    :return: :class:`~microgen.shape.shape.Shape` carrying the box SDF
+    """
+    hx, hy, hz = (0.5 * float(d) for d in dims)
+    cx, cy, cz = (float(c) for c in center)
+
+    def _box_sdf(
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        return np.maximum.reduce(
+            [np.abs(x - cx) - hx, np.abs(y - cy) - hy, np.abs(z - cz) - hz],
+        )
+
+    bounds: BoundsType = (cx - hx, cx + hx, cy - hy, cy + hy, cz - hz, cz + hz)
+    return _make_shape(func=_box_sdf, bounds=bounds)
+
+
 def _fd_sdf(
     f: Field,
     epsilon: float,
@@ -329,13 +378,18 @@ def _fd_sdf(
         gy = (f(x, y + h, z) - f(x, y - h, z)) / (2 * h)
         gz = (f(x, y, z + h) - f(x, y, z - h)) / (2 * h)
         grad_mag = np.sqrt(gx**2 + gy**2 + gz**2)
-        return val / np.maximum(grad_mag, epsilon)
+        # Where the gradient is degenerate (e.g. flat-z fields like the
+        # honeycomb_* surfaces, or saddle points), normalization would
+        # blow up to ±1/epsilon — preserve the raw field's *sign* by
+        # falling back to the unnormalized value there.
+        return np.where(grad_mag > epsilon, val / np.maximum(grad_mag, epsilon), val)
 
     return sdf
 
 
 def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
-    """Return a new Shape with gradient-normalized SDF field: ``f / |nabla f|``.
+    """
+    Return a new Shape with gradient-normalized SDF field: ``f / |nabla f|``.
 
     Uses ``autograd`` for exact analytical gradients when the field function
     is differentiable through ``autograd.numpy``.  Falls back to central
@@ -351,7 +405,7 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
     # OR at first evaluation (autograd may succeed at construction but
     # fail when the inner function uses non-autograd numpy ops).
     try:
-        from autograd import elementwise_grad  # noqa: PLC0415
+        from autograd import elementwise_grad
 
         dfdx = elementwise_grad(f, argnum=0)
         dfdy = elementwise_grad(f, argnum=1)
@@ -374,7 +428,14 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
             grad_mag = np.sqrt(
                 dfdx(x, y, z) ** 2 + dfdy(x, y, z) ** 2 + dfdz(x, y, z) ** 2,
             )
-            return val / np.maximum(grad_mag, epsilon)
+            # Same fallback as in `_fd_sdf`: where the gradient vanishes
+            # (degenerate flat-z fields, saddle points), keep the raw value
+            # so its sign is preserved without exploding into ±1/epsilon.
+            return np.where(
+                grad_mag > epsilon,
+                val / np.maximum(grad_mag, epsilon),
+                val,
+            )
 
     except Exception:  # noqa: BLE001
         sdf = _fd_sdf(f, epsilon)
@@ -386,7 +447,8 @@ def variable_shell(
     shape: Shape,
     thickness_func: Field,
 ) -> Shape:
-    """Shell with spatially-varying thickness: ``|f(p)| - t(p)/2``.
+    """
+    Shell with spatially-varying thickness: ``|f(p)| - t(p)/2``.
 
     :param shape: shape whose implicit field defines the surface
     :param thickness_func: callable ``(x, y, z) -> thickness`` returning

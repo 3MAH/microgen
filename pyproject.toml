@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     # Python 3.13 not yet supported (CadQuery does not support 3.13)
 ]
-dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy", "nlopt"]
+dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy", "nlopt", "autograd"]
 
 [project.optional-dependencies]
 dev = [
@@ -85,9 +85,47 @@ exclude = [
     "microgen/rve.py",
     "microgen/single_mesh.py",
     "examples/*",
+    "gyroid_gd_bunny.py",
 ] # external = ["E131", "D102", "D105"]
 select = ["ALL"]
-ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003"]
+ignore = [
+    "E501",     # line too long — ruff-format handles wrapping
+    "S101",     # assert in tests is fine
+    "ANN101",   # removed rule
+    "ANN102",   # removed rule
+    "ANN001",   # missing type hint on argument
+    "ANN002",   # missing type hint on *args
+    "ANN003",   # missing **kwargs annotation
+    "ANN202",   # missing return-type on private function
+    "PLC0415",  # late imports needed to avoid circular deps
+    "N806",     # capitalised local variables (T, N, B for tangent/normal/binormal)
+    "PLR2004",  # magic-value comparison — too noisy in scientific code
+    "PLR0913",  # too many arguments — APIs are wide on purpose
+    "PLR0915",  # too many statements
+    "LOG015",   # root logger usage
+    "SLF001",   # private member access between class siblings
+    "RUF001",   # ambiguous unicode (we use Greek letters intentionally)
+    "RUF002",   # same, in docstrings
+    "RUF003",   # same, in comments
+    "RUF046",   # int(...) on already-int — bookkeeping
+    "RUF007",   # zip strict
+    "ARG002",   # unused method argument (pyvista hook signatures)
+    "ARG005",   # unused lambda argument (kwargs trampolines)
+    "TID252",   # relative imports are the project convention
+    "FBT001",   # boolean positional argument
+    "FBT002",   # boolean default-value
+    "TC003",    # typing-only imports — minor
+    "RET504",   # unnecessary assignment before return
+    "PERF401",  # list comprehension — readability tradeoff
+    "TRY003",   # long messages outside exception class
+    "EM101",    # raw string in exception
+    "EM102",    # f-string in exception
+    "SIM108",   # ternary instead of if/else
+    "UP038",    # isinstance with X | Y — deprecated rule (perf regression)
+    # Docstring style — too noisy for scientific code
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+    "D203", "D205", "D211", "D212", "D213", "D400", "D401", "D415",
+]
 
 [tool.ruff.format]
 docstring-code-format = true

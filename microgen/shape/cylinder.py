@@ -1,4 +1,5 @@
-"""Cylinder.
+"""
+Cylinder.
 
 =========================================
 Cylinder (:mod:`microgen.shape.cylinder`)
@@ -21,7 +22,8 @@ if TYPE_CHECKING:
 
 
 class Cylinder(Shape):
-    """Class to generate a cylinder.
+    """
+    Class to generate a cylinder.
 
     .. jupyter-execute::
        :hide-code:
@@ -77,7 +79,7 @@ class Cylinder(Shape):
         resolution: int = 100,
         **kwargs: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        """Deprecated. Use :meth:`generate_vtk` instead."""
         return self.generate_vtk(
             resolution=resolution,
             **kwargs,

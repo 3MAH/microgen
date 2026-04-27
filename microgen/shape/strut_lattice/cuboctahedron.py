@@ -38,8 +38,11 @@ class Cuboctahedron(AbstractLattice):
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = np.array(
             list(
-                product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
-            )
+                product(
+                    [-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2],
+                    repeat=3,
+                ),
+            ),
         )
 
         edges = [
@@ -59,7 +62,7 @@ class Cuboctahedron(AbstractLattice):
             tree.query_ball_point(
                 self.base_vertices,
                 r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + BALL_POINT_RADIUS_TOLERANCE,
-            )
+            ),
         ):
             for j in indices:
                 if i != j:

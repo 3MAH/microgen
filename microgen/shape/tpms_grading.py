@@ -3,26 +3,60 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pyvista as pv
 from typing_extensions import override
 
 if TYPE_CHECKING:
-    import numpy as np
     import numpy.typing as npt
-    import pyvista as pv
+
+    Field = Callable[
+        [npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]],
+        npt.NDArray[np.float64],
+    ]
 
 
 class OffsetGrading(ABC):
     """Base class for offset grading functions."""
+
+    def as_field(self: OffsetGrading) -> Field:
+        """Return a ``(x, y, z) -> array`` callable form of this grading.
+
+        Used by the F-rep marching-cubes path to re-evaluate the offset on
+        an arbitrary grid (the one chosen by marching cubes is *not* the
+        same as the structured grid used by the legacy clip-scalar path).
+
+        The default implementation builds a transient :class:`pv.PolyData`
+        of the queried points and forwards to :meth:`compute_offset`, which
+        works for any grading whose ``compute_offset`` only consults point
+        coordinates (it does for :class:`NormedDistance`).  Subclasses that
+        depend on cell connectivity should override this method.
+        """
+
+        def _field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+            _self: OffsetGrading = self,
+        ) -> npt.NDArray[np.float64]:
+            shape = x.shape
+            pts = np.column_stack([x.ravel(), y.ravel(), z.ravel()])
+            polydata = pv.PolyData(pts)
+            values = _self.compute_offset(polydata)
+            return np.asarray(values).reshape(shape)
+
+        return _field
 
     @abstractmethod
     def compute_offset(
         self: OffsetGrading,
         grid: pv.UnstructuredGrid | pv.StructuredGrid,
     ) -> npt.NDArray[np.float64]:
-        """Compute the offset of the grid.
+        """
+        Compute the offset of the grid.
 
         This method should compute the offset on each point of the grid and return \
             it as a 1D array.
@@ -54,7 +88,8 @@ class NormedDistance(OffsetGrading):
         furthest_offset: float,
         boundary_weight: float = 1.0,
     ) -> None:
-        """Initialize the ImplicitDistance object.
+        """
+        Initialize the ImplicitDistance object.
 
         Parameters
         ----------
