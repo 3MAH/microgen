@@ -31,8 +31,7 @@ def _get_microgen_surface_functions() -> list[str]:
     return [
         name
         for name, fn in getmembers(microgen.surface_functions, isfunction)
-        if not any(c.isupper() for c in name)
-        and len(signature(fn).parameters) == 3
+        if not any(c.isupper() for c in name) and len(signature(fn).parameters) == 3
     ]
 
 
@@ -809,6 +808,6 @@ def test_sweep_along_straight_line_is_finite_and_positive() -> None:
     tube_volume = np.pi * radial_max * radial_max * height
     v = abs(sheet.volume)
     assert v > 0.0, "Sweep produced an empty sheet"
-    assert v < tube_volume * 1.05, (
-        f"Sweep sheet volume {v:.2f} exceeds tube envelope {tube_volume:.2f}"
-    )
+    assert (
+        v < tube_volume * 1.05
+    ), f"Sweep sheet volume {v:.2f} exceeds tube envelope {tube_volume:.2f}"

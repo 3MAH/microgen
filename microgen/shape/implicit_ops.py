@@ -425,7 +425,9 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
             # Same fallback as in `_fd_sdf`: where the gradient vanishes
             # (degenerate flat-z fields, saddle points), keep the raw value
             # so its sign is preserved without exploding into ±1/epsilon.
-            return np.where(grad_mag > epsilon, val / np.maximum(grad_mag, epsilon), val)
+            return np.where(
+                grad_mag > epsilon, val / np.maximum(grad_mag, epsilon), val
+            )
 
     except Exception:  # noqa: BLE001
         sdf = _fd_sdf(f, epsilon)

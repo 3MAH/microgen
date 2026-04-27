@@ -88,6 +88,7 @@ report("2. CylindricalTpms (R=1.5)", m_cyl)
 # 3. Sweep — gyroid along a helical curve (1.5 turns, height 6)
 # -----------------------------------------------------------------------------
 
+
 def helix(t: float) -> np.ndarray:
     """Helix: 1.5 turns, radius 2, height 6."""
     theta = 2.0 * np.pi * 1.5 * t

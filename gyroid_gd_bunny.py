@@ -14,7 +14,7 @@ cell_size = np.array([1, 1, 1])
 center_offset = 0.5
 resolution = 15
 
-offset = np.pi/2.
+offset = np.pi / 2.0
 
 linspaces: List[np.ndarray] = []
 for repeat_cell_axis, cell_size_axis in zip(repeat_cell, cell_size):
@@ -34,10 +34,7 @@ kx, ky, kz = 2 * np.pi / cell_size
 surface_function = gyroid(kx * x, ky * y, kz * z)
 
 bunny = examples.download_bunny()
-transform_matrix = np.array([[40, 0, 0, 0],
-                            [0, 40, 0, 0],
-                            [0, 0, 40, 0],
-                            [0, 0, 0, 1]])
+transform_matrix = np.array([[40, 0, 0, 0], [0, 40, 0, 0], [0, 0, 40, 0], [0, 0, 0, 1]])
 bunny.transform(transform_matrix, inplace=True)
 center = bunny.center_of_mass()
 bunny.translate(-center, inplace=True)
@@ -47,13 +44,13 @@ print(grid.bounds)
 
 grid.compute_implicit_distance(bunny, inplace=True)
 
-#normalize :
-dist = -1.*grid['implicit_distance']
+# normalize :
+dist = -1.0 * grid["implicit_distance"]
 dist[dist > 0] = 0
 dist_norm = (dist - min(dist)) / (max(dist) - min(dist))
 x_t = 0.5
 l = 0.2
-reg_func = 0.6 * (1. + np.tanh((dist_norm - x_t)/l)) - 0.2
+reg_func = 0.6 * (1.0 + np.tanh((dist_norm - x_t) / l)) - 0.2
 
 print(min(dist))
 print(max(dist))
@@ -64,8 +61,8 @@ print(max(dist_norm))
 print(min(reg_func))
 print(max(reg_func))
 
-grid["lower_surface"] = (surface_function.ravel(order="F") - offset*reg_func)
-grid["upper_surface"] = (surface_function.ravel(order="F") + offset*reg_func)
+grid["lower_surface"] = surface_function.ravel(order="F") - offset * reg_func
+grid["upper_surface"] = surface_function.ravel(order="F") + offset * reg_func
 sheet = grid.clip_scalar(scalars="upper_surface", invert=False).clip_scalar(
     scalars="lower_surface"
 )
@@ -77,11 +74,11 @@ clipped.compute_implicit_distance(bunny, inplace=True)
 
 print(f"relative density = {clipped.volume / bunny.volume:.2%}")
 
-clipped2 = clipped.clip('y', origin = (0,-0.5,0.), invert=False)
-clipped2["dist"] = -1.*clipped2["implicit_distance"]
+clipped2 = clipped.clip("y", origin=(0, -0.5, 0.0), invert=False)
+clipped2["dist"] = -1.0 * clipped2["implicit_distance"]
 
 pl = pv.Plotter()
-#pl.add_mesh(grid, color="b", opacity = 0.1)
-pl.add_mesh(bunny, color="w", opacity = 0.1)
-pl.add_mesh(clipped2, scalars='dist', cmap='inferno')
+# pl.add_mesh(grid, color="b", opacity = 0.1)
+pl.add_mesh(bunny, color="w", opacity=0.1)
+pl.add_mesh(clipped2, scalars="dist", cmap="inferno")
 pl.show()

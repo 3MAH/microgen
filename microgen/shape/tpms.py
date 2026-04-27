@@ -157,7 +157,13 @@ class Tpms(Shape):
         # Stores the offset callable when one is provided, so the F-rep path
         # can re-evaluate variable thickness on its own marching-cubes grid.
         self._offset_func: Field | None = (
-            offset if (offset is not None and callable(offset) and not isinstance(offset, OffsetGrading)) else None
+            offset
+            if (
+                offset is not None
+                and callable(offset)
+                and not isinstance(offset, OffsetGrading)
+            )
+            else None
         )
         self.phase_shift = phase_shift
 
@@ -913,7 +919,9 @@ class Tpms(Shape):
         if self.density == 1.0:
             envelope_mesh = self._envelope_mesh_at_full_density()
             envelope_mesh = rotate(
-                envelope_mesh, center=(0, 0, 0), rotation=self.orientation,
+                envelope_mesh,
+                center=(0, 0, 0),
+                rotation=self.orientation,
             )
             return envelope_mesh.translate(xyz=self.center)
 
@@ -1160,7 +1168,12 @@ class CylindricalTpms(Tpms):
 
         r_inner, r_outer, half_z = self._shell_extents()
         bounds: BoundsType = (
-            -r_outer, r_outer, -r_outer, r_outer, -half_z, half_z,
+            -r_outer,
+            r_outer,
+            -r_outer,
+            r_outer,
+            -half_z,
+            half_z,
         )
 
         def _shell_sdf(
@@ -1200,7 +1213,8 @@ class CylindricalTpms(Tpms):
         radial_extent = float(self.cell_size[0]) * float(self.repeat_cell[0])
         axial_extent = float(self.cell_size[2]) * float(self.repeat_cell[2])
         cell_size_min = max(
-            min(float(self.cell_size[0]), float(self.cell_size[2])), 1e-12,
+            min(float(self.cell_size[0]), float(self.cell_size[2])),
+            1e-12,
         )
         n = int(self.resolution * max(radial_extent, axial_extent) / cell_size_min)
         return max(n, 10)
@@ -1335,8 +1349,7 @@ class SphericalTpms(Tpms):
             rho_cart = np.sqrt(x**2 + y**2 + z**2)
             rho = rho_cart - sph_r
             theta = (
-                np.arccos(np.clip(z / np.maximum(rho_cart, 1e-30), -1, 1))
-                - np.pi / 2.0
+                np.arccos(np.clip(z / np.maximum(rho_cart, 1e-30), -1, 1)) - np.pi / 2.0
             ) / unit_theta
             phi = np.arctan2(y, x) / unit_phi
             return self.surface_function(
@@ -1373,7 +1386,12 @@ class SphericalTpms(Tpms):
 
         r_inner, r_outer = self._shell_radii()
         bounds: BoundsType = (
-            -r_outer, r_outer, -r_outer, r_outer, -r_outer, r_outer,
+            -r_outer,
+            r_outer,
+            -r_outer,
+            r_outer,
+            -r_outer,
+            r_outer,
         )
 
         def _shell_sdf(
@@ -1461,7 +1479,8 @@ class Sweep(Tpms):
 
     def __init__(  # noqa: PLR0913
         self: Sweep,
-        curve_points: npt.NDArray[np.float64] | Callable[[float], npt.NDArray[np.float64]],
+        curve_points: npt.NDArray[np.float64]
+        | Callable[[float], npt.NDArray[np.float64]],
         surface_function: Field,
         radial_max: float,
         offset: float | OffsetGrading | Field | None = None,
@@ -1655,7 +1674,9 @@ class Sweep(Tpms):
         y: npt.NDArray[np.float64],
         z: npt.NDArray[np.float64],
     ) -> tuple[
-        npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
     ]:
         """Return ``(s, r, θ)`` for each input point ``p = (x, y, z)``."""
         shape = x.shape
@@ -1697,9 +1718,12 @@ class Sweep(Tpms):
         bb_min = self.curve.min(axis=0) - self.radial_max
         bb_max = self.curve.max(axis=0) + self.radial_max
         bounds: BoundsType = (
-            float(bb_min[0]), float(bb_max[0]),
-            float(bb_min[1]), float(bb_max[1]),
-            float(bb_min[2]), float(bb_max[2]),
+            float(bb_min[0]),
+            float(bb_max[0]),
+            float(bb_min[1]),
+            float(bb_max[1]),
+            float(bb_min[2]),
+            float(bb_max[2]),
         )
 
         # Like Conformal, the field is built around discrete data — skip
@@ -1715,7 +1739,9 @@ class Sweep(Tpms):
         from .implicit_ops import from_field  # noqa: PLC0415
 
         bounds: BoundsType = (
-            self._bounds if self._bounds is not None else (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+            self._bounds
+            if self._bounds is not None
+            else (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         )
 
         def _tube_sdf(
@@ -2068,7 +2094,9 @@ class GradedInfill(Infill):
         (at ``d_norm = 1``) via a ``tanh`` profile centred at ``transition``.
         """
         envelope_oriented = envelope.compute_normals(
-            auto_orient_normals=True, point_normals=True, cell_normals=True,
+            auto_orient_normals=True,
+            point_normals=True,
+            cell_normals=True,
         )
 
         bounds = np.array(envelope_oriented.bounds, dtype=float)
@@ -2093,12 +2121,13 @@ class GradedInfill(Infill):
             # ``sigmoid`` runs 0 → 1 as we go from skin → core.  Multiply that
             # by ``(offset_core - offset_skin)`` and add ``offset_skin`` to
             # interpolate the right way around.
-            sigmoid = 0.5 * (1.0 + np.tanh((d_norm - transition) / max(smoothness, 1e-6)))
+            sigmoid = 0.5 * (
+                1.0 + np.tanh((d_norm - transition) / max(smoothness, 1e-6))
+            )
             offset_at_p = offset_skin + (offset_core - offset_skin) * sigmoid
             return offset_at_p.reshape(shape)
 
         return _graded_offset
-
 
 
 # Re-export for backward compatibility
