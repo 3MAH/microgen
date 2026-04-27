@@ -1,7 +1,6 @@
 from itertools import product
 from pathlib import Path
 
-import cadquery as cq
 import numpy as np
 
 from microgen import CustomLattice
@@ -95,4 +94,4 @@ auxetic_lattice = CustomLattice(
 
 shape = auxetic_lattice.generate()
 stl_file = Path(__file__).parent / "auxetic_custom_lattice.stl"
-cq.exporters.export(shape, stl_file.name)
+shape.export_stl(stl_file.name)

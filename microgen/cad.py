@@ -363,6 +363,24 @@ class CadShape:
             raise RuntimeError(err_msg)
 
 
+def import_step(path: str | Path) -> CadShape:
+    """Import a STEP file and return the resulting :class:`CadShape`.
+
+    Multi-root STEP files are merged into a single ``TopoDS_Compound``.
+    """
+    require_cad()
+    from OCP.IFSelect import IFSelect_RetDone
+    from OCP.STEPControl import STEPControl_Reader
+
+    reader = STEPControl_Reader()
+    status = reader.ReadFile(str(path))
+    if status != IFSelect_RetDone:
+        err_msg = f"STEP read failed for {path!r} with status {status!r}"
+        raise RuntimeError(err_msg)
+    reader.TransferRoots()
+    return CadShape(reader.OneShape())
+
+
 # ---------------------------------------------------------------------------
 # Mesh → Shell (SOTA path: one TopoDS_Face with attached Poly_Triangulation)
 # ---------------------------------------------------------------------------

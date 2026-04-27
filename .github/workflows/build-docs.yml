@@ -35,8 +35,10 @@ jobs:
       - name: Install libGLU
         run: sudo apt-get install -y libglu1-mesa
 
-      - name: Install package with docs dependencies
-        run: pip install .[docs]
+      - name: Install package with docs and CAD dependencies
+        # Sphinx jupyter-execute cells render Shape.generate() / Tpms.generate()
+        # examples, which require the OCP backend (``cadquery-ocp``).
+        run: pip install .[docs,cad]
 
       - name: Build docs
         run: make -C docs html

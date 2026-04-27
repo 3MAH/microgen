@@ -1,8 +1,7 @@
 from pathlib import Path
 
-import cadquery as cq
-
 from microgen import Ellipsoid, Phase, Rve, mesh, rasterPhase
+from microgen.cad import make_compound_from_solids
 
 rve = Rve(dim=1)
 
@@ -11,11 +10,11 @@ elli = elem.generate()
 
 raster = rasterPhase(phase=Phase(shape=elli), rve=rve, grid=[5, 5, 5])
 
-compound = cq.Compound.makeCompound(
+compound = make_compound_from_solids(
     [solid for phase in raster for solid in phase.solids]
 )
 step_file = str(Path(__file__).parent / "compound.step")
-cq.exporters.export(compound, step_file)
+compound.export_step(step_file)
 
 vtk_file = str(Path(__file__).parent / "rasterEllipsoid.vtk")
 mesh(

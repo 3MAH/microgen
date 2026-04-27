@@ -1,8 +1,7 @@
 from pathlib import Path
 
-import cadquery as cq
-
 from microgen import Neper, Phase, mesh
+from microgen.cad import make_compound
 
 # # We import the Polyhedra from Neper tessellation file
 # listPolyhedra, seed, vertices, edges, faces, polys = parseNeper("test1")
@@ -37,9 +36,9 @@ polyhedra = Neper.generateVoronoiFromTessFile(tess_file)
 
 shapes = [poly.generate() for poly in polyhedra]
 
-compound = cq.Compound.makeCompound(shapes)
+compound = make_compound(shapes)
 step_file = str(Path(__file__).parent / "compound.step")
-cq.exporters.export(compound, step_file)
+compound.export_step(step_file)
 
 phases = [Phase(shape=shape) for shape in shapes]
 

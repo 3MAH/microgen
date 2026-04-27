@@ -24,7 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.10", "3.12", "3.13", "3.14"]
+        # vtk has no PyPI wheel for 3.14 yet (only conda-forge); the
+        # integration job below covers 3.14 via the conda route.
+        python-version: ["3.10", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
