@@ -1,4 +1,5 @@
-"""Sphere.
+"""
+Sphere.
 
 =====================================
 Sphere (:mod:`microgen.shape.sphere`)
@@ -20,7 +21,8 @@ if TYPE_CHECKING:
 
 
 class Sphere(Shape):
-    """Class to generate a sphere.
+    """
+    Class to generate a sphere.
 
     .. jupyter-execute::
        :hide-code:
@@ -74,5 +76,5 @@ class Sphere(Shape):
         phi_resolution: int = 50,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Deprecated method. Use generate_vtk instead."""  # noqa: D401
+        """Deprecated method. Use generate_vtk instead."""
         return self.generate_vtk(theta_resolution, phi_resolution)

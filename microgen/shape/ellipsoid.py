@@ -1,4 +1,5 @@
-"""Ellipsoid.
+"""
+Ellipsoid.
 
 =============================================
 Ellipsoid (:mod:`microgen.shape.ellipsoid`)
@@ -23,7 +24,8 @@ if TYPE_CHECKING:
 
 
 class Ellipsoid(Shape):
-    """Class to generate an ellipsoid.
+    """
+    Class to generate an ellipsoid.
 
     .. jupyter-execute::
        :hide-code:
@@ -90,5 +92,5 @@ class Ellipsoid(Shape):
         return rotate(ellipsoid, self.center, self.orientation)
 
     def generateVtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        """Deprecated. Use :meth:`generate_vtk` instead."""
         return self.generate_vtk()

@@ -37,10 +37,10 @@ class RhombicDodecahedron(AbstractLattice):
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         outer_cube_vertices = list(
-            product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
+            product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3),
         )
         inner_cube_vertices = list(
-            product([-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4], repeat=3)
+            product([-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4], repeat=3),
         )
 
         face_centers = [

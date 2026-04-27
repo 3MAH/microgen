@@ -1,5 +1,3 @@
-from typing import List
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples
@@ -16,14 +14,14 @@ resolution = 15
 
 offset = np.pi / 2.0
 
-linspaces: List[np.ndarray] = []
-for repeat_cell_axis, cell_size_axis in zip(repeat_cell, cell_size):
+linspaces: list[np.ndarray] = []
+for repeat_cell_axis, cell_size_axis in zip(repeat_cell, cell_size, strict=False):
     linspaces.append(
         np.linspace(
             -center_offset * cell_size_axis * repeat_cell_axis,
             center_offset * cell_size_axis * repeat_cell_axis,
             resolution * repeat_cell_axis,
-        )
+        ),
     )
 
 x, y, z = np.meshgrid(*linspaces)
@@ -64,7 +62,7 @@ print(max(reg_func))
 grid["lower_surface"] = surface_function.ravel(order="F") - offset * reg_func
 grid["upper_surface"] = surface_function.ravel(order="F") + offset * reg_func
 sheet = grid.clip_scalar(scalars="upper_surface", invert=False).clip_scalar(
-    scalars="lower_surface"
+    scalars="lower_surface",
 )
 upper_skeletal = grid.clip_scalar(scalars="upper_surface")
 lower_skeletal = grid.clip_scalar(scalars="lower_surface", invert=False)

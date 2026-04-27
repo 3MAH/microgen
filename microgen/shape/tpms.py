@@ -1,4 +1,5 @@
-"""TPMS.
+"""
+TPMS.
 
 =============================================
 TPMS (:mod:`microgen.shape.tpms`)
@@ -15,7 +16,8 @@ TPMS (:mod:`microgen.shape.tpms`)
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Literal, Sequence
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Literal
 
 import cadquery as cq
 import numpy as np
@@ -45,7 +47,8 @@ def _wedge_sdf_2d(
     y: npt.NDArray[np.float64],
     half_angle: float,
 ) -> npt.NDArray[np.float64]:
-    """SDF of a 2D wedge centred on +X with half-aperture ``half_angle``.
+    """
+    SDF of a 2D wedge centred on +X with half-aperture ``half_angle``.
 
     Negative inside, positive outside, zero on the bounding rays.
     Z-independent — used as a clipping primitive for cylindrical / spherical
@@ -60,7 +63,8 @@ def _double_cone_sdf(
     z: npt.NDArray[np.float64],
     half_polar: float,
 ) -> npt.NDArray[np.float64]:
-    """SDF of a double cone around the Z axis with half-aperture ``half_polar``.
+    """
+    SDF of a double cone around the Z axis with half-aperture ``half_polar``.
 
     Symmetric about the XY plane; points inside iff their angle from ±Z is
     less than ``half_polar``.  Used to clip spherical partial-θ coverage.
@@ -74,7 +78,8 @@ def _interp_along_curve(
     curve_s: npt.NDArray[np.float64],
     values: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """Per-axis ``np.interp`` of an ``(M, 3)`` curve attribute at ``query_s``.
+    """
+    Per-axis ``np.interp`` of an ``(M, 3)`` curve attribute at ``query_s``.
 
     Returns an ``(N, 3)`` array.  Wraps the three-axis loop so callers don't
     repeat the pattern.
@@ -85,7 +90,8 @@ def _interp_along_curve(
 
 
 class Tpms(Shape):
-    """Triply Periodical Minimal Surfaces.
+    """
+    Triply Periodical Minimal Surfaces.
 
     Class to generate Triply Periodical Minimal Surfaces (TPMS)
     geometry from a given mathematical function, with given offset
@@ -109,7 +115,7 @@ class Tpms(Shape):
         - :class:`~microgen.shape.surface_functions.honeycomb_lidinoid`
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Tpms,
         surface_function: Field,
         offset: float | OffsetGrading | Field | None = None,
@@ -120,7 +126,8 @@ class Tpms(Shape):
         density: float | None = None,
         **kwargs: Vector3DType,
     ) -> None:
-        r"""Class used to generate TPMS geometries (sheet or skeletals parts).
+        r"""
+        Class used to generate TPMS geometries (sheet or skeletals parts).
 
         TPMS are created by default in a cube.
         The geometry of the cube can be modified using 'cell_size' parameter.
@@ -213,7 +220,8 @@ class Tpms(Shape):
         density: float,
         resolution: int = 20,
     ) -> float:
-        """Return the offset corresponding to the required density.
+        """
+        Return the offset corresponding to the required density.
 
         :param surface_function: tpms function
         :param part_type: type of the part (sheet, lower skeletal or upper skeletal)
@@ -222,13 +230,14 @@ class Tpms(Shape):
 
         :return: corresponding offset value
         """
-        return Tpms(  # noqa: SLF001
+        return Tpms(
             surface_function=surface_function,
             density=density,
         )._compute_offset_to_fit_density(part_type=part_type, resolution=resolution)
 
     def _density_envelope_volume(self: Tpms) -> float:
-        """Return the *envelope* volume that ``density`` is measured against.
+        """
+        Return the *envelope* volume that ``density`` is measured against.
 
         For a plain :class:`Tpms` this is the cartesian cell volume.  Subclasses
         with a non-cartesian envelope (:class:`Infill`, :class:`Conformal`)
@@ -243,7 +252,8 @@ class Tpms(Shape):
         part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
         resolution: int | None = None,
     ) -> float:
-        """Compute the offset that yields the requested density.
+        """
+        Compute the offset that yields the requested density.
 
         Searches with the same F-rep ``generate_vtk`` pipeline the user
         invokes, so the offset returned actually reproduces the requested
@@ -432,6 +442,7 @@ class Tpms(Shape):
             for repeat_cell_axis, cell_size_axis in zip(
                 self.repeat_cell,
                 self.cell_size,
+                strict=False,
             )
         ]
 
@@ -455,7 +466,7 @@ class Tpms(Shape):
         bounds: tuple[float, float, float, float, float, float],
     ) -> None:
         """Normalize a raw field to SDF and set ``_func`` / ``_bounds``."""
-        from .implicit_ops import from_field, normalize_to_sdf  # noqa: PLC0415
+        from .implicit_ops import from_field, normalize_to_sdf
 
         self._raw_field_func = raw_field
         sdf_shape = normalize_to_sdf(from_field(raw_field))
@@ -490,15 +501,16 @@ class Tpms(Shape):
         return self._raw_field_func
 
     def as_sheet(self: Tpms, thickness: float | None = None) -> Shape:
-        """Return an F-rep Shape representing a TPMS sheet of given thickness.
+        """
+        Return an F-rep Shape representing a TPMS sheet of given thickness.
 
         Uses the SDF-normalized field, so *thickness* is in physical units.
         If *thickness* is ``None``, uses ``self.offset`` (which may be a
         scalar, an array sampled on ``self.grid``, or a callable in which
         case the callable form is used directly).
         """
-        from .implicit_ops import shell  # noqa: PLC0415
-        from .shape import Shape  # noqa: PLC0415
+        from .implicit_ops import shell
+        from .shape import Shape
 
         if thickness is not None:
             t: float | npt.NDArray | Field = float(thickness)
@@ -509,7 +521,8 @@ class Tpms(Shape):
         return shell(Shape(func=self._func, bounds=self._bounds), t)
 
     def _half_offset_field(self: Tpms) -> Field | float:
-        """Return half the offset as a callable (variable) or scalar (constant).
+        """
+        Return half the offset as a callable (variable) or scalar (constant).
 
         Variable offset stored as a callable can be re-evaluated on the
         marching-cubes grid; an array offset (sampled on ``self.grid``)
@@ -520,7 +533,7 @@ class Tpms(Shape):
         if self._offset_func is not None:
             f = self._offset_func
 
-            def _half(x, y, z, _f=f):  # noqa: ANN001
+            def _half(x, y, z, _f=f):
                 return 0.5 * _f(x, y, z)
 
             return _half
@@ -530,84 +543,87 @@ class Tpms(Shape):
         return 0.0
 
     def as_upper_skeletal(self: Tpms) -> Shape:
-        """F-rep Shape for the *upper* skeletal: ``{p : f(p) > offset/2}``.
+        """
+        F-rep Shape for the *upper* skeletal: ``{p : f(p) > offset/2}``.
 
         Volume scales with the chosen offset (smaller offset ⇒ larger
         skeletal), matching the historical CadQuery behaviour and the VTK
         grid-clip path.
         """
-        from .implicit_ops import from_field  # noqa: PLC0415
+        from .implicit_ops import from_field
 
         f = self._func
         h = self._half_offset_field()
         if callable(h):
 
-            def _upper(x, y, z, _f=f, _h=h):  # noqa: ANN001
+            def _upper(x, y, z, _f=f, _h=h):
                 return -_f(x, y, z) + _h(x, y, z)
 
         else:
 
-            def _upper(x, y, z, _f=f, _h=h):  # noqa: ANN001
+            def _upper(x, y, z, _f=f, _h=h):
                 return -_f(x, y, z) + _h
 
         return from_field(func=_upper, bounds=self._bounds)
 
     def as_lower_skeletal(self: Tpms) -> Shape:
         """F-rep Shape for the *lower* skeletal: ``{p : f(p) < -offset/2}``."""
-        from .implicit_ops import from_field  # noqa: PLC0415
+        from .implicit_ops import from_field
 
         f = self._func
         h = self._half_offset_field()
         if callable(h):
 
-            def _lower(x, y, z, _f=f, _h=h):  # noqa: ANN001
+            def _lower(x, y, z, _f=f, _h=h):
                 return _f(x, y, z) + _h(x, y, z)
 
         else:
 
-            def _lower(x, y, z, _f=f, _h=h):  # noqa: ANN001
+            def _lower(x, y, z, _f=f, _h=h):
                 return _f(x, y, z) + _h
 
         return from_field(func=_lower, bounds=self._bounds)
 
     def as_surface(self: Tpms) -> Shape:
-        """Return F-rep Shape for the (open) zero-isosurface, no thickness.
+        """
+        Return F-rep Shape for the (open) zero-isosurface, no thickness.
 
         Same field as :meth:`as_lower_skeletal`; meant for ``type_part="surface"``.
         Marching cubes will produce an open shell — there is no enclosed volume.
         """
-        from .implicit_ops import from_field  # noqa: PLC0415
+        from .implicit_ops import from_field
 
         return from_field(func=self._func, bounds=self._bounds)
 
     def _cell_box(self: Tpms) -> Shape:
         """SDF Shape of this TPMS' cell (cell_size × repeat_cell, centered origin)."""
-        from .implicit_ops import box  # noqa: PLC0415
+        from .implicit_ops import box
 
         dims = tuple(float(d) for d in (self.cell_size * self.repeat_cell))
         return box(dims=dims, center=(0.0, 0.0, 0.0))
 
     def _clipped_sheet(self: Tpms) -> Shape:
-        """Sheet F-rep clipped to the cell box.
+        """
+        Sheet F-rep clipped to the cell box.
 
         When the offset approaches its upper limit the sheet field is
         uniformly negative inside the cell and marching cubes finds no
         boundary — clipping by the cell box makes the box face the closed
         boundary, yielding a full-cell mesh as expected.
         """
-        from .implicit_ops import intersection  # noqa: PLC0415
+        from .implicit_ops import intersection
 
         return intersection(self.as_sheet(), self._cell_box())
 
     def _clipped_upper_skeletal(self: Tpms) -> Shape:
         """Upper skeletal F-rep clipped to the cell box (closed under marching cubes)."""
-        from .implicit_ops import intersection  # noqa: PLC0415
+        from .implicit_ops import intersection
 
         return intersection(self.as_upper_skeletal(), self._cell_box())
 
     def _clipped_lower_skeletal(self: Tpms) -> Shape:
         """Lower skeletal F-rep clipped to the cell box (closed under marching cubes)."""
-        from .implicit_ops import intersection  # noqa: PLC0415
+        from .implicit_ops import intersection
 
         return intersection(self.as_lower_skeletal(), self._cell_box())
 
@@ -653,7 +669,8 @@ class Tpms(Shape):
         self.offset_updated = True
 
     def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> cq.Shape:
-        """Convert a triangulated PyVista mesh to a CadQuery ``Shape``.
+        """
+        Convert a triangulated PyVista mesh to a CadQuery ``Shape``.
 
         Builds one ``cq.Face`` per triangle, then *sews* them with OCCT's
         ``BRepBuilderAPI_Sewing`` so adjacent triangles share edges — without
@@ -662,7 +679,7 @@ class Tpms(Shape):
         ``TopoDS_Shell`` if sewing succeeded into one shell, otherwise the
         compound that sewing produced).
         """
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
 
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
@@ -676,7 +693,7 @@ class Tpms(Shape):
                     cq.Vector(*mesh.points[start]),
                     cq.Vector(*mesh.points[end]),
                 )
-                for start, end in zip(tri[:], tri[1:])
+                for start, end in zip(tri[:], tri[1:], strict=False)
             ]
             wire = cq.Wire.assembleEdges(lines)
             faces.append(cq.Face.makeFromWires(wire))
@@ -729,7 +746,8 @@ class Tpms(Shape):
     _VALID_PARTS = ("sheet", "lower skeletal", "upper skeletal", "surface")
 
     def _frep_part(self: Tpms, type_part: TpmsPartType) -> Shape:
-        """Pick the F-rep :class:`Shape` for *type_part*.
+        """
+        Pick the F-rep :class:`Shape` for *type_part*.
 
         Skeletals are intersected with the cell box so marching cubes
         produces a *closed* shell (the unclipped skeletal field is
@@ -748,7 +766,8 @@ class Tpms(Shape):
         raise ValueError(err_msg)
 
     def _isotropic_resolution(self: Tpms) -> int:
-        """Map ``self.resolution`` (per-axis) to an isotropic Shape resolution.
+        """
+        Map ``self.resolution`` (per-axis) to an isotropic Shape resolution.
 
         ``Shape.generate_vtk`` takes a single resolution; we use the geometric
         mean of the per-axis cell counts so total grid points stay proportional.
@@ -756,7 +775,8 @@ class Tpms(Shape):
         return max(int(self.resolution * np.cbrt(np.prod(self.repeat_cell))), 10)
 
     def _envelope_mesh_at_full_density(self: Tpms) -> pv.PolyData:
-        """Return the cell-envelope mesh used by the ``density=1.0`` shortcut.
+        """
+        Return the cell-envelope mesh used by the ``density=1.0`` shortcut.
 
         Plain :class:`Tpms` has an axis-aligned box envelope, returned exactly
         via :class:`pyvista.Box`.  Subclasses with non-cubic envelopes
@@ -772,7 +792,8 @@ class Tpms(Shape):
         )
 
     def _envelope_mesh_via_cell_box(self: Tpms) -> pv.PolyData:
-        """Marching-cubes mesh of the (potentially non-cubic) ``_cell_box``.
+        """
+        Marching-cubes mesh of the (potentially non-cubic) ``_cell_box``.
 
         Used by subclasses that override :meth:`_envelope_mesh_at_full_density`
         to delegate to the F-rep envelope SDF.
@@ -790,7 +811,8 @@ class Tpms(Shape):
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> cq.Shape:
-        """Generate the OCCT/CadQuery shape of the requested TPMS part.
+        """
+        Generate the OCCT/CadQuery shape of the requested TPMS part.
 
         Pure F-rep pipeline: pick the SDF Shape via :meth:`_frep_part`, run
         marching cubes through :meth:`Shape.generate_vtk`, optionally smooth,
@@ -853,15 +875,16 @@ class Tpms(Shape):
 
     @staticmethod
     def _try_make_solid(shape: cq.Shape) -> cq.Shape:
-        """Best-effort upgrade of a sewn shell into a closed Solid.
+        """
+        Best-effort upgrade of a sewn shell into a closed Solid.
 
         Returns the original shape unchanged if the sewn result is a Compound
         (multiple disjoint shells, can't be a single solid) or if OCCT refuses
         the conversion.
         """
-        from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
-        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
-        from OCP.TopoDS import TopoDS  # noqa: PLC0415
+        from OCP.TopAbs import TopAbs_SHELL
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopoDS import TopoDS
 
         wrapped = shape.wrapped
         # Already a Shell? Try to make a Solid directly.
@@ -896,7 +919,8 @@ class Tpms(Shape):
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Generate the PyVista mesh of the requested TPMS part.
+        """
+        Generate the PyVista mesh of the requested TPMS part.
 
         Same F-rep pipeline as :meth:`generate` (skeletals are clipped to the
         cell box), so the two outputs share the exact same triangulation and
@@ -997,7 +1021,7 @@ class Tpms(Shape):
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        """Deprecated. Use :meth:`generate_vtk` instead."""
         return self.generate_vtk(
             type_part=type_part,
             algo_resolution=algo_resolution,
@@ -1016,7 +1040,7 @@ class CylindricalTpms(Tpms):
 
     _envelope_mesh_at_full_density = Tpms._envelope_mesh_via_cell_box
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: CylindricalTpms,
         radius: float,
         surface_function: Field,
@@ -1029,7 +1053,8 @@ class CylindricalTpms(Tpms):
         resolution: int = 20,
         density: float | None = None,
     ) -> None:
-        r"""Cylindrical TPMS geometry.
+        r"""
+        Cylindrical TPMS geometry.
 
         Directions of cell_size and repeat_cell must be taken as the cylindrical \
             coordinate system $\\left(\\rho, \\theta, z\\right)$.
@@ -1087,7 +1112,8 @@ class CylindricalTpms(Tpms):
         y: npt.NDArray[np.float64],
         z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
-        """Return the structured cylindrical grid of the TPMS.
+        """
+        Return the structured cylindrical grid of the TPMS.
 
         ``y`` carries arc-length along the equator, so the conversion to an
         angle is ``theta = y / radius``.  The earlier ``y * unit_theta`` form
@@ -1145,7 +1171,8 @@ class CylindricalTpms(Tpms):
         )
 
     def _cell_box(self: CylindricalTpms) -> Shape:
-        """Cylindrical-shell SDF in Cartesian space (replaces the parent's
+        """
+        Cylindrical-shell SDF in Cartesian space (replaces the parent's
         axis-aligned-box SDF, which was geometrically wrong for this class).
 
         Without this override the F-rep marching cubes path
@@ -1164,7 +1191,7 @@ class CylindricalTpms(Tpms):
         handled by intersecting the ring with an angular wedge centred on
         the +X axis.
         """
-        from .implicit_ops import from_field, intersection  # noqa: PLC0415
+        from .implicit_ops import from_field, intersection
 
         r_inner, r_outer, half_z = self._shell_extents()
         bounds: BoundsType = (
@@ -1204,7 +1231,8 @@ class CylindricalTpms(Tpms):
         return shell
 
     def _isotropic_resolution(self: CylindricalTpms) -> int:
-        """Per-axis resolution count for the F-rep marching-cubes grid.
+        """
+        Per-axis resolution count for the F-rep marching-cubes grid.
 
         Override the parent's geometric-mean of ``repeat_cell`` (which mixes
         the angular axis with linear ones).  Use only the radial (``[0]``)
@@ -1230,7 +1258,7 @@ class SphericalTpms(Tpms):
 
     _envelope_mesh_at_full_density = Tpms._envelope_mesh_via_cell_box
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: SphericalTpms,
         radius: float,
         surface_function: Field,
@@ -1243,7 +1271,8 @@ class SphericalTpms(Tpms):
         resolution: int = 20,
         density: float | None = None,
     ) -> None:
-        r"""Spherical TPMS geometry.
+        r"""
+        Spherical TPMS geometry.
 
         Directions of cell_size and repeat_cell must be taken as the spherical \
             coordinate system $\\left(r, \\theta, \\phi\\right)$.
@@ -1307,7 +1336,8 @@ class SphericalTpms(Tpms):
         y: npt.NDArray[np.float64],
         z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
-        """Return the structured spherical grid of the TPMS.
+        """
+        Return the structured spherical grid of the TPMS.
 
         ``y`` and ``z`` carry equatorial arc length, so the conversion to
         angles is ``theta = y / radius`` and ``phi = z / radius``.  The
@@ -1372,7 +1402,8 @@ class SphericalTpms(Tpms):
         return max(sph_r - delta_r, 0.0), sph_r + delta_r
 
     def _cell_box(self: SphericalTpms) -> Shape:
-        """Spherical-shell SDF in Cartesian space.
+        """
+        Spherical-shell SDF in Cartesian space.
 
         Replaces the parent's axis-aligned-box clip — same fix as
         :meth:`CylindricalTpms._cell_box`, see that docstring for the
@@ -1382,7 +1413,7 @@ class SphericalTpms(Tpms):
         in xy-plane) is supported when ``repeat_cell[1]`` /
         ``repeat_cell[2]`` are smaller than the auto-fill values.
         """
-        from .implicit_ops import from_field, intersection  # noqa: PLC0415
+        from .implicit_ops import from_field, intersection
 
         r_inner, r_outer = self._shell_radii()
         bounds: BoundsType = (
@@ -1434,7 +1465,8 @@ class SphericalTpms(Tpms):
         return shape
 
     def _isotropic_resolution(self: SphericalTpms) -> int:
-        """Use only the radial physical extent (the angular axes are
+        """
+        Use only the radial physical extent (the angular axes are
         parametric and would mislead a geometric mean across them).
         """
         radial_extent = float(self.cell_size[0]) * float(self.repeat_cell[0])
@@ -1445,7 +1477,8 @@ class SphericalTpms(Tpms):
 
 
 class Sweep(Tpms):
-    """TPMS along an arbitrary 3D curve — generalisation of CylindricalTpms.
+    """
+    TPMS along an arbitrary 3D curve — generalisation of CylindricalTpms.
 
     The TPMS is generated in a tube of radius ``radial_max`` around an
     arbitrary curve, in local coordinates ``(s, r, θ)`` where:
@@ -1477,7 +1510,7 @@ class Sweep(Tpms):
 
     _envelope_mesh_at_full_density = Tpms._envelope_mesh_via_cell_box
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Sweep,
         curve_points: npt.NDArray[np.float64]
         | Callable[[float], npt.NDArray[np.float64]],
@@ -1494,7 +1527,8 @@ class Sweep(Tpms):
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
-        r"""Build a TPMS swept along a curve.
+        r"""
+        Build a TPMS swept along a curve.
 
         :param curve_points: either an ``(M, 3)`` array of polyline samples
             or a callable ``t \in [0, 1] -> (3,)``.  Callables are sampled
@@ -1558,7 +1592,8 @@ class Sweep(Tpms):
         self: Sweep,
         seed_normal: Sequence[float] | None,
     ) -> None:
-        """Pre-compute arc length, tangents, and parallel-transported normals.
+        """
+        Pre-compute arc length, tangents, and parallel-transported normals.
 
         Stores on ``self``:
           ``_curve_s``       arc length per sample, shape (M,)
@@ -1566,7 +1601,7 @@ class Sweep(Tpms):
           ``_curve_N``       unit normal (parallel-transported), shape (M, 3)
           ``_curve_kdtree``  scipy cKDTree on the curve points
         """
-        from scipy.spatial import cKDTree  # noqa: PLC0415
+        from scipy.spatial import cKDTree
 
         pts = self.curve
         m = pts.shape[0]
@@ -1736,7 +1771,7 @@ class Sweep(Tpms):
 
     def _cell_box(self: Sweep) -> Shape:
         """Tube SDF: ``dist_to_curve(p) − radial_max``."""
-        from .implicit_ops import from_field  # noqa: PLC0415
+        from .implicit_ops import from_field
 
         bounds: BoundsType = (
             self._bounds
@@ -1771,7 +1806,8 @@ class Sweep(Tpms):
         y: npt.NDArray[np.float64],
         z: npt.NDArray[np.float64],
     ) -> pv.StructuredGrid:
-        """Map a parametric (s, r, θ) grid to Cartesian via the curve frames.
+        """
+        Map a parametric (s, r, θ) grid to Cartesian via the curve frames.
 
         ``x``, ``y``, ``z`` here are the parametric meshgrid coordinates
         from :meth:`Tpms._compute_tpms_field` (they live in (s, r, θ)
@@ -1855,7 +1891,7 @@ class Infill(Tpms):
         """Lower-skeletal part as a PolyData mesh."""
         return self.generate_vtk(type_part="lower skeletal")
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Infill,
         obj: pv.PolyData,
         surface_function: Field,
@@ -1866,7 +1902,8 @@ class Infill(Tpms):
         resolution: int = 20,
         density: float | None = None,
     ) -> None:
-        r"""Initialize the Infill object.
+        r"""
+        Initialize the Infill object.
 
         :param obj: object in which the infill is generated. Normals must be oriented\
                 towards the outside of the object. Use the `flip_normals` method if\
@@ -1949,7 +1986,8 @@ class Infill(Tpms):
         return grid
 
     def _density_envelope_volume(self: Infill) -> float:
-        """Density is measured against the input object's volume.
+        """
+        Density is measured against the input object's volume.
 
         Uses the volume of the *original* input object rather than the
         re-oriented one stored on ``self.obj`` — see ``__init__``.
@@ -1957,7 +1995,8 @@ class Infill(Tpms):
         return self._obj_volume
 
     def _setup_frep_field(self: Infill) -> None:
-        """Cartesian gyroid field, but bounds set to the obj bbox.
+        """
+        Cartesian gyroid field, but bounds set to the obj bbox.
 
         The plain :class:`Tpms` parent uses origin-centered bounds of size
         ``cell_size * repeat_cell``.  For an Infill of an object that is *not*
@@ -1986,14 +2025,15 @@ class Infill(Tpms):
         self._finalize_frep(_raw_field, bounds)
 
     def _cell_box(self: Infill) -> Shape:
-        """Override the cell-box clip with the *object envelope* SDF.
+        """
+        Override the cell-box clip with the *object envelope* SDF.
 
         Without this override the F-rep marching cubes path (used by
         :meth:`Tpms.generate_vtk` and :meth:`Tpms.generate`) would clip the
         TPMS to the cartesian bounding box rather than to the input object —
         producing volumes well above ``obj.volume`` and corrupting density.
         """
-        from .implicit_ops import from_field  # noqa: PLC0415
+        from .implicit_ops import from_field
 
         bounds_arr = np.array(self.obj.bounds)
         bounds: BoundsType = tuple(bounds_arr.tolist())
@@ -2013,7 +2053,8 @@ class Infill(Tpms):
 
 
 class GradedInfill(Infill):
-    """Cartesian TPMS infill with offset graded by distance to the envelope.
+    """
+    Cartesian TPMS infill with offset graded by distance to the envelope.
 
     Same as :class:`Infill` (TPMS in the world cartesian frame, clipped by
     the input object), except the *thickness* of the TPMS sheet varies with
@@ -2029,7 +2070,7 @@ class GradedInfill(Infill):
     bunny-style envelopes with high-curvature features.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: GradedInfill,
         obj: pv.PolyData,
         surface_function: Field,
@@ -2042,7 +2083,8 @@ class GradedInfill(Infill):
         phase_shift: Sequence[float] = (0.0, 0.0, 0.0),
         resolution: int = 20,
     ) -> None:
-        """Build a graded TPMS infill.
+        """
+        Build a graded TPMS infill.
 
         :param obj: envelope mesh
         :param surface_function: TPMS function ``f(x,y,z)``
@@ -2086,7 +2128,8 @@ class GradedInfill(Infill):
         transition: float,
         smoothness: float,
     ) -> Field:
-        """Return ``f(x, y, z) -> offset(p)`` graded by SDF.
+        """
+        Return ``f(x, y, z) -> offset(p)`` graded by SDF.
 
         ``d_norm = clip(-d / depth_max, 0, 1)`` ∈ [0, 1] (0 at skin, 1 in
         deepest interior point).  Offset is interpolated from

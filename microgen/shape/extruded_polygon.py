@@ -1,4 +1,5 @@
-"""Extruded Polygon.
+"""
+Extruded Polygon.
 
 ========================================================
 Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
@@ -7,7 +8,8 @@ Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
@@ -22,7 +24,8 @@ if TYPE_CHECKING:
 
 
 class ExtrudedPolygon(Shape):
-    """ExtrudedPolygon.
+    """
+    ExtrudedPolygon.
 
     Class to generate an extruded polygon with a given list of points and a thickness
 
@@ -46,7 +49,7 @@ class ExtrudedPolygon(Shape):
         orientation = kwargs.get("orientation", (0, 0, 0))
         super().__init__(center=center, orientation=orientation)
 
-        if kwargs.get("listCorners", None) is not None:
+        if kwargs.get("listCorners") is not None:
             list_corners = kwargs["listCorners"]
 
         if list_corners is None:
@@ -99,5 +102,5 @@ class ExtrudedPolygon(Shape):
         return rotate(poly, self.center, self.orientation)
 
     def generateVtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
+        """Deprecated. Use :meth:`generate_vtk` instead."""
         return self.generate_vtk()
