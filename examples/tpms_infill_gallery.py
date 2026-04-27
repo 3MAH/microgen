@@ -40,7 +40,7 @@ SPHERE_RADIUS = 3.0
 CYLINDER_RADIUS = 1.5
 CYLINDER_HEIGHT = 6.0
 
-OUT = Path("/Users/ychemisky/Documents/GitHub/microgen")
+OUT = Path(__file__).parent
 
 
 def clip_y(mesh: pv.DataSet, frac: float = -0.2) -> pv.DataSet:

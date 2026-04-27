@@ -647,6 +647,11 @@ class Tpms(Shape):
             self._offset = offset
         elif isinstance(offset, OffsetGrading):
             self._offset = offset.compute_offset(self.grid)
+            # Also expose the grading as a callable so the F-rep path
+            # (``as_sheet`` → ``shell``) can re-evaluate the offset on the
+            # marching-cubes grid.  Without this, ``shell()`` would receive
+            # the array sampled on ``self.grid`` and fail at ``float(t)``.
+            self._offset_func = offset.as_field()
         elif callable(offset):
             # Keep the callable so the F-rep path can re-evaluate it on the
             # marching-cubes grid (which differs from ``self.grid``).
