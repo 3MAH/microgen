@@ -200,7 +200,7 @@ class Shape:
             err_msg = "No implicit field defined — subclasses must override generate()"
             raise NotImplementedError(err_msg)
 
-        from microgen.cad import mesh_to_shape  # noqa: PLC0415
+        from microgen.cad import mesh_to_shape
 
         mesh = self.generate_vtk(bounds=bounds, resolution=resolution)
         if mesh.n_cells == 0:

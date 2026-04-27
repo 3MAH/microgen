@@ -77,7 +77,7 @@ class Polyhedron(Shape):
 
     def generate(self: Polyhedron, **_: KwargsGenerateType) -> CadShape:
         """Generate a polyhedron CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_polyhedron  # noqa: PLC0415
+        from microgen.cad import make_polyhedron
 
         shape = make_polyhedron(
             vertices=self.dic["vertices"],

@@ -150,9 +150,9 @@ def _unify_solids(shape: Any) -> CadShape:
 
     upgrader = ShapeUpgrade_UnifySameDomain(
         shape,
-        True,   # unify edges
-        True,   # unify faces
-        True,   # concat bsplines
+        True,  # unify edges
+        True,  # unify faces
+        True,  # concat bsplines
     )
     upgrader.Build()
     return CadShape(upgrader.Shape())

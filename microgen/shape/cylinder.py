@@ -47,7 +47,7 @@ class Cylinder(Shape):
 
     def generate(self: Cylinder, **_: KwargsGenerateType) -> CadShape:
         """Generate a cylinder CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_cylinder  # noqa: PLC0415
+        from microgen.cad import make_cylinder
 
         shape = make_cylinder(
             radius=self.radius,

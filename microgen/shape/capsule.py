@@ -47,7 +47,7 @@ class Capsule(Shape):
 
     def generate(self: Capsule, **_: KwargsGenerateType) -> CadShape:
         """Generate a capsule CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_capsule  # noqa: PLC0415
+        from microgen.cad import make_capsule
 
         shape = make_capsule(
             radius=self.radius,

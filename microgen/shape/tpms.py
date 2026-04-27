@@ -676,8 +676,8 @@ class Tpms(Shape):
         with real surface geometry — required because downstream callers may
         use the result as a cutting tool in boolean ops.
         """
-        from microgen.cad import ShellCreationError as _CadShellError  # noqa: PLC0415
-        from microgen.cad import mesh_to_shell_brep  # noqa: PLC0415
+        from microgen.cad import ShellCreationError as _CadShellError
+        from microgen.cad import mesh_to_shell_brep
 
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
@@ -869,11 +869,12 @@ class Tpms(Shape):
         (multiple disjoint shells, can't be a single solid) or if OCCT refuses
         the conversion.
         """
-        from microgen.cad import CadShape as _CadShape  # noqa: PLC0415
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid  # noqa: PLC0415
-        from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
-        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
-        from OCP.TopoDS import TopoDS  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid
+        from OCP.TopAbs import TopAbs_SHELL
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopoDS import TopoDS
+
+        from microgen.cad import CadShape as _CadShape
 
         wrapped = shape.wrapped
         # Already a Shell? Try to make a Solid directly.

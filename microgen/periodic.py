@@ -145,7 +145,9 @@ def _intersect_face(
     base = _base_pnt(face, rve)
     inside_solids = select_solids_on_side(partitions[face], base, _SIDE_DIR[face])
     outside_solids = select_solids_on_side(
-        partitions[face], base, tuple(-d for d in _SIDE_DIR[face]),
+        partitions[face],
+        base,
+        tuple(-d for d in _SIDE_DIR[face]),
     )
     tr = _translate(face, rve)
     translated = [translate_solid(s, tr) for s in outside_solids]
@@ -172,29 +174,37 @@ def _intersect_edge(
     # (++) — inside both half-spaces, no translation
     p0_inside = select_solids_on_side(partitions[f_0], base_0, _SIDE_DIR[f_0])
     split_pp = split_shape(
-        make_compound_from_solids(p0_inside), rve_planes[f_1],
+        make_compound_from_solids(p0_inside),
+        rve_planes[f_1],
     )
     pp = select_solids_on_side(split_pp, base_1, _SIDE_DIR[f_1])
 
     # (+−) — inside first, outside second: translate by tr_1
     pm = select_solids_on_side(
-        split_pp, base_1, tuple(-d for d in _SIDE_DIR[f_1]),
+        split_pp,
+        base_1,
+        tuple(-d for d in _SIDE_DIR[f_1]),
     )
     pm_t = [translate_solid(s, tr_1) for s in pm]
 
     # Split the "outside first" half by the second plane to get (-+) and (--)
     p0_outside = select_solids_on_side(
-        partitions[f_0], base_0, tuple(-d for d in _SIDE_DIR[f_0]),
+        partitions[f_0],
+        base_0,
+        tuple(-d for d in _SIDE_DIR[f_0]),
     )
     split_m = split_shape(
-        make_compound_from_solids(p0_outside), rve_planes[f_1],
+        make_compound_from_solids(p0_outside),
+        rve_planes[f_1],
     )
     # (-+) — outside first, inside second: translate by tr_0
     mp = select_solids_on_side(split_m, base_1, _SIDE_DIR[f_1])
     mp_t = [translate_solid(s, tr_0) for s in mp]
     # (--) — outside both: translate by tr_0 + tr_1
     mm = select_solids_on_side(
-        split_m, base_1, tuple(-d for d in _SIDE_DIR[f_1]),
+        split_m,
+        base_1,
+        tuple(-d for d in _SIDE_DIR[f_1]),
     )
     tslt = (tr_0[0] + tr_1[0], tr_0[1] + tr_1[1], tr_0[2] + tr_1[2])
     mm_t = [translate_solid(s, tslt) for s in mm]
@@ -235,17 +245,26 @@ def _intersect_corner(
     results: list[CadShape] = []
 
     # Branch by sign of f_0 side
-    for sign_0, tr_x in ((_SIDE_DIR[f_0], (0.0, 0.0, 0.0)), (neg(_SIDE_DIR[f_0]), tr_0)):
+    for sign_0, tr_x in (
+        (_SIDE_DIR[f_0], (0.0, 0.0, 0.0)),
+        (neg(_SIDE_DIR[f_0]), tr_0),
+    ):
         p0 = select_solids_on_side(partitions[f_0], base_0, sign_0)
         split_1 = split_shape(make_compound_from_solids(p0), rve_planes[f_1])
 
         # Branch by sign of f_1 side
-        for sign_1, tr_y in ((_SIDE_DIR[f_1], (0.0, 0.0, 0.0)), (neg(_SIDE_DIR[f_1]), tr_1)):
+        for sign_1, tr_y in (
+            (_SIDE_DIR[f_1], (0.0, 0.0, 0.0)),
+            (neg(_SIDE_DIR[f_1]), tr_1),
+        ):
             p1 = select_solids_on_side(split_1, base_1, sign_1)
             split_2 = split_shape(make_compound_from_solids(p1), rve_planes[f_2])
 
             # Branch by sign of f_2 side
-            for sign_2, tr_z in ((_SIDE_DIR[f_2], (0.0, 0.0, 0.0)), (neg(_SIDE_DIR[f_2]), tr_2)):
+            for sign_2, tr_z in (
+                (_SIDE_DIR[f_2], (0.0, 0.0, 0.0)),
+                (neg(_SIDE_DIR[f_2]), tr_2),
+            ):
                 p2 = select_solids_on_side(split_2, base_2, sign_2)
                 shift = add(tr_x, tr_y, tr_z)
                 if shift == (0.0, 0.0, 0.0):

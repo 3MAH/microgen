@@ -25,7 +25,8 @@ working unchanged.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -33,7 +34,7 @@ import numpy.typing as npt
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from OCP.TopoDS import TopoDS_Compound, TopoDS_Shape
+    from OCP.TopoDS import TopoDS_Shape
 
 
 _INSTALL_HINT = (
@@ -84,7 +85,7 @@ class _BBox:
     ``(xmin, ymin, zmin, xmax, ymax, zmax)`` matching OCCT's ``Bnd_Box.Get``.
     """
 
-    __slots__ = ("xmin", "ymin", "zmin", "xmax", "ymax", "zmax")
+    __slots__ = ("xmax", "xmin", "ymax", "ymin", "zmax", "zmin")
 
     def __init__(
         self,
@@ -115,7 +116,7 @@ class _BBox:
 def require_cad() -> None:
     """Raise :class:`ImportError` if the CAD backend (OCP) is not importable."""
     try:
-        import OCP  # noqa: F401, PLC0415
+        import OCP  # noqa: F401
     except ImportError as err:
         raise ImportError(_INSTALL_HINT) from err
 
@@ -142,11 +143,13 @@ class CadShape:
 
     def translate(self, offset: Sequence[float]) -> CadShape:
         """Return a translated copy."""
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform  # noqa: PLC0415
-        from OCP.gp import gp_Trsf, gp_Vec  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+        from OCP.gp import gp_Trsf, gp_Vec
 
         trsf = gp_Trsf()
-        trsf.SetTranslation(gp_Vec(float(offset[0]), float(offset[1]), float(offset[2])))
+        trsf.SetTranslation(
+            gp_Vec(float(offset[0]), float(offset[1]), float(offset[2]))
+        )
         transformed = BRepBuilderAPI_Transform(self.wrapped, trsf, True).Shape()
         return CadShape(transformed)
 
@@ -157,8 +160,8 @@ class CadShape:
         angle_degrees: float,
     ) -> CadShape:
         """Return a rotated copy (angle in degrees, axis is a unit vector)."""
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform  # noqa: PLC0415
-        from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+        from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf
 
         trsf = gp_Trsf()
         ax = gp_Ax1(
@@ -171,7 +174,7 @@ class CadShape:
 
     def copy(self) -> CadShape:
         """Return an independent copy (deep topology copy)."""
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy
 
         return CadShape(BRepBuilderAPI_Copy(self.wrapped).Shape())
 
@@ -179,19 +182,19 @@ class CadShape:
 
     def fuse(self, other: CadShape) -> CadShape:
         """Boolean fusion: ``self ∪ other``."""
-        from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse  # noqa: PLC0415
+        from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 
         return CadShape(BRepAlgoAPI_Fuse(self.wrapped, other.wrapped).Shape())
 
     def cut(self, other: CadShape) -> CadShape:
         """Boolean difference: ``self \\ other``."""
-        from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut  # noqa: PLC0415
+        from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut
 
         return CadShape(BRepAlgoAPI_Cut(self.wrapped, other.wrapped).Shape())
 
     def intersect(self, other: CadShape) -> CadShape:
         """Boolean intersection: ``self ∩ other``."""
-        from OCP.BRepAlgoAPI import BRepAlgoAPI_Common  # noqa: PLC0415
+        from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
 
         return CadShape(BRepAlgoAPI_Common(self.wrapped, other.wrapped).Shape())
 
@@ -199,9 +202,9 @@ class CadShape:
 
     def solids(self) -> list[CadShape]:
         """Enumerate contained solids."""
-        from OCP.TopAbs import TopAbs_SOLID  # noqa: PLC0415
-        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
-        from OCP.TopoDS import TopoDS  # noqa: PLC0415
+        from OCP.TopAbs import TopAbs_SOLID
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopoDS import TopoDS
 
         out: list[CadShape] = []
         exp = TopExp_Explorer(self.wrapped, TopAbs_SOLID)
@@ -215,14 +218,67 @@ class CadShape:
         """CadQuery-compatible alias for :meth:`solids`."""
         return self.solids()
 
+    def Vertices(self) -> list[tuple[float, float, float]]:  # noqa: N802
+        """Enumerate the vertex coordinates of the shape.
+
+        CadQuery-compatible: callers use this to check that a generated mesh
+        has any vertices at all (``assert np.any(shape.Vertices())``).
+        """
+        from OCP.BRep import BRep_Tool
+        from OCP.TopAbs import TopAbs_VERTEX
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopoDS import TopoDS
+
+        out: list[tuple[float, float, float]] = []
+        exp = TopExp_Explorer(self.wrapped, TopAbs_VERTEX)
+        while exp.More():
+            v = TopoDS.Vertex_s(exp.Current())
+            p = BRep_Tool.Pnt_s(v)
+            out.append((float(p.X()), float(p.Y()), float(p.Z())))
+            exp.Next()
+        return out
+
+    def Faces(self) -> list[CadShape]:  # noqa: N802
+        """Enumerate the faces of the shape (CadQuery compatibility)."""
+        from OCP.TopAbs import TopAbs_FACE
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopoDS import TopoDS
+
+        out: list[CadShape] = []
+        exp = TopExp_Explorer(self.wrapped, TopAbs_FACE)
+        while exp.More():
+            out.append(CadShape(TopoDS.Face_s(exp.Current())))
+            exp.Next()
+        return out
+
+    def Closed(self) -> bool:  # noqa: N802
+        """Whether the shape is topologically closed (CadQuery compatibility).
+
+        Solids are always closed; for shells/compounds we read OCCT's
+        per-shape ``Closed`` flag (set by ``BRep_Builder::IsClosed`` when the
+        shell was built from a watertight set of faces).
+        """
+        from OCP.TopAbs import TopAbs_SOLID
+
+        if self.wrapped.ShapeType() == TopAbs_SOLID:
+            return True
+        return bool(self.wrapped.Closed())
+
     def Volume(self) -> float:  # noqa: N802
-        """Return the volume of the shape (uses OCCT ``BRepGProp``)."""
-        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-        from OCP.GProp import GProp_GProps  # noqa: PLC0415
+        """Return the (unsigned) volume of the shape.
+
+        OCCT's ``BRepGProp::VolumeProperties`` returns a *signed* volume that
+        depends on face orientation; mesh-built shells from
+        :func:`mesh_to_shell_brep` can carry inverted orientation and yield a
+        negative value.  We return ``abs(...)`` to match CadQuery's behaviour
+        and the natural expectation that volumes are non-negative.
+        """
+        from OCP.BRepGProp import BRepGProp
+        from OCP.GProp import GProp_GProps
 
         props = GProp_GProps()
         BRepGProp.VolumeProperties_s(self.wrapped, props)
-        return float(props.Mass())
+        return float(abs(props.Mass()))
 
     def Center(self) -> _Centre:  # noqa: N802
         """Return the volumetric center of mass.
@@ -230,8 +286,8 @@ class CadShape:
         The result is a :class:`_Centre` — exposes ``.x``, ``.y``, ``.z``,
         ``.toTuple()`` (CadQuery compatibility), and unpacks like a tuple.
         """
-        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-        from OCP.GProp import GProp_GProps  # noqa: PLC0415
+        from OCP.BRepGProp import BRepGProp
+        from OCP.GProp import GProp_GProps
 
         props = GProp_GProps()
         BRepGProp.VolumeProperties_s(self.wrapped, props)
@@ -244,8 +300,8 @@ class CadShape:
         The result exposes CadQuery-compatible ``xmin``/``xmax``/… attributes
         (see :class:`_BBox`).
         """
-        from OCP.Bnd import Bnd_Box  # noqa: PLC0415
-        from OCP.BRepBndLib import BRepBndLib  # noqa: PLC0415
+        from OCP.Bnd import Bnd_Box
+        from OCP.BRepBndLib import BRepBndLib
 
         box = Bnd_Box()
         # AddOptimal uses exact geometric bounds (not cached triangulation),
@@ -265,8 +321,8 @@ class CadShape:
         ascii_mode: bool = False,
     ) -> None:
         """Export to STL.  Mesh is regenerated at the given deflection."""
-        from OCP.BRepMesh import BRepMesh_IncrementalMesh  # noqa: PLC0415
-        from OCP.StlAPI import StlAPI_Writer  # noqa: PLC0415
+        from OCP.BRepMesh import BRepMesh_IncrementalMesh
+        from OCP.StlAPI import StlAPI_Writer
 
         BRepMesh_IncrementalMesh(
             self.wrapped,
@@ -281,8 +337,11 @@ class CadShape:
 
     def export_step(self, path: str | Path) -> None:
         """Export to STEP (AP214)."""
-        from OCP.IFSelect import IFSelect_RetDone  # noqa: PLC0415
-        from OCP.STEPControl import STEPControl_AsIs, STEPControl_Writer  # noqa: PLC0415
+        from OCP.IFSelect import IFSelect_RetDone
+        from OCP.STEPControl import (
+            STEPControl_AsIs,
+            STEPControl_Writer,
+        )
 
         writer = STEPControl_Writer()
         status = writer.Transfer(self.wrapped, STEPControl_AsIs)
@@ -296,7 +355,7 @@ class CadShape:
 
     def export_brep(self, path: str | Path) -> None:
         """Export to OCCT native BREP."""
-        from OCP.BRepTools import BRepTools  # noqa: PLC0415
+        from OCP.BRepTools import BRepTools
 
         ok = BRepTools.Write_s(self.wrapped, str(path))
         if not ok:
@@ -330,10 +389,10 @@ def mesh_to_shape(
     :raises ShellCreationError: if the triangulation cannot be built
     """
     require_cad()
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.gp import gp_Pnt  # noqa: PLC0415
-    from OCP.Poly import Poly_Triangle, Poly_Triangulation  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Face, TopoDS_Shell  # noqa: PLC0415
+    from OCP.BRep import BRep_Builder
+    from OCP.gp import gp_Pnt
+    from OCP.Poly import Poly_Triangle, Poly_Triangulation
+    from OCP.TopoDS import TopoDS_Face, TopoDS_Shell
 
     pts = np.asarray(points, dtype=np.float64)
     tris = np.asarray(triangles, dtype=np.int64)
@@ -351,7 +410,9 @@ def mesh_to_shape(
     nb_tri = int(tris.shape[0])
     triangulation = Poly_Triangulation(nb_nodes, nb_tri, False)
     for i in range(nb_nodes):
-        triangulation.SetNode(i + 1, gp_Pnt(float(pts[i, 0]), float(pts[i, 1]), float(pts[i, 2])))
+        triangulation.SetNode(
+            i + 1, gp_Pnt(float(pts[i, 0]), float(pts[i, 1]), float(pts[i, 2]))
+        )
     for i in range(nb_tri):
         a, b, c = int(tris[i, 0]), int(tris[i, 1]), int(tris[i, 2])
         triangulation.SetTriangle(i + 1, Poly_Triangle(a + 1, b + 1, c + 1))
@@ -360,7 +421,7 @@ def mesh_to_shape(
     face = TopoDS_Face()
     try:
         builder.MakeFace(face, triangulation)
-    except Exception as err:  # noqa: BLE001
+    except Exception as err:
         err_msg = "OCCT refused the triangulation — check bounds and field."
         raise ShellCreationError(err_msg) from err
 
@@ -388,14 +449,14 @@ def mesh_to_shell_brep(
     :raises ShellCreationError: if any triangle cannot be built into a face
     """
     require_cad()
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.BRepBuilderAPI import (  # noqa: PLC0415
+    from OCP.BRep import BRep_Builder
+    from OCP.BRepBuilderAPI import (
         BRepBuilderAPI_MakeEdge,
         BRepBuilderAPI_MakeFace,
         BRepBuilderAPI_MakeWire,
     )
-    from OCP.gp import gp_Pnt  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Shell  # noqa: PLC0415
+    from OCP.gp import gp_Pnt
+    from OCP.TopoDS import TopoDS_Shell
 
     pts = np.asarray(points, dtype=np.float64)
     tris = np.asarray(triangles, dtype=np.int64)
@@ -417,7 +478,7 @@ def mesh_to_shell_brep(
             wire = BRepBuilderAPI_MakeWire(e1, e2, e3).Wire()
             face = BRepBuilderAPI_MakeFace(wire).Face()
             builder.Add(shell, face)
-    except Exception as err:  # noqa: BLE001
+    except Exception as err:
         err_msg = (
             "Failed to build the OCCT shell from the mesh; "
             "try to increase the resolution or adjust bounds."
@@ -435,8 +496,8 @@ def mesh_to_shell_brep(
 def make_box(dim: Sequence[float], center: Sequence[float]) -> CadShape:
     """Axis-aligned box of size ``dim`` centered at ``center``."""
     require_cad()
-    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox  # noqa: PLC0415
-    from OCP.gp import gp_Pnt  # noqa: PLC0415
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCP.gp import gp_Pnt
 
     dx, dy, dz = (float(d) for d in dim)
     cx, cy, cz = (float(c) for c in center)
@@ -447,8 +508,8 @@ def make_box(dim: Sequence[float], center: Sequence[float]) -> CadShape:
 def make_sphere(radius: float, center: Sequence[float]) -> CadShape:
     """Sphere of given radius at ``center``."""
     require_cad()
-    from OCP.BRepPrimAPI import BRepPrimAPI_MakeSphere  # noqa: PLC0415
-    from OCP.gp import gp_Pnt  # noqa: PLC0415
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeSphere
+    from OCP.gp import gp_Pnt
 
     pnt = gp_Pnt(float(center[0]), float(center[1]), float(center[2]))
     return CadShape(BRepPrimAPI_MakeSphere(pnt, float(radius)).Shape())
@@ -462,8 +523,8 @@ def make_cylinder(
 ) -> CadShape:
     """Cylinder of given radius and height centered at ``center`` along ``axis``."""
     require_cad()
-    from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder  # noqa: PLC0415
-    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt  # noqa: PLC0415
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
 
     h = float(height)
     ax_vec = np.asarray(axis, dtype=np.float64)
@@ -487,11 +548,11 @@ def make_capsule(
 ) -> CadShape:
     """Capsule (cylinder along X with hemispherical caps)."""
     require_cad()
-    from OCP.BRepPrimAPI import (  # noqa: PLC0415
+    from OCP.BRepPrimAPI import (
         BRepPrimAPI_MakeCylinder,
         BRepPrimAPI_MakeSphere,
     )
-    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt  # noqa: PLC0415
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
 
     cx, cy, cz = (float(c) for c in center)
     h = float(height)
@@ -510,9 +571,9 @@ def make_ellipsoid(radii: Sequence[float], center: Sequence[float]) -> CadShape:
     Built as a unit sphere transformed by a non-uniform scaling matrix.
     """
     require_cad()
-    from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform  # noqa: PLC0415
-    from OCP.BRepPrimAPI import BRepPrimAPI_MakeSphere  # noqa: PLC0415
-    from OCP.gp import gp_GTrsf, gp_Mat, gp_Pnt, gp_XYZ  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeSphere
+    from OCP.gp import gp_GTrsf, gp_Mat, gp_Pnt, gp_XYZ
 
     rx, ry, rz = (float(r) for r in radii)
     cx, cy, cz = (float(c) for c in center)
@@ -521,9 +582,15 @@ def make_ellipsoid(radii: Sequence[float], center: Sequence[float]) -> CadShape:
     gtrsf = gp_GTrsf()
     gtrsf.SetVectorialPart(
         gp_Mat(
-            rx, 0.0, 0.0,
-            0.0, ry, 0.0,
-            0.0, 0.0, rz,
+            rx,
+            0.0,
+            0.0,
+            0.0,
+            ry,
+            0.0,
+            0.0,
+            0.0,
+            rz,
         ),
     )
     gtrsf.SetTranslationPart(gp_XYZ(cx, cy, cz))
@@ -545,29 +612,28 @@ def make_polyhedron(
     does not orient; the resulting solid would have mixed-sign volume.)
     """
     require_cad()
-    from OCP.BRepBuilderAPI import (  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import (
         BRepBuilderAPI_MakeEdge,
         BRepBuilderAPI_MakeFace,
         BRepBuilderAPI_MakeSolid,
         BRepBuilderAPI_MakeWire,
         BRepBuilderAPI_Sewing,
     )
-    from OCP.gp import gp_Pnt  # noqa: PLC0415
-    from OCP.ShapeFix import ShapeFix_Solid  # noqa: PLC0415
-    from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
-    from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS  # noqa: PLC0415
+    from OCP.gp import gp_Pnt
+    from OCP.ShapeFix import ShapeFix_Solid
+    from OCP.TopAbs import TopAbs_SHELL
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopoDS import TopoDS
 
     cx, cy, cz = (float(c) for c in center)
     points = [
-        gp_Pnt(float(v[0]) + cx, float(v[1]) + cy, float(v[2]) + cz)
-        for v in vertices
+        gp_Pnt(float(v[0]) + cx, float(v[1]) + cy, float(v[2]) + cz) for v in vertices
     ]
 
     sewing = BRepBuilderAPI_Sewing()
     for ixs in faces_ixs:
         wire_builder = BRepBuilderAPI_MakeWire()
-        for i1, i2 in zip(ixs, ixs[1:]):
+        for i1, i2 in zip(ixs, ixs[1:], strict=False):
             edge = BRepBuilderAPI_MakeEdge(points[i1], points[i2]).Edge()
             wire_builder.Add(edge)
         face = BRepBuilderAPI_MakeFace(wire_builder.Wire()).Face()
@@ -595,13 +661,13 @@ def make_extruded_polygon(
 ) -> CadShape:
     """Extrude a 2D polygon (in the YZ plane) along the X axis."""
     require_cad()
-    from OCP.BRepBuilderAPI import (  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import (
         BRepBuilderAPI_MakeEdge,
         BRepBuilderAPI_MakeFace,
         BRepBuilderAPI_MakeWire,
     )
-    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism  # noqa: PLC0415
-    from OCP.gp import gp_Pnt, gp_Vec  # noqa: PLC0415
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    from OCP.gp import gp_Pnt, gp_Vec
 
     cx, cy, cz = (float(c) for c in center)
     h = float(height)
@@ -630,8 +696,8 @@ def make_extruded_polygon(
 def make_compound(shapes: Iterable[CadShape]) -> CadShape:
     """Assemble shapes into a single OCCT ``TopoDS_Compound``."""
     require_cad()
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Compound  # noqa: PLC0415
+    from OCP.BRep import BRep_Builder
+    from OCP.TopoDS import TopoDS_Compound
 
     builder = BRep_Builder()
     compound = TopoDS_Compound()
@@ -644,8 +710,8 @@ def make_compound(shapes: Iterable[CadShape]) -> CadShape:
 def make_compound_from_solids(solids: Iterable[Any]) -> CadShape:
     """Assemble raw OCCT ``TopoDS_Shape`` solids (not ``CadShape``) into a compound."""
     require_cad()
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Compound  # noqa: PLC0415
+    from OCP.BRep import BRep_Builder
+    from OCP.TopoDS import TopoDS_Compound
 
     builder = BRep_Builder()
     compound = TopoDS_Compound()
@@ -664,9 +730,9 @@ def make_compound_from_solids(solids: Iterable[Any]) -> CadShape:
 def enumerate_solids(shape: CadShape) -> list[Any]:
     """Return the list of ``TopoDS_Solid`` inside a shape (empty if none)."""
     require_cad()
-    from OCP.TopAbs import TopAbs_SOLID  # noqa: PLC0415
-    from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS  # noqa: PLC0415
+    from OCP.TopAbs import TopAbs_SOLID
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopoDS import TopoDS
 
     out: list[Any] = []
     exp = TopExp_Explorer(shape.wrapped, TopAbs_SOLID)
@@ -684,8 +750,8 @@ def split_shape(shape: CadShape, tool: CadShape) -> CadShape:
     :func:`enumerate_solids` to iterate over the resulting solids.
     """
     require_cad()
-    from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter  # noqa: PLC0415
-    from OCP.TopTools import TopTools_ListOfShape  # noqa: PLC0415
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter
+    from OCP.TopTools import TopTools_ListOfShape
 
     args = TopTools_ListOfShape()
     args.Append(shape.wrapped)
@@ -712,8 +778,8 @@ def make_plane_face(
         reaches far outside any realistic shape)
     """
     require_cad()
-    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace  # noqa: PLC0415
-    from OCP.gp import gp_Ax3, gp_Dir, gp_Pln, gp_Pnt  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+    from OCP.gp import gp_Ax3, gp_Dir, gp_Pln, gp_Pnt
 
     pnt = gp_Pnt(float(base_pnt[0]), float(base_pnt[1]), float(base_pnt[2]))
     nrm = gp_Dir(float(direction[0]), float(direction[1]), float(direction[2]))
@@ -734,16 +800,22 @@ def transform_geometry(shape: CadShape, matrix: npt.NDArray[np.float64]) -> CadS
     :param matrix: ``(3, 4)`` array; rows are ``[a b c tx; d e f ty; g h i tz]``.
     """
     require_cad()
-    from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform  # noqa: PLC0415
-    from OCP.gp import gp_GTrsf, gp_Mat, gp_XYZ  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform
+    from OCP.gp import gp_GTrsf, gp_Mat, gp_XYZ
 
     m = np.asarray(matrix, dtype=np.float64)
     gtrsf = gp_GTrsf()
     gtrsf.SetVectorialPart(
         gp_Mat(
-            float(m[0, 0]), float(m[0, 1]), float(m[0, 2]),
-            float(m[1, 0]), float(m[1, 1]), float(m[1, 2]),
-            float(m[2, 0]), float(m[2, 1]), float(m[2, 2]),
+            float(m[0, 0]),
+            float(m[0, 1]),
+            float(m[0, 2]),
+            float(m[1, 0]),
+            float(m[1, 1]),
+            float(m[1, 2]),
+            float(m[2, 0]),
+            float(m[2, 1]),
+            float(m[2, 2]),
         ),
     )
     gtrsf.SetTranslationPart(gp_XYZ(float(m[0, 3]), float(m[1, 3]), float(m[2, 3])))
@@ -753,8 +825,8 @@ def transform_geometry(shape: CadShape, matrix: npt.NDArray[np.float64]) -> CadS
 def translate_solid(solid: Any, offset: Sequence[float]) -> Any:
     """Translate a raw OCCT solid/shape by ``offset`` and return the same type."""
     require_cad()
-    from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform  # noqa: PLC0415
-    from OCP.gp import gp_Trsf, gp_Vec  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+    from OCP.gp import gp_Trsf, gp_Vec
 
     shape = solid.wrapped if hasattr(solid, "wrapped") else solid
     trsf = gp_Trsf()
@@ -767,8 +839,8 @@ def translate_solid(solid: Any, offset: Sequence[float]) -> Any:
 def solid_center(shape: Any) -> tuple[float, float, float]:
     """Return the volumetric center of mass of a raw OCCT shape/solid."""
     require_cad()
-    from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-    from OCP.GProp import GProp_GProps  # noqa: PLC0415
+    from OCP.BRepGProp import BRepGProp
+    from OCP.GProp import GProp_GProps
 
     s = shape.wrapped if hasattr(shape, "wrapped") else shape
     props = GProp_GProps()
@@ -805,7 +877,7 @@ def intersect_solids_with_box(solids: Iterable[Any], box: CadShape) -> CadShape:
     Returns a :class:`CadShape` wrapping a compound (possibly empty).
     """
     require_cad()
-    from OCP.BRepAlgoAPI import BRepAlgoAPI_Common  # noqa: PLC0415
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
 
     parts: list[Any] = []
     for solid in solids:

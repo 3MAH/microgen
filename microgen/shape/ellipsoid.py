@@ -65,7 +65,7 @@ class Ellipsoid(Shape):
 
     def generate(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
         """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_ellipsoid  # noqa: PLC0415
+        from microgen.cad import make_ellipsoid
 
         shape = make_ellipsoid(radii=self.radii, center=self.center)
         return rotate(shape, self.center, self.orientation)

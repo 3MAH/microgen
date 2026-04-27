@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt

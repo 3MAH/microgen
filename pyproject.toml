@@ -110,6 +110,7 @@ ignore = [
     "ANN002",   # missing type hint on *args
     "ANN003",   # missing **kwargs annotation
     "ANN202",   # missing return-type on private function
+    "ANN401",   # typing.Any — needed for raw OCCT TopoDS_Shape passthrough
     "PLC0415",  # late imports needed to avoid circular deps
     "N806",     # capitalised local variables (T, N, B for tangent/normal/binormal)
     "PLR2004",  # magic-value comparison — too noisy in scientific code
@@ -127,6 +128,10 @@ ignore = [
     "TID252",   # relative imports are the project convention
     "FBT001",   # boolean positional argument
     "FBT002",   # boolean default-value
+    "FBT003",   # boolean positional value — third-party OCP/CadQuery API
+    "COM812",   # trailing comma — conflicts with ruff-format
+    "PYI034",   # __new__ return type — _Centre/_BBox use tuple subclassing
+    "D301",     # raw docstring with backslashes — needed for LaTeX in docs
     "TC003",    # typing-only imports — minor
     "RET504",   # unnecessary assignment before return
     "PERF401",  # list comprehension — readability tradeoff

@@ -68,7 +68,7 @@ class ExtrudedPolygon(Shape):
 
     def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
         """Generate an extruded polygon CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_extruded_polygon  # noqa: PLC0415
+        from microgen.cad import make_extruded_polygon
 
         shape = make_extruded_polygon(
             list_corners=self.list_corners,

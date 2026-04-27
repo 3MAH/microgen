@@ -43,7 +43,7 @@ class Sphere(Shape):
 
     def generate(self: Sphere, **_: KwargsGenerateType) -> CadShape:
         """Generate a sphere CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_sphere  # noqa: PLC0415
+        from microgen.cad import make_sphere
 
         return make_sphere(self.radius, self.center)
 

@@ -63,7 +63,7 @@ class Box(Shape):
 
     def generate(self: Box, **_: KwargsGenerateType) -> CadShape:
         """Generate a box CAD shape (OCCT).  Requires the ``[cad]`` extra."""
-        from microgen.cad import make_box  # noqa: PLC0415
+        from microgen.cad import make_box
 
         shape = make_box(self.dim, self.center)
         return rotate(shape, self.center, self.orientation)
