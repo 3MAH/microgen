@@ -16,7 +16,7 @@ dependencies:
   - python-gmsh
   - meshio
   - ocp               # OCP (OCCT Python binding) — enables the CAD path
+  - mmgpy             # MMG remeshing (Python bindings, bundles MMG natives)
   - pip:
     - autograd
-  - mmg
 #  - neper
