@@ -1,5 +1,4 @@
-"""
-Polyhedron.
+"""Polyhedron.
 
 =============================================
 Polyhedron (:mod:`microgen.shape.polyhedron`)
@@ -10,7 +9,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 import numpy as np
 import pyvista as pv
@@ -19,17 +18,17 @@ from microgen.operations import rotate
 
 from .shape import Shape
 
+
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
-Vertex = tuple[float, float, float]
-Face = dict[str, list[int]]
+Vertex = Tuple[float, float, float]
+Face = Dict[str, List[int]]
 
 
 class Polyhedron(Shape):
-    """
-    Class to generate a Polyhedron with a given set of faces and vertices.
+    """Class to generate a Polyhedron with a given set of faces and vertices.
 
     .. jupyter-execute::
        :hide-code:
@@ -45,8 +44,7 @@ class Polyhedron(Shape):
         dic: dict[str, list[Vertex | Face]] | None = None,
         **kwargs: Vector3DType,
     ) -> None:
-        """
-        Initialize the polyhedron.
+        """Initialize the polyhedron.
 
         .. warning:
             Give a center parameter only if the polyhedron must be translated
@@ -99,7 +97,7 @@ class Polyhedron(Shape):
         return pv.PolyData(vertices, faces).compute_normals()
 
     def generateVtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated method. Use generate_vtk instead."""
+        """Deprecated method. Use generate_vtk instead."""  # noqa: D401
         return self.generate_vtk()
 
 

@@ -40,11 +40,8 @@ class Diamond(AbstractLattice):
     def _generate_tetrahedra_centers(self) -> npt.NDArray[np.float64]:
         candidates = np.array(
             list(
-                product(
-                    [-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4],
-                    repeat=3,
-                ),
-            ),
+                product([-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4], repeat=3)
+            )
         )
         centers = candidates[np.sum(candidates < 0, axis=1) % 2 == 0]
 
@@ -58,11 +55,8 @@ class Diamond(AbstractLattice):
         ]
         candidates = np.array(
             list(
-                product(
-                    [-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2],
-                    repeat=3,
-                ),
-            ),
+                product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
+            )
         )
         outer_cube_corners = candidates[np.sum(candidates < 0, axis=1) % 2 == 0]
 

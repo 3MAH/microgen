@@ -1,5 +1,4 @@
-"""
-Basic Geometry.
+"""Basic Geometry.
 
 ====================================================
 Basic Geometry (:mod:`microgen.shape.shape`)
@@ -38,8 +37,7 @@ class ShellCreationError(Exception):
 
 
 class Shape:
-    """
-    Unified shape with optional implicit (F-rep) and CAD representations.
+    """Unified shape with optional implicit (F-rep) and CAD representations.
 
     Every shape has a ``center`` and ``orientation``.  It may also carry an
     implicit scalar field (``_func``) where ``f(x, y, z) < 0`` means *inside*.
@@ -105,8 +103,7 @@ class Shape:
         y: npt.NDArray[np.float64],
         z: npt.NDArray[np.float64],
     ) -> npt.NDArray[np.float64]:
-        """
-        Evaluate the implicit scalar field at the given coordinates.
+        """Evaluate the implicit scalar field at the given coordinates.
 
         Coordinates are in the **field's local frame** — ``center`` and
         ``orientation`` are NOT applied here (they only affect mesh output
@@ -130,8 +127,7 @@ class Shape:
         resolution: int = 50,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """
-        Generate a VTK mesh of the shape.
+        """Generate a VTK mesh of the shape.
 
         The default implementation meshes the implicit field via marching cubes
         (``f < 0`` convention).  Subclasses override this with their own
@@ -200,7 +196,7 @@ class Shape:
             err_msg = "No implicit field defined — subclasses must override generate()"
             raise NotImplementedError(err_msg)
 
-        from microgen.cad import mesh_to_shape
+        from microgen.cad import mesh_to_shape  # noqa: PLC0415
 
         mesh = self.generate_vtk(bounds=bounds, resolution=resolution)
         if mesh.n_cells == 0:
@@ -222,7 +218,7 @@ class Shape:
             raise ShellCreationError(err_msg) from err
 
     def generateVtk(self: Shape, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(**kwargs)
 
     # ------------------------------------------------------------------

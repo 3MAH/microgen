@@ -1,5 +1,4 @@
-"""
-Strut-based lattice structures.
+"""Strut-based lattice structures.
 
 ========================================
 Strut Lattice (:mod:`microgen.shape.strut_lattice`)
@@ -41,11 +40,11 @@ __all__ = [
     "CustomLattice",
     "Diamond",
     "FaceCenteredCubic",
+    "TruncatedCuboctahedron",
     "Octahedron",
     "OctetTruss",
+    "TruncatedCube",
     "RhombicCuboctahedron",
     "RhombicDodecahedron",
-    "TruncatedCube",
-    "TruncatedCuboctahedron",
     "TruncatedOctahedron",
 ]

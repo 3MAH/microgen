@@ -1,5 +1,4 @@
-"""
-Capsule.
+"""Capsule.
 
 =======================================
 Capsule (:mod:`microgen.shape.capsule`)
@@ -22,8 +21,7 @@ if TYPE_CHECKING:
 
 
 class Capsule(Shape):
-    """
-    Class to generate a capsule (cylinder with hemispherical ends).
+    """Class to generate a capsule (cylinder with hemispherical ends).
 
     .. jupyter-execute::
        :hide-code:
@@ -93,7 +91,7 @@ class Capsule(Shape):
         phi_resolution: int = 50,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
             resolution=resolution,
             theta_resolution=theta_resolution,

@@ -5,8 +5,7 @@ from autograd.numpy import cos, sin
 
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Gyroid.
+    """Gyroid.
 
     .. math::
        sin(x) cos(y) + sin(y) cos(z) + sin(z) cos(x) = 0
@@ -29,8 +28,7 @@ def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def schwarz_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Schwarz P.
+    """Schwarz P.
 
     .. math::
        cos(x) + cos(y) + cos(z) = 0
@@ -53,8 +51,7 @@ def schwarz_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def schwarz_d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Schwarz D.
+    """Schwarz D.
 
     .. math::
        sin(x) sin(y) sin(z) + sin(x) cos(y) cos(z) +\
@@ -83,8 +80,7 @@ def schwarz_d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Neovius.
+    """Neovius.
 
     .. math::
         3 cos(x) + cos(y) + cos(z) + 4 cos(x) cos(y) cos(z) = 0
@@ -107,8 +103,7 @@ def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def schoen_iwp(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Schoen IWP.
+    """Schoen IWP.
 
     .. math::
        2 (cos(x) cos(y) + cos(y) cos(z) + cos(z) cos(x)) \
@@ -134,8 +129,7 @@ def schoen_iwp(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def schoen_frd(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Schoen FRD.
+    """Schoen FRD.
 
     .. math::
        4 cos(x) cos(y) cos(z) \
@@ -161,8 +155,7 @@ def schoen_frd(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def fischer_koch_s(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Fischer-Koch S.
+    """Fischer-Koch S.
 
     .. math::
        cos(2 x) sin(y) cos(z) + cos(x) cos(2 y) sin(z) + sin(x) cos(y) cos(2 z) = 0
@@ -189,8 +182,7 @@ def fischer_koch_s(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    PMY.
+    """PMY.
 
     .. math::
        2 cos(x) cos(y) cos(z) + sin(2 x) sin(y) + sin(x) sin(2 z) + sin(2 y) sin(z) = 0
@@ -218,8 +210,7 @@ def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def honeycomb(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Honneycomb.
+    """Honneycomb.
 
     .. math::
        sin(x) cos(y) + sin(y) + cos(z) = 0
@@ -242,8 +233,7 @@ def honeycomb(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def lidinoid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Lidinoid.
+    """Lidinoid.
 
     .. math::
        0.5 (sin(2 x) cos(y) sin(z) +
@@ -281,8 +271,7 @@ def lidinoid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-    """
-    Split P.
+    """Split P.
 
     .. math::
        1.1 (sin(2 x) cos(y) sin(z) +
@@ -321,8 +310,7 @@ def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
 
 def honeycomb_gyroid(x: float, y: float, _: float) -> float:
-    """
-    Honeycomb Gyroid.
+    """Honeycomb Gyroid.
 
     .. math::
        sin(x) cos(y) + sin(y) + cos(x) = 0
@@ -345,8 +333,7 @@ def honeycomb_gyroid(x: float, y: float, _: float) -> float:
 
 
 def honeycomb_schwarz_p(x: float, y: float, _: float) -> float:
-    """
-    Honeycomb Schwarz P.
+    """Honeycomb Schwarz P.
 
     .. math::
        cos(x) + cos(y) = 0
@@ -369,8 +356,7 @@ def honeycomb_schwarz_p(x: float, y: float, _: float) -> float:
 
 
 def honeycomb_schwarz_d(x: float, y: float, _: float) -> float:
-    """
-    Honneycomb Schwarz D.
+    """Honneycomb Schwarz D.
 
     .. math::
        cos(x) cos(y) + sin(x) sin(y) + sin(x) cos(y) + cos(x) sin(y) = 0
@@ -393,8 +379,7 @@ def honeycomb_schwarz_d(x: float, y: float, _: float) -> float:
 
 
 def honeycomb_schoen_iwp(x: float, y: float, _: float) -> float:
-    """
-    Honneycomb Schoen IWP.
+    """Honneycomb Schoen IWP.
 
     .. math::
        cos(x) cos(y) + cos(y) + cos(x) = 0
@@ -417,8 +402,7 @@ def honeycomb_schoen_iwp(x: float, y: float, _: float) -> float:
 
 
 def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
-    """
-    Honeycomb Lidinoid.
+    """Honeycomb Lidinoid.
 
     .. math::
        1.1 (sin(2 x) cos(y) + sin(2 y) sin(x) + cos(x) sin(y))

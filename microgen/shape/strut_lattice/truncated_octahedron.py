@@ -38,10 +38,10 @@ class TruncatedOctahedron(AbstractLattice):
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         base_vertices = set()
         for perm in permutations(
-            [0, self._UNIT_CUBE_SIZE / 4.0, self._UNIT_CUBE_SIZE / 2.0],
+            [0, self._UNIT_CUBE_SIZE / 4.0, self._UNIT_CUBE_SIZE / 2.0]
         ):
             for signs in product([-1, 1], repeat=3):
-                vertex = tuple(s * p for s, p in zip(signs, perm, strict=False))
+                vertex = tuple(s * p for s, p in zip(signs, perm))
                 if sum(abs(v) for v in vertex) == 3.0 / 4.0:
                     base_vertices.add(vertex)
         return np.array(list(base_vertices))

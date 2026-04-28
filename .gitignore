@@ -24,4 +24,3 @@ _build/
 .ipynb_checkpoints/
 **/.DS_Store
 .claude/
-gyroid_remesh.py

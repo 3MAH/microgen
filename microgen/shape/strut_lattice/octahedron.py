@@ -42,7 +42,7 @@ class Octahedron(AbstractLattice):
                 ]
                 for axis in range(3)
                 for sign in [-1, 1]
-            ],
+            ]
         )
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:

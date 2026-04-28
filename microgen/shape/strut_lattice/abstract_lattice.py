@@ -35,7 +35,9 @@ BALL_POINT_RADIUS_TOLERANCE = 1e-5
 
 
 class AbstractLattice(Shape):
-    """Abstract Class to create strut-based lattice"""
+    """
+    Abstract Class to create strut-based lattice
+    """
 
     _UNIT_CUBE_SIZE = 1.0
 
@@ -134,10 +136,8 @@ class AbstractLattice(Shape):
 
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
-        """
-        Property: coordinates of the vertices for a structure
-        centered at the origin and enclosed in a size 1 cubic rve
-        """
+        """Property: coordinates of the vertices for a structure
+        centered at the origin and enclosed in a size 1 cubic rve"""
         if self._base_vertices is not None:
             return self._base_vertices
         return self._generate_base_vertices()
@@ -151,14 +151,15 @@ class AbstractLattice(Shape):
 
     @abstractmethod
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
-        """
-        Abstract method to generate base vertices, ie as if the
+        """Abstract method to generate base vertices, ie as if the
         lattice was centered at the origin and in a cubic size 1 rve.
         """
+        pass
 
     @abstractmethod
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
         """Abstract method to generate strut vertex pairs."""
+        pass
 
     def _compute_vertices(self) -> npt.NDArray[np.float64]:
         return self.center + self.cell_size * self.base_vertices
@@ -172,6 +173,7 @@ class AbstractLattice(Shape):
 
     def _validate_inputs(self):
         """Checks coherence of inputs."""
+
         if self._strut_heights is None:
             raise NotImplementedError("strut_heights must be defined by the subclass")
         if (
@@ -179,7 +181,7 @@ class AbstractLattice(Shape):
             and len(self._strut_heights) != self.strut_number
         ):
             raise ValueError(
-                f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided.",
+                f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided."
             )
 
     @property
@@ -198,24 +200,22 @@ class AbstractLattice(Shape):
         return self._strut_heights * self.cell_size
 
     def _compute_rotations(self) -> list[Rotation]:
-        """
-        Computes rotation from default (1.0, 0.0, 0.0) oriented Cylinder
-        for all struts in the lattice using Scipy's Rotation object.
-        """
+        """Computes rotation from default (1.0, 0.0, 0.0) oriented Cylinder
+        for all struts in the lattice using Scipy's Rotation object."""
+
         default_direction = np.array([1.0, 0.0, 0.0])
 
         rotations_list = []
 
         for i in range(self.strut_number):
             if np.all(
-                self.strut_directions_cartesian[i] == default_direction,
+                self.strut_directions_cartesian[i] == default_direction
             ) or np.all(self.strut_directions_cartesian[i] == -default_direction):
                 rotation_vector = np.zeros(3)
                 rotations_list.append(Rotation.from_rotvec(rotation_vector))
             else:
                 rotation, _ = Rotation.align_vectors(
-                    self.strut_directions_cartesian[i],
-                    default_direction,
+                    self.strut_directions_cartesian[i], default_direction
                 )
                 rotations_list.append(rotation)
 
@@ -350,7 +350,7 @@ class AbstractLattice(Shape):
         periodic: bool = True,
         **kwargs: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""
+        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
         return self.generate_vtk(
             size=size,
             order=order,

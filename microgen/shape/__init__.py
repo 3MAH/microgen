@@ -1,5 +1,4 @@
-"""
-Shape.
+"""Shape.
 
 ========================================
 Shape (:mod:`microgen.shape`)
@@ -20,8 +19,7 @@ Shape (:mod:`microgen.shape`)
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Callable, Literal, Sequence, Tuple
 
 from . import implicit_ops, surface_functions
 from .box import Box
@@ -29,8 +27,8 @@ from .capsule import Capsule
 from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
-from .implicit_ops import batch_smooth_union, from_field
 from .polyhedron import Polyhedron
+from .implicit_ops import batch_smooth_union, from_field
 from .shape import Shape
 from .sphere import Sphere
 from .strut_lattice import (
@@ -53,7 +51,7 @@ from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 from .tpms_grading import NormedDistance
 
 if TYPE_CHECKING:
-    Vector3DType = tuple[float, float, float] | Sequence[float]
+    Vector3DType = Tuple[float, float, float] | Sequence[float]
 
     TpmsPartType = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
 
@@ -74,8 +72,7 @@ def new_geometry(  # noqa: PLR0911
     center: tuple[float, float, float] = (0, 0, 0),
     orientation: tuple[float, float, float] = (0, 0, 0),
 ) -> Shape:
-    """
-    Create a new basic geometry with given shape and geometrical parameters.
+    """Create a new basic geometry with given shape and geometrical parameters.
 
     :param shape: name of the geometry
     :param param_geom: dictionary with required geometrical parameters
@@ -136,8 +133,7 @@ def new_geometry(  # noqa: PLR0911
 
 
 class ShapeError(Exception):
-    """
-    Exception raised for errors in the shape module.
+    """Exception raised for errors in the shape module.
 
     :param message: explanation of the error
     """
@@ -159,13 +155,16 @@ __all__ = [
     "Cubic",
     "Cuboctahedron",
     "CustomLattice",
-    "Cylinder",
     "CylindricalTpms",
+    "Cylinder",
     "Diamond",
     "Ellipsoid",
     "ExtrudedPolygon",
     "FaceCenteredCubic",
     "Infill",
+    "batch_smooth_union",
+    "from_field",
+    "implicit_ops",
     "NormedDistance",
     "Octahedron",
     "OctetTruss",
@@ -173,16 +172,13 @@ __all__ = [
     "RhombicCuboctahedron",
     "RhombicDodecahedron",
     "Shape",
-    "Sphere",
     "SphericalTpms",
+    "Sphere",
     "Tpms",
     "TruncatedCube",
     "TruncatedCuboctahedron",
     "TruncatedOctahedron",
-    "batch_smooth_union",
-    "from_field",
-    "implicit_ops",
-    "newGeometry",
     "new_geometry",
+    "newGeometry",
     "surface_functions",
 ]

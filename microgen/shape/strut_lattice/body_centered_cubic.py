@@ -37,11 +37,8 @@ class BodyCenteredCubic(AbstractLattice):
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         unit_cube_vertices = np.array(
             list(
-                product(
-                    [-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2],
-                    repeat=3,
-                ),
-            ),
+                product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
+            )
         )
         return np.vstack(([0.0, 0.0, 0.0], unit_cube_vertices))
 
