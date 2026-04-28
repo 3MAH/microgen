@@ -356,7 +356,7 @@ def _check_output_mesh_periodicity(output_mesh_file: str, tol: float = 1e-8) -> 
     dimension = gmsh.model.getDimension()
     _, nodes_coords, _ = gmsh.model.mesh.getNodes(dim=dimension)
     nodes_coords = nodes_coords.reshape((-1, dimension))
-    check_periodicity = is_periodic(nodes_coords, tol, dimension)
+    check_periodicity = is_periodic(nodes_coords, tol)
     gmsh.finalize()
 
     if not check_periodicity:
