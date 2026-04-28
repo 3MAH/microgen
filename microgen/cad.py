@@ -121,6 +121,18 @@ def require_cad() -> None:
         raise ImportError(_INSTALL_HINT) from err
 
 
+def _topods_cast(name: str) -> Any:
+    """Return ``TopoDS.<name>`` cast helper, tolerant of OCP version drift.
+
+    Older OCP releases expose the static cast as ``TopoDS.Shell_s`` (pybind11
+    ``_s`` convention); newer releases expose the unsuffixed ``TopoDS.Shell``.
+    Try the suffixed form first, fall back to unsuffixed.
+    """
+    from OCP.TopoDS import TopoDS
+
+    return getattr(TopoDS, f"{name}_s", None) or getattr(TopoDS, name)
+
+
 # ---------------------------------------------------------------------------
 # CadShape wrapper
 # ---------------------------------------------------------------------------
@@ -204,12 +216,12 @@ class CadShape:
         """Enumerate contained solids."""
         from OCP.TopAbs import TopAbs_SOLID
         from OCP.TopExp import TopExp_Explorer
-        from OCP.TopoDS import TopoDS
 
+        cast_solid = _topods_cast("Solid")
         out: list[CadShape] = []
         exp = TopExp_Explorer(self.wrapped, TopAbs_SOLID)
         while exp.More():
-            out.append(CadShape(TopoDS.Solid_s(exp.Current())))
+            out.append(CadShape(cast_solid(exp.Current())))
             exp.Next()
         return out
 
@@ -227,13 +239,14 @@ class CadShape:
         from OCP.BRep import BRep_Tool
         from OCP.TopAbs import TopAbs_VERTEX
         from OCP.TopExp import TopExp_Explorer
-        from OCP.TopoDS import TopoDS
 
+        cast_vertex = _topods_cast("Vertex")
+        pnt = getattr(BRep_Tool, "Pnt_s", None) or BRep_Tool.Pnt
         out: list[tuple[float, float, float]] = []
         exp = TopExp_Explorer(self.wrapped, TopAbs_VERTEX)
         while exp.More():
-            v = TopoDS.Vertex_s(exp.Current())
-            p = BRep_Tool.Pnt_s(v)
+            v = cast_vertex(exp.Current())
+            p = pnt(v)
             out.append((float(p.X()), float(p.Y()), float(p.Z())))
             exp.Next()
         return out
@@ -242,12 +255,12 @@ class CadShape:
         """Enumerate the faces of the shape (CadQuery compatibility)."""
         from OCP.TopAbs import TopAbs_FACE
         from OCP.TopExp import TopExp_Explorer
-        from OCP.TopoDS import TopoDS
 
+        cast_face = _topods_cast("Face")
         out: list[CadShape] = []
         exp = TopExp_Explorer(self.wrapped, TopAbs_FACE)
         while exp.More():
-            out.append(CadShape(TopoDS.Face_s(exp.Current())))
+            out.append(CadShape(cast_face(exp.Current())))
             exp.Next()
         return out
 
@@ -449,6 +462,193 @@ def mesh_to_shape(
     return CadShape(shell)
 
 
+def mesh_to_planar_face(
+    points: npt.NDArray[np.float64],
+    triangles: npt.NDArray[np.int64],
+    plane_origin: Sequence[float],
+    plane_normal: Sequence[float],
+) -> CadShape:
+    """Build planar BREP face(s) whose wires trace the triangle-group boundary.
+
+    Each connected component of the triangle group becomes a
+    :class:`TopoDS_Face` whose underlying surface is ``Geom_Plane`` and
+    whose outer/inner wires follow the boundary edges of the group on the
+    plane.  Suitable both for STEP export (the BRep represents the right
+    region, not a bounding rectangle) and for gmsh ``setPeriodic`` (the
+    plane equation is recognised and the trimmed wires define the slave/
+    master mesh region identically on opposite cell sides).
+
+    All triangle vertices must lie on the plane within OCCT tolerance.
+
+    :param points: ``(N, 3)`` array of vertex coordinates
+    :param triangles: ``(M, 3)`` array of 0-indexed triangle vertex indices
+    :param plane_origin: a point on the plane
+    :param plane_normal: the plane's outward unit normal
+    :return: wrapped face (single component) or shell (multiple components)
+    :raises ShellCreationError: if no usable boundary loop is found
+    """
+    require_cad()
+    from collections import defaultdict  # noqa: PLC0415
+
+    from OCP.BRep import BRep_Builder  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import (  # noqa: PLC0415
+        BRepBuilderAPI_MakeEdge,
+        BRepBuilderAPI_MakeFace,
+        BRepBuilderAPI_MakeWire,
+    )
+    from OCP.gp import gp_Dir, gp_Pln, gp_Pnt  # noqa: PLC0415
+    from OCP.TopoDS import TopoDS_Shell  # noqa: PLC0415
+
+    cast_wire = _topods_cast("Wire")
+
+    pts = np.asarray(points, dtype=np.float64)
+    tris = np.asarray(triangles, dtype=np.int64)
+    if tris.size == 0:
+        err_msg = "Cannot build a planar face from an empty triangle list"
+        raise ShellCreationError(err_msg)
+
+    plane = gp_Pln(
+        gp_Pnt(float(plane_origin[0]), float(plane_origin[1]), float(plane_origin[2])),
+        gp_Dir(float(plane_normal[0]), float(plane_normal[1]), float(plane_normal[2])),
+    )
+
+    n = np.asarray(plane_normal, dtype=np.float64)
+    n = n / (float(np.linalg.norm(n)) or 1.0)
+    helper = np.array([1.0, 0.0, 0.0]) if abs(n[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+    u_ax = np.cross(n, helper); u_ax /= (float(np.linalg.norm(u_ax)) or 1.0)
+    v_ax = np.cross(n, u_ax)
+    o_arr = np.asarray(plane_origin, dtype=np.float64)
+
+    n_tri = int(tris.shape[0])
+    edges_dir = np.vstack([tris[:, [0, 1]], tris[:, [1, 2]], tris[:, [2, 0]]])
+    edges_sorted = np.sort(edges_dir, axis=1)
+    _e_keys, e_inv = np.unique(edges_sorted, axis=0, return_inverse=True)
+    e_owner = np.tile(np.arange(n_tri), 3)
+
+    edge_to_tris: dict[int, list[int]] = defaultdict(list)
+    for global_i, key_i in enumerate(e_inv):
+        edge_to_tris[int(key_i)].append(int(e_owner[global_i]))
+
+    adj: list[list[int]] = [[] for _ in range(n_tri)]
+    for tlist in edge_to_tris.values():
+        if len(tlist) == 2:
+            adj[tlist[0]].append(tlist[1])
+            adj[tlist[1]].append(tlist[0])
+
+    component = -np.ones(n_tri, dtype=np.int64)
+    n_comp = 0
+    for start in range(n_tri):
+        if component[start] >= 0:
+            continue
+        component[start] = n_comp
+        stack = [start]
+        while stack:
+            t = stack.pop()
+            for nb in adj[t]:
+                if component[nb] < 0:
+                    component[nb] = n_comp
+                    stack.append(nb)
+        n_comp += 1
+
+    pnt_cache: dict[int, gp_Pnt] = {}
+
+    def _occ_pnt(idx: int) -> gp_Pnt:
+        cached = pnt_cache.get(idx)
+        if cached is None:
+            v = pts[idx]
+            cached = gp_Pnt(float(v[0]), float(v[1]), float(v[2]))
+            pnt_cache[idx] = cached
+        return cached
+
+    def _signed_area(loop: list[int]) -> float:
+        rel = pts[loop[:-1]] - o_arr
+        u = rel @ u_ax
+        v = rel @ v_ax
+        return 0.5 * float(np.sum(u * np.roll(v, -1) - np.roll(u, -1) * v))
+
+    def _build_wire(loop: list[int]):  # noqa: ANN202
+        wb = BRepBuilderAPI_MakeWire()
+        for k in range(len(loop) - 1):
+            e = BRepBuilderAPI_MakeEdge(_occ_pnt(loop[k]), _occ_pnt(loop[k + 1])).Edge()
+            wb.Add(e)
+        return wb.Wire()
+
+    component_faces = []
+    for ci in range(n_comp):
+        comp_tris = tris[np.where(component == ci)[0]]
+        ce = np.vstack(
+            [comp_tris[:, [0, 1]], comp_tris[:, [1, 2]], comp_tris[:, [2, 0]]],
+        )
+        cs = np.sort(ce, axis=1)
+        _ck, c_inv, c_counts = np.unique(
+            cs, axis=0, return_inverse=True, return_counts=True,
+        )
+        bedges = ce[c_counts[c_inv] == 1]
+        if len(bedges) == 0:
+            continue
+
+        used = np.zeros(len(bedges), dtype=bool)
+        start_map: dict[int, list[int]] = defaultdict(list)
+        for i, (a, _b) in enumerate(bedges):
+            start_map[int(a)].append(i)
+
+        loops: list[list[int]] = []
+        for start_i in range(len(bedges)):
+            if used[start_i]:
+                continue
+            cur = start_i
+            used[cur] = True
+            loop = [int(bedges[cur, 0])]
+            while True:
+                b = int(bedges[cur, 1])
+                loop.append(b)
+                if b == loop[0]:
+                    break
+                nxt = next(
+                    (cand for cand in start_map[b] if not used[cand]), None,
+                )
+                if nxt is None:
+                    break
+                used[nxt] = True
+                cur = nxt
+            if len(loop) >= 4 and loop[-1] == loop[0]:
+                loops.append(loop)
+
+        if not loops:
+            continue
+
+        areas = [_signed_area(L) for L in loops]
+        outer_local = int(np.argmax([abs(a) for a in areas]))
+        if areas[outer_local] < 0:
+            loops = [list(reversed(L)) for L in loops]
+            areas = [-a for a in areas]
+
+        wires = [_build_wire(L) for L in loops]
+        face_builder = BRepBuilderAPI_MakeFace(plane, wires[outer_local])
+        for k, w in enumerate(wires):
+            if k == outer_local:
+                continue
+            face_builder.Add(cast_wire(w.Reversed()))
+        if not face_builder.IsDone():
+            err_msg = "BRepBuilderAPI_MakeFace failed building a planar face"
+            raise ShellCreationError(err_msg)
+        component_faces.append(face_builder.Face())
+
+    if not component_faces:
+        err_msg = "No planar face could be built from the triangle group"
+        raise ShellCreationError(err_msg)
+
+    if len(component_faces) == 1:
+        return CadShape(component_faces[0])
+
+    builder = BRep_Builder()
+    shell = TopoDS_Shell()
+    builder.MakeShell(shell)
+    for f in component_faces:
+        builder.Add(shell, f)
+    return CadShape(shell)
+
+
 def mesh_to_shell_brep(
     points: npt.NDArray[np.float64],
     triangles: npt.NDArray[np.int64],
@@ -504,6 +704,68 @@ def mesh_to_shell_brep(
         raise ShellCreationError(err_msg) from err
 
     return CadShape(shell)
+
+
+def mesh_to_sewn_shell(
+    points: npt.NDArray[np.float64],
+    triangles: npt.NDArray[np.int64],
+    tolerance: float | None = None,
+) -> CadShape:
+    """Convert a triangle mesh to a sewn shell with shared edges.
+
+    Builds one planar BREP face per triangle then sews them via
+    :class:`BRepBuilderAPI_Sewing` so coincident edges/vertices are merged
+    into shared topology. The resulting shell has valid topology, which
+    makes any subsequent boolean op (``Cut``, ``Common``, ``Fuse``) tractable
+    — unlike :func:`mesh_to_shell_brep` whose triangle-soup output is
+    pathologically slow for booleans.
+
+    :param points: ``(N, 3)`` array of vertex coordinates
+    :param triangles: ``(M, 3)`` array of 0-indexed triangle vertex indices
+    :param tolerance: sewing tolerance; defaults to ``1e-6 * bbox_diag``
+    :return: wrapped sewn ``TopoDS_Shape`` (Shell, or Compound of shells if
+        the input is disconnected)
+    :raises ShellCreationError: if any triangle cannot be built into a face
+    """
+    require_cad()
+    from OCP.BRepBuilderAPI import (
+        BRepBuilderAPI_MakeEdge,
+        BRepBuilderAPI_MakeFace,
+        BRepBuilderAPI_MakeWire,
+        BRepBuilderAPI_Sewing,
+    )
+    from OCP.gp import gp_Pnt
+
+    pts = np.asarray(points, dtype=np.float64)
+    tris = np.asarray(triangles, dtype=np.int64)
+    if tris.size == 0:
+        err_msg = "Cannot build a shell from an empty triangle list"
+        raise ShellCreationError(err_msg)
+
+    if tolerance is None:
+        bbox_diag = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
+        tolerance = max(1e-9, 1e-6 * bbox_diag)
+
+    occ_points = [gp_Pnt(float(p[0]), float(p[1]), float(p[2])) for p in pts]
+
+    sewing = BRepBuilderAPI_Sewing(tolerance)
+    try:
+        for a, b, c in tris:
+            e1 = BRepBuilderAPI_MakeEdge(occ_points[int(a)], occ_points[int(b)]).Edge()
+            e2 = BRepBuilderAPI_MakeEdge(occ_points[int(b)], occ_points[int(c)]).Edge()
+            e3 = BRepBuilderAPI_MakeEdge(occ_points[int(c)], occ_points[int(a)]).Edge()
+            wire = BRepBuilderAPI_MakeWire(e1, e2, e3).Wire()
+            face = BRepBuilderAPI_MakeFace(wire).Face()
+            sewing.Add(face)
+    except Exception as err:
+        err_msg = (
+            "Failed to build the OCCT shell from the mesh; "
+            "try to increase the resolution or adjust bounds."
+        )
+        raise ShellCreationError(err_msg) from err
+
+    sewing.Perform()
+    return CadShape(sewing.SewedShape())
 
 
 # ---------------------------------------------------------------------------
@@ -641,7 +903,6 @@ def make_polyhedron(
     from OCP.ShapeFix import ShapeFix_Solid
     from OCP.TopAbs import TopAbs_SHELL
     from OCP.TopExp import TopExp_Explorer
-    from OCP.TopoDS import TopoDS
 
     cx, cy, cz = (float(c) for c in center)
     points = [
@@ -664,7 +925,7 @@ def make_polyhedron(
     if not exp.More():
         err_msg = "Sewing did not produce a shell — check face connectivity"
         raise ShellCreationError(err_msg)
-    shell = TopoDS.Shell_s(exp.Current())
+    shell = _topods_cast("Shell")(exp.Current())
 
     solid = BRepBuilderAPI_MakeSolid(shell).Solid()
     fixer = ShapeFix_Solid(solid)
@@ -750,22 +1011,38 @@ def enumerate_solids(shape: CadShape) -> list[Any]:
     require_cad()
     from OCP.TopAbs import TopAbs_SOLID
     from OCP.TopExp import TopExp_Explorer
-    from OCP.TopoDS import TopoDS
 
+    cast_solid = _topods_cast("Solid")
     out: list[Any] = []
     exp = TopExp_Explorer(shape.wrapped, TopAbs_SOLID)
     while exp.More():
-        out.append(TopoDS.Solid_s(exp.Current()))
+        out.append(cast_solid(exp.Current()))
         exp.Next()
     return out
 
 
-def split_shape(shape: CadShape, tool: CadShape) -> CadShape:
+def split_shape(
+    shape: CadShape,
+    tool: CadShape | Iterable[CadShape],
+    *,
+    fuzzy_value: float = 1e-4,
+) -> CadShape:
     """Split *shape* by *tool* using OCCT's ``BRepAlgoAPI_Splitter``.
 
     The result is a :class:`CadShape` wrapping a ``TopoDS_Compound`` that
     contains the sub-shapes produced by the split.  Use
     :func:`enumerate_solids` to iterate over the resulting solids.
+
+    :param tool: a single :class:`CadShape` or an iterable of them.  Pass
+        multiple tools when each tool is a separate ``TopoDS_Shell`` and
+        you want to keep them topologically distinct — the OCCT splitter
+        treats each list entry as one cutting tool.  This matters because
+        ``BRepAlgoAPI_Fuse`` on two shells *decomposes* them into a
+        compound of per-face shells, which then defeats the splitter.
+    :param fuzzy_value: tolerance forwarded to ``SetFuzzyValue`` so OCCT
+        recognises near-coincident geometry as touching.  Necessary when
+        a tool is a tessellated shell whose boundary edges lie on
+        ``shape``'s planar faces only up to a few microns of drift.
     """
     require_cad()
     from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter
@@ -774,11 +1051,17 @@ def split_shape(shape: CadShape, tool: CadShape) -> CadShape:
     args = TopTools_ListOfShape()
     args.Append(shape.wrapped)
     tools = TopTools_ListOfShape()
-    tools.Append(tool.wrapped)
+    if isinstance(tool, CadShape):
+        tools.Append(tool.wrapped)
+    else:
+        for t in tool:
+            tools.Append(t.wrapped)
 
     splitter = BRepAlgoAPI_Splitter()
     splitter.SetArguments(args)
     splitter.SetTools(tools)
+    if fuzzy_value > 0:
+        splitter.SetFuzzyValue(float(fuzzy_value))
     splitter.Build()
     return CadShape(splitter.Shape())
 
