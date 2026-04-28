@@ -23,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        # conda-forge ships the `ocp` Python 3.14 wheels ahead of PyPI, so
-        # 3.14 is viable through the conda route even when PyPI isn't ready.
         python-version: ["3.10", "3.14"]
 
     steps:

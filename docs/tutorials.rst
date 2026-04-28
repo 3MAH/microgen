@@ -426,6 +426,6 @@ Further Resources
 -----------------
 
 - `Microgen GitHub Repository <https://github.com/3MAH/microgen>`_
-- `cadquery-ocp (OCCT Python bindings) <https://github.com/CadQuery/OCP>`_
+- `OCP (OCCT Python bindings) <https://github.com/CadQuery/OCP>`_
 - `PyVista Documentation <https://docs.pyvista.org/>`_
 - `3MAH Website <https://3mah.github.io/>`_
