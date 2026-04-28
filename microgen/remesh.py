@@ -97,7 +97,7 @@ def remesh_keeping_boundaries_for_fem(
         err_msg = "Input mesh must be either a BoxMesh or a pv.UnstructuredGrid"
         raise TypeError(err_msg)
 
-    if periodic and not is_periodic(nodes_coords, tol, dimension):
+    if periodic and not is_periodic(nodes_coords, tol):
         err_msg = "Input mesh is not periodic"
         raise InputMeshNotPeriodicError(err_msg)
 
@@ -137,7 +137,7 @@ def remesh_keeping_boundaries_for_fem(
 
     output_mesh = pv.UnstructuredGrid(output_mesh_file.name)
 
-    if periodic and not is_periodic(output_mesh.points, tol, dimension):
+    if periodic and not is_periodic(output_mesh.points, tol):
         err_msg = "Something went wrong: output mesh is not periodic"
         raise OutputMeshNotPeriodicError(err_msg)
 

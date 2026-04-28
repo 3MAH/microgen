@@ -26,6 +26,18 @@ AXES_PAIRS = (("x", "y"), ("x", "z"), ("y", "z"))
 SIGNS = ("-", "+")
 
 
+class NonBoxMeshError(ValueError):
+    """Raised when an input mesh does not fill its bounding box.
+
+    A :class:`BoxMesh` represents a mesh whose external surface coincides with
+    its axis-aligned bounding box. The construction logic relies on this: faces,
+    edges and corners are derived by tolerance-binning nodes against the bbox
+    planes. If one or more of the eight bbox corners has no node on it, the mesh
+    is not box-shaped and the downstream periodicity / required-boundary logic
+    becomes ill-defined.
+    """
+
+
 class ClosestCellsOnBoundaries(NamedTuple):
     """Class to manage closest cells on boundaries.
 
@@ -133,6 +145,17 @@ class BoxMesh(SingleMesh):
             )
             for sx, sy, sz in product(SIGNS, repeat=3)
         }
+
+        empty_corners = [key for key, idx in corners.items() if idx.size == 0]
+        if empty_corners:
+            err_msg = (
+                "Input mesh does not fill its bounding box: no node found at "
+                f"corner(s) {empty_corners} (within tol={tol}). BoxMesh expects a "
+                "rectangular mesh whose vertices touch all 8 bbox corners; the "
+                "downstream periodicity and boundary-preserving remesh logic "
+                "rely on this invariant."
+            )
+            raise NonBoxMeshError(err_msg)
 
         # Remove nodes that belong to several sets
         all_corners = np.hstack(list(corners.values()))

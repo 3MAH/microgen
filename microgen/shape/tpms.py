@@ -292,6 +292,11 @@ class Tpms(Shape):
         def density(offset: float) -> float:
             self.offset = offset  # setter; also clears _offset_func
             mesh = self.generate_vtk(type_part=part_type)
+            # Empty-mesh guard: at offset extremes the field can produce no
+            # isosurface, in which case ``mesh.volume`` triggers a noisy
+            # ``vtkMassProperties: No data to measure`` stderr write.
+            if mesh.n_cells == 0:
+                return 0.0
             return abs(mesh.volume) / envelope_volume
 
         bracket = self.offset_lim[part]
@@ -647,6 +652,11 @@ class Tpms(Shape):
             self._offset = offset
         elif isinstance(offset, OffsetGrading):
             self._offset = offset.compute_offset(self.grid)
+            # Also expose the grading as a callable so the F-rep path
+            # (``as_sheet`` → ``shell``) can re-evaluate the offset on the
+            # marching-cubes grid.  Without this, ``shell()`` would receive
+            # the array sampled on ``self.grid`` and fail at ``float(t)``.
+            self._offset_func = offset.as_field()
         elif callable(offset):
             # Keep the callable so the F-rep path can re-evaluate it on the
             # marching-cubes grid (which differs from ``self.grid``).
@@ -667,6 +677,92 @@ class Tpms(Shape):
 
         self._update_grid_offset()
         self.offset_updated = True
+
+    def _mesh_to_periodic_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
+        """Build an OCCT shell with planar BREP faces on cell sides.
+
+        Splits the triangle mesh into seven groups: one per unit-cell
+        boundary plane (x=±half, y=±half, z=±half) plus the TPMS interior.
+        Each cell-side group goes through :func:`mesh_to_planar_face`,
+        producing one or more :class:`TopoDS_Face` whose underlying surface
+        is a ``Geom_Plane`` and whose wires trace the actual cell-side
+        outline (so STEP shows the gyroid cuts, not a bounding cube; gmsh
+        ``setPeriodic`` matches opposite cell sides by their plane
+        equation). Interior triangles are sewn into a single shell with
+        shared edges via :func:`mesh_to_sewn_shell`.
+        """
+        from OCP.BRep import BRep_Builder  # noqa: PLC0415
+        from OCP.TopAbs import TopAbs_FACE  # noqa: PLC0415
+        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
+        from OCP.TopoDS import TopoDS_Shell  # noqa: PLC0415
+
+        from microgen.cad import (  # noqa: PLC0415
+            CadShape as _CadShape,
+            _topods_cast,
+            mesh_to_planar_face,
+            mesh_to_sewn_shell,
+        )
+
+        if not mesh.is_all_triangles:
+            mesh.triangulate(inplace=True)
+        pts = np.asarray(mesh.points, dtype=np.float64)
+        tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
+
+        half = 0.5 * np.asarray(self.cell_size) * np.asarray(self.repeat_cell)
+        # A vertex is "on" a cell-side plane iff its coordinate on that axis
+        # equals the mesh's exact extremum on that axis. Marching cubes on
+        # the periodic-aligned grid places cap vertices on in-plane grid
+        # edges, so they share the linspace endpoint exactly — no tolerance
+        # ball, just exact equality on the actual data. Slanted surface
+        # triangles near the boundary land on perpendicular grid edges and
+        # never produce that exact value.
+        # Sanity-check the extremum is the expected ±half (skip otherwise so
+        # we never misclassify a surface-only mesh whose extremum is not on
+        # a cube face).
+        drift_tol = 1e-9 * float(np.max(np.abs(half)) or 1.0)
+
+        consumed = np.zeros(tris.shape[0], dtype=bool)
+        on_plane: list[tuple[int, int, npt.NDArray[np.int64]]] = []
+        for axis in range(3):
+            for sign in (-1, +1):
+                extremum = (
+                    float(pts[:, axis].max())
+                    if sign > 0
+                    else float(pts[:, axis].min())
+                )
+                if abs(extremum - sign * float(half[axis])) > drift_tol:
+                    continue
+                vert_on = pts[:, axis] == extremum
+                tri_on = np.all(vert_on[tris], axis=1) & ~consumed
+                if tri_on.any():
+                    on_plane.append((axis, sign, np.where(tri_on)[0]))
+                    consumed |= tri_on
+        interior_idx = np.where(~consumed)[0]
+
+        cast_face = _topods_cast("Face")
+        builder = BRep_Builder()
+        shell = TopoDS_Shell()
+        builder.MakeShell(shell)
+
+        for axis, sign, tri_idx in on_plane:
+            origin = [0.0, 0.0, 0.0]
+            origin[axis] = sign * float(half[axis])
+            normal = [0.0, 0.0, 0.0]
+            normal[axis] = float(sign)
+            planar = mesh_to_planar_face(pts, tris[tri_idx], origin, normal)
+            exp = TopExp_Explorer(planar.wrapped, TopAbs_FACE)
+            while exp.More():
+                builder.Add(shell, cast_face(exp.Current()))
+                exp.Next()
+
+        if interior_idx.size:
+            interior = mesh_to_sewn_shell(pts, tris[interior_idx])
+            exp = TopExp_Explorer(interior.wrapped, TopAbs_FACE)
+            while exp.More():
+                builder.Add(shell, cast_face(exp.Current()))
+                exp.Next()
+
+        return _CadShape(shell)
 
     def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
         """Convert a triangulated PyVista mesh to an OCCT ``CadShape``.
@@ -798,21 +894,23 @@ class Tpms(Shape):
     ) -> CadShape:
         """Generate an OCCT CAD shape of the requested TPMS part.
 
-        Pure F-rep pipeline: pick the SDF Shape via :meth:`_frep_part`, run
-        marching cubes through :meth:`Shape.generate_vtk`, optionally smooth,
-        then build an OCCT ``Shell`` via :func:`microgen.cad.mesh_to_shell_brep`.
-        The same SDF + same marching-cubes grid is used by :meth:`generate_vtk`,
-        so volumes converge to identical values up to discretisation.
+        Builds the periodic structured-grid mesh (same as :meth:`generate_vtk`)
+        and converts it to an OCCT shell with **planar BREP faces on the
+        cell-boundary planes** (one face per side, carrying its tessellation)
+        plus per-triangle planar faces for the TPMS interior surface.  This
+        is the layout gmsh's ``setPeriodic`` expects: it pairs opposite
+        cell-side faces by their plane equation.
 
         Requires the optional ``[cad]`` install extra (``cadquery-ocp``).
 
         :param type_part: ``"sheet"``, ``"lower skeletal"``, ``"upper skeletal"``
             or ``"surface"`` (open zero-isosurface, no thickness)
-        :param smoothing: number of Laplacian smoothing iterations on the mesh
+        :param smoothing: Laplacian smoothing iterations on the boundary mesh
+            (default 0; non-zero hurts strict periodicity)
         :param algo_resolution: temporary-TPMS resolution for density→offset
             search (only used when ``self.density`` is set)
         :return: :class:`microgen.cad.CadShape` wrapping an OCCT ``TopoDS_Shell``
-            (or a ``TopoDS_Solid`` when sewing succeeded into a closed shell).
+            with 6 planar boundary faces + interior tessellation.
         """
         if type_part not in self._VALID_PARTS:
             err_msg = (
@@ -826,6 +924,7 @@ class Tpms(Shape):
                 logging.warning("offset is ignored for 'surface' part")
             if self.density is not None:
                 logging.warning("density is ignored for 'surface' part")
+            mesh = self.surface
         else:
             if self.density is not None:
                 self._compute_offset_to_fit_density(
@@ -833,30 +932,41 @@ class Tpms(Shape):
                     resolution=algo_resolution,
                 )
             self._check_offset(type_part)
+            # Take the *unrotated* periodic structured-grid mesh so we can
+            # apply orientation+center once on the OCCT shell at the end.
+            grid_attr = f"grid_{type_part.replace(' ', '_')}"
+            mesh = getattr(self, grid_attr).extract_surface()
+            if getattr(self, "_uses_parametric_grid", False):
+                seam_tol = min(
+                    5e-3,
+                    0.1 * float(np.min(self.cell_size)) / float(self.resolution),
+                )
+                mesh = mesh.clean(tolerance=seam_tol, absolute=True)
+            else:
+                # Plain Tpms / Infill: default clean() — non-zero tolerance
+                # would collapse boundary vertices asymmetrically and break
+                # strict periodicity.
+                mesh = mesh.clean()
+            mesh = mesh.triangulate()
 
-        frep = self._frep_part(type_part)
-        mesh = frep.generate_vtk(
-            bounds=self._bounds,
-            resolution=self._isotropic_resolution(),
-        )
         if smoothing > 0:
             mesh.smooth(n_iter=smoothing, feature_smoothing=True, inplace=True)
             mesh.clean(inplace=True)
 
         if mesh.n_cells == 0:
             err_msg = (
-                f"Marching cubes produced an empty mesh for '{type_part}'; "
+                f"Empty mesh for '{type_part}'; "
                 "check offset / density / resolution."
             )
             raise ShellCreationError(err_msg)
 
-        shape = self._mesh_to_shell(mesh)
-
-        if type_part != "surface":
-            # Closed shell ⇒ try to upgrade into a Solid so volume queries and
-            # downstream booleans behave correctly.  If sewing produced a
-            # compound (non-manifold patches) or OCCT refuses, keep the shell.
-            shape = self._try_make_solid(shape)
+        # ``surface`` opens to the zero-isosurface only — no cell-boundary
+        # faces to extract — so route it through the simple per-triangle
+        # shell.  All other parts use the periodic-aware shell.
+        if type_part == "surface":
+            shape = self._mesh_to_shell(mesh)
+        else:
+            shape = self._mesh_to_periodic_shell(mesh)
 
         shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
         return shape.translate(self.center)
@@ -872,15 +982,16 @@ class Tpms(Shape):
         from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid
         from OCP.TopAbs import TopAbs_SHELL
         from OCP.TopExp import TopExp_Explorer
-        from OCP.TopoDS import TopoDS
 
         from microgen.cad import CadShape as _CadShape
+        from microgen.cad import _topods_cast
 
+        cast_shell = _topods_cast("Shell")
         wrapped = shape.wrapped
         # Already a Shell? Try to make a Solid directly.
         if wrapped.ShapeType() == TopAbs_SHELL:
             try:
-                shell = TopoDS.Shell_s(wrapped)
+                shell = cast_shell(wrapped)
                 return _CadShape(BRepBuilderAPI_MakeSolid(shell).Solid())
             except (ValueError, RuntimeError):
                 return shape
@@ -890,7 +1001,7 @@ class Tpms(Shape):
         solids: list[CadShape] = []
         while exp.More():
             try:
-                shell = TopoDS.Shell_s(exp.Current())
+                shell = cast_shell(exp.Current())
                 solids.append(_CadShape(BRepBuilderAPI_MakeSolid(shell).Solid()))
             except (ValueError, RuntimeError):
                 pass
@@ -947,37 +1058,40 @@ class Tpms(Shape):
         # / zero / variable offsets gracefully.  ``generate()`` still applies
         # the historical CAD-side restriction.
 
-        # Subclasses with a *parametric* coordinate frame (CylindricalTpms,
-        # SphericalTpms, Sweep) cannot use the F-rep marching-cubes path —
-        # the TPMS field has rapid angular oscillations that an isotropic
-        # Cartesian grid samples poorly (visible as dotted holes near the
-        # pole / axis).  They opt into the legacy grid-clip path by setting
-        # ``_uses_parametric_grid = True``: clip the parametric structured
-        # grid by the relevant scalar threshold, then extract the surface.
+        # Always use the structured-grid clip-scalar path (the same one
+        # exposed by the ``.sheet`` / ``.upper_skeletal`` / ``.lower_skeletal``
+        # properties).  ``self.grid`` is built on a Cartesian (or parametric)
+        # linspace so its boundary points are *exactly* periodic — opposite
+        # faces of the unit cell carry identical (y, z) point patterns and
+        # identical scalar values, hence ``clip_scalar`` produces matching
+        # boundary triangles within machine epsilon.  This is what gmsh's
+        # ``setPeriodic`` (and FEM-grade periodic meshing in general) needs.
+        #
+        # The F-rep marching-cubes path (still available via :meth:`as_sheet`,
+        # :meth:`_frep_part`, etc.) cannot guarantee that correspondence —
+        # boundary vertices on opposite faces drift by up to one voxel width
+        # because MC chooses isosurface-edge intersections per voxel without
+        # enforcing periodic alignment.
+        grid_attr = f"grid_{type_part.replace(' ', '_')}"
+        polydata = getattr(self, grid_attr).extract_surface()
+
         if getattr(self, "_uses_parametric_grid", False):
-            grid_attr = f"grid_{type_part.replace(' ', '_')}"
-            # Merge points within an absolute tolerance large enough to close
-            # the angular seam (φ=±π for sphere, θ=±π for cylinder) where
-            # the structured grid's two boundary faces coincide in Cartesian
-            # space up to ~1e-3 floating-point drift, but small enough not
-            # to collapse legitimate cell edges (smallest grid spacing is
-            # ~ ``cell_size / resolution``).
+            # CylindricalTpms / SphericalTpms / Sweep have an angular seam
+            # at φ=±π (or θ=±π) where the parametric grid's two boundary
+            # slabs coincide in Cartesian space up to ~1e-3 floating-point
+            # drift.  Merge those duplicates with an absolute tolerance
+            # small enough not to collapse legitimate cell edges.
             seam_tol = min(
                 5e-3,
                 0.1 * float(np.min(self.cell_size)) / float(self.resolution),
             )
-            polydata = (
-                getattr(self, grid_attr)
-                .extract_surface()
-                .clean(tolerance=seam_tol, absolute=True)
-                .triangulate()
-            )
+            polydata = polydata.clean(tolerance=seam_tol, absolute=True)
         else:
-            frep = self._frep_part(type_part)
-            polydata = frep.generate_vtk(
-                bounds=self._bounds,
-                resolution=self._isotropic_resolution(),
-            )
+            # Plain Tpms / Infill: no angular seam.  A non-zero merge
+            # tolerance here would collapse boundary vertices asymmetrically
+            # between opposite faces and break strict periodicity.
+            polydata = polydata.clean()
+        polydata = polydata.triangulate()
 
         polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
