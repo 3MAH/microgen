@@ -1,7 +1,7 @@
 """Smoke tests verifying that the mesh / implicit-field path works without OCP.
 
 These tests exercise the public microgen API that must function **without**
-the optional ``[cad]`` install extra (i.e. without ``cadquery-ocp``/OCP).
+the optional ``[cad]`` install extra (i.e. without ``cadquery-ocp-novtk``/OCP).
 
 In CI we run them in a dedicated no-CAD environment.  Running them in an
 environment where OCP *is* installed is still fine — every assertion here
@@ -69,7 +69,7 @@ def test_cad_capable_entry_points_raise_cleanly_without_ocp() -> None:
     try:
         cad.require_cad()
     except ImportError as err:
-        assert "cadquery-ocp" in str(err) or "microgen[cad]" in str(err)
+        assert "microgen[cad]" in str(err) or "OCP" in str(err)
     else:
         # OCP is installed in this env — that's fine, nothing to verify.
         assert True

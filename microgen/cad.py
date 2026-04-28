@@ -5,7 +5,7 @@ CAD backend (:mod:`microgen.cad`)
 =========================================================
 
 All CadQuery calls in microgen have been replaced by direct OCP
-(``cadquery-ocp``) calls housed in this module.  OCP is an *optional*
+(``cadquery-ocp-novtk``) calls housed in this module.  OCP is an *optional*
 dependency — install via ``pip install microgen[cad]``.
 
 The module's top-level body does not import OCP, so ``import microgen.cad``
@@ -38,9 +38,9 @@ if TYPE_CHECKING:
 
 
 _INSTALL_HINT = (
-    "microgen's CAD backend requires cadquery-ocp. "
-    "Install it with:  pip install 'microgen[cad]'  "
-    "or:  pip install cadquery-ocp"
+    "microgen's CAD backend requires the OCP (OCCT) Python bindings. "
+    "Install with:  pip install 'microgen[cad]'  "
+    "(this pulls cadquery-ocp-novtk-novtk; on conda-forge use `ocp` instead)."
 )
 
 

@@ -10,7 +10,7 @@
 - **3D Voronoi tessellation**: Simulation of granular materials and polycrystalline metals.
 - **Meshing**: Regular and **periodic** meshing using Gmsh, **remeshing** using Mmg.
 
-Generation of 3D objects is achievable through functions that utilize Open CASCADE (via [cadquery-ocp](https://github.com/CadQuery/ocp-build-system), the direct OCCT Python binding) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
+Generation of 3D objects is achievable through functions that utilize Open CASCADE (via [cadquery-ocp-novtk](https://github.com/CadQuery/ocp-build-system), the direct OCCT Python binding) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
 
 The CAD path (`.generate()` on shapes, `Phase`, `fuse_shapes`, periodic split, lattice CAD) is **optional** — install with `pip install 'microgen[cad]'`. The default `pip install microgen` gives you mesh + implicit-field (F-rep) workflows only, which is sufficient for many applications and has a much lighter dependency footprint (no OCCT, no VTK version pin).
 
@@ -38,7 +38,7 @@ The CAD path (`.generate()` on shapes, `Phase`, `fuse_shapes`, periodic split, l
 pip install microgen
 ```
 
-**With CAD capabilities** (OCCT via `cadquery-ocp`, enables `.generate()`, `Phase`, `fuse_shapes`, periodic split, lattice CAD):
+**With CAD capabilities** (OCCT via `cadquery-ocp-novtk`, enables `.generate()`, `Phase`, `fuse_shapes`, periodic split, lattice CAD):
 
 ```bash
 pip install 'microgen[cad]'
@@ -51,7 +51,7 @@ conda install conda-forge::microgen          # core
 conda install conda-forge::microgen ocp      # core + CAD
 ```
 
-**Python version notes:** core supports Python 3.10 to 3.14 on PyPI and conda-forge. On PyPI the `[cad]` extra is currently capped at Python 3.13 by `cadquery-ocp`'s wheel availability (typically 2 to 6 months behind a new Python release). For Python 3.14 + CAD, install through conda-forge instead: `conda install -c conda-forge ocp` ships 3.14 builds today.
+**Python version notes:** Python 3.10 to 3.14 is supported on Linux, macOS (Apple Silicon), and Windows, for both core and `[cad]`, on both PyPI and conda-forge.
 
 What you can do in each mode:
 

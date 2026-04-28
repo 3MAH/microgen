@@ -1,6 +1,6 @@
 """Periodic cut — rearrange a shape so it wraps around an RVE.
 
-Pure OCP implementation (``cadquery-ocp``); no ``cadquery`` dependency.
+Pure OCP implementation (``cadquery-ocp-novtk``); no ``cadquery`` dependency.
 Requires the ``[cad]`` extra.
 """
 

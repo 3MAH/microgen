@@ -922,7 +922,7 @@ class Tpms(Shape):
         is the layout gmsh's ``setPeriodic`` expects: it pairs opposite
         cell-side faces by their plane equation.
 
-        Requires the optional ``[cad]`` install extra (``cadquery-ocp``).
+        Requires the optional ``[cad]`` install extra (``cadquery-ocp-novtk``).
 
         :param type_part: ``"sheet"``, ``"lower skeletal"``, ``"upper skeletal"``
             or ``"surface"`` (open zero-isosurface, no thickness)

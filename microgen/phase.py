@@ -1,7 +1,7 @@
 """Phase class: a collection of OCCT solids belonging to the same phase.
 
 The CAD path goes through OCCT directly via ``OCP`` (installed as the
-``[cad]`` extra — ``cadquery-ocp``); no ``cadquery`` anywhere.  Shapes are
+``[cad]`` extra — ``cadquery-ocp-novtk``); no ``cadquery`` anywhere.  Shapes are
 stored as :class:`microgen.cad.CadShape` and solids as raw OCCT
 ``TopoDS_Solid``.
 """

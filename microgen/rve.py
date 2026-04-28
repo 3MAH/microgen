@@ -2,7 +2,7 @@
 
 The ``Rve.box`` attribute is a :class:`~microgen.cad.CadShape` wrapping an
 OCCT box; it is built lazily on first access and requires the ``[cad]``
-extra (``cadquery-ocp``).
+extra (``cadquery-ocp-novtk``).
 """
 
 from __future__ import annotations

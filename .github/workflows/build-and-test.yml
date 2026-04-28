@@ -45,15 +45,14 @@ jobs:
           uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py -q
 
   # --- CAD suite: full test run with OCP installed via the [cad] extra. ---
-  # cadquery-ocp's newest wheel is cp313; 3.14 + CAD goes through the conda
-  # integration job instead.
+  # The [cad] extra pulls cadquery-ocp-novtk, which ships cp310-cp314 wheels.
   cad:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.10", "3.13"]
+        python-version: ["3.10", "3.14"]
 
     steps:
       - uses: actions/checkout@v4

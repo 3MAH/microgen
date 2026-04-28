@@ -16,7 +16,7 @@ Generated files:
 - remeshed_gyroid_mesh.vtk (optional): Quality-improved periodic mesh for FEM.
 
 Dependencies:
-- microgen (with the [cad] extra: cadquery-ocp via microgen.cad)
+- microgen (with the [cad] extra: cadquery-ocp-novtk via microgen.cad)
 - pyvista
 """
 

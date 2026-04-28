@@ -186,7 +186,7 @@ class Shape:
         (single ``TopoDS_Face`` carrying a ``Poly_Triangulation``).  Subclasses
         override this with native primitive construction.
 
-        Requires the optional ``[cad]`` install extra (``cadquery-ocp``).
+        Requires the optional ``[cad]`` install extra (``cadquery-ocp-novtk``).
 
         :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
         :param resolution: number of grid points per axis
