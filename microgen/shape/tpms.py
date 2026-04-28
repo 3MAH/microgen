@@ -691,13 +691,15 @@ class Tpms(Shape):
         equation). Interior triangles are sewn into a single shell with
         shared edges via :func:`mesh_to_sewn_shell`.
         """
-        from OCP.BRep import BRep_Builder  # noqa: PLC0415
-        from OCP.TopAbs import TopAbs_FACE  # noqa: PLC0415
-        from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
-        from OCP.TopoDS import TopoDS_Shell  # noqa: PLC0415
+        from OCP.BRep import BRep_Builder
+        from OCP.TopAbs import TopAbs_FACE
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopoDS import TopoDS_Shell
 
-        from microgen.cad import (  # noqa: PLC0415
+        from microgen.cad import (
             CadShape as _CadShape,
+        )
+        from microgen.cad import (
             _topods_cast,
             mesh_to_planar_face,
             mesh_to_sewn_shell,
@@ -726,9 +728,7 @@ class Tpms(Shape):
         for axis in range(3):
             for sign in (-1, +1):
                 extremum = (
-                    float(pts[:, axis].max())
-                    if sign > 0
-                    else float(pts[:, axis].min())
+                    float(pts[:, axis].max()) if sign > 0 else float(pts[:, axis].min())
                 )
                 if abs(extremum - sign * float(half[axis])) > drift_tol:
                     continue
@@ -955,8 +955,7 @@ class Tpms(Shape):
 
         if mesh.n_cells == 0:
             err_msg = (
-                f"Empty mesh for '{type_part}'; "
-                "check offset / density / resolution."
+                f"Empty mesh for '{type_part}'; check offset / density / resolution."
             )
             raise ShellCreationError(err_msg)
 

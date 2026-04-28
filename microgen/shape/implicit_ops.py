@@ -441,26 +441,3 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
         sdf = _fd_sdf(f, epsilon)
 
     return _make_shape(func=sdf, bounds=shape.bounds)
-
-
-def variable_shell(
-    shape: Shape,
-    thickness_func: Field,
-) -> Shape:
-    """
-    Shell with spatially-varying thickness: ``|f(p)| - t(p)/2``.
-
-    :param shape: shape whose implicit field defines the surface
-    :param thickness_func: callable ``(x, y, z) -> thickness`` returning
-        the local shell thickness
-    """
-    f = shape.require_func()
-
-    def _var_shell(
-        x: npt.NDArray[np.float64],
-        y: npt.NDArray[np.float64],
-        z: npt.NDArray[np.float64],
-    ) -> npt.NDArray[np.float64]:
-        return np.abs(f(x, y, z)) - thickness_func(x, y, z) / 2.0
-
-    return _make_shape(func=_var_shell, bounds=shape.bounds)

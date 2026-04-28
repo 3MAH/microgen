@@ -22,5 +22,6 @@
 data/
 _build/
 .ipynb_checkpoints/
-microgen/shape/.DS_Store
+**/.DS_Store
 .claude/
+gyroid_remesh.py

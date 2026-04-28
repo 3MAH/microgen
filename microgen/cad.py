@@ -196,19 +196,31 @@ class CadShape:
         """Boolean fusion: ``self ∪ other``."""
         from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 
-        return CadShape(BRepAlgoAPI_Fuse(self.wrapped, other.wrapped).Shape())
+        op = BRepAlgoAPI_Fuse(self.wrapped, other.wrapped)
+        if op.HasErrors():
+            err_msg = "BRepAlgoAPI_Fuse failed"
+            raise RuntimeError(err_msg)
+        return CadShape(op.Shape())
 
     def cut(self, other: CadShape) -> CadShape:
         """Boolean difference: ``self \\ other``."""
         from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut
 
-        return CadShape(BRepAlgoAPI_Cut(self.wrapped, other.wrapped).Shape())
+        op = BRepAlgoAPI_Cut(self.wrapped, other.wrapped)
+        if op.HasErrors():
+            err_msg = "BRepAlgoAPI_Cut failed"
+            raise RuntimeError(err_msg)
+        return CadShape(op.Shape())
 
     def intersect(self, other: CadShape) -> CadShape:
         """Boolean intersection: ``self ∩ other``."""
         from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
 
-        return CadShape(BRepAlgoAPI_Common(self.wrapped, other.wrapped).Shape())
+        op = BRepAlgoAPI_Common(self.wrapped, other.wrapped)
+        if op.HasErrors():
+            err_msg = "BRepAlgoAPI_Common failed"
+            raise RuntimeError(err_msg)
+        return CadShape(op.Shape())
 
     # -- topology queries --------------------------------------------------
 
@@ -346,7 +358,9 @@ class CadShape:
         )
         writer = StlAPI_Writer()
         writer.ASCIIMode = bool(ascii_mode)
-        writer.Write(self.wrapped, str(path))
+        if not writer.Write(self.wrapped, str(path)):
+            err_msg = f"STL write failed for {path!r}"
+            raise RuntimeError(err_msg)
 
     def export_step(self, path: str | Path) -> None:
         """Export to STEP (AP214)."""
@@ -462,7 +476,104 @@ def mesh_to_shape(
     return CadShape(shell)
 
 
-def mesh_to_planar_face(
+def _triangle_components(
+    triangles: npt.NDArray[np.int64],
+) -> npt.NDArray[np.int64]:
+    """Label connected components of a triangle mesh by edge adjacency."""
+    from collections import defaultdict
+
+    n_tri = int(triangles.shape[0])
+    edges_sorted = np.sort(
+        np.vstack(
+            [triangles[:, [0, 1]], triangles[:, [1, 2]], triangles[:, [2, 0]]],
+        ),
+        axis=1,
+    )
+    _keys, inv = np.unique(edges_sorted, axis=0, return_inverse=True)
+    owner = np.tile(np.arange(n_tri), 3)
+
+    edge_to_tris: dict[int, list[int]] = defaultdict(list)
+    for global_i, key_i in enumerate(inv):
+        edge_to_tris[int(key_i)].append(int(owner[global_i]))
+
+    adj: list[list[int]] = [[] for _ in range(n_tri)]
+    for tlist in edge_to_tris.values():
+        if len(tlist) == 2:
+            adj[tlist[0]].append(tlist[1])
+            adj[tlist[1]].append(tlist[0])
+
+    component = -np.ones(n_tri, dtype=np.int64)
+    n_comp = 0
+    for start in range(n_tri):
+        if component[start] >= 0:
+            continue
+        component[start] = n_comp
+        stack = [start]
+        while stack:
+            t = stack.pop()
+            for nb in adj[t]:
+                if component[nb] < 0:
+                    component[nb] = n_comp
+                    stack.append(nb)
+        n_comp += 1
+    return component
+
+
+def _walk_boundary_loops(
+    comp_tris: npt.NDArray[np.int64],
+) -> list[list[int]]:
+    """Extract directed closed loops from the boundary edges of a triangle group.
+
+    A boundary edge appears in exactly one triangle of the group; the loops
+    are the closed chains of those edges in their original triangle direction.
+    """
+    from collections import defaultdict
+
+    ce = np.vstack(
+        [comp_tris[:, [0, 1]], comp_tris[:, [1, 2]], comp_tris[:, [2, 0]]],
+    )
+    cs = np.sort(ce, axis=1)
+    _keys, inv, counts = np.unique(
+        cs,
+        axis=0,
+        return_inverse=True,
+        return_counts=True,
+    )
+    bedges = ce[counts[inv] == 1]
+    if len(bedges) == 0:
+        return []
+
+    used = np.zeros(len(bedges), dtype=bool)
+    start_map: dict[int, list[int]] = defaultdict(list)
+    for i, (a, _b) in enumerate(bedges):
+        start_map[int(a)].append(i)
+
+    loops: list[list[int]] = []
+    for start_i in range(len(bedges)):
+        if used[start_i]:
+            continue
+        cur = start_i
+        used[cur] = True
+        loop = [int(bedges[cur, 0])]
+        while True:
+            b = int(bedges[cur, 1])
+            loop.append(b)
+            if b == loop[0]:
+                break
+            nxt = next(
+                (cand for cand in start_map[b] if not used[cand]),
+                None,
+            )
+            if nxt is None:
+                break
+            used[nxt] = True
+            cur = nxt
+        if len(loop) >= 4 and loop[-1] == loop[0]:
+            loops.append(loop)
+    return loops
+
+
+def mesh_to_planar_face(  # noqa: C901
     points: npt.NDArray[np.float64],
     triangles: npt.NDArray[np.int64],
     plane_origin: Sequence[float],
@@ -488,16 +599,14 @@ def mesh_to_planar_face(
     :raises ShellCreationError: if no usable boundary loop is found
     """
     require_cad()
-    from collections import defaultdict  # noqa: PLC0415
-
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.BRepBuilderAPI import (  # noqa: PLC0415
+    from OCP.BRep import BRep_Builder
+    from OCP.BRepBuilderAPI import (
         BRepBuilderAPI_MakeEdge,
         BRepBuilderAPI_MakeFace,
         BRepBuilderAPI_MakeWire,
     )
-    from OCP.gp import gp_Dir, gp_Pln, gp_Pnt  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Shell  # noqa: PLC0415
+    from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
+    from OCP.TopoDS import TopoDS_Shell
 
     cast_wire = _topods_cast("Wire")
 
@@ -515,40 +624,13 @@ def mesh_to_planar_face(
     n = np.asarray(plane_normal, dtype=np.float64)
     n = n / (float(np.linalg.norm(n)) or 1.0)
     helper = np.array([1.0, 0.0, 0.0]) if abs(n[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
-    u_ax = np.cross(n, helper); u_ax /= (float(np.linalg.norm(u_ax)) or 1.0)
+    u_ax = np.cross(n, helper)
+    u_ax /= float(np.linalg.norm(u_ax)) or 1.0
     v_ax = np.cross(n, u_ax)
     o_arr = np.asarray(plane_origin, dtype=np.float64)
 
-    n_tri = int(tris.shape[0])
-    edges_dir = np.vstack([tris[:, [0, 1]], tris[:, [1, 2]], tris[:, [2, 0]]])
-    edges_sorted = np.sort(edges_dir, axis=1)
-    _e_keys, e_inv = np.unique(edges_sorted, axis=0, return_inverse=True)
-    e_owner = np.tile(np.arange(n_tri), 3)
-
-    edge_to_tris: dict[int, list[int]] = defaultdict(list)
-    for global_i, key_i in enumerate(e_inv):
-        edge_to_tris[int(key_i)].append(int(e_owner[global_i]))
-
-    adj: list[list[int]] = [[] for _ in range(n_tri)]
-    for tlist in edge_to_tris.values():
-        if len(tlist) == 2:
-            adj[tlist[0]].append(tlist[1])
-            adj[tlist[1]].append(tlist[0])
-
-    component = -np.ones(n_tri, dtype=np.int64)
-    n_comp = 0
-    for start in range(n_tri):
-        if component[start] >= 0:
-            continue
-        component[start] = n_comp
-        stack = [start]
-        while stack:
-            t = stack.pop()
-            for nb in adj[t]:
-                if component[nb] < 0:
-                    component[nb] = n_comp
-                    stack.append(nb)
-        n_comp += 1
+    component = _triangle_components(tris)
+    n_comp = int(component.max()) + 1 if component.size else 0
 
     pnt_cache: dict[int, gp_Pnt] = {}
 
@@ -566,63 +648,18 @@ def mesh_to_planar_face(
         v = rel @ v_ax
         return 0.5 * float(np.sum(u * np.roll(v, -1) - np.roll(u, -1) * v))
 
-    def _build_wire(loop: list[int]):  # noqa: ANN202
+    def _build_wire(loop: list[int]):
         wb = BRepBuilderAPI_MakeWire()
         for k in range(len(loop) - 1):
             e = BRepBuilderAPI_MakeEdge(_occ_pnt(loop[k]), _occ_pnt(loop[k + 1])).Edge()
             wb.Add(e)
         return wb.Wire()
 
-    component_faces = []
-    for ci in range(n_comp):
-        comp_tris = tris[np.where(component == ci)[0]]
-        ce = np.vstack(
-            [comp_tris[:, [0, 1]], comp_tris[:, [1, 2]], comp_tris[:, [2, 0]]],
-        )
-        cs = np.sort(ce, axis=1)
-        _ck, c_inv, c_counts = np.unique(
-            cs, axis=0, return_inverse=True, return_counts=True,
-        )
-        bedges = ce[c_counts[c_inv] == 1]
-        if len(bedges) == 0:
-            continue
-
-        used = np.zeros(len(bedges), dtype=bool)
-        start_map: dict[int, list[int]] = defaultdict(list)
-        for i, (a, _b) in enumerate(bedges):
-            start_map[int(a)].append(i)
-
-        loops: list[list[int]] = []
-        for start_i in range(len(bedges)):
-            if used[start_i]:
-                continue
-            cur = start_i
-            used[cur] = True
-            loop = [int(bedges[cur, 0])]
-            while True:
-                b = int(bedges[cur, 1])
-                loop.append(b)
-                if b == loop[0]:
-                    break
-                nxt = next(
-                    (cand for cand in start_map[b] if not used[cand]), None,
-                )
-                if nxt is None:
-                    break
-                used[nxt] = True
-                cur = nxt
-            if len(loop) >= 4 and loop[-1] == loop[0]:
-                loops.append(loop)
-
-        if not loops:
-            continue
-
+    def _build_component_face(loops: list[list[int]]):
         areas = [_signed_area(L) for L in loops]
         outer_local = int(np.argmax([abs(a) for a in areas]))
         if areas[outer_local] < 0:
             loops = [list(reversed(L)) for L in loops]
-            areas = [-a for a in areas]
-
         wires = [_build_wire(L) for L in loops]
         face_builder = BRepBuilderAPI_MakeFace(plane, wires[outer_local])
         for k, w in enumerate(wires):
@@ -632,7 +669,14 @@ def mesh_to_planar_face(
         if not face_builder.IsDone():
             err_msg = "BRepBuilderAPI_MakeFace failed building a planar face"
             raise ShellCreationError(err_msg)
-        component_faces.append(face_builder.Face())
+        return face_builder.Face()
+
+    component_faces = []
+    for ci in range(n_comp):
+        comp_tris = tris[np.where(component == ci)[0]]
+        loops = _walk_boundary_loops(comp_tris)
+        if loops:
+            component_faces.append(_build_component_face(loops))
 
     if not component_faces:
         err_msg = "No planar face could be built from the triangle group"

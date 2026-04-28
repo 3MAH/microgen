@@ -119,14 +119,12 @@ Export to STL (from PyVista mesh):
 
    sheet.save('gyroid_sheet.stl')
 
-Export to STEP (from CadQuery shape):
+Export to STEP (from OCCT ``CadShape``):
 
 .. code-block:: python
 
-   import cadquery as cq
-
    cad_shape = gyroid.generate(type_part='sheet')
-   cq.exporters.export(cq.Workplane().add(cad_shape), 'gyroid_sheet.step')
+   cad_shape.export_step('gyroid_sheet.step')
 
 Export to VTK:
 
