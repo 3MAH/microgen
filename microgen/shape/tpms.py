@@ -31,6 +31,8 @@ from .shape import Shape
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
+import contextlib
+
 from .tpms_grading import OffsetGrading
 
 logging.basicConfig(level=logging.INFO)
@@ -979,28 +981,25 @@ class Tpms(Shape):
             raise ShellCreationError(err_msg)
 
         # ``surface`` opens to the zero-isosurface only — no cell-boundary
-        # faces to extract — so route it through the simple per-triangle
-        # shell.  All other parts use the periodic-aware shell, then are
-        # upgraded to a Solid where possible so :meth:`CadShape.Volume`
-        # reads the enclosed volume rather than a meaningless surface
-        # integral on an open shell.
+        # faces to extract — route it through the simple per-triangle shell
+        # and skip the Solid-upgrade / volume-stash.
         if type_part == "surface":
             shape = self._mesh_to_shell(mesh)
-        else:
-            shape = self._try_make_solid(self._mesh_to_periodic_shell(mesh))
+            shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
+            return shape.translate(self.center)
 
+        # Periodic-aware shell, upgraded to a Solid where possible so
+        # :meth:`CadShape.Volume` reads the enclosed volume rather than a
+        # meaningless surface integral on an open shell. Stash the trusted
+        # mesh volume after rigid transforms (which preserve volume); used as
+        # a fallback when OCCT flags the solid invalid (self-intersecting or
+        # non-manifold from raw marching-cubes — happens for skeletals at
+        # offset=0 where the iso-surface coincides with the cell boundary).
+        shape = self._try_make_solid(self._mesh_to_periodic_shell(mesh))
         shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
         shape = shape.translate(self.center)
-        # Stash the trusted mesh volume on the final shape (after rigid
-        # transforms which preserve volume). :meth:`CadShape.Volume` falls
-        # back to it when OCCT flags the solid as invalid (self-intersecting
-        # or non-manifold from raw marching-cubes — happens for skeletals at
-        # offset=0 where the iso-surface coincides with the cell boundary).
-        if type_part != "surface":
-            try:
-                shape._mesh_volume = float(abs(mesh.volume))  # noqa: SLF001
-            except (AttributeError, ValueError):
-                pass
+        with contextlib.suppress(AttributeError, ValueError):
+            shape._mesh_volume = float(abs(mesh.volume))
         return shape
 
     @staticmethod
@@ -1025,7 +1024,7 @@ class Tpms(Shape):
         cast_shell = _topods_cast("Shell")
         cast_solid = _topods_cast("Solid")
 
-        def _make_solid(shell_shape) -> CadShape | None:  # noqa: ANN001
+        def _make_solid(shell_shape) -> CadShape | None:
             try:
                 solid = BRepBuilderAPI_MakeSolid(shell_shape).Solid()
             except (ValueError, RuntimeError):

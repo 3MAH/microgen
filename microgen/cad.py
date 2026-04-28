@@ -317,9 +317,12 @@ class CadShape:
         from OCP.BRepGProp import BRepGProp
         from OCP.GProp import GProp_GProps
 
-        if self._mesh_volume is not None and not BRepCheck_Analyzer(
-            self.wrapped,
-        ).IsValid():
+        if (
+            self._mesh_volume is not None
+            and not BRepCheck_Analyzer(
+                self.wrapped,
+            ).IsValid()
+        ):
             return float(abs(self._mesh_volume))
 
         props = GProp_GProps()
