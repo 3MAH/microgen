@@ -121,6 +121,21 @@ def require_cad() -> None:
         raise ImportError(_INSTALL_HINT) from err
 
 
+def _run_boolean(op_cls: Any, a: CadShape, b: CadShape, label: str) -> TopoDS_Shape:
+    """Run an OCCT boolean op and raise on failure.
+
+    Older OCP releases don't expose ``HasErrors()`` / ``IsDone()`` on the
+    ``BRepAlgoAPI_*`` classes; we probe via ``getattr`` and skip the check
+    when the API isn't available.
+    """
+    op = op_cls(a.wrapped, b.wrapped)
+    has_errors = getattr(op, "HasErrors", None)
+    if callable(has_errors) and has_errors():
+        err_msg = f"BRepAlgoAPI_{label} failed"
+        raise RuntimeError(err_msg)
+    return op.Shape()
+
+
 def _topods_cast(name: str) -> Any:
     """Return ``TopoDS.<name>`` cast helper, tolerant of OCP version drift.
 
@@ -143,13 +158,19 @@ class CadShape:
 
     Preserves the ``.wrapped`` attribute name used by CadQuery so downstream
     OCP calls (``BRepAlgoAPI_Fuse(a.wrapped, b.wrapped)``) keep working.
+
+    ``_mesh_volume`` (optional) is a trusted volume in the source mesh's
+    units, set by mesh-derived constructors (e.g. the TPMS periodic shell)
+    where OCCT's surface-integral volume is unreliable on invalid topology.
+    :meth:`Volume` prefers it over the OCCT integral when present.
     """
 
-    __slots__ = ("wrapped",)
+    __slots__ = ("_mesh_volume", "wrapped")
 
     def __init__(self, shape: TopoDS_Shape) -> None:
         """Wrap an OCCT ``TopoDS_Shape``."""
         self.wrapped = shape
+        self._mesh_volume: float | None = None
 
     # -- transforms --------------------------------------------------------
 
@@ -196,31 +217,19 @@ class CadShape:
         """Boolean fusion: ``self ∪ other``."""
         from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 
-        op = BRepAlgoAPI_Fuse(self.wrapped, other.wrapped)
-        if op.HasErrors():
-            err_msg = "BRepAlgoAPI_Fuse failed"
-            raise RuntimeError(err_msg)
-        return CadShape(op.Shape())
+        return CadShape(_run_boolean(BRepAlgoAPI_Fuse, self, other, "Fuse"))
 
     def cut(self, other: CadShape) -> CadShape:
         """Boolean difference: ``self \\ other``."""
         from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut
 
-        op = BRepAlgoAPI_Cut(self.wrapped, other.wrapped)
-        if op.HasErrors():
-            err_msg = "BRepAlgoAPI_Cut failed"
-            raise RuntimeError(err_msg)
-        return CadShape(op.Shape())
+        return CadShape(_run_boolean(BRepAlgoAPI_Cut, self, other, "Cut"))
 
     def intersect(self, other: CadShape) -> CadShape:
         """Boolean intersection: ``self ∩ other``."""
         from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
 
-        op = BRepAlgoAPI_Common(self.wrapped, other.wrapped)
-        if op.HasErrors():
-            err_msg = "BRepAlgoAPI_Common failed"
-            raise RuntimeError(err_msg)
-        return CadShape(op.Shape())
+        return CadShape(_run_boolean(BRepAlgoAPI_Common, self, other, "Common"))
 
     # -- topology queries --------------------------------------------------
 
@@ -297,9 +306,21 @@ class CadShape:
         :func:`mesh_to_shell_brep` can carry inverted orientation and yield a
         negative value.  We return ``abs(...)`` to match CadQuery's behaviour
         and the natural expectation that volumes are non-negative.
+
+        If a mesh-derived volume was stashed on ``_mesh_volume`` AND the OCCT
+        solid is not valid (BRepCheck_Analyzer flags self-intersection /
+        non-manifold edges, common on raw marching-cubes input), we trust the
+        mesh volume — the OCCT surface integral on an invalid topology is
+        meaningless.
         """
+        from OCP.BRepCheck import BRepCheck_Analyzer
         from OCP.BRepGProp import BRepGProp
         from OCP.GProp import GProp_GProps
+
+        if self._mesh_volume is not None and not BRepCheck_Analyzer(
+            self.wrapped,
+        ).IsValid():
+            return float(abs(self._mesh_volume))
 
         props = GProp_GProps()
         BRepGProp.VolumeProperties_s(self.wrapped, props)

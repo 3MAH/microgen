@@ -100,8 +100,11 @@ def test_phase_solids_and_shape_properties_should_return_the_right_values() -> N
     """Test the Phase class with a shape."""
     ellipsoid = Ellipsoid(radii=(0.15, 0.31, 0.4)).generate()
     phase = Phase(shape=ellipsoid)
-    assert phase.solids == [ellipsoid]
-    assert phase.shape == ellipsoid
+    # Phase.solids returns raw TopoDS_Solid objects; identity-by-`==` doesn't
+    # apply, so check topological sameness against the wrapped solid instead.
+    assert len(phase.solids) == 1
+    assert phase.solids[0].IsSame(ellipsoid.wrapped)
+    assert phase.shape is ellipsoid
 
 
 def test_phase_empty_should_have_empty_shape_and_solids() -> None:

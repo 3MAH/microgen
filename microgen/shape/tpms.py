@@ -679,7 +679,7 @@ class Tpms(Shape):
         self.offset_updated = True
 
     def _mesh_to_periodic_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
-        """Build an OCCT shell with planar BREP faces on cell sides.
+        """Build a closed, sewn OCCT shell with planar BREP faces on cell sides.
 
         Splits the triangle mesh into seven groups: one per unit-cell
         boundary plane (x=±half, y=±half, z=±half) plus the TPMS interior.
@@ -687,22 +687,30 @@ class Tpms(Shape):
         producing one or more :class:`TopoDS_Face` whose underlying surface
         is a ``Geom_Plane`` and whose wires trace the actual cell-side
         outline (so STEP shows the gyroid cuts, not a bounding cube; gmsh
-        ``setPeriodic`` matches opposite cell sides by their plane
-        equation). Interior triangles are sewn into a single shell with
-        shared edges via :func:`mesh_to_sewn_shell`.
+        ``setPeriodic`` matches opposite cell sides by their plane equation).
+        The TPMS interior contributes one planar face per triangle.
+
+        All faces — caps + interior — are sewn together via
+        :class:`BRepBuilderAPI_Sewing` so the cap/interior seam shares edges
+        and face orientations are reconciled. The result is a closed shell
+        whose ``BRepGProp::VolumeProperties`` matches the underlying VTK
+        volume, and which is a valid input to boolean ops.
         """
-        from OCP.BRep import BRep_Builder
+        from OCP.BRepBuilderAPI import (
+            BRepBuilderAPI_MakeEdge,
+            BRepBuilderAPI_MakeFace,
+            BRepBuilderAPI_MakeWire,
+            BRepBuilderAPI_Sewing,
+        )
+        from OCP.gp import gp_Pnt
         from OCP.TopAbs import TopAbs_FACE
         from OCP.TopExp import TopExp_Explorer
-        from OCP.TopoDS import TopoDS_Shell
 
         from microgen.cad import (
             CadShape as _CadShape,
         )
         from microgen.cad import (
-            _topods_cast,
             mesh_to_planar_face,
-            mesh_to_sewn_shell,
         )
 
         if not mesh.is_all_triangles:
@@ -739,10 +747,12 @@ class Tpms(Shape):
                     consumed |= tri_on
         interior_idx = np.where(~consumed)[0]
 
-        cast_face = _topods_cast("Face")
-        builder = BRep_Builder()
-        shell = TopoDS_Shell()
-        builder.MakeShell(shell)
+        # Sewing tolerance: a small fraction of the bbox diagonal absorbs
+        # numerical drift between cap-wire vertices and interior-triangle
+        # vertices that should match exactly along the cell-side seam.
+        bbox_diag = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
+        sew_tol = max(1e-9, 1e-6 * bbox_diag)
+        sewing = BRepBuilderAPI_Sewing(sew_tol)
 
         for axis, sign, tri_idx in on_plane:
             origin = [0.0, 0.0, 0.0]
@@ -752,17 +762,26 @@ class Tpms(Shape):
             planar = mesh_to_planar_face(pts, tris[tri_idx], origin, normal)
             exp = TopExp_Explorer(planar.wrapped, TopAbs_FACE)
             while exp.More():
-                builder.Add(shell, cast_face(exp.Current()))
+                sewing.Add(exp.Current())
                 exp.Next()
 
-        if interior_idx.size:
-            interior = mesh_to_sewn_shell(pts, tris[interior_idx])
-            exp = TopExp_Explorer(interior.wrapped, TopAbs_FACE)
-            while exp.More():
-                builder.Add(shell, cast_face(exp.Current()))
-                exp.Next()
+        # Interior TPMS triangles: contribute as raw per-triangle faces so
+        # sewing can stitch them to the cap wires (a pre-sewn interior would
+        # have shared edges already, blocking the seam stitch).
+        for a, b, c in tris[interior_idx]:
+            pa, pb, pc = pts[int(a)], pts[int(b)], pts[int(c)]
+            ga = gp_Pnt(float(pa[0]), float(pa[1]), float(pa[2]))
+            gb = gp_Pnt(float(pb[0]), float(pb[1]), float(pb[2]))
+            gc = gp_Pnt(float(pc[0]), float(pc[1]), float(pc[2]))
+            e1 = BRepBuilderAPI_MakeEdge(ga, gb).Edge()
+            e2 = BRepBuilderAPI_MakeEdge(gb, gc).Edge()
+            e3 = BRepBuilderAPI_MakeEdge(gc, ga).Edge()
+            wire = BRepBuilderAPI_MakeWire(e1, e2, e3).Wire()
+            face = BRepBuilderAPI_MakeFace(wire).Face()
+            sewing.Add(face)
 
-        return _CadShape(shell)
+        sewing.Perform()
+        return _CadShape(sewing.SewedShape())
 
     def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
         """Convert a triangulated PyVista mesh to an OCCT ``CadShape``.
@@ -961,14 +980,28 @@ class Tpms(Shape):
 
         # ``surface`` opens to the zero-isosurface only — no cell-boundary
         # faces to extract — so route it through the simple per-triangle
-        # shell.  All other parts use the periodic-aware shell.
+        # shell.  All other parts use the periodic-aware shell, then are
+        # upgraded to a Solid where possible so :meth:`CadShape.Volume`
+        # reads the enclosed volume rather than a meaningless surface
+        # integral on an open shell.
         if type_part == "surface":
             shape = self._mesh_to_shell(mesh)
         else:
-            shape = self._mesh_to_periodic_shell(mesh)
+            shape = self._try_make_solid(self._mesh_to_periodic_shell(mesh))
 
         shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
-        return shape.translate(self.center)
+        shape = shape.translate(self.center)
+        # Stash the trusted mesh volume on the final shape (after rigid
+        # transforms which preserve volume). :meth:`CadShape.Volume` falls
+        # back to it when OCCT flags the solid as invalid (self-intersecting
+        # or non-manifold from raw marching-cubes — happens for skeletals at
+        # offset=0 where the iso-surface coincides with the cell boundary).
+        if type_part != "surface":
+            try:
+                shape._mesh_volume = float(abs(mesh.volume))  # noqa: SLF001
+            except (AttributeError, ValueError):
+                pass
+        return shape
 
     @staticmethod
     def _try_make_solid(shape: CadShape) -> CadShape:
@@ -976,9 +1009,13 @@ class Tpms(Shape):
 
         Returns the original shape unchanged if the sewn result is a Compound
         (multiple disjoint shells, can't be a single solid) or if OCCT refuses
-        the conversion.
+        the conversion. Reorients via :func:`BRepLib.OrientClosedSolid_s` so
+        that the resulting Solid encloses the right region (without this,
+        sewing-from-mesh can produce an inside-out solid whose
+        ``VolumeProperties`` reads ``cube_volume - actual_volume``).
         """
         from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid
+        from OCP.BRepLib import BRepLib
         from OCP.TopAbs import TopAbs_SHELL
         from OCP.TopExp import TopExp_Explorer
 
@@ -986,24 +1023,28 @@ class Tpms(Shape):
         from microgen.cad import _topods_cast
 
         cast_shell = _topods_cast("Shell")
-        wrapped = shape.wrapped
-        # Already a Shell? Try to make a Solid directly.
-        if wrapped.ShapeType() == TopAbs_SHELL:
+        cast_solid = _topods_cast("Solid")
+
+        def _make_solid(shell_shape) -> CadShape | None:  # noqa: ANN001
             try:
-                shell = cast_shell(wrapped)
-                return _CadShape(BRepBuilderAPI_MakeSolid(shell).Solid())
+                solid = BRepBuilderAPI_MakeSolid(shell_shape).Solid()
             except (ValueError, RuntimeError):
-                return shape
+                return None
+            BRepLib.OrientClosedSolid_s(cast_solid(solid))
+            return _CadShape(solid)
+
+        wrapped = shape.wrapped
+        if wrapped.ShapeType() == TopAbs_SHELL:
+            built = _make_solid(cast_shell(wrapped))
+            return built if built is not None else shape
 
         # Compound: extract Shells, build a Solid per closed shell, fuse.
         exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
         solids: list[CadShape] = []
         while exp.More():
-            try:
-                shell = cast_shell(exp.Current())
-                solids.append(_CadShape(BRepBuilderAPI_MakeSolid(shell).Solid()))
-            except (ValueError, RuntimeError):
-                pass
+            built = _make_solid(cast_shell(exp.Current()))
+            if built is not None:
+                solids.append(built)
             exp.Next()
 
         if not solids:
