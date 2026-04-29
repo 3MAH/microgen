@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use Microgen in your research, please cite it using the metadata below."
+title: "Microgen: Microstructure generation and meshing"
+abstract: "Microgen is a Python library for the generation and meshing of microstructures, including repeated cells, strut-based and TPMS lattices, virtual composite microstructures, and 3D Voronoi tessellations."
+type: software
+authors:
+  - family-names: Marchais
+    given-names: Kevin
+    affiliation: "Hivelix"
+    orcid: "https://orcid.org/0000-0001-8842-6329"
+  - family-names: Chemisky
+    given-names: Yves
+    affiliation: ""
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Legerstee
+    given-names: Yasmin
+    affiliation: ""
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: Guevara Garban
+    given-names: Manuel Ricardo
+    affiliation: ""
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/3MAH/microgen"
+url: "https://3mah.github.io/microgen-docs/"
+license: GPL-3.0-only
+keywords:
+  - microstructure
+  - lattice
+  - periodic
+  - TPMS
+  - mesh
+  - F-rep
+  - Voronoi
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.6793573
+    description: "Concept DOI (resolves to the latest version on Zenodo)"

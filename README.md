@@ -23,7 +23,7 @@ Generation of 3D objects is achievable through functions that utilize Open CASCA
 | Conda forge package  | [![Conda](https://anaconda.org/conda-forge/microgen/badges/version.svg)](https://anaconda.org/conda-forge/microgen) |
 | Documentation  | [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://3mah.github.io/microgen-docs/) |
 | Status         | [![Status](https://github.com/3MAH/microgen/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/3MAH/microgen) |
-| Citation       | [![DOI](https://zenodo.org/badge/380437028.svg)](https://zenodo.org/badge/latestdoi/380437028) |
+| Citation       | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6793573.svg)](https://doi.org/10.5281/zenodo.6793573) |
 | License        | [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) |
 | Website        | [![Website](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/) |
 | Binder         | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/3MAH/microgen/HEAD?urlpath=lab%2Ftree%2Fexamples%2Fjupyter_notebooks) |
