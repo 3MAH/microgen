@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 _INSTALL_HINT = (
     "microgen's CAD backend requires the OCP (OCCT) Python bindings. "
     "Install with:  pip install 'microgen[cad]'  "
-    "(this pulls cadquery-ocp-novtk-novtk; on conda-forge use `ocp` instead)."
+    "(this pulls cadquery-ocp-novtk; on conda-forge use `ocp` instead)."
 )
 
 
