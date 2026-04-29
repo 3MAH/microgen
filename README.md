@@ -138,3 +138,44 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 <a href="https://3mah.github.io/microgen-docs/examples/mesh.html#periodic-remeshing">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/remeshed_mesh.png" height="250">
 </a>
+
+## Citation
+
+If you use Microgen in academic work, please cite it using the **concept DOI**, which always resolves to the latest archived version on Zenodo:
+
+> [10.5281/zenodo.6793573](https://doi.org/10.5281/zenodo.6793573)
+
+A BibTeX entry suitable for the latest release:
+
+```bibtex
+@software{microgen,
+  author    = {Marchais, Kevin and
+               Chemisky, Yves and
+               Legerstee, Yasmin and
+               Guevara Garban, Manuel Ricardo},
+  title     = {{Microgen: Microstructure generation and meshing}},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.6793573},
+  url       = {https://doi.org/10.5281/zenodo.6793573}
+}
+```
+
+To cite a specific release instead of the concept, follow the concept DOI to its Zenodo page and pick the version DOI for the release you used. Machine-readable metadata is also available in [`CITATION.cff`](CITATION.cff).
+
+## Authors and contributors
+
+Microgen is developed by the [3MAH](https://3mah.github.io/) group and external collaborators.
+
+**Authors**
+
+- Kevin Marchais
+- Yves Chemisky
+- Yasmin Legerstee
+- Manuel Ricardo Guevara Garban
+
+**Contributors**
+
+- Louise Le Barbenchon
+- Karim Haffar
+- Romain d'Esparbès
+- Sudeep Kumar Sahoo
