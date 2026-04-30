@@ -18,8 +18,8 @@ authors:
     # orcid: "https://orcid.org/0000-0000-0000-0000"
   - family-names: Guevara Garban
     given-names: Manuel Ricardo
-    affiliation: ""
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
+    affiliation: "Université de Bordeaux / TU Bergakademie Freiberg"
+    orcid: "https://orcid.org/0009-0007-8208-3020"
 repository-code: "https://github.com/3MAH/microgen"
 url: "https://3mah.github.io/microgen-docs/"
 license: GPL-3.0-only
