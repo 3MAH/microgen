@@ -675,8 +675,16 @@ def mesh_to_planar_face(  # noqa: C901
     def _build_wire(loop: list[int]):
         wb = BRepBuilderAPI_MakeWire()
         for k in range(len(loop) - 1):
-            e = BRepBuilderAPI_MakeEdge(_occ_pnt(loop[k]), _occ_pnt(loop[k + 1])).Edge()
-            wb.Add(e)
+            edge_builder = BRepBuilderAPI_MakeEdge(
+                _occ_pnt(loop[k]), _occ_pnt(loop[k + 1])
+            )
+            if not edge_builder.IsDone():
+                err_msg = "BRepBuilderAPI_MakeEdge failed for boundary segment"
+                raise ShellCreationError(err_msg)
+            wb.Add(edge_builder.Edge())
+        if not wb.IsDone():
+            err_msg = "BRepBuilderAPI_MakeWire failed for boundary loop"
+            raise ShellCreationError(err_msg)
         return wb.Wire()
 
     def _build_component_face(loops: list[list[int]]):
@@ -981,10 +989,19 @@ def make_polyhedron(
     for ixs in faces_ixs:
         wire_builder = BRepBuilderAPI_MakeWire()
         for i1, i2 in zip(ixs, ixs[1:], strict=False):
-            edge = BRepBuilderAPI_MakeEdge(points[i1], points[i2]).Edge()
-            wire_builder.Add(edge)
-        face = BRepBuilderAPI_MakeFace(wire_builder.Wire()).Face()
-        sewing.Add(face)
+            edge_builder = BRepBuilderAPI_MakeEdge(points[i1], points[i2])
+            if not edge_builder.IsDone():
+                err_msg = "BRepBuilderAPI_MakeEdge failed for polyhedron face"
+                raise ShellCreationError(err_msg)
+            wire_builder.Add(edge_builder.Edge())
+        if not wire_builder.IsDone():
+            err_msg = "BRepBuilderAPI_MakeWire failed for polyhedron face"
+            raise ShellCreationError(err_msg)
+        face_builder = BRepBuilderAPI_MakeFace(wire_builder.Wire())
+        if not face_builder.IsDone():
+            err_msg = "BRepBuilderAPI_MakeFace failed for polyhedron face"
+            raise ShellCreationError(err_msg)
+        sewing.Add(face_builder.Face())
     sewing.Perform()
     sewn = sewing.SewedShape()
 
@@ -995,8 +1012,11 @@ def make_polyhedron(
         raise ShellCreationError(err_msg)
     shell = _topods_cast("Shell")(exp.Current())
 
-    solid = BRepBuilderAPI_MakeSolid(shell).Solid()
-    fixer = ShapeFix_Solid(solid)
+    solid_builder = BRepBuilderAPI_MakeSolid(shell)
+    if not solid_builder.IsDone():
+        err_msg = "BRepBuilderAPI_MakeSolid failed; sewn shell is not closed"
+        raise ShellCreationError(err_msg)
+    fixer = ShapeFix_Solid(solid_builder.Solid())
     fixer.Perform()
     return CadShape(fixer.Solid())
 
@@ -1028,10 +1048,19 @@ def make_extruded_polygon(
 
     wire_builder = BRepBuilderAPI_MakeWire()
     for i in range(len(pts) - 1):
-        edge = BRepBuilderAPI_MakeEdge(pts[i], pts[i + 1]).Edge()
-        wire_builder.Add(edge)
-    face = BRepBuilderAPI_MakeFace(wire_builder.Wire()).Face()
-    extruded = BRepPrimAPI_MakePrism(face, gp_Vec(h, 0.0, 0.0)).Shape()
+        edge_builder = BRepBuilderAPI_MakeEdge(pts[i], pts[i + 1])
+        if not edge_builder.IsDone():
+            err_msg = "BRepBuilderAPI_MakeEdge failed for extruded polygon"
+            raise ShellCreationError(err_msg)
+        wire_builder.Add(edge_builder.Edge())
+    if not wire_builder.IsDone():
+        err_msg = "BRepBuilderAPI_MakeWire failed for extruded polygon"
+        raise ShellCreationError(err_msg)
+    face_builder = BRepBuilderAPI_MakeFace(wire_builder.Wire())
+    if not face_builder.IsDone():
+        err_msg = "BRepBuilderAPI_MakeFace failed for extruded polygon"
+        raise ShellCreationError(err_msg)
+    extruded = BRepPrimAPI_MakePrism(face_builder.Face(), gp_Vec(h, 0.0, 0.0)).Shape()
     return CadShape(extruded)
 
 
