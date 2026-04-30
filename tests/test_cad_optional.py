@@ -13,7 +13,12 @@ holds unconditionally; these tests just prove the no-CAD paths don't
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import sys
+
+import pytest
+
+_ocp_available = importlib.util.find_spec("OCP") is not None
 
 
 def test_import_microgen_without_ocp() -> None:
@@ -73,3 +78,32 @@ def test_cad_capable_entry_points_raise_cleanly_without_ocp() -> None:
     else:
         # OCP is installed in this env — that's fine, nothing to verify.
         assert True
+
+
+@pytest.mark.skipif(
+    _ocp_available,
+    reason="Test asserts the no-OCP error path; only meaningful when OCP is absent",
+)
+def test_shape_generate_raises_importerror_without_ocp() -> None:
+    """``Shape.generate()`` must raise ImportError pointing at ``microgen[cad]``.
+
+    Locks in the user-facing message so a future refactor that silently swaps
+    the error type (e.g. raises a bare ``ModuleNotFoundError`` from a stray
+    eager import, or an OCP-internal ``AttributeError``) is caught by CI.
+    """
+    from microgen.shape.sphere import Sphere
+
+    with pytest.raises(ImportError, match=r"microgen\[cad\]"):
+        Sphere().generate()
+
+
+@pytest.mark.skipif(
+    _ocp_available,
+    reason="Test asserts the no-OCP error path; only meaningful when OCP is absent",
+)
+def test_make_box_raises_importerror_without_ocp() -> None:
+    """``microgen.cad.make_box`` must raise ImportError pointing at ``[cad]``."""
+    from microgen import cad
+
+    with pytest.raises(ImportError, match=r"microgen\[cad\]"):
+        cad.make_box((1.0, 1.0, 1.0), (0.0, 0.0, 0.0))
