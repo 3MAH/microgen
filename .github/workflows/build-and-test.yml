@@ -41,6 +41,12 @@ jobs:
       # Pin to VTK 9.4 to prove it actually installs cleanly now that
       # cadquery no longer constrains the dep tree.
       - run: uv pip install 'vtk>=9.4' 'pyvista>=0.47'
+      # Hard guard: if OCP ever leaks into the core dep graph, this job is a
+      # false-pass.  Fail loudly here rather than have downstream tests
+      # silently exercise the CAD path.
+      - name: Assert OCP is not importable in the core install
+        run: |
+          uv run python -c "import importlib.util, sys; sys.exit(1 if importlib.util.find_spec('OCP') is not None else 0)"
       - run: |
           uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py -q
 
