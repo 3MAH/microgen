@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use Microgen in your research, please cite it using the metadata below."
-title: "Microgen: Microstructure generation and meshing"
-abstract: "Microgen is a Python library for the generation and meshing of microstructures, including repeated cells, strut-based and TPMS lattices, virtual composite microstructures, and 3D Voronoi tessellations."
+title: "microgen: microstructure generation and meshing"
+abstract: "microgen is a Python library for the generation and meshing of microstructures, including repeated cells, strut-based and TPMS lattices, virtual composite microstructures, and 3D Voronoi tessellations."
 type: software
 authors:
   - family-names: Marchais

@@ -2,7 +2,7 @@
     <img src="https://github.com/3MAH/microgen/blob/main/docs/_static/microgen.png?raw=true" alt="Microgen logo" width="100%"/>
 </p>
 
-**Microgen** is a Python library designed to facilitate microstructure generation and meshing. Here are its core features:
+**microgen** is a Python library designed to facilitate microstructure generation and meshing. Here are its core features:
 
 - **Repeated cells**: Generation of lattice structures such as octet trusses and honeycombs.
 - **Triply Periodic Minimal Surfaces (TPMS)**: TPMS-based lattice generation known for favorable physical (mechanical, thermal, ...) properties like low density and large surface area.
@@ -64,7 +64,7 @@ pytest tests -n auto
 
 ## Examples
 
-Click on the image to be redirected to the corresponding example on Microgen's documentation
+Click on the image to be redirected to the corresponding example on **microgen**'s documentation
 
 ### Basic shapes
 
@@ -141,7 +141,7 @@ Click on the image to be redirected to the corresponding example on Microgen's d
 
 ## Citation
 
-If you use Microgen in academic work, please cite it using the **concept DOI**, which always resolves to the latest archived version on Zenodo:
+If you use **microgen** in academic work, please cite it using the concept DOI, which always resolves to the latest archived version on Zenodo:
 
 > [10.5281/zenodo.6793573](https://doi.org/10.5281/zenodo.6793573)
 
@@ -153,7 +153,7 @@ A BibTeX entry suitable for the latest release:
                Chemisky, Yves and
                Legerstee, Yasmin and
                Guevara Garban, Manuel Ricardo},
-  title     = {{Microgen: Microstructure generation and meshing}},
+  title     = {{microgen: microstructure generation and meshing}},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.6793573},
   url       = {https://doi.org/10.5281/zenodo.6793573}
@@ -164,7 +164,7 @@ To cite a specific release instead of the concept, follow the concept DOI to its
 
 ## Authors and contributors
 
-Microgen is developed by the [3MAH](https://3mah.github.io/) group and external collaborators.
+**microgen** is developed by the [3MAH](https://3mah.github.io/) group and external collaborators.
 
 **Authors**
 

@@ -1,6 +1,6 @@
 {
-  "title": "Microgen: Microstructure generation and meshing",
-  "description": "Microgen is a Python library for the generation and meshing of microstructures, including repeated cells, strut-based and TPMS lattices, virtual composite microstructures, and 3D Voronoi tessellations.",
+  "title": "microgen: microstructure generation and meshing",
+  "description": "microgen is a Python library for the generation and meshing of microstructures, including repeated cells, strut-based and TPMS lattices, virtual composite microstructures, and 3D Voronoi tessellations.",
   "license": "GPL-3.0-only",
   "upload_type": "software",
   "access_right": "open",
