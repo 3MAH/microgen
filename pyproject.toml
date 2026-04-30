@@ -27,7 +27,6 @@ dependencies = [
     "gmsh",
     "meshio",
     "scipy",
-    "nlopt",
     "autograd",
 ]
 
