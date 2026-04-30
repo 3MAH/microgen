@@ -16,7 +16,8 @@
   "creators": [
     {
       "name": "Marchais, Kevin",
-      "affiliation": "Hivelix"
+      "affiliation": "Hivelix",
+      "orcid": "0000-0001-8842-6329"
     },
     {
       "name": "Chemisky, Yves",
@@ -34,7 +35,8 @@
   "contributors": [
     {
       "name": "Le Barbenchon, Louise",
-      "affiliation": "",
+      "affiliation": "Institut de Mécanique et d'Ingénierie",
+      "orcid": "0000-0002-5631-248X",
       "type": "ProjectMember"
     },
     {
