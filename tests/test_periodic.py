@@ -3,6 +3,7 @@
 import pytest
 
 from microgen import Phase, Rve, periodic_split_and_translate, shape
+from microgen.cad import CadShape
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
@@ -121,12 +122,19 @@ _VOL_REL_TOL = 5e-3  # OCCT booleans have small volumetric drift
 
 
 def _total_volume(phase: Phase) -> float:
-    return sum(float(s.Volume()) for s in phase.solids)
+    # phase.solids is a list of raw TopoDS_Solid; wrap each so we can call
+    # the CadShape helpers (Volume / BoundingBox).
+    return sum(float(CadShape(s).Volume()) for s in phase.solids)
 
 
-def _all_solids_inside(phase: Phase, rve: Rve, tol: float = 1e-6) -> bool:
+def _all_solids_inside(phase: Phase, rve: Rve, tol: float = 1e-3) -> bool:
+    # OCCT boolean intersection (BRepAlgoAPI_Common with the RVE box) leaves a
+    # small geometric drift on the order of 1e-4 in the resulting bounding
+    # box.  A misplaced fragment from a sign error would be off by O(rve.dim),
+    # so 1e-3 is loose enough for OCCT noise yet tight enough to catch the
+    # bug class this test targets.
     for solid in phase.solids:
-        bb = solid.BoundingBox()
+        bb = CadShape(solid).BoundingBox()
         if (
             bb.xmin < rve.min_point[0] - tol
             or bb.xmax > rve.max_point[0] + tol
