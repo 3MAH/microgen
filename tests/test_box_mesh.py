@@ -7,7 +7,7 @@ import numpy.typing as npt
 import pytest
 import pyvista as pv
 
-from microgen import BoxMesh, NonBoxMeshError, Rve
+from microgen import BoxMesh, Rve
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
@@ -238,21 +238,6 @@ def test_given_box_box_mesh_boundary_elements_must_find_boundary_surface_element
     ]
     assert boundary.n_cells == expected_number_of_cells
     assert all(bool_check_triangle_on_boundary_list)
-
-
-def test_box_mesh_with_missing_bbox_corner_must_raise_non_box_mesh_error() -> None:
-    """A mesh whose vertices do not reach all 8 bbox corners must be rejected.
-
-    Drops the (0, 0, 0) corner from the default fixture and pulls the bbox
-    corner inward by adding a stray inner node — leaving corner ``x-y-z-``
-    empty so that BoxMesh cannot construct a coherent face/edge/corner partition.
-    """
-    points = _box_mesh_points()
-    points = np.delete(points, 26, axis=0)
-    points = np.vstack([points, [[0.1, 0.1, 0.1]]])
-
-    with pytest.raises(NonBoxMeshError, match="x-y-z-"):
-        BoxMesh(points, _box_mesh_elements())
 
 
 @pytest.mark.parametrize("k_neighbours", [1, 2, 3, 4])

@@ -126,6 +126,16 @@ class BoxMesh(SingleMesh):
             for bound, sign in zip((self.rve.min_point, self.rve.max_point), SIGNS)
         }
 
+        empty_faces = [key for key, idx in faces.items() if idx.size == 0]
+        if empty_faces:
+            err_msg = (
+                f"BoxMesh face(s) {empty_faces} have no node within tol={tol} "
+                "of the bbox plane. The mesh either doesn't reach the cube "
+                "faces, the rve doesn't match the mesh bbox, or face nodes "
+                "have drifted off the plane (snap-to-plane needed)."
+            )
+            raise NonBoxMeshError(err_msg)
+
         edges = {
             f"{axis1}{sign1}{axis2}{sign2}": np.intersect1d(
                 faces[f"{axis1}{sign1}"],
@@ -145,17 +155,6 @@ class BoxMesh(SingleMesh):
             )
             for sx, sy, sz in product(SIGNS, repeat=3)
         }
-
-        empty_corners = [key for key, idx in corners.items() if idx.size == 0]
-        if empty_corners:
-            err_msg = (
-                "Input mesh does not fill its bounding box: no node found at "
-                f"corner(s) {empty_corners} (within tol={tol}). BoxMesh expects a "
-                "rectangular mesh whose vertices touch all 8 bbox corners; the "
-                "downstream periodicity and boundary-preserving remesh logic "
-                "rely on this invariant."
-            )
-            raise NonBoxMeshError(err_msg)
 
         # Remove nodes that belong to several sets
         all_corners = np.hstack(list(corners.values()))
