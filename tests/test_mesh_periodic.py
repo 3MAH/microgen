@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pathlib import Path
 
-import cadquery as cq
 import numpy as np
 import pytest
 import pyvista as pv
+
+pytest.importorskip("OCP")
 
 from microgen import (
     Box,
@@ -23,6 +24,7 @@ from microgen import (
     meshPeriodic,
     periodic,
 )
+from microgen.cad import CadShape, make_compound_from_solids
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
@@ -99,7 +101,7 @@ def _generate_cqcompound_octettruss(rve: Rve) -> list[Phase]:
 
 
 @pytest.fixture()
-def box_homogeneous_unit(rve_unit: Rve) -> tuple[cq.Shape, list[Phase], Rve]:
+def box_homogeneous_unit(rve_unit: Rve) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous unit box."""
     shape = Box(
         center=tuple(rve_unit.center),
@@ -113,7 +115,7 @@ def box_homogeneous_unit(rve_unit: Rve) -> tuple[cq.Shape, list[Phase], Rve]:
 @pytest.fixture()
 def box_homogeneous_double(
     rve_double: Rve,
-) -> tuple[cq.Shape, list[Phase], Rve]:
+) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous double box."""
     shape = Box(
         center=tuple(rve_double.center),
@@ -127,7 +129,7 @@ def box_homogeneous_double(
 @pytest.fixture()
 def box_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> (cq.Shape, list[Phase], Rve):
+) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous double centered box."""
     shape = Box(
         center=tuple(rve_double_centered.center),
@@ -141,7 +143,7 @@ def box_homogeneous_double_centered(
 @pytest.fixture()
 def octet_truss_homogeneous_unit(
     rve_unit: Rve,
-) -> tuple[cq.Shape, list[Phase], Rve]:
+) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous unit octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
     merged = fuseShapes(
@@ -155,7 +157,7 @@ def octet_truss_homogeneous_unit(
 @pytest.fixture()
 def octet_truss_homogeneous_double_centered(
     rve_double_centered: Rve,
-) -> tuple[cq.Shape, list[Phase], Rve]:
+) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous double centered octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_double_centered)
     merged = fuseShapes(
@@ -169,12 +171,12 @@ def octet_truss_homogeneous_double_centered(
 @pytest.fixture()
 def octet_truss_heterogeneous(
     rve_unit: Rve,
-) -> tuple[cq.Compound, list[Phase], Rve]:
+) -> tuple[CadShape, list[Phase], Rve]:
     """Return a heterogeneous octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
     listcqphases = cutPhases(phaseList=list_periodic_phases, reverseOrder=False)
     return (
-        cq.Compound.makeCompound([phase.shape for phase in listcqphases]),
+        make_compound_from_solids([phase.shape.wrapped for phase in listcqphases]),
         listcqphases,
         rve_unit,
     )
@@ -193,7 +195,7 @@ def octet_truss_heterogeneous(
     ],
 )
 def test_octettruss_mesh_must_be_periodic(
-    shape: tuple[cq.Compound | cq.Shape, list[Phase], Rve],
+    shape: tuple[CadShape, list[Phase], Rve],
     request: pytest.FixtureRequest,
     tmp_output_compound_filename: str,
     tmp_output_vtk_filename: str,
@@ -201,7 +203,7 @@ def test_octettruss_mesh_must_be_periodic(
     """Test that the octet truss mesh is periodic."""
     cqoctet, listcqphases, rve = request.getfixturevalue(shape)
 
-    cq.exporters.export(cqoctet, tmp_output_compound_filename)
+    cqoctet.export_step(tmp_output_compound_filename)
     meshPeriodic(
         mesh_file=tmp_output_compound_filename,
         rve=rve,

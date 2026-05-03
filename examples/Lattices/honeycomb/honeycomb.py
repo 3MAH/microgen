@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import cadquery as cq
 import numpy as np
 
 from microgen import Box, ExtrudedPolygon, Phase, cutPhaseByShapeList, mesh
@@ -45,8 +44,8 @@ honeycomb = cutPhaseByShapeList(phaseToCut=boxPhase, cqShapeList=shapeList)
 
 step_file = str(Path(__file__).parent / "honeycomb.step")
 stl_file = str(Path(__file__).parent / "honeycomb.stl")
-cq.exporters.export(honeycomb.shape, step_file)
-cq.exporters.export(honeycomb.shape, stl_file)
+honeycomb.shape.export_step(step_file)
+honeycomb.shape.export_stl(stl_file)
 vtk_file = str(Path(__file__).parent / "honeycomb.vtk")
 mesh(
     mesh_file=step_file,

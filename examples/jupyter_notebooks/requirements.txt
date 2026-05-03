@@ -1,4 +1,3 @@
 jupyterlab
-jupyter-cadquery
 sidecar
 jupyterview

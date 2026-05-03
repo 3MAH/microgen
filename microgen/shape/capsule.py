@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import cadquery as cq
 import pyvista as pv
 
 from microgen.operations import rotate
@@ -17,6 +16,7 @@ from microgen.operations import rotate
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
@@ -43,40 +43,16 @@ class Capsule(Shape):
         self.height = height
         self.radius = radius
 
-    def generate(self: Capsule, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate a capsule CAD shape using the given parameters."""
-        cylinder = cq.Solid.makeCylinder(
-            self.radius,
-            self.height,
-            pnt=cq.Vector(
-                -self.height / 2.0 + self.center[0],
-                self.center[1],
-                self.center[2],
-            ),
-            dir=cq.Vector(0.1, 0.0, 0.0),
-            angleDegrees=360,
+    def generate(self: Capsule, **_: KwargsGenerateType) -> CadShape:
+        """Generate a capsule CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_capsule
+
+        shape = make_capsule(
+            radius=self.radius,
+            height=self.height,
+            center=self.center,
         )
-        sphere_left = cq.Solid.makeSphere(
-            self.radius,
-            cq.Vector(
-                self.center[0] - self.height / 2.0,
-                self.center[1],
-                self.center[2],
-            ),
-            angleDegrees1=-90,
-        )
-        sphere_right = cq.Solid.makeSphere(
-            self.radius,
-            cq.Vector(
-                self.center[0] + self.height / 2.0,
-                self.center[1],
-                self.center[2],
-            ),
-            angleDegrees1=-90,
-        )
-        capsule = cylinder.fuse(sphere_left)
-        capsule = capsule.fuse(sphere_right)
-        return rotate(capsule, self.center, self.orientation)
+        return rotate(shape, self.center, self.orientation)
 
     def generate_vtk(
         self: Capsule,

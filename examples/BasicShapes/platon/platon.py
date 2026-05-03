@@ -1,8 +1,7 @@
 from pathlib import Path
 
-import cadquery as cq
-
 import microgen
+from microgen.cad import make_compound
 
 filenames = [
     "tetrahedron.obj",
@@ -19,9 +18,9 @@ for filename in filenames:
     dic = microgen.shape.polyhedron.read_obj(filename)
     solid = microgen.shape.polyhedron.Polyhedron(dic=dic)
     shape = solid.generate()
-    shape = shape.translate(cq.Vector(-6 + 3 * i, 0, 0))
+    shape = shape.translate((-6 + 3 * i, 0, 0))
     platon_solids.append(shape)
     i += 1
 
 stl_file = str(Path(__file__).parent / "platon.stl")
-cq.exporters.export(cq.Compound.makeCompound(platon_solids), stl_file)
+make_compound(platon_solids).export_stl(stl_file)

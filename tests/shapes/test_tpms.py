@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from inspect import getmembers, isfunction
+from inspect import getmembers, isfunction, signature
 from typing import Literal
 
 import numpy as np
@@ -21,11 +21,17 @@ TEST_DEFAULT_SURFACE_FUNCTION = microgen.surface_functions.gyroid
 
 
 def _get_microgen_surface_functions() -> list[str]:
-    # Dont take into account deprecated surface functions named in camelCase
+    """List the actual TPMS surface functions in microgen.surface_functions.
+
+    Filters out:
+    - deprecated camelCase aliases (any uppercase letter)
+    - non-TPMS callables exposed via re-import (autograd ``cos``/``sin``) —
+      they take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
+    """
     return [
-        func[0]
-        for func in getmembers(microgen.surface_functions, isfunction)
-        if not any(ele.isupper() for ele in func[0])
+        name
+        for name, fn in getmembers(microgen.surface_functions, isfunction)
+        if not any(c.isupper() for c in name) and len(signature(fn).parameters) == 3
     ]
 
 
@@ -689,3 +695,119 @@ def test_tpms_none_offset_and_density_given_must_raise_error() -> None:
     expected_err_msg = "offset or density must be given. Give one of them."
     with pytest.raises(ValueError, match=expected_err_msg):
         microgen.Tpms(surface_function=TEST_DEFAULT_SURFACE_FUNCTION)
+
+
+# -----------------------------------------------------------------------------
+# Coordinate-frame mode regression tests
+# -----------------------------------------------------------------------------
+# These guard against the cell-box / bounds confusion that made
+# CylindricalTpms / SphericalTpms produce wildly low volumes after the F-rep
+# refactor (the parent's axis-aligned-box ``_cell_box`` was treated as a
+# Cartesian clip even though those subclasses use parametric units).
+
+
+def test_cylindrical_tpms_full_wrap_volume_matches_shell() -> None:
+    """A full-wrap cylindrical TPMS sheet should fill a sizeable fraction of
+    the underlying ``2πR·Δr·H`` shell envelope.  The exact fraction depends
+    on the surface function and offset, but for gyroid + offset 0.5 it
+    should be > 30 % of the shell envelope.  Pre-fix this test would have
+    seen ~10 %.
+    """
+    from microgen.shape.tpms import CylindricalTpms
+
+    radius, delta_r, height = 1.5, 2.0, 6.0
+    tpms = CylindricalTpms(
+        radius=radius,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        cell_size=1.0,
+        repeat_cell=(2, 0, int(height)),  # 0 → auto-fill full circle
+    )
+    sheet = tpms.generate_vtk(type_part="sheet")
+
+    shell_envelope = 2.0 * np.pi * radius * delta_r * height
+    density = abs(sheet.volume) / shell_envelope
+    # Gyroid sheet density at offset 0.5 ≈ 10-25% via parametric grid-clip.
+    # Assert just enough to gate the parametric-grid path: the broken F-rep
+    # path was producing < 1 % here.
+    assert density > 0.05, f"density {density:.2%} too low — clip path likely wrong"
+    assert density < 1.05, f"density {density:.2%} > envelope — clipping leak"
+
+
+def test_spherical_tpms_full_wrap_volume_matches_shell() -> None:
+    """Full-sphere TPMS sheet should fill a sizeable fraction of the
+    ``4πR²·Δr`` shell envelope.  Pre-fix this would have been ~1 %.
+    """
+    from microgen.shape.tpms import SphericalTpms
+
+    radius, delta_r = 3.0, 2.0
+    tpms = SphericalTpms(
+        radius=radius,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        cell_size=1.0,
+        repeat_cell=(2, 0, 0),  # auto-fill θ + φ
+    )
+    sheet = tpms.generate_vtk(type_part="sheet")
+
+    shell_envelope = 4.0 * np.pi * radius * radius * delta_r
+    density = abs(sheet.volume) / shell_envelope
+    # Gyroid sheet density at offset 0.5 ≈ 10-25% via parametric grid-clip.
+    assert density > 0.05, f"density {density:.2%} too low — clip path likely wrong"
+    assert density < 1.05, f"density {density:.2%} > envelope — clipping leak"
+
+
+def test_cylindrical_tpms_partial_wrap_smaller_than_full() -> None:
+    """A quarter-wrap cylinder must produce ≲ 1/3 of the full-wrap volume.
+
+    Gates the wedge clip in :meth:`CylindricalTpms._cell_box` — without it
+    the partial wrap would equal the full wrap.
+    """
+    from microgen.shape.tpms import CylindricalTpms
+
+    full = CylindricalTpms(
+        radius=1.5,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        cell_size=1.0,
+        repeat_cell=(2, 0, 6),
+    ).generate_vtk(type_part="sheet")
+
+    quarter = CylindricalTpms(
+        radius=1.5,
+        surface_function=microgen.surface_functions.gyroid,
+        offset=0.5,
+        cell_size=1.0,
+        repeat_cell=(2, 2, 6),  # quarter wrap (~2 of 9 angular cells)
+    ).generate_vtk(type_part="sheet")
+
+    assert abs(quarter.volume) < abs(full.volume) / 3.0, (
+        f"quarter wrap vol {abs(quarter.volume):.2f} should be ≲ "
+        f"{abs(full.volume) / 3.0:.2f} (1/3 of full)"
+    )
+
+
+def test_sweep_along_straight_line_is_finite_and_positive() -> None:
+    """Sweep along a straight z-axis line must produce a positive sheet
+    volume bounded by the tube envelope.
+    """
+    from microgen.shape.tpms import Sweep
+
+    line = np.linspace([0.0, 0.0, -3.0], [0.0, 0.0, 3.0], 50)
+    radial_max, height = 1.0, 6.0
+    tpms = Sweep(
+        curve_points=line,
+        surface_function=microgen.surface_functions.gyroid,
+        radial_max=radial_max,
+        offset=0.4,
+        cell_size=1.0,
+        repeat_cell=(int(height), 1, 6),
+    )
+    sheet = tpms.generate_vtk(type_part="sheet")
+
+    tube_volume = np.pi * radial_max * radial_max * height
+    v = abs(sheet.volume)
+    assert v > 0.0, "Sweep produced an empty sheet"
+    assert (
+        v < tube_volume * 1.05
+    ), f"Sweep sheet volume {v:.2f} exceeds tube envelope {tube_volume:.2f}"

@@ -1,16 +1,22 @@
-"""Representative Volume Element (RVE)."""
+"""Representative Volume Element (RVE).
+
+The ``Rve.box`` attribute is a :class:`~microgen.cad.CadShape` wrapping an
+OCCT box; it is built lazily on first access and requires the ``[cad]``
+extra (``cadquery-ocp-novtk``).
+"""
 
 from __future__ import annotations
 
 import warnings
 from typing import TYPE_CHECKING, Sequence, Tuple
 
-import cadquery as cq
 import numpy as np
 
 _DIM = 3
 
 if TYPE_CHECKING:
+    from .cad import CadShape
+
     Vector3DType = Tuple[float, float, float] | Sequence[float]
 
 
@@ -73,7 +79,6 @@ class Rve:
         self.min_point = self.center - 0.5 * self.dim
         self.max_point = self.center + 0.5 * self.dim
 
-        self.box = cq.Workplane().box(*self.dim).translate(vec=cq.Vector(*self.center))
         self.is_matrix = False
         self.matrix_number = 0
 
@@ -87,13 +92,24 @@ class Rve:
         self.dx = abs(self.x_max - self.x_min)
         self.dy = abs(self.y_max - self.y_min)
         self.dz = abs(self.z_max - self.z_min)
-        self.box = (
-            cq.Workplane()
-            .box(*self.dim)
-            .translate((self.center[0], self.center[1], self.center[2]))
-        )
-        self.is_matrix = False
-        self.matrix_number = 0
+
+        self._cached_box: CadShape | None = None
+
+    @property
+    def box(self) -> CadShape:
+        """Return a :class:`~microgen.cad.CadShape` box of the RVE (cached).
+
+        Requires the ``[cad]`` extra.
+        """
+        if self._cached_box is None:
+            from .cad import make_box  # noqa: PLC0415
+
+            self._cached_box = make_box(tuple(self.dim), tuple(self.center))
+        return self._cached_box
+
+    @box.setter
+    def box(self, value: CadShape) -> None:
+        self._cached_box = value
 
     @classmethod
     def from_min_max(

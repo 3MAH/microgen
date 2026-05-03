@@ -2,7 +2,7 @@
 
 import importlib.metadata
 
-from .box_mesh import BoxMesh
+from .box_mesh import BoxMesh, NonBoxMeshError
 from .external import Mmg, Neper, parseNeper
 from .mesh import is_periodic, mesh, mesh_periodic, meshPeriodic
 from .operations import (
@@ -86,6 +86,7 @@ __all__ = [
     "ExtrudedPolygon",
     "FaceCenteredCubic",
     "Infill",
+    "NonBoxMeshError",
     "NormedDistance",
     "Mmg",
     "Neper",

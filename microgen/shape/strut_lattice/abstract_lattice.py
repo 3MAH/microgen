@@ -11,13 +11,13 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
-import cadquery as cq
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 from scipy.spatial.transform import Rotation
 
+from ...cad import CadShape
 from ...mesh import mesh, mesh_periodic
 from ...operations import fuse_shapes
 from ...periodic import periodic_split_and_translate
@@ -221,8 +221,8 @@ class AbstractLattice(Shape):
 
         return rotations_list
 
-    def generate(self, **_: KwargsGenerateType) -> cq.Shape:
-        if isinstance(self._cad_shape, cq.Shape):
+    def generate(self, **_: KwargsGenerateType) -> CadShape:
+        if isinstance(self._cad_shape, CadShape):
             return self._cad_shape
 
         self._cad_shape = self._generate_cad()
@@ -230,7 +230,7 @@ class AbstractLattice(Shape):
 
     cad_shape = property(generate)
 
-    def _generate_cad(self, **_: KwargsGenerateType) -> cq.Shape:
+    def _generate_cad(self, **_: KwargsGenerateType) -> CadShape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
         list_phases: list[Phase] = []
         list_periodic_phases: list[Phase] = []
@@ -312,7 +312,7 @@ class AbstractLattice(Shape):
             NamedTemporaryFile(suffix=".step", delete=False) as cad_step_file,
             NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
         ):
-            cq.exporters.export(cad_lattice, cad_step_file.name)
+            cad_lattice.export_step(cad_step_file.name)
             if periodic:
                 mesh_periodic(
                     mesh_file=cad_step_file.name,

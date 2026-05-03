@@ -2,11 +2,14 @@
 
 from pathlib import Path
 
-import cadquery as cq
 import numpy as np
 import pyvista as pv
+import pytest
+
+pytest.importorskip("OCP")
 
 from microgen import Phase, Rve, Sphere, mesh, raster_phase
+from microgen.cad import make_compound_from_solids
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 
@@ -23,10 +26,10 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells() -> None:
         rve=Rve(),
         grid=grid,
     )
-    compound = cq.Compound.makeCompound(
+    compound = make_compound_from_solids(
         [solid for phase in phases for solid in phase.solids],
     )
-    cq.exporters.export(compound, fname="tests/data/compound.step")
+    compound.export_step("tests/data/compound.step")
 
     mesh(
         mesh_file="tests/data/compound.step",

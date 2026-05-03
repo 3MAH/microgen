@@ -3,13 +3,19 @@ channels:
   - conda-forge
   - set3mah
 
+# Full dev environment.  cadquery is REMOVED from microgen; the CAD path goes
+# through OCCT directly via `ocp` (conda-forge's name; on PyPI the [cad] extra
+# pulls `cadquery-ocp-novtk`).  On conda-forge `ocp` installs cleanly, so we
+# bring it in by default, matching the conda recipe.
 dependencies:
   - numpy
-  - pyvista <0.47  # pyvista 0.47 requires vtkRenderingMatplotlib, missing from conda VTK on Windows
+  - pyvista           # unpinned: VTK 9.4+ is unblocked (cadquery no longer in the tree)
   - matplotlib
   - scipy
   - python-gmsh
   - meshio
-  - cadquery
+  - ocp               # OCP (OCCT Python binding) — enables the CAD path
+  - pip:
+    - autograd
   - mmg
 #  - neper
