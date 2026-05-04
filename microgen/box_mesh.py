@@ -123,7 +123,9 @@ class BoxMesh(SingleMesh):
                 np.abs(crd[:, a] - bound[a]) < tol,
             )[0]
             for a, axis in enumerate(AXES)
-            for bound, sign in zip((self.rve.min_point, self.rve.max_point), SIGNS)
+            for bound, sign in zip(
+                (self.rve.min_point, self.rve.max_point), SIGNS, strict=True,
+            )
         }
 
         empty_faces = [key for key, idx in faces.items() if idx.size == 0]
@@ -528,7 +530,9 @@ class BoxMesh(SingleMesh):
 
         boundary_elements = pv.PolyData()
 
-        for normal, origin_p, size_plane in zip(normals, origins_p, size_planes):
+        for normal, origin_p, size_plane in zip(
+            normals, origins_p, size_planes, strict=True,
+        ):
             plane = pv.Plane(
                 center=origin_p,
                 direction=normal,
