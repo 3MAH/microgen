@@ -43,5 +43,5 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells() -> None:
     assert vtk_mesh["CellEntityIds"].shape[0] == vtk_mesh.n_cells > 0
     assert len(np.unique(vtk_mesh["CellEntityIds"])) == np.prod(grid)
 
-    mesh_quality = np.mean(vtk_mesh.compute_cell_quality()["CellQuality"])
+    mesh_quality = np.mean(vtk_mesh.cell_quality()["scaled_jacobian"])
     assert mesh_quality > MESH_QUALITY_THRESHOLD

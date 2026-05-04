@@ -2048,7 +2048,7 @@ class Infill(Tpms):
         Initialize the Infill object.
 
         :param obj: object in which the infill is generated. Normals must be oriented\
-                towards the outside of the object. Use the `flip_normals` method if\
+                towards the outside of the object. Use the `flip_faces` method if\
                      needed.
         :param surface_function: tpms function or custom function (f(x, y, z) = 0)
         :param offset: offset of the isosurface to generate thickness
