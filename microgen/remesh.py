@@ -111,9 +111,7 @@ def remesh_keeping_boundaries_for_fem(
         err_msg = "Input mesh is not periodic"
         raise InputMeshNotPeriodicError(err_msg)
 
-    with NamedTemporaryFile(
-        suffix=".mesh", delete=False
-    ) as boundary_triangles_file:
+    with NamedTemporaryFile(suffix=".mesh", delete=False) as boundary_triangles_file:
         pass
 
     _generate_mesh_with_required_triangles(
