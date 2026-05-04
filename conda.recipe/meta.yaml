@@ -18,14 +18,13 @@ requirements:
   run:
     - python >=3.10,<3.15
     - numpy
-    - vtk                 # unpinned — VTK 9.4+ unblocked (cadquery removed)
-    - pyvista             # unpinned — same reason
+    - vtk                 # VTK 9.4+ unblocked (cadquery removed)
+    - pyvista >=0.46      # cell_quality and flip_faces APIs
     - python-gmsh
     - meshio
-    - ocp                 # OCCT Python binding — enables the CAD path
+    - ocp                 # OCCT Python binding, enables the CAD path
     - scipy
-    - pip:
-      - autograd
+    - autograd
 
 test:
   imports:
