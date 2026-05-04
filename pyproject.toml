@@ -91,7 +91,6 @@ exclude = [
     "microgen/external.py",
     "microgen/mesh.py",
     "microgen/operations.py",
-    "microgen/phase.py",
     "microgen/remesh.py",
     "examples/*",
 ] # external = ["E131", "D102", "D105"]

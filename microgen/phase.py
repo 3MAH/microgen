@@ -9,8 +9,7 @@ stored as :class:`microgen.cad.CadShape` and solids as raw OCCT
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -26,7 +25,13 @@ from .cad import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from OCP.TopoDS import TopoDS_Shape, TopoDS_Solid
+
     from .rve import Rve
+
+    ShapeLike = CadShape | TopoDS_Shape
 
 
 def _require_ocp() -> None:
@@ -40,7 +45,7 @@ def _require_ocp() -> None:
         raise ImportError(err_msg) from err
 
 
-def _to_cad_shape(obj: Any) -> CadShape:
+def _to_cad_shape(obj: ShapeLike) -> CadShape:
     """Coerce a ``CadShape`` or raw ``TopoDS_Shape`` into a :class:`CadShape`."""
     if isinstance(obj, CadShape):
         return obj
@@ -67,8 +72,8 @@ class Phase:
 
     def __init__(
         self: Phase,
-        shape: CadShape | Any | None = None,
-        solids: list[Any] | None = None,
+        shape: ShapeLike | None = None,
+        solids: list[TopoDS_Solid] | None = None,
         center: tuple[float, float, float] | None = None,
         orientation: tuple[float, float, float] | None = None,
     ) -> None:
@@ -76,7 +81,7 @@ class Phase:
         self._shape: CadShape | None = (
             _to_cad_shape(shape) if shape is not None else None
         )
-        self._solids: list[Any] = solids if solids is not None else []
+        self._solids: list[TopoDS_Solid] = solids if solids is not None else []
         self.center = center
         self.orientation = orientation
 
@@ -169,7 +174,7 @@ class Phase:
         return None
 
     @property
-    def solids(self: Phase) -> list[Any]:
+    def solids(self: Phase) -> list[TopoDS_Solid]:
         """Return the list of OCCT ``TopoDS_Solid`` in the phase."""
         if len(self._solids) > 0:
             return self._solids
@@ -190,7 +195,7 @@ class Phase:
 
     @staticmethod
     def rescale_shape(
-        shape: CadShape | Any,
+        shape: ShapeLike,
         scale: float | tuple[float, float, float],
     ) -> CadShape:
         """Rescale ``shape`` by ``scale`` = ``(sx, sy, sz)`` (or a scalar).
@@ -226,7 +231,7 @@ class Phase:
 
     @staticmethod
     def repeat_shape(
-        unit_geom: CadShape | Any,
+        unit_geom: ShapeLike,
         rve: Rve,
         grid: tuple[int, int, int],
     ) -> CadShape:
@@ -238,7 +243,7 @@ class Phase:
         unit_geom = _to_cad_shape(unit_geom)
         center = np.array(unit_geom.Center().toTuple())
 
-        copies: list[Any] = []
+        copies: list[TopoDS_Solid] = []
         for idx in np.ndindex(*grid):
             pos = center - rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
             copies.append(translate_solid(unit_geom.wrapped, pos))
@@ -251,7 +256,7 @@ class Phase:
             raise ValueError(err_msg)
         self._shape = self.repeat_shape(self.shape, rve, grid)
 
-    def split_solids(self: Phase, rve: Rve, grid: list[int]) -> list[Any]:
+    def split_solids(self: Phase, rve: Rve, grid: list[int]) -> list[TopoDS_Solid]:
         """Split solids from phase according to the rve divided by the given grid.
 
         Each solid is split by the (grid-1) interior planes along each axis;
@@ -263,7 +268,7 @@ class Phase:
 
         :return: list of raw OCCT ``TopoDS_Solid``
         """
-        result: list[Any] = []
+        result: list[TopoDS_Solid] = []
         for solid in self.solids:
             current = CadShape(solid)
             for dim in range(3):
@@ -307,7 +312,7 @@ class Phase:
     @classmethod
     def generate_phase_per_raster(
         cls: type[Phase],
-        solids: list[Any],
+        solids: list[TopoDS_Solid],
         rve: Rve,
         grid: list[int],
     ) -> list[Phase]:
@@ -324,7 +329,7 @@ class Phase:
         from OCP.GProp import GProp_GProps  # noqa: PLC0415
 
         grid_arr = np.array(grid)
-        solids_phases: list[list[Any]] = [[] for _ in range(int(np.prod(grid_arr)))]
+        solids_phases: list[list[TopoDS_Solid]] = [[] for _ in range(int(np.prod(grid_arr)))]
         for solid in solids:
             props = GProp_GProps()
             BRepGProp.VolumeProperties_s(solid, props)
