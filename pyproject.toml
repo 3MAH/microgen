@@ -95,9 +95,7 @@ exclude = [
     "microgen/periodic.py",
     "microgen/phase.py",
     "microgen/remesh.py",
-    "microgen/report.py",
     "microgen/rve.py",
-    "microgen/single_mesh.py",
     "examples/*",
 ] # external = ["E131", "D102", "D105"]
 select = ["ALL"]
