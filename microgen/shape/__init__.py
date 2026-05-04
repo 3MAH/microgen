@@ -71,31 +71,45 @@ if TYPE_CHECKING:
 
 _SHAPE_FACTORIES: dict[str, Callable[..., Shape]] = {
     "box": lambda center, orientation, p: Box(
-        center=center, orientation=orientation, dim=p["dim"],
+        center=center,
+        orientation=orientation,
+        dim=p["dim"],
     ),
     "cylinder": lambda center, orientation, p: Cylinder(
-        center=center, orientation=orientation,
-        height=p["height"], radius=p["radius"],
+        center=center,
+        orientation=orientation,
+        height=p["height"],
+        radius=p["radius"],
     ),
     "extrudedpolygon": lambda center, orientation, p: ExtrudedPolygon(
-        center=center, orientation=orientation,
-        list_corners=p["list_corners"], height=p["height"],
+        center=center,
+        orientation=orientation,
+        list_corners=p["list_corners"],
+        height=p["height"],
     ),
     "capsule": lambda center, orientation, p: Capsule(
-        center=center, orientation=orientation,
-        height=p["height"], radius=p["radius"],
+        center=center,
+        orientation=orientation,
+        height=p["height"],
+        radius=p["radius"],
     ),
     "sphere": lambda center, _orientation, p: Sphere(
-        center=center, radius=p["radius"],
+        center=center,
+        radius=p["radius"],
     ),
     "ellipsoid": lambda center, orientation, p: Ellipsoid(
-        center=center, orientation=orientation, radii=p["radii"],
+        center=center,
+        orientation=orientation,
+        radii=p["radii"],
     ),
     "tpms": lambda center, orientation, p: Tpms(
-        center=center, orientation=orientation,
+        center=center,
+        orientation=orientation,
         surface_function=p["surface_function"],
-        offset=p["offset"], cell_size=p["cell_size"],
-        repeat_cell=p["repeat_cell"], resolution=p["resolution"],
+        offset=p["offset"],
+        cell_size=p["cell_size"],
+        repeat_cell=p["repeat_cell"],
+        resolution=p["resolution"],
     ),
     "polyhedron": lambda _center, _orientation, p: Polyhedron(dic=p["dic"]),
 }
