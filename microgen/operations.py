@@ -8,8 +8,7 @@ install.  Functions that use OCCT raise a clear ``ImportError`` (via
 from __future__ import annotations
 
 import itertools
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -19,17 +18,21 @@ from scipy.spatial.transform import Rotation
 from .cad import CadShape, require_cad
 
 if TYPE_CHECKING:
-    import OCP
+    from collections.abc import Sequence
+
+    from OCP.TopoDS import TopoDS_Shape
 
     from .phase import Phase
     from .rve import Rve
 
+    Rotatable = CadShape | pv.PolyData
+
 
 def rotate(
-    obj: Any,
+    obj: Rotatable,
     center: npt.NDArray[np.float64] | Sequence[float],
     rotation: Rotation,
-) -> Any:
+) -> Rotatable:
     """Rotate object according to given rotation.
 
     Supports :class:`microgen.cad.CadShape` and :class:`pyvista.PolyData`.
@@ -58,36 +61,11 @@ def rotate(
     raise ValueError(err_msg)
 
 
-def _get_rotation_axes(
-    psi: float,
-    theta: float,
-    phi: float,
-) -> list[tuple[float, float, float]]:
-    """Retrieve the 3 Euler rotation axes.
-
-    :param psi: first Euler angle, in degrees
-    :param theta: first Euler angle, in degrees
-    :param phi: first Euler angle, in degrees
-
-    :return: a list containing the three 3D Euler rotation axes
-    """
-    psi_rad, theta_rad, phi_rad = np.deg2rad((psi, theta, phi))
-    return [
-        (0.0, 0.0, 1.0),
-        (np.cos(psi_rad), np.sin(psi_rad), 0.0),
-        (
-            np.sin(psi_rad) * np.sin(theta_rad),
-            -np.sin(theta_rad) * np.cos(psi_rad),
-            np.cos(theta_rad),
-        ),
-    ]
-
-
 def rotate_euler(
-    obj: Any,
+    obj: Rotatable,
     center: npt.NDArray[np.float64] | Sequence[float],
     angles_or_rotation: Sequence[float] | Rotation,
-) -> Any:
+) -> Rotatable:
     """Rotate object according to ZXZ Euler angle convention.
 
     Accepts :class:`~microgen.cad.CadShape` or :class:`pyvista.PolyData`.
@@ -144,15 +122,18 @@ def rescale(shape: CadShape, scale: float | tuple[float, float, float]) -> CadSh
     return Phase.rescale_shape(shape, scale)
 
 
-def _unify_solids(shape: Any) -> CadShape:
+def _unify_solids(shape: TopoDS_Shape) -> CadShape:
     require_cad()
     from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain  # noqa: PLC0415
 
+    unify_edges = True
+    unify_faces = True
+    concat_bsplines = True
     upgrader = ShapeUpgrade_UnifySameDomain(
         shape,
-        True,  # unify edges
-        True,  # unify faces
-        True,  # concat bsplines
+        unify_edges,
+        unify_faces,
+        concat_bsplines,
     )
     upgrader.Build()
     return CadShape(upgrader.Shape())
