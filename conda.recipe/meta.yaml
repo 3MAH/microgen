@@ -22,7 +22,7 @@ requirements:
     - pyvista >=0.46      # cell_quality and flip_faces APIs
     - python-gmsh
     - meshio
-    - ocp                 # OCCT Python binding, enables the CAD path
+    - ocp                 # OCCT Python binding — enables the CAD path
     - scipy
     - autograd
 
