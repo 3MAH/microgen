@@ -21,29 +21,29 @@
     },
     {
       "name": "Chemisky, Yves",
-      "affiliation": ""
+      "affiliation": "Université Grenoble Alpes - laboratoire TIMC"
     },
     {
       "name": "Legerstee, Yasmin",
-      "affiliation": "Institut de Mécanique et d'Ingénierie",
+      "affiliation": "Université de Bordeaux - laboratoire I2M",
       "orcid": "0009-0001-5249-2882"
     },
     {
       "name": "Guevara Garban, Manuel Ricardo",
-      "affiliation": "Institut de Mécanique et d'Ingénierie / TU Bergakademie Freiberg",
+      "affiliation": "Université de Bordeaux - laboratoire I2M / TU Bergakademie Freiberg",
       "orcid": "0009-0007-8208-3020",
     }
   ],
   "contributors": [
     {
       "name": "Le Barbenchon, Louise",
-      "affiliation": "Institut de Mécanique et d'Ingénierie",
+      "affiliation": "CNRS - laboratoire I2M",
       "orcid": "0000-0002-5631-248X",
       "type": "ProjectMember"
     },
     {
       "name": "Haffar, Karim",
-      "affiliation": "",
+      "affiliation": "Université Grenoble Alpes - laboratoire TIMC",
       "type": "ProjectMember"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "name": "Sahoo, Sudeep Kumar",
-      "affiliation": "",
+      "affiliation": "Titan Company Limited",
       "type": "ProjectMember"
     }
   ],
