@@ -1,6 +1,6 @@
 [project]
 name = "microgen"
-version = "1.4.0.dev0"
+version = "2.0.0.dev0"
 authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation and meshing"
 readme = "README.md"
@@ -16,11 +16,26 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    # Python 3.13 not yet supported (CadQuery does not support 3.13)
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
-dependencies = ["numpy", "pyvista", "gmsh", "meshio", "cadquery", "scipy", "nlopt"]
+# Core dependencies: mesh / implicit-field workflows only.  The CAD path
+# (``.generate()`` → OCCT ``TopoDS_Shape``) requires the ``[cad]`` extra.
+dependencies = [
+    "numpy",
+    "pyvista",
+    "gmsh",
+    "meshio",
+    "scipy",
+    "autograd",
+]
 
 [project.optional-dependencies]
+# CAD backend: OCCT via cadquery-ocp-novtk (no cadquery, no bundled VTK; we
+# use VTK via PyVista already).  Installing this extra unlocks
+# Shape.generate(), Phase, fuse_shapes, lattice CAD, etc., and ships cp314
+# wheels on Linux/macOS arm64/Windows.
+cad = ["cadquery-ocp-novtk"]
 dev = [
     'pre-commit>=3.5.0',
     "ruff>=0.9",
@@ -43,11 +58,10 @@ ray = [
 ]
 jupyter = [
     "jupyterlab>=3.6.8,<4.6",
-    "jupyter-cadquery>=2.2.1",
     "sidecar>=0.5.2",
     "jupyterview>=0.7.0",
 ]
-all = ["microgen[dev, docs, jupyter, ray]"]
+all = ["microgen[cad, dev, docs, jupyter, ray]"]
 
 [project.urls]
 Documentation = 'https://3mah.github.io/microgen-docs/'

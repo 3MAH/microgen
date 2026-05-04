@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import cadquery as cq
 import numpy as np
 
 from microgen import Cylinder, Phase, Rve, cutPhases, meshPeriodic, periodic
+from microgen.cad import make_compound
 
 # ----------LOADTXT------------------------------------------------------------------------------------------#
 
@@ -71,12 +71,12 @@ for phase_elem in listPhases:
     listPeriodicPhases.append(periodicPhase)
 
 phases_cut = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
-compound = cq.Compound.makeCompound([phase.shape for phase in phases_cut])
+compound = make_compound([phase.shape for phase in phases_cut])
 
 step_file = str(Path(__file__).parent / "octettruss.step")
 stl_file = str(Path(__file__).parent / "octettruss.stl")
-cq.exporters.export(compound, step_file)
-cq.exporters.export(compound, stl_file)
+compound.export_step(step_file)
+compound.export_stl(stl_file)
 
 vtk_file = str(Path(__file__).parent / "octettruss.vtk")
 meshPeriodic(

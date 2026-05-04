@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import cadquery as cq
-import numpy as np
 import pyvista as pv
 
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
@@ -40,19 +39,11 @@ class Sphere(Shape):
         super().__init__(**kwargs)
         self.radius = radius
 
-    def generate(self: Sphere, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate a sphere CAD shape using the given parameters."""
-        # Temporary workaround bug fix for OpenCascade bug using a random
-        # direct parameter for cq.Workplane().sphere() method
-        # Related to issue https://github.com/CadQuery/cadquery/issues/1461
-        _seed = 38
-        _random_direction_creation_axis = tuple(np.random.default_rng(_seed).random(3))
-        sphere = (
-            cq.Workplane()
-            .sphere(radius=self.radius, direct=_random_direction_creation_axis)
-            .translate(self.center)
-        )
-        return cq.Shape(sphere.val().wrapped)
+    def generate(self: Sphere, **_: KwargsGenerateType) -> CadShape:
+        """Generate a sphere CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_sphere
+
+        return make_sphere(self.radius, self.center)
 
     def generate_vtk(
         self: Sphere,

@@ -11,7 +11,6 @@ import copy
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-import cadquery as cq
 import numpy as np
 import pyvista as pv
 
@@ -21,6 +20,7 @@ from .shape import Shape
 
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 Vertex = Tuple[float, float, float]
@@ -73,31 +73,16 @@ class Polyhedron(Shape):
         for ixs in self.faces_ixs:
             ixs.append(ixs[0])
 
-    def generate(self: Polyhedron, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate a polyhedron CAD shape using the given parameters."""
-        faces = []
-        for ixs in self.faces_ixs:
-            lines = []
-            for v1, v2 in zip(ixs, ixs[1:]):
-                # tuple(map(sum, zip(a, b))) -> sum of tuples value by value
-                vertice_coords1 = tuple(
-                    map(sum, zip(self.center, self.dic["vertices"][v1])),
-                )
-                vertice_coords2 = tuple(
-                    map(sum, zip(self.center, self.dic["vertices"][v2])),
-                )
-                lines.append(
-                    cq.Edge.makeLine(
-                        cq.Vector(*vertice_coords1),
-                        cq.Vector(*vertice_coords2),
-                    ),
-                )
-            wire = cq.Wire.assembleEdges(lines)
-            faces.append(cq.Face.makeFromWires(wire))
-        shell = cq.Shell.makeShell(faces)
-        solid = cq.Solid.makeSolid(shell)
-        polyhedron = cq.Shape(solid.wrapped)
-        return rotate(polyhedron, self.center, self.orientation)
+    def generate(self: Polyhedron, **_: KwargsGenerateType) -> CadShape:
+        """Generate a polyhedron CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_polyhedron
+
+        shape = make_polyhedron(
+            vertices=self.dic["vertices"],
+            faces_ixs=self.faces_ixs,
+            center=self.center,
+        )
+        return rotate(shape, self.center, self.orientation)
 
     def generate_vtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate a polyhedron VTK shape using the given parameters."""

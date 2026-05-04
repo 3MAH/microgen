@@ -26,6 +26,18 @@ AXES_PAIRS = (("x", "y"), ("x", "z"), ("y", "z"))
 SIGNS = ("-", "+")
 
 
+class NonBoxMeshError(ValueError):
+    """Raised when an input mesh does not fill its bounding box.
+
+    A :class:`BoxMesh` represents a mesh whose external surface coincides with
+    its axis-aligned bounding box. The construction logic relies on this: faces,
+    edges and corners are derived by tolerance-binning nodes against the bbox
+    planes. If one or more of the eight bbox corners has no node on it, the mesh
+    is not box-shaped and the downstream periodicity / required-boundary logic
+    becomes ill-defined.
+    """
+
+
 class ClosestCellsOnBoundaries(NamedTuple):
     """Class to manage closest cells on boundaries.
 
@@ -113,6 +125,16 @@ class BoxMesh(SingleMesh):
             for a, axis in enumerate(AXES)
             for bound, sign in zip((self.rve.min_point, self.rve.max_point), SIGNS)
         }
+
+        empty_faces = [key for key, idx in faces.items() if idx.size == 0]
+        if empty_faces:
+            err_msg = (
+                f"BoxMesh face(s) {empty_faces} have no node within tol={tol} "
+                "of the bbox plane. The mesh either doesn't reach the cube "
+                "faces, the rve doesn't match the mesh bbox, or face nodes "
+                "have drifted off the plane (snap-to-plane needed)."
+            )
+            raise NonBoxMeshError(err_msg)
 
         edges = {
             f"{axis1}{sign1}{axis2}{sign2}": np.intersect1d(

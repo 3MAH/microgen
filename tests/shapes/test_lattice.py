@@ -2,9 +2,10 @@
 
 from typing import Literal
 
-import cadquery as cq
 import numpy as np
 import pytest
+
+pytest.importorskip("OCP")
 
 from microgen import is_periodic
 from microgen.shape.strut_lattice import (

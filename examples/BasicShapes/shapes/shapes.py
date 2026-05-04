@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import cadquery as cq
 import numpy as np
 
+from microgen.cad import make_compound
 from microgen.shape import newGeometry
 
 shapes = {
@@ -26,7 +26,7 @@ shapes = {
 }
 
 
-assembly = cq.Assembly()
+parts = []
 
 n_col = 3
 n_row = np.ceil(len(shapes) / n_col)
@@ -40,9 +40,9 @@ for shape, param_geom in shapes.items():
         orientation=(90, 90, 90),
         param_geom=param_geom,
     )
-    assembly.add(elem.generate())
+    parts.append(elem.generate())
     i = i + 1
 
-compound = assembly.toCompound()
+compound = make_compound(parts)
 stl_file = str(Path(__file__).parent / "shapes.stl")
-cq.exporters.export(compound, stl_file)
+compound.export_stl(stl_file)

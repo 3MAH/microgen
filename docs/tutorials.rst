@@ -272,7 +272,6 @@ Repeat a shape in a grid pattern:
 
    import microgen
    import pyvista as pv
-   import cadquery as cq
 
    # Create a sphere
    sphere = microgen.Sphere(center=(0, 0, 0), radius=0.15)
@@ -289,7 +288,7 @@ Repeat a shape in a grid pattern:
    )
 
    # Export to STL
-   cq.exporters.export(repeated, "repeated.stl")
+   repeated.export_stl("repeated.stl")
 
    # Visualize
    plotter = pv.Plotter()
@@ -304,9 +303,9 @@ Raster a phase to create a periodic pattern:
 
 .. jupyter-execute::
 
-   import cadquery as cq
+   from microgen.cad import make_compound_from_solids
 
-   # Create ellipsoid and convert to CadQuery shape
+   # Create ellipsoid and convert to OCCT shape
    ellipsoid = microgen.Ellipsoid(
        center=(0, 0, 0),
        radii=(0.15, 0.1, 0.08)
@@ -324,11 +323,11 @@ Raster a phase to create a periodic pattern:
        grid=(2, 2, 2)
    )
 
-   # Create compound from all solids and export to STL
-   compound = cq.Compound.makeCompound(
-       [solid for p in rastered for solid in p.solids]
+   # Compose a compound from all rastered solids and export to STL
+   compound = make_compound_from_solids(
+       solid for p in rastered for solid in p.solids
    )
-   cq.exporters.export(compound, "rastered.stl")
+   compound.export_stl("rastered.stl")
 
    # Visualize
    plotter = pv.Plotter()
@@ -347,7 +346,6 @@ Generate a tetrahedral mesh using Gmsh:
 .. code-block:: python
 
    import microgen
-   import cadquery as cq
 
    # Create a TPMS geometry
    gyroid = microgen.Tpms(
@@ -358,7 +356,7 @@ Generate a tetrahedral mesh using Gmsh:
    shape = gyroid.generate(type_part='sheet')
 
    # Export to STEP file first
-   cq.exporters.export(cq.Workplane().add(shape), 'gyroid.step')
+   shape.export_step('gyroid.step')
 
    # Create mesh from STEP file
    microgen.mesh(
@@ -376,8 +374,6 @@ Generate a periodic mesh suitable for homogenization:
 
 .. code-block:: python
 
-   import cadquery as cq
-
    # Create geometry
    gyroid = microgen.Tpms(
        surface_function=microgen.surface_functions.gyroid,
@@ -391,7 +387,7 @@ Generate a periodic mesh suitable for homogenization:
    phase = microgen.Phase(shape=shape)
 
    # Export to STEP file first
-   cq.exporters.export(cq.Workplane().add(shape), 'gyroid.step')
+   shape.export_step('gyroid.step')
 
    # Create periodic mesh
    microgen.mesh_periodic(
@@ -430,6 +426,6 @@ Further Resources
 -----------------
 
 - `Microgen GitHub Repository <https://github.com/3MAH/microgen>`_
-- `CadQuery Documentation <https://cadquery.readthedocs.io/en/latest/>`_
+- `OCP (OCCT Python bindings) <https://github.com/CadQuery/OCP>`_
 - `PyVista Documentation <https://docs.pyvista.org/>`_
 - `3MAH Website <https://3mah.github.io/>`_

@@ -16,8 +16,7 @@ Generated files:
 - remeshed_gyroid_mesh.vtk (optional): Quality-improved periodic mesh for FEM.
 
 Dependencies:
-- microgen
-- cadquery
+- microgen (with the [cad] extra: cadquery-ocp-novtk via microgen.cad)
 - pyvista
 """
 
@@ -25,7 +24,6 @@ from pathlib import Path
 from microgen import Tpms, Phase, meshPeriodic, Rve
 from microgen.remesh import remesh_keeping_periodicity_for_fem
 from microgen.shape.surface_functions import gyroid
-import cadquery as cq
 import pyvista as pv
 
 # 1. Generate a TPMS geometry using the gyroid surface function.
@@ -42,7 +40,7 @@ rve = Rve(dim=1)
 
 # 3. Export the geometry as a STEP file.
 step_file = str(Path(__file__).parent / "gyroid.step")
-cq.exporters.export(phases[0].shape, step_file)
+phases[0].shape.export_step(step_file)
 
 # 4. Import the STEP file and create a mesh with periodic constraints and export as VTK.
 

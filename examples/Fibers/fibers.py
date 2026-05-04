@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import cadquery as cq
 import progressbar  # pip install progressbar2
 
 from microgen import Cylinder
+from microgen.cad import make_compound
 
 
 def read_csv(filename):
@@ -58,17 +58,12 @@ for i in range(len(x)):
     shapes.append(elem.generate())
     bar.update(i)
 
-assemb = cq.Assembly()
-for shape in shapes:
-    assemb.add(shape)
-
-
-compound = assemb.toCompound()
+compound = make_compound(shapes)
 
 step_file = str(Path(__file__).parent / "compound.step")
 stl_file = str(Path(__file__).parent / "compound.stl")
-cq.exporters.export(compound, step_file)
-cq.exporters.export(compound, stl_file)
+compound.export_step(step_file)
+compound.export_stl(stl_file)
 
 
 # mesh(mesh_file='compound.step', listPhases=raster[1], size=0.03, order=1, output_file='Mesh.msh')

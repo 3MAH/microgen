@@ -10,7 +10,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-import cadquery as cq
 import numpy as np
 import pyvista as pv
 
@@ -19,6 +18,7 @@ from microgen.operations import rotate
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
 
@@ -61,19 +61,12 @@ class Ellipsoid(Shape):
 
         self.radii = radii
 
-    def generate(self: Ellipsoid, **_: KwargsGenerateType) -> cq.Shape:
-        """Generate an ellipsoid CAD shape using the given parameters."""
-        transform_mat = cq.Matrix(
-            [
-                [self.radii[0], 0, 0, self.center[0]],
-                [0, self.radii[1], 0, self.center[1]],
-                [0, 0, self.radii[2], self.center[2]],
-            ],
-        )
+    def generate(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
+        """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        from microgen.cad import make_ellipsoid
 
-        sphere = cq.Solid.makeSphere(1.0, cq.Vector(0, 0, 0), angleDegrees1=-90)
-        ellipsoid = sphere.transformGeometry(transform_mat)
-        return rotate(ellipsoid, self.center, self.orientation)
+        shape = make_ellipsoid(radii=self.radii, center=self.center)
+        return rotate(shape, self.center, self.orientation)
 
     def generate_vtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""

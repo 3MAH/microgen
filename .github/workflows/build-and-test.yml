@@ -15,19 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  # --- Core suite: mesh + implicit-field only.  No OCP installed. ---
+  # Proves `import microgen` + `.generate_vtk()` + F-rep work on VTK 9.4+
+  # with no CAD stack.
+  core-no-cad:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [
-            "ubuntu-latest",
-            "windows-latest",
-            # "macos-13", # x86_64
-            "macos-latest", # arm64
-          ]
-        python-version: ["3.10", "3.12"]
-        # Python 3.13 excluded: CadQuery does not support 3.13 (tested via conda in integration.yml)
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.10", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -41,4 +38,38 @@ jobs:
 
       - run: uv sync --extra dev
       - run: uv pip install .
+      # Pin to VTK 9.4 to prove it actually installs cleanly now that
+      # cadquery no longer constrains the dep tree.
+      - run: uv pip install 'vtk>=9.4' 'pyvista>=0.47'
+      # Hard guard: if OCP ever leaks into the core dep graph, this job is a
+      # false-pass.  Fail loudly here rather than have downstream tests
+      # silently exercise the CAD path.
+      - name: Assert OCP is not importable in the core install
+        run: |
+          uv run python -c "import importlib.util, sys; sys.exit(1 if importlib.util.find_spec('OCP') is not None else 0)"
+      - run: |
+          uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py -q
+
+  # --- CAD suite: full test run with OCP installed via the [cad] extra. ---
+  # The [cad] extra pulls cadquery-ocp-novtk, which ships cp310-cp314 wheels.
+  cad:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.10", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - if: runner.os == 'Linux'
+        run: sudo apt-get install libglu1-mesa
+
+      - run: uv sync --extra dev --extra cad
+      - run: uv pip install '.[cad]'
       - run: uv run pytest --numprocesses=auto

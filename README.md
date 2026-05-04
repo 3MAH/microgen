@@ -10,7 +10,9 @@
 - **3D Voronoi tessellation**: Simulation of granular materials and polycrystalline metals.
 - **Meshing**: Regular and **periodic** meshing using Gmsh, **remeshing** using Mmg.
 
-Generation of 3D objects is achievable through functions that utilize Open CASCADE (via Cadquery) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
+Generation of 3D objects is achievable through functions that utilize Open CASCADE (via [cadquery-ocp-novtk](https://github.com/CadQuery/ocp-build-system), the direct OCCT Python binding) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
+
+The CAD path (`.generate()` on shapes, `Phase`, `fuse_shapes`, periodic split, lattice CAD) is **optional** — install with `pip install 'microgen[cad]'`. The default `pip install microgen` gives you mesh + implicit-field (F-rep) workflows only, which is sufficient for many applications and has a much lighter dependency footprint (no OCCT, no VTK version pin).
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
@@ -30,17 +32,37 @@ Generation of 3D objects is achievable through functions that utilize Open CASCA
 
 ## Installation
 
-With pip:
+**Core (mesh + implicit-field / F-rep, no CAD kernel)** — lighter, works with VTK 9.4+:
 
 ```bash
 pip install microgen
 ```
 
+**With CAD capabilities** (OCCT via `cadquery-ocp-novtk`, enables `.generate()`, `Phase`, `fuse_shapes`, periodic split, lattice CAD):
+
+```bash
+pip install 'microgen[cad]'
+```
+
 With conda:
 
 ```bash
-conda install conda-forge::microgen
+conda install conda-forge::microgen          # core
+conda install conda-forge::microgen ocp      # core + CAD
 ```
+
+**Python version notes:** Python 3.10 to 3.14 is supported on Linux, macOS (Apple Silicon), and Windows, for both core and `[cad]`, on both PyPI and conda-forge.
+
+What you can do in each mode:
+
+|                                       | Core install | `[cad]` install |
+| ------------------------------------- | :----------: | :-------------: |
+| `Shape.generate_vtk()` (mesh output)  |      ✅      |        ✅        |
+| Implicit fields, TPMS F-rep, booleans |      ✅      |        ✅        |
+| `Shape.generate()` (OCCT BREP)        |      ❌      |        ✅        |
+| `Phase`, `fuse_shapes`, `cut_*`       |      ❌      |        ✅        |
+| Periodic split, lattice CAD export    |      ❌      |        ✅        |
+| VTK 9.4+                              |      ✅      |        ✅        |
 
 -------------------------------------------------------------------------------------------------------
 
