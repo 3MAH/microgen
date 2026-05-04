@@ -31,7 +31,7 @@ class TruncatedCuboctahedron(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: object, **kwargs: object) -> None:
         kwargs.setdefault("strut_heights", 1 / (1.0 + 2.0 * np.sqrt(2)))
         super().__init__(*args, **kwargs)
 

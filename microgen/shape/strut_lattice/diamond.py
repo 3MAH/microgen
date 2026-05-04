@@ -31,7 +31,7 @@ class Diamond(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: object, **kwargs: object) -> None:
         self._tetrahedra_centers = self._generate_tetrahedra_centers()
         self._tetrahedra_vertices = self._generate_tetrahedra_vertices()
         kwargs.setdefault("strut_heights", np.sqrt(3.0) / 4.0)

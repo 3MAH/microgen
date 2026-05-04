@@ -31,7 +31,7 @@ class FaceCenteredCubic(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: object, **kwargs: object) -> None:
         kwargs.setdefault("strut_heights", np.sqrt(2.0) / 2.0)
         super().__init__(*args, **kwargs)
 

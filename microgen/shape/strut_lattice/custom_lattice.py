@@ -19,8 +19,8 @@ class CustomLattice(AbstractLattice):
         self,
         base_vertices: npt.NDArray[np.float64],
         strut_vertex_pairs: npt.NDArray[np.int64],
-        *args,
-        **kwargs,
+        *args: object,
+        **kwargs: object,
     ) -> None:
         kwargs["base_vertices"] = base_vertices
         kwargs["strut_vertex_pairs"] = strut_vertex_pairs
