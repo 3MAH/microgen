@@ -329,7 +329,9 @@ class Phase:
         from OCP.GProp import GProp_GProps  # noqa: PLC0415
 
         grid_arr = np.array(grid)
-        solids_phases: list[list[TopoDS_Solid]] = [[] for _ in range(int(np.prod(grid_arr)))]
+        solids_phases: list[list[TopoDS_Solid]] = [
+            [] for _ in range(int(np.prod(grid_arr)))
+        ]
         for solid in solids:
             props = GProp_GProps()
             BRepGProp.VolumeProperties_s(solid, props)
