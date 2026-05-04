@@ -22,6 +22,7 @@ Dependencies:
 
 from pathlib import Path
 from microgen import Tpms, Phase, mesh_periodic, Rve
+from microgen.mesh import MeshOptions
 from microgen.remesh import MmgOptions, remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
 import pyvista as pv
@@ -50,9 +51,7 @@ mesh_periodic(
     mesh_file=step_file,
     rve=rve,
     list_phases=phases,
-    order=1,
-    size=0.03,
-    output_file=vtk_file,
+    options=MeshOptions(size=0.03, order=1, output_file=vtk_file),
 )
 
 # 5. Optionally remesh the mesh while preserving periodicity.

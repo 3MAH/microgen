@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Iterator
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import gmsh
@@ -11,6 +11,8 @@ import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from .phase import Phase
     from .rve import Rve
 
@@ -25,58 +27,58 @@ class OutputMeshNotPeriodicError(Exception):
     """Raised when output mesh from mesh_periodic is not periodic."""
 
 
+@dataclass(frozen=True)
+class MeshOptions:
+    """Settings for gmsh meshing.
+
+    :param size: mesh size constraint
+        (see ``gmsh.model.mesh.setSize(dimTags, size)``)
+    :param order: element order
+        (see ``gmsh.model.mesh.setOrder(order)``)
+    :param output_file: output file path (``.msh`` or ``.vtk``)
+    :param msh_file_version: gmsh ``.msh`` file version
+    :param tol: tolerance for the periodicity check (``mesh_periodic`` only)
+    """
+
+    size: float
+    order: int
+    output_file: str = "Mesh.msh"
+    msh_file_version: int = 4
+    tol: float = 1e-8
+
+
 def mesh(
     mesh_file: str,
     list_phases: list[Phase],
-    size: float,
-    order: int,
-    output_file: str = "Mesh.msh",
-    msh_file_version: int = 4,
+    options: MeshOptions,
 ) -> None:
-    """Mesh step file with gmsh with list of phases management.
+    """Mesh a step file with gmsh, with list-of-phases management.
 
     :param mesh_file: step file to mesh
     :param list_phases: list of phases to mesh
-    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
-    :param order: see `gmsh.model.mesh.setOrder(order)`_
-    :param output_file: output file (.msh, .vtk)
-    :param msh_file_version: gmsh file version
-
-    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
-    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
+    :param options: gmsh meshing options (see :class:`MeshOptions`)
     """
-    _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
-    _finalize_mesh(size, output_file)
+    _initialize_mesh(mesh_file, list_phases, options.order, options.msh_file_version)
+    _finalize_mesh(options.size, options.output_file)
 
 
 def mesh_periodic(
     mesh_file: str,
     rve: Rve,
     list_phases: list[Phase],
-    size: float,
-    order: int,
-    output_file: str = "MeshPeriodic.msh",
-    msh_file_version: int = 4,
-    tol: float = 1e-8,
+    options: MeshOptions,
 ) -> None:
     """Mesh periodic geometries with gmsh.
 
     :param mesh_file: step file to mesh
     :param rve: RVE for periodicity
     :param list_phases: list of phases to mesh
-    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
-    :param order: see `gmsh.model.mesh.setOrder(order)`_
-    :param output_file: output file (.msh, .vtk)
-    :param msh_file_version: gmsh file version
-    :param tol: tolerance for periodicity check
-
-    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
-    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
+    :param options: gmsh meshing options (see :class:`MeshOptions`)
     """
-    _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
+    _initialize_mesh(mesh_file, list_phases, options.order, options.msh_file_version)
     _set_periodic(rve)
-    _finalize_mesh(size, output_file)
-    _check_output_mesh_periodicity(output_file, tol)
+    _finalize_mesh(options.size, options.output_file)
+    _check_output_mesh_periodicity(options.output_file, options.tol)
 
 
 def _get_bounding_box(
@@ -119,7 +121,7 @@ def _extract_face_nodes(
     axes = "xyz"[:dim]
     faces = {}
     for i, axis in enumerate(axes):
-        for sign, point in zip("-+", [min_point, max_point]):
+        for sign, point in zip("-+", [min_point, max_point], strict=True):
             face = f"{axis}{sign}"
             faces[face] = np.where(np.abs(nodes_coords[:, i] - point[i]) < tol)[0]
     return faces

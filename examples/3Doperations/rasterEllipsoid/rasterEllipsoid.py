@@ -2,6 +2,7 @@ from pathlib import Path
 
 from microgen import Ellipsoid, Phase, Rve, mesh, raster_phase
 from microgen.cad import make_compound_from_solids
+from microgen.mesh import MeshOptions
 
 rve = Rve(dim=1)
 
@@ -20,7 +21,5 @@ vtk_file = str(Path(__file__).parent / "rasterEllipsoid.vtk")
 mesh(
     mesh_file=step_file,
     list_phases=raster,
-    size=0.03,
-    order=1,
-    output_file=vtk_file,
+    options=MeshOptions(size=0.03, order=1, output_file=vtk_file),
 )

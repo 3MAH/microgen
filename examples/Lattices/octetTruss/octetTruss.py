@@ -11,6 +11,7 @@ from microgen import (
     periodic_split_and_translate,
 )
 from microgen.cad import make_compound
+from microgen.mesh import MeshOptions
 
 # ----------LOADTXT------------------------------------------------------------------------------------------#
 
@@ -90,7 +91,5 @@ mesh_periodic(
     mesh_file=step_file,
     rve=rve,
     list_phases=phases_cut,
-    order=1,
-    size=0.03,
-    output_file=vtk_file,
+    options=MeshOptions(size=0.03, order=1, output_file=vtk_file),
 )

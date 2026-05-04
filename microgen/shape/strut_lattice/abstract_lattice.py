@@ -18,7 +18,7 @@ from scipy.optimize import root_scalar
 from scipy.spatial.transform import Rotation
 
 from ...cad import CadShape
-from ...mesh import mesh, mesh_periodic
+from ...mesh import MeshOptions, mesh, mesh_periodic
 from ...operations import fuse_shapes
 from ...periodic import periodic_split_and_translate
 from ...phase import Phase
@@ -313,22 +313,23 @@ class AbstractLattice(Shape):
             NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
         ):
             cad_lattice.export_step(cad_step_file.name)
+            mesh_options = MeshOptions(
+                size=size,
+                order=order,
+                output_file=mesh_file.name,
+            )
             if periodic:
                 mesh_periodic(
                     mesh_file=cad_step_file.name,
                     rve=self.rve,
                     list_phases=list_phases,
-                    size=size,
-                    order=order,
-                    output_file=mesh_file.name,
+                    options=mesh_options,
                 )
             else:
                 mesh(
                     mesh_file=cad_step_file.name,
                     list_phases=list_phases,
-                    size=size,
-                    order=order,
-                    output_file=mesh_file.name,
+                    options=mesh_options,
                 )
 
             vtk_lattice = pv.read(mesh_file.name).extract_surface(algorithm=None)
