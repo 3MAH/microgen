@@ -77,6 +77,6 @@ def test_rve_from_min_max_must_return_expected_rve() -> None:
     assert np.all(rve.center == [0, 0, 0])
     assert np.all(rve.dim == [1, 1, 1])
 
-    rve = Rve.from_min_max(x_min=-1, x_max=0, y_min=0, y_max=2, z_min=-3, z_max=3)
+    rve = Rve.from_min_max(min_point=(-1, 0, -3), max_point=(0, 2, 3))
     assert np.all(rve.center == [-0.5, 1, 0])
     assert np.all(rve.dim == [1, 2, 6])

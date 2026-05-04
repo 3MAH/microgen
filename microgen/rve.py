@@ -7,7 +7,6 @@ extra (``cadquery-ocp-novtk``).
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -15,6 +14,8 @@ import numpy as np
 _DIM = 3
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from .cad import CadShape
 
     Vector3DType = tuple[float, float, float] | Sequence[float]
@@ -82,24 +83,14 @@ class Rve:
     @classmethod
     def from_min_max(
         cls: type[Rve],
-        x_min: float = -0.5,
-        x_max: float = 0.5,
-        y_min: float = -0.5,
-        y_max: float = 0.5,
-        z_min: float = -0.5,
-        z_max: float = 0.5,
+        min_point: Vector3DType = (-0.5, -0.5, -0.5),
+        max_point: Vector3DType = (0.5, 0.5, 0.5),
     ) -> Rve:
-        """Generate a Rve from the min - max values.
+        """Generate a Rve from min and max corner points.
 
-        :param x_min: min X dimension of the RVE
-        :param x_max: max X dimension of the RVE
-        :param x_min: min Y dimension of the RVE
-        :param x_max: max Y dimension of the RVE
-        :param x_min: min Z dimension of the RVE
-        :param x_max: max Z dimension of the RVE
+        :param min_point: ``(x_min, y_min, z_min)`` corner of the RVE
+        :param max_point: ``(x_max, y_max, z_max)`` corner of the RVE
         """
-        center = (0.5 * (x_min + x_max), 0.5 * (y_min + y_max), 0.5 * (z_min + z_max))
-        dim_x = abs(x_max - x_min)
-        dim_y = abs(y_max - y_min)
-        dim_z = abs(z_max - z_min)
-        return Rve(dim=(dim_x, dim_y, dim_z), center=center)
+        lo = np.asarray(min_point, dtype=float)
+        hi = np.asarray(max_point, dtype=float)
+        return cls(center=tuple(0.5 * (lo + hi)), dim=tuple(np.abs(hi - lo)))
