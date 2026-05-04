@@ -7,7 +7,7 @@ from microgen.shape import surface_functions
 
 # We import the Polyhedra from Neper tessellation file
 tess_file = str(Path(__file__).parent / "test1.tess")
-polyhedra = Neper.generateVoronoiFromTessFile(tess_file)
+polyhedra = Neper.voronoi_from_tess_file(tess_file)
 
 gyroid = Tpms(
     center=(0.5, 0.5, 0.5),

@@ -19,11 +19,10 @@ def test_neper() -> None:
     if USE_NEPER and platform != "win32":
         microgen.Neper.run(
             filename="tests/data/neper.tess",
-            nbCell=2,
-            dimCube=(1, 1, 1),
+            n_cells=2,
+            cube_dim=(1, 1, 1),
         )
-        microgen.parseNeper("tests/data/neper")
-        microgen.Neper.generateVoronoiFromTessFile("tests/data/neper.tess")
+        microgen.Neper.voronoi_from_tess_file("tests/data/neper.tess")
 
 
 def test_operations() -> None:

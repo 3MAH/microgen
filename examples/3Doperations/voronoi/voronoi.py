@@ -4,8 +4,7 @@ from microgen import Neper, Phase, mesh
 from microgen.cad import make_compound
 from microgen.mesh import MeshOptions
 
-# # We import the Polyhedra from Neper tessellation file
-# listPolyhedra, seed, vertices, edges, faces, polys = parseNeper("test1")
+# We import the Polyhedra from Neper tessellation file
 
 # Revel = Rve(dim=1)
 # phases = []
@@ -33,7 +32,7 @@ from microgen.mesh import MeshOptions
 # )
 
 tess_file = str(Path(__file__).parent / "test1.tess")
-polyhedra = Neper.generateVoronoiFromTessFile(tess_file)
+polyhedra = Neper.voronoi_from_tess_file(tess_file)
 
 shapes = [poly.generate() for poly in polyhedra]
 

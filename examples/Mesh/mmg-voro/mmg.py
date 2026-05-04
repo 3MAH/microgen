@@ -14,15 +14,19 @@ mesh = meshio.read(msh_file)
 mesh.write(str(data_dir / "meshIni.mesh"))
 
 microgen.external.Mmg.mmg3d(
-    input=str(data_dir / "meshIni.mesh"),
-    output=str(data_dir / "intermesh.mesh"),
+    microgen.external.MmgOptions(
+        input_file=str(data_dir / "meshIni.mesh"),
+        output_file=str(data_dir / "intermesh.mesh"),
+    ),
 )
 microgen.external.Mmg.mmg3d(
-    input=str(data_dir / "intermesh.mesh"),
-    output=str(data_dir / "finalmesh.mesh"),
-    ls=True,
-    hgrad=1.1,
-    hsiz=0.02,
+    microgen.external.MmgOptions(
+        input_file=str(data_dir / "intermesh.mesh"),
+        output_file=str(data_dir / "finalmesh.mesh"),
+        level_set=0.0,
+        hgrad=1.1,
+        hsiz=0.02,
+    ),
 )
 
 meshFinal = meshio.read(str(data_dir / "finalmesh.mesh"))

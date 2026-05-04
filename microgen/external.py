@@ -1,7 +1,7 @@
-"""
-Functions related to external software
-    - `Neper - Polycrystal Generation and Meshing`_
-    - `mmg - Robust, Open-source & Multidisciplinary Software for Remeshing`_
+"""Wrappers around external command-line tools.
+
+- `Neper - Polycrystal Generation and Meshing`_
+- `mmg - Robust, Open-source & Multidisciplinary Software for Remeshing`_
 
 .. _Neper - Polycrystal Generation and Meshing: https://neper.info/
 .. _mmg - Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
@@ -9,114 +9,138 @@ Functions related to external software
 
 from __future__ import annotations
 
+import shutil
 import subprocess
+import warnings
+from dataclasses import dataclass, fields
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from microgen.shape import Polyhedron
 
+if TYPE_CHECKING:
+    from typing import TextIO
+
+# Vertex-data row indices in the polyhedron-faces section of a .tess file.
+_TESS_VERTEX_X_INDEX = 1
+_TESS_VERTEX_Y_INDEX = 2
+_TESS_VERTEX_Z_INDEX = 3
+_TESS_VERTEX_STATE_INDEX = 4
+
+
+# ---------------------------------------------------------------------------
+# Neper
+# ---------------------------------------------------------------------------
+
 
 class Neper:
-    @staticmethod
-    def run(filename: str, nbCell: int, dimCube: tuple[float, float, float]) -> None:
-        """
-        Runs neper command from the command line
+    """Wrapper around the ``neper`` command-line tool."""
 
-        command = neper -T -n nbCell -id 1 -dim 3 -domain 'cube(dimCube[0], dimCube[1], dimCube[2])' -morpho gg -o filename
+    @staticmethod
+    def run(
+        filename: str,
+        n_cells: int,
+        cube_dim: tuple[float, float, float],
+    ) -> None:
+        r"""Run a neper tessellation from the command line.
+
+        Equivalent to::
+
+            neper -T -n n_cells -id 1 -dim 3 \
+                  -domain 'cube(cube_dim[0], cube_dim[1], cube_dim[2])' \
+                  -morpho gg -o filename
 
         :param filename: output file
-        :param nbCell: Specify the number of cells of the tessellation
-        :param dimCube: `neper's documentation`_
+        :param n_cells: number of cells of the tessellation
+        :param cube_dim: see `neper's documentation`_
 
         .. _neper's documentation: https://neper.info/doc/neper_t.html#cmdoption-domain
         """
-
-        try:
-            # Check if neper is installed and available in the PATH
-            subprocess.run(["neper", "--version"], check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(
-                "Neper is not installed. Please install Neper before running this command."
+        neper = shutil.which("neper")
+        if neper is None:
+            warnings.warn(
+                "Neper is not installed. "
+                "Please install Neper before running this command.",
+                stacklevel=2,
             )
             return
 
-        command = ["neper", "-T", "-n", str(nbCell), "-id", "1", "-dim", "3"]
-        command += [
-            "-domain",
-            "'cube(",
-            str(dimCube[0]),
-            ",",
-            str(dimCube[1]),
-            ",",
-            str(dimCube[2]),
-            ")'",
+        try:
+            subprocess.run([neper, "--version"], check=True)  # noqa: S603
+        except subprocess.CalledProcessError:
+            warnings.warn(
+                "Neper is installed but '--version' failed.",
+                stacklevel=2,
+            )
+            return
+
+        cube = f"'cube({cube_dim[0]},{cube_dim[1]},{cube_dim[2]})'"
+        command = [
+            neper, "-T", "-n", str(n_cells), "-id", "1", "-dim", "3",
+            "-domain", cube,
+            "-morpho", "gg",
+            "-o", filename,
         ]
-        command += ["-morpho", "gg", "-o", filename]
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True)  # noqa: S603
 
     @staticmethod
-    def generateVoronoiFromTessFile(filename: str) -> list[Polyhedron]:
-        """
-        Generates list of Voronoi polyhedron shapes from a tessellation file generated with neper
-        """
-        polyhedra = []
-        tess = Neper.tessParse(filename)
-        for i in range(tess["cells"]["number_of_cells"]):
-            global_ind_faces = tess["polyhedra"]["faces"][i]
-            global_ind_vertices = []
-            for face_ind in global_ind_faces:
-                face_vertices = tess["faces"]["vertices"][face_ind - 1]
-                global_ind_vertices += face_vertices
-            global_ind_vertices = list(
-                dict.fromkeys(global_ind_vertices)
-            )  # remove duplicates
-            global_ind_vertices.sort()
+    def voronoi_from_tess_file(filename: str) -> list[Polyhedron]:
+        """Build :class:`Polyhedron` shapes from a neper-generated .tess file."""
+        polyhedra: list[Polyhedron] = []
+        tess = Neper.parse_tess(filename)
+        for cell_index in range(tess["cells"]["number_of_cells"]):
+            global_face_indices = tess["polyhedra"]["faces"][cell_index]
+            global_vertex_indices: list[int] = []
+            for face_ind in global_face_indices:
+                global_vertex_indices += tess["faces"]["vertices"][face_ind - 1]
+            global_vertex_indices = sorted(dict.fromkeys(global_vertex_indices))
 
-            vertices = []
-            local_ind_vertices = []
-            for i in range(len(global_ind_vertices)):
-                ind = global_ind_vertices[i]
-                x = tess["vertices"]["ver_x"][ind - 1]
-                y = tess["vertices"]["ver_y"][ind - 1]
-                z = tess["vertices"]["ver_z"][ind - 1]
-                vertices.append((x, y, z))
-                local_ind_vertices.append(i)
+            vertices: list[tuple[float, float, float]] = [
+                (
+                    tess["vertices"]["ver_x"][ind - 1],
+                    tess["vertices"]["ver_y"][ind - 1],
+                    tess["vertices"]["ver_z"][ind - 1],
+                )
+                for ind in global_vertex_indices
+            ]
 
-            faces = []
-            for face_ind in global_ind_faces:
+            faces: list[dict[str, list[int]]] = []
+            for face_ind in global_face_indices:
                 face_vertices = tess["faces"]["vertices"][face_ind - 1]
-                faces.append({"vertices": []})
-                for ver in face_vertices:
-                    faces[-1]["vertices"].append(global_ind_vertices.index(ver))
+                faces.append(
+                    {
+                        "vertices": [
+                            global_vertex_indices.index(v) for v in face_vertices
+                        ],
+                    },
+                )
 
             polyhedra.append(Polyhedron(dic={"vertices": vertices, "faces": faces}))
         return polyhedra
 
     @staticmethod
-    def tessParse(filename: str) -> dict[str, dict]:
-        """
-        Parses tessellation file (.tess) generated with neper.
-        Following .tess structure from `neper's`_ documentation:
-        Returns a dictionary containing information cells,
-        vertices, edges, faces, polyhedra
+    def parse_tess(filename: str) -> dict[str, dict]:
+        """Parse a tessellation (.tess) file generated by neper.
 
-        .. _neper's: https://neper.info/doc/fileformat.html#tessellation-file-tess
+        Returns a dictionary with keys ``cells``, ``vertices``, ``edges``,
+        ``faces``, ``polyhedra``. Follows the .tess structure from
+        `neper's documentation`_.
+
+        .. _neper's documentation: https://neper.info/doc/fileformat.html#tessellation-file-tess
         """
-        if len(filename.split(".")) == 1:
-            filename += ".tess"
-        with open(filename) as f:
-            f.readline()  # ***tess
-            f.readline()  # **format
-            f.readline()  # <format>
-            f.readline()  # **general
-            f.readline()  # <dim> <type>
-            f.readline()  # **cell
-            cells = Neper._readCells(f)
-            vertices = Neper._readVertices(f)
-            edges = Neper._readEdges(f)
-            faces = Neper._readFaces(f)
-            polyhedra = Neper._readPolyhedra(f)
-            # not reading the rest of the file
+        path = Path(filename)
+        if path.suffix == "":
+            path = path.with_suffix(".tess")
+        with path.open() as f:
+            for _ in range(6):
+                f.readline()
+            cells = Neper._read_cells(f)
+            vertices = Neper._read_vertices(f)
+            edges = Neper._read_edges(f)
+            faces = Neper._read_faces(f)
+            polyhedra = Neper._read_polyhedra(f)
         return {
             "cells": cells,
             "vertices": vertices,
@@ -126,87 +150,84 @@ class Neper:
         }
 
     @staticmethod
-    def _readCells(f):
-        cells = {"number_of_cells": int(f.readline())}
+    def _read_cells(f: TextIO) -> dict:
+        cells: dict = {"number_of_cells": int(f.readline())}
+        n = cells["number_of_cells"]
         while True:
             tag = f.readline().rstrip()
             if tag == "  *id":
-                cells["id"] = []
-                while len(cells["id"]) < cells["number_of_cells"]:
-                    data = f.readline().split()
-                    for id in data:
-                        cells["id"].append(int(id))
-            elif tag == "  *mode" or tag == "  *modeid":
-                cells["mode"] = []
-                while len(cells["mode"]) < cells["number_of_cells"]:
-                    data = f.readline().split()
-                    for id in data:
-                        cells["mode"].append(int(id))
+                cells["id"] = Neper._read_int_block(f, n)
+            elif tag in {"  *mode", "  *modeid"}:
+                cells["mode"] = Neper._read_int_block(f, n)
             elif tag == "  *seed":
-                cells["seed"] = []
-                for i in range(cells["number_of_cells"]):
-                    data = f.readline().split()
-                    cells["seed"].append(
-                        {
-                            "seed_id": int(data[0]),
-                            "seed_x": float(data[1]),
-                            "seed_y": float(data[2]),
-                            "seed_z": float(data[3]),
-                            "seed_weight": float(data[4]),
-                        }
-                    )
+                cells["seed"] = [
+                    Neper._parse_seed_row(f.readline()) for _ in range(n)
+                ]
             elif tag == "  *ori":
                 cells["ori"] = {"descriptor": f.readline()}
-                for i in range(cells["number_of_cells"]):
+                for _ in range(n):
                     data = f.readline().split()
-                    cells["ori"]["cellid_param"] = [
-                        float(data[0]),
-                        float(data[1]),
-                        float(data[2]),
-                    ]
-            elif tag == "  *orispread":
-                pass
-            elif tag == "  *lam":
-                pass
-            elif tag == "  *mode":
+                    cells["ori"]["cellid_param"] = [float(x) for x in data[:3]]
+            elif tag in {"  *orispread", "  *lam"}:
                 pass
             elif tag == "  *crysym":
                 cells["crysym"] = f.readline()
             elif tag == " **vertex":
                 return cells
             else:
-                raise ValueError(f"tag {tag} not known")
+                err_msg = f"tag {tag} not known"
+                raise ValueError(err_msg)
 
     @staticmethod
-    def _readVertices(f):
-        vertices = {
-            "total_number_of_vertices": int(f.readline()),
+    def _read_int_block(f: TextIO, count: int) -> list[int]:
+        values: list[int] = []
+        while len(values) < count:
+            values.extend(int(x) for x in f.readline().split())
+        return values
+
+    @staticmethod
+    def _parse_seed_row(line: str) -> dict:
+        data = line.split()
+        return {
+            "seed_id": int(data[0]),
+            "seed_x": float(data[1]),
+            "seed_y": float(data[2]),
+            "seed_z": float(data[3]),
+            "seed_weight": float(data[_TESS_VERTEX_STATE_INDEX]),
+        }
+
+    @staticmethod
+    def _read_vertices(f: TextIO) -> dict:
+        n = int(f.readline())
+        vertices: dict = {
+            "total_number_of_vertices": n,
             "ver_id": [],
             "ver_x": [],
             "ver_y": [],
             "ver_z": [],
             "ver_state": [],
         }
-        for i in range(vertices["total_number_of_vertices"]):
+        for _ in range(n):
             data = f.readline().split()
             vertices["ver_id"].append(int(data[0]))
-            vertices["ver_x"].append(float(data[1]))
-            vertices["ver_y"].append(float(data[2]))
-            vertices["ver_z"].append(float(data[3]))
-            vertices["ver_state"].append(int(data[4]))
+            vertices["ver_x"].append(float(data[_TESS_VERTEX_X_INDEX]))
+            vertices["ver_y"].append(float(data[_TESS_VERTEX_Y_INDEX]))
+            vertices["ver_z"].append(float(data[_TESS_VERTEX_Z_INDEX]))
+            vertices["ver_state"].append(int(data[_TESS_VERTEX_STATE_INDEX]))
         return vertices
 
     @staticmethod
-    def _readEdges(f):
+    def _read_edges(f: TextIO) -> dict:
         f.readline()  # **edge
-        edges = {
-            "total_number_of_edges": int(f.readline().rstrip()),
+        n = int(f.readline().rstrip())
+        edges: dict = {
+            "total_number_of_edges": n,
             "edge_id": [],
             "ver_1": [],
             "ver_2": [],
             "edge_state": [],
         }
-        for i in range(edges["total_number_of_edges"]):
+        for _ in range(n):
             data = f.readline().split()
             edges["edge_id"].append(int(data[0]))
             edges["ver_1"].append(int(data[1]))
@@ -215,611 +236,230 @@ class Neper:
         return edges
 
     @staticmethod
-    def _readFaces(f):
+    def _read_faces(f: TextIO) -> dict:
         f.readline()  # **face
-        faces = {
-            "total_number_of_faces": int(f.readline().rstrip()),
+        n = int(f.readline().rstrip())
+        faces: dict = {
+            "total_number_of_faces": n,
             "face_id": [],
             "vertices": [],
             "edges": [],
         }
-        for i in range(faces["total_number_of_faces"]):
+        for _ in range(n):
             data = f.readline().split()
             faces["face_id"].append(int(data[0]))
             n_ver = int(data[1])
-            faces["vertices"].append([])
-            for j in range(n_ver):
-                faces["vertices"][-1].append(int(data[j + 2]))
+            faces["vertices"].append([int(data[j + 2]) for j in range(n_ver)])
             data = f.readline().split()
             n_edg = int(data[0])
-            faces["edges"].append([])
-            for j in range(n_edg):
-                faces["edges"][-1].append(np.abs(int(data[j + 1])))
+            faces["edges"].append(
+                [int(np.abs(int(data[j + 1]))) for j in range(n_edg)],
+            )
             f.readline()  # not reading this line
             f.readline()  # not reading this line
         return faces
 
     @staticmethod
-    def _readPolyhedra(f):
+    def _read_polyhedra(f: TextIO) -> dict:
         f.readline()  # **polyhedron
-        polyhedra = {
-            "total_number_of_polyhedra": int(f.readline().rstrip()),
+        n = int(f.readline().rstrip())
+        polyhedra: dict = {
+            "total_number_of_polyhedra": n,
             "poly_id": [],
             "faces": [],
         }
-        for i in range(polyhedra["total_number_of_polyhedra"]):
+        for _ in range(n):
             data = f.readline().split()
             polyhedra["poly_id"] = int(data[0])
             n_fac = int(data[1])
-            polyhedra["faces"].append([])
-            for j in range(n_fac):
-                polyhedra["faces"][-1].append(np.abs(int(data[j + 2])))
+            polyhedra["faces"].append(
+                [int(np.abs(int(data[j + 2]))) for j in range(n_fac)],
+            )
         return polyhedra
 
 
-def parseNeper(filename: str) -> tuple:
-    """
-    Parses .tess tessellation file obtained with neper
-    :param filename: .tess file name
-    """
-
-    # First step: read coordinates of seeds, coordinates of vertices, global labels
-    # of vertices for each segment, global labels of segments for each face, global
-    # labels of faces for each polyhedron from the tessellation file filename.tess
-    # generated by NEPER
-
-    file = filename + ".tess"
-    fid = open(file)
-
-    flagChercheSeed = False
-    seed = []
-
-    flagChercheVertex = False
-    vertices = []
-
-    flagChercheEdges = False
-    edges = []
-
-    flagChercheFaces = False
-    faces = []
-    iLigneFace = 1
-
-    flagCherchePolys = False
-    polys = []
-
-    flagExtraction = False
-    i = 0
-
-    for line in fid:
-        if flagExtraction:
-            if "*" in line:
-                flagExtraction = False
-            else:
-                if i == 1:  # Extraction des germes
-                    ligneDecoupee = line.split()
-                    seed.append(
-                        [
-                            float(ligneDecoupee[1]),
-                            float(ligneDecoupee[2]),
-                            float(ligneDecoupee[3]),
-                        ]
-                    )
-                if i == 2:  # Extraction des sommets
-                    ligneDecoupee = line.split()
-                    vertices.append(
-                        [
-                            int(ligneDecoupee[0]),
-                            float(ligneDecoupee[1]),
-                            float(ligneDecoupee[2]),
-                            float(ligneDecoupee[3]),
-                        ]
-                    )
-                if i == 3:  # Extraction des segments
-                    ligneDecoupee = line.split()
-                    edges.append(
-                        [
-                            int(ligneDecoupee[0]),
-                            int(ligneDecoupee[1]),
-                            int(ligneDecoupee[2]),
-                        ]
-                    )
-                if i == 4:  # Extraction des faces
-                    if iLigneFace == 1:
-                        tmp = []
-                        tmp.append(int(line.split()[0]))
-                    if iLigneFace == 2:
-                        ligneDecoupee = line.split()
-                        nbEdges = int(ligneDecoupee[0])
-                        for k in range(nbEdges):
-                            tmp.append(int(ligneDecoupee[k + 1]))
-                        faces.append(tmp)
-                    if iLigneFace == 4:
-                        iLigneFace = 0
-
-                    iLigneFace += 1
-                if i == 5:  # Extraction des cellules
-                    tmp = []
-                    ligneDecoupee = line.split()
-                    tmp.append(int(ligneDecoupee[0]))
-                    nbFaces = int(ligneDecoupee[1])
-                    for k in range(nbFaces):
-                        tmp.append(np.abs(int(ligneDecoupee[k + 2])))
-                    polys.append(tmp)
-
-        if "*seed" in line:
-            flagChercheSeed = True
-            i += 1
-
-        if "**vertex" in line:
-            flagChercheVertex = True
-            i += 1
-            next(fid)
-
-        if "**edge" in line:
-            flagChercheEdges = True
-            i += 1
-            next(fid)
-
-        if "**face" in line:
-            flagChercheFaces = True
-            i += 1
-            next(fid)
-
-        if "**polyhedron" in line:
-            flagCherchePolys = True
-            i += 1
-            next(fid)
-
-        if flagChercheSeed:
-            flagExtraction = True
-            flagChercheSeed = False
-
-        if flagChercheVertex:
-            flagExtraction = True
-            flagChercheVertex = False
-
-        if flagChercheEdges:
-            flagExtraction = True
-            flagChercheEdges = False
-
-        if flagChercheFaces:
-            flagExtraction = True
-            flagChercheFaces = False
-
-        if flagCherchePolys:
-            flagExtraction = True
-            flagCherchePolys = False
-
-    fid.close()
-
-    # Second step: create an object for the polycrystal having a structure similar
-    # to the output of compute_voronoi from the py_voro library, compatible with the
-    # definition of the polyhedra of the Microgen library
-
-    A = []
-    nbPolys = len(polys)
-    listeSommets = []
-    listeSommetsOut = []
-    for i in range(nbPolys):
-        voro: dict[str, dict | list] = {}
-        voro["original"] = seed[i]
-        voro["faces"] = []
-        listeSommetsPoly = []
-        sommets = []
-        for facePoly in polys[i][1:]:
-            listeSommetsFace = []
-            dicVertices: dict[str, list] = {}
-            dicVertices["vertices"] = []
-            for segment in faces[facePoly - 1][1:]:
-                # Listes des sommets avec numérotation globale et faces associées
-                if edges[np.abs(segment) - 1][1] not in listeSommets:
-                    dicFacesAssociees = {}
-                    dicFacesAssociees["cell_associees"] = [facePoly]
-                    listeSommets.append(edges[np.abs(segment) - 1][1])
-                    listeSommetsOut.append(
-                        (edges[np.abs(segment) - 1][1], dicFacesAssociees)
-                    )
-                else:
-                    idx = listeSommets.index(edges[np.abs(segment) - 1][1])
-                    if facePoly not in listeSommetsOut[idx][1]["cell_associees"]:
-                        listeSommetsOut[idx][1]["cell_associees"].append(facePoly)
-                    # sommets.append(vertices[edges[np.abs(segment)-1][1]-1][1:])
-                if edges[np.abs(segment) - 1][2] not in listeSommets:
-                    dicFacesAssociees = {}
-                    dicFacesAssociees["cell_associees"] = [facePoly]
-                    listeSommets.append(edges[np.abs(segment) - 1][2])
-                    listeSommetsOut.append(
-                        (edges[np.abs(segment) - 1][2], dicFacesAssociees)
-                    )
-                else:
-                    idx = listeSommets.index(edges[np.abs(segment) - 1][2])
-                    if facePoly not in listeSommetsOut[idx][1]["cell_associees"]:
-                        listeSommetsOut[idx][1]["cell_associees"].append(facePoly)
-                    # sommets.append(vertices[edges[np.abs(segment)-1][2]-1][1:])
-
-                # Listes des sommets et de leurs coordonnées avec numérotation locale
-                # à inclure dans voro
-                if segment < 0:
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][2])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][2] - 1][1:])
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][2])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][2])
-                        )
-
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][1])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][1] - 1][1:])
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][1])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][1])
-                        )
-
-                if segment > 0:
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][1])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][1] - 1][1:])
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][1])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][1])
-                        )
-
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][2])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][2] - 1][1:])
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][2])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][2])
-                        )
-            voro["faces"].append(dicVertices)
-
-        voro["vertices"] = sommets
-        A.append(voro)
-
-    return A, seed, listeSommetsOut, edges, faces, polys
+# ---------------------------------------------------------------------------
+# Mmg
+# ---------------------------------------------------------------------------
 
 
 class MmgError(Exception):
-    """Raised when Mmg command fails"""
+    """Raised when an mmg command fails."""
 
-    ...
+
+# Maps dataclass field name -> mmg command-line flag.  ``None`` means flag-only
+# (no value), other values mean the field's value is rendered into the cmd.
+_MMG_FLAG_MAP: dict[str, str | None] = {
+    "debug": "-d",
+    "show_help": "-h",
+    "memory": "-m",
+    "verbosity": "-v",
+    "val": "-val",
+    "default": "-default",
+    "input_file": "-in",
+    "output_file": "-out",
+    "solution_file": "-sol",
+    "metric_file": "-met",
+    "no_angle_detection": "-A",
+    "angle_threshold": "-ar",
+    "octree": "-octree",
+    "hausd": "-hausd",
+    "hgrad": "-hgrad",
+    "hmax": "-hmax",
+    "hmin": "-hmin",
+    "hsiz": "-hsiz",
+    "lagrangian": "-lag",
+    "level_set": "-ls",
+    "nofem": "-nofem",
+    "no_insert": "-noinsert",
+    "no_move": "-nomove",
+    "no_surface": "-nosurf",
+    "no_swap": "-noswap",
+    "no_ridge": "-nr",
+    "n_regions": "-nreg",
+    "n_subdomain": "-nsd",
+    "optim": "-optim",
+    "optim_les": "-optimLES",
+    "open_boundary": "-opnbdy",
+    "rmc": "-rmc",
+    "rebuild_normals": "-rn",
+    "medit_3d": "-3dMedit",
+}
+
+
+@dataclass(frozen=True)
+class MmgOptions:
+    """Common command-line options for the mmg tools.
+
+    Each field maps to one mmg CLI flag. Fields with ``bool`` defaults render as
+    flag-only options (``-foo``); fields with optional value defaults render as
+    ``-foo VALUE`` when set. Not every flag is accepted by every mmg variant
+    (mmg2d, mmgs, mmg3d); see the
+    `mmg documentation <https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options>`_.
+    """
+
+    debug: bool = False
+    show_help: bool = False
+    memory: int | None = None
+    verbosity: int | None = None
+    val: bool = False
+    default: bool = False
+    input_file: str | None = None
+    output_file: str | None = None
+    solution_file: str | None = None
+    metric_file: str | None = None
+    no_angle_detection: bool = False
+    angle_threshold: float | None = None
+    octree: int | None = None
+    hausd: float | None = None
+    hgrad: float | None = None
+    hmax: float | None = None
+    hmin: float | None = None
+    hsiz: float | None = None
+    lagrangian: int | None = None
+    level_set: float | None = None
+    nofem: bool = False
+    no_insert: bool = False
+    no_move: bool = False
+    no_surface: bool = False
+    no_swap: bool = False
+    no_ridge: bool = False
+    n_regions: int | None = None
+    n_subdomain: int | None = None
+    optim: bool = False
+    optim_les: bool = False
+    open_boundary: bool = False
+    rmc: float | None = None
+    rebuild_normals: bool = False
+    medit_3d: int | None = None
+
+
+# Per-tool whitelist of supported MmgOptions fields.
+_MMG2D_FIELDS = {
+    "debug", "show_help", "memory", "verbosity", "val", "default",
+    "input_file", "output_file", "solution_file", "metric_file",
+    "no_angle_detection", "angle_threshold",
+    "hausd", "hgrad", "hmax", "hmin", "hsiz",
+    "lagrangian", "level_set", "medit_3d",
+    "no_insert", "no_move", "no_surface", "no_swap",
+    "no_ridge", "n_regions", "n_subdomain",
+    "optim", "open_boundary", "rmc",
+}
+
+_MMGS_FIELDS = {
+    "debug", "show_help", "memory", "verbosity", "val", "default",
+    "input_file", "output_file", "solution_file", "metric_file",
+    "no_angle_detection", "angle_threshold",
+    "hausd", "hgrad", "hmax", "hmin", "hsiz",
+    "level_set",
+    "no_insert", "no_move", "no_surface", "no_swap",
+    "no_ridge", "n_regions", "n_subdomain",
+    "optim", "rebuild_normals",
+}
+
+_MMG3D_FIELDS = {
+    "debug", "show_help", "memory", "verbosity", "val", "default",
+    "input_file", "output_file", "solution_file", "metric_file",
+    "no_angle_detection", "angle_threshold", "octree",
+    "hausd", "hgrad", "hmax", "hmin", "hsiz",
+    "lagrangian", "level_set", "nofem",
+    "no_insert", "no_move", "no_surface", "no_swap",
+    "no_ridge", "n_regions", "n_subdomain",
+    "optim", "optim_les", "open_boundary", "rmc", "rebuild_normals",
+}
+
+
+def _build_mmg_cmd(
+    binary: str,
+    options: MmgOptions,
+    allowed: set[str],
+) -> list[str]:
+    """Render an :class:`MmgOptions` into an mmg CLI argument list."""
+    cmd = [binary]
+    for field in fields(options):
+        if field.name not in allowed:
+            continue
+        value = getattr(options, field.name)
+        flag = _MMG_FLAG_MAP[field.name]
+        if isinstance(value, bool):
+            if value:
+                cmd.append(flag)
+        elif value is not None:
+            cmd.extend([flag, str(value)])
+    return cmd
+
+
+def _run_mmg_command(cmd: list[str]) -> None:
+    """Run an mmg subprocess and raise :class:`MmgError` on failure."""
+    binary = shutil.which(cmd[0])
+    if binary is None:
+        err_msg = f"mmg command '{cmd[0]}' not found in PATH"
+        raise MmgError(err_msg)
+    try:
+        subprocess.check_output([binary, *cmd[1:]], stderr=subprocess.STDOUT)  # noqa: S603
+    except (subprocess.CalledProcessError, FileNotFoundError) as error:
+        joined = " ".join([binary, *cmd[1:]])
+        err_msg = f"mmg command '{joined}' failed"
+        raise MmgError(err_msg) from error
 
 
 class Mmg:
-    @staticmethod
-    def _run_mmg_command(cmd: list[str]):
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            mmg_failed_command = " ".join(cmd)
-            raise MmgError(f"mmg command '{mmg_failed_command}' failed") from error
+    """Wrapper around the ``mmg2d_O3`` / ``mmgs_O3`` / ``mmg3d_O3`` binaries."""
 
     @staticmethod
-    def mmg2d(
-        d=None,
-        h=None,
-        m=None,
-        v=None,
-        val=None,
-        default=None,
-        input=None,
-        output=None,
-        solution=None,
-        metric=None,
-        A=None,
-        ar=None,
-        hausd=None,
-        hgrad=None,
-        hmax=None,
-        hmin=None,
-        hsiz=None,
-        lag=None,
-        ls=None,
-        _3dMedit=None,
-        noinsert=None,
-        nomove=None,
-        nosurf=None,
-        noswap=None,
-        nr=None,
-        nreg=None,
-        nsd=None,
-        optim=None,
-        opnbdy=None,
-        rmc=None,
-    ):
-        """
-        Runs mmg2d_O3 from the command line with given arguments
-        """
-        cmd = ["mmg2d_O3"]
-        if d:
-            cmd.append("-d")
-        if h:
-            cmd.append("-h")
-        if m:
-            if isinstance(m, bool):
-                m = ""
-            cmd.extend(["-m", str(m)])
-        if v:
-            if isinstance(v, bool):
-                v = 1
-            cmd.extend(["-v", str(v)])
-        if val:
-            cmd.append("-val")
-        if default:
-            cmd.append("-default")
-        if input:
-            cmd.extend(["-in", input])
-        if output:
-            cmd.extend(["-out", output])
-        if solution:
-            cmd.extend(["-sol", solution])
-        if metric:
-            cmd.extend(["-met", metric])
-        if A:
-            cmd.append("-A")
-        if ar:
-            cmd.extend(["-ar", str(ar)])
-        if hausd:
-            cmd.extend(["-hausd", str(hausd)])
-        if hgrad:
-            cmd.extend(["-hgrad", str(hgrad)])
-        if hmax:
-            cmd.extend(["-hmax", str(hmax)])
-        if hmin:
-            cmd.extend(["-hmin", str(hmin)])
-        if hsiz:
-            cmd.extend(["-hsiz", str(hsiz)])
-        if lag or lag == 0:
-            if isinstance(lag, bool):
-                lag = 0
-            cmd.extend(["-lag", str(lag)])
-        if ls or ls == 0:
-            ls_value = ls
-            if isinstance(ls_value, bool):
-                ls_value = 0
-            cmd.extend(["-ls", str(ls_value)])
-        if _3dMedit:
-            cmd.extend(["-3dMedit", str(_3dMedit)])
-
-        if noinsert:
-            cmd.append("-noinsert")
-        if nomove:
-            cmd.append("-nomove")
-        if nosurf:
-            cmd.append("-nosurf")
-        if noswap:
-            cmd.append("-noswap")
-        if nr:
-            cmd.append("-nr")
-        if nreg:
-            cmd.extend(["-nreg", str(nreg)])
-        if nsd:
-            cmd.extend(["-nsd", str(nsd)])
-        if optim:
-            cmd.append("-optim")
-        if opnbdy:
-            cmd.append("-opnbdy")
-        if rmc:
-            cmd.extend(["-rmc", str(rmc)])
-
-        Mmg._run_mmg_command(cmd)
+    def mmg2d(options: MmgOptions | None = None) -> None:
+        """Run ``mmg2d_O3`` from the command line."""
+        opts = options if options is not None else MmgOptions()
+        _run_mmg_command(_build_mmg_cmd("mmg2d_O3", opts, _MMG2D_FIELDS))
 
     @staticmethod
-    def mmgs(
-        d=None,
-        h=None,
-        m=None,
-        v=None,
-        val=None,
-        default=None,
-        input=None,
-        output=None,
-        solution=None,
-        metric=None,
-        A=None,
-        ar=None,
-        hausd=None,
-        hgrad=None,
-        hmax=None,
-        hmin=None,
-        hsiz=None,
-        ls=None,
-        noinsert=None,
-        nomove=None,
-        nosurf=None,
-        noswap=None,
-        nr=None,
-        nreg=None,
-        nsd=None,
-        optim=None,
-        rn=None,
-    ):
-        """
-        Runs mmgs_O3 from the command line with given arguments
-        """
-        cmd = ["mmgs_O3"]
-        if d:
-            cmd.append("-d")
-        if h:
-            cmd.append("-h")
-        if m:
-            if isinstance(m, bool):
-                m = ""
-            cmd.extend(["-m", str(m)])
-        if v:
-            if isinstance(v, bool):
-                v = 1
-            cmd.extend(["-v", str(v)])
-        if val:
-            cmd.append("-val")
-        if default:
-            cmd.append("-default")
-        if input:
-            cmd.extend(["-in", input])
-        if output:
-            cmd.extend(["-out", output])
-        if solution:
-            cmd.extend(["-sol", solution])
-        if metric:
-            cmd.extend(["-met", metric])
-        if A:
-            cmd.append("-A")
-        if ar:
-            cmd.extend(["-ar", str(ar)])
-        if hausd:
-            cmd.extend(["-hausd", str(hausd)])
-        if hgrad:
-            cmd.extend(["-hgrad", str(hgrad)])
-        if hmax:
-            cmd.extend(["-hmax", str(hmax)])
-        if hmin:
-            cmd.extend(["-hmin", str(hmin)])
-        if hsiz:
-            cmd.extend(["-hsiz", str(hsiz)])
-        if ls or ls == 0:
-            ls_value = ls
-            if isinstance(ls_value, bool):
-                ls_value = 0
-            cmd.extend(["-ls", str(ls_value)])
-        if noinsert:
-            cmd.append("-noinsert")
-        if nomove:
-            cmd.append("-nomove")
-        if nosurf:
-            cmd.append("-nosurf")
-        if noswap:
-            cmd.append("-noswap")
-        if nr:
-            cmd.append("-nr")
-        if nreg:
-            cmd.extend(["-nreg", str(nreg)])
-        if nsd:
-            cmd.extend(["-nsd", str(nsd)])
-        if optim:
-            cmd.append("-optim")
-        if rn:
-            cmd.append("-rn")
-        Mmg._run_mmg_command(cmd)
+    def mmgs(options: MmgOptions | None = None) -> None:
+        """Run ``mmgs_O3`` from the command line."""
+        opts = options if options is not None else MmgOptions()
+        _run_mmg_command(_build_mmg_cmd("mmgs_O3", opts, _MMGS_FIELDS))
 
     @staticmethod
-    def mmg3d(
-        d=None,
-        h=None,
-        m=None,
-        v=None,
-        val=None,
-        default=None,
-        input=None,
-        output=None,
-        solution=None,
-        metric=None,
-        A=None,
-        ar=None,
-        octree=None,
-        hausd=None,
-        hgrad=None,
-        hmax=None,
-        hmin=None,
-        hsiz=None,
-        lag=None,
-        ls=None,
-        nofem=None,
-        noinsert=None,
-        nomove=None,
-        nosurf=None,
-        noswap=None,
-        nr=None,
-        nreg=None,
-        nsd=None,
-        optim=None,
-        optimLES=None,
-        opnbdy=None,
-        rmc=None,
-        rn=None,
-    ):
-        """
-        Runs mmg3d_O3 from the command line with given arguments
-        """
-        cmd = ["mmg3d_O3"]
-        if d:
-            cmd.append("-d")
-        if h:
-            cmd.append("-h")
-        if m:
-            if isinstance(m, bool):
-                m = ""
-            cmd.extend(["-m", str(m)])
-        if v:
-            if isinstance(v, bool):
-                v = 1
-            cmd.extend(["-v", str(v)])
-        if val:
-            cmd.append("-val")
-        if default:
-            cmd.append("-default")
-        if input:
-            cmd.extend(["-in", input])
-        if output:
-            cmd.extend(["-out", output])
-        if solution:
-            cmd.extend(["-sol", solution])
-        if metric:
-            cmd.extend(["-met", metric])
-        if A:
-            cmd.append("-A")
-        if ar:
-            cmd.extend(["-ar", str(ar)])
-        if octree:
-            cmd.extend(["-octree", str(octree)])
-        if hausd:
-            cmd.extend(["-hausd", str(hausd)])
-        if hgrad:
-            cmd.extend(["-hgrad", str(hgrad)])
-        if hmax:
-            cmd.extend(["-hmax", str(hmax)])
-        if hmin:
-            cmd.extend(["-hmin", str(hmin)])
-        if hsiz:
-            cmd.extend(["-hsiz", str(hsiz)])
-        if lag or lag == 0:
-            if isinstance(lag, bool):
-                lag = 0
-            cmd.extend(["-lag", str(lag)])
-        if ls or ls == 0:
-            ls_value = ls
-            if isinstance(ls_value, bool):
-                ls_value = 0
-            cmd.extend(["-ls", str(ls_value)])
-        if nofem:
-            cmd.append("-nofem")
-        if noinsert:
-            cmd.append("-noinsert")
-        if nomove:
-            cmd.append("-nomove")
-        if nosurf:
-            cmd.append("-nosurf")
-        if noswap:
-            cmd.append("-noswap")
-        if nr:
-            cmd.append("-nr")
-        if nreg:
-            cmd.extend(["-nreg", str(nreg)])
-        if nsd:
-            cmd.extend(["-nsd", str(nsd)])
-        if optim:
-            cmd.append("-optim")
-        if optimLES:
-            cmd.append("-optimLES")
-        if opnbdy:
-            cmd.append("-opnbdy")
-        if rmc:
-            cmd.extend(["-rmc", str(rmc)])
-        if rn:
-            cmd.append("-rn")
-
-        Mmg._run_mmg_command(cmd)
+    def mmg3d(options: MmgOptions | None = None) -> None:
+        """Run ``mmg3d_O3`` from the command line."""
+        opts = options if options is not None else MmgOptions()
+        _run_mmg_command(_build_mmg_cmd("mmg3d_O3", opts, _MMG3D_FIELDS))
