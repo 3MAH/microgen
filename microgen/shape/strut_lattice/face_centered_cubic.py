@@ -48,7 +48,7 @@ class FaceCenteredCubic(AbstractLattice):
 
         return np.array(cube_vertices + face_centers)
 
-    def _generate_face_center_to_cube_vertices_dict(self) -> dict[int, List[int]]:
+    def _generate_face_center_to_cube_vertices_dict(self) -> dict[int, list[int]]:
         """
         Dynamically generates a dictionary associating the indices of the face centers with the indices of the cube vertices.
         """

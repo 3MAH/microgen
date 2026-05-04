@@ -9,7 +9,8 @@ stored as :class:`microgen.cad.CadShape` and solids as raw OCCT
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any
+from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -34,8 +35,7 @@ def _require_ocp() -> None:
         import OCP  # noqa: F401, PLC0415
     except ImportError as err:
         err_msg = (
-            "This Phase operation requires the CAD extra: "
-            "pip install 'microgen[cad]'"
+            "This Phase operation requires the CAD extra: pip install 'microgen[cad]'"
         )
         raise ImportError(err_msg) from err
 
