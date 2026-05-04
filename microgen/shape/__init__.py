@@ -47,6 +47,7 @@ from .strut_lattice import (
     TruncatedCuboctahedron,
     TruncatedOctahedron,
 )
+from .spinodoid import Spinodoid
 from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 from .tpms_grading import NormedDistance
 
@@ -174,6 +175,7 @@ __all__ = [
     "Shape",
     "SphericalTpms",
     "Sphere",
+    "Spinodoid",
     "Tpms",
     "TruncatedCube",
     "TruncatedCuboctahedron",
