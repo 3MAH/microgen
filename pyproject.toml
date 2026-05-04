@@ -91,7 +91,6 @@ exclude = [
     "microgen/external.py",
     "microgen/mesh.py",
     "microgen/operations.py",
-    "microgen/periodic.py",
     "microgen/phase.py",
     "microgen/remesh.py",
     "microgen/rve.py",
