@@ -10,11 +10,11 @@ authors:
     orcid: "https://orcid.org/0000-0001-8842-6329"
   - family-names: Chemisky
     given-names: Yves
-    affiliation: ""
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
+    affiliation: "Université Grenoble Alpes - laboratoire TIMC"
+    orcid: "https://orcid.org/0000-0002-8725-9554"
   - family-names: Legerstee
     given-names: Yasmin
-    affiliation: "Université de Bordeaux"
+    affiliation: "Université de Bordeaux - laboratoire I2M"
     orcid: "https://orcid.org/0009-0001-5249-2882"
   - family-names: Guevara Garban
     given-names: Manuel Ricardo
@@ -27,6 +27,7 @@ keywords:
   - microstructure
   - lattice
   - periodic
+  - implicit surface
   - TPMS
   - mesh
   - F-rep
