@@ -25,7 +25,7 @@ from microgen.cad import make_compound
 
 # mesh(
 #     mesh_file="compound.step",
-#     listPhases=phases,
+#     list_phases=phases,
 #     size=0.05,
 #     order=1,
 #     output_file="Voronoi.vtk",
@@ -45,7 +45,7 @@ phases = [Phase(shape=shape) for shape in shapes]
 vtk_file = str(Path(__file__).parent / "Voronoi.vtk")
 mesh(
     mesh_file=step_file,
-    listPhases=phases,
+    list_phases=phases,
     size=0.05,
     order=1,
     output_file=vtk_file,

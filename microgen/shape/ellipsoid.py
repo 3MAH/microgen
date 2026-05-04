@@ -7,7 +7,6 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -37,28 +36,10 @@ class Ellipsoid(Shape):
     def __init__(
         self: Ellipsoid,
         radii: tuple[float, float, float] = (1, 0.5, 0.25),
-        a_x: float | None = None,
-        a_y: float | None = None,
-        a_z: float | None = None,
         **kwargs: Vector3DType,
     ) -> None:
         """Initialize the ellipsoid."""
         super().__init__(**kwargs)
-        if a_x is not None or a_y is not None or a_z is not None:
-            warnings.warn(
-                "The 'a_x', 'a_y', and 'a_z' parameters are deprecated. \
-                    Use 'radii' instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if a_x is None:
-                a_x = radii[0]
-            if a_y is None:
-                a_y = radii[1]
-            if a_z is None:
-                a_z = radii[2]
-            radii = (a_x, a_y, a_z)
-
         self.radii = radii
 
     def generate(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
@@ -81,7 +62,3 @@ class Ellipsoid(Shape):
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
         return rotate(ellipsoid, self.center, self.orientation)
-
-    def generateVtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk()

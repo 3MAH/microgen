@@ -46,9 +46,6 @@ class ExtrudedPolygon(Shape):
         orientation = kwargs.get("orientation", (0, 0, 0))
         super().__init__(center=center, orientation=orientation)
 
-        if kwargs.get("listCorners", None) is not None:
-            list_corners = kwargs["listCorners"]
-
         if list_corners is None:
             self.list_corners = [
                 (1, 0),
@@ -94,7 +91,3 @@ class ExtrudedPolygon(Shape):
         )
 
         return rotate(poly, self.center, self.orientation)
-
-    def generateVtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk()

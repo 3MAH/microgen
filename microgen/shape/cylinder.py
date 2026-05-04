@@ -70,14 +70,3 @@ class Cylinder(Shape):
             capping=True,
         )
         return rotate(cylinder, self.center, self.orientation)
-
-    def generateVtk(  # noqa: N802
-        self: Cylinder,
-        resolution: int = 100,
-        **kwargs: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk(
-            resolution=resolution,
-            **kwargs,
-        )

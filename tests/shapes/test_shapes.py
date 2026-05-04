@@ -33,7 +33,7 @@ from microgen.shape import (
         (Ellipsoid, {"radii": (0.15, 0.31, 0.4)}),
         (
             ExtrudedPolygon,
-            {"listCorners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
+            {"list_corners": [(0, 0), (0, 1), (1, 1), (1, 0)], "height": 0.3},
         ),
         (
             Polyhedron,
@@ -50,7 +50,7 @@ def test_new_geometry_and_native_shape_must_have_same_volume(
     shape: type[Shape],
     params: dict[str, Any],
 ) -> None:
-    """Test if the newGeometry generates the same volume as the native shape."""
+    """Test if new_geometry generates the same volume as the native shape."""
     key = shape.__name__
     new_geom = microgen.shape.new_geometry(shape=key, param_geom=params)
     native_shape = shape(**params)
@@ -59,7 +59,7 @@ def test_new_geometry_and_native_shape_must_have_same_volume(
 
 
 def test_new_geometry_given_wrong_shape_must_raise_error() -> None:
-    """Test if the newGeometry raises an error when the shape is not recognized."""
+    """Test if new_geometry raises an error when the shape is not recognized."""
     fake_shape = "fake"
     expected_err_msg = f"{fake_shape} name not implemented"
     with pytest.raises(ShapeError, match=expected_err_msg):

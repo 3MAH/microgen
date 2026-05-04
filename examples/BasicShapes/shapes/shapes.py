@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from microgen.cad import make_compound
-from microgen.shape import newGeometry
+from microgen.shape import new_geometry
 
 shapes = {
     "box": {"dim": (0.8, 0.8, 0.8)},
@@ -12,7 +12,7 @@ shapes = {
     "cylinder": {"height": 0.5, "radius": 0.5},
     "ellipsoid": {"radii": (0.5, 0.25, 0.3)},
     "extrudedpolygon": {
-        "listCorners": [
+        "list_corners": [
             (0.5, 0),
             (0.25, 0.44),
             (-0.25, 0.44),
@@ -34,7 +34,7 @@ i = 0
 for shape, param_geom in shapes.items():
     i_x = i % n_col
     i_y = i // n_col
-    elem = newGeometry(
+    elem = new_geometry(
         shape=shape,
         center=(1.2 * (i_x - 0.5 * (n_col - 1)), -1.2 * (i_y - 0.5 * (n_row - 1)), 0),
         orientation=(90, 90, 90),

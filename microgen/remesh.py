@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import overload
@@ -228,38 +227,3 @@ def _remove_unnecessary_fields_from_mesh_file(
 
 def _only_numbers_in_line(line: list[str]) -> bool:
     return all(not flag.isalpha() for flag in line)
-
-
-def remesh_keeping_periodicity_for_fem(
-    input_mesh: BoxMesh | pv.UnstructuredGrid,
-    mesh_version: int = 2,
-    dimension: int = 3,
-    tol: float = 1e-8,
-    hausd: float | None = None,
-    hgrad: float | None = None,
-    hmax: float | None = None,
-    hmin: float | None = None,
-    hsiz: float | None = None,
-) -> BoxMesh | pv.UnstructuredGrid:
-    """See remesh_keeping_boundaries_for_fem.
-
-    Deprecated in favor of remesh_keeping_boundaries_for_fem.
-    """
-    warnings.warn(
-        "remesh_keeping_periodicity_for_fem is deprecated, use remesh_keeping_boundaries_for_fem instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    return remesh_keeping_boundaries_for_fem(
-        input_mesh,
-        periodic=True,
-        mesh_version=mesh_version,
-        dimension=dimension,
-        tol=tol,
-        hausd=hausd,
-        hgrad=hgrad,
-        hmax=hmax,
-        hmin=hmin,
-        hsiz=hsiz,
-    )

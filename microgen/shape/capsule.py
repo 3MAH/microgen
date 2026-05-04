@@ -83,17 +83,3 @@ class Capsule(Shape):
         ).triangulate()
         capsule = cylinder.boolean_union(sphere_left).boolean_union(sphere_right)
         return rotate(capsule, self.center, self.orientation)
-
-    def generateVtk(  # noqa: N802
-        self: Capsule,
-        resolution: int = 100,
-        theta_resolution: int = 50,
-        phi_resolution: int = 50,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk(
-            resolution=resolution,
-            theta_resolution=theta_resolution,
-            phi_resolution=phi_resolution,
-        )

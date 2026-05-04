@@ -34,8 +34,7 @@ def _require_ocp() -> None:
         import OCP  # noqa: F401, PLC0415
     except ImportError as err:
         err_msg = (
-            "This Phase operation requires the CAD extra: "
-            "pip install 'microgen[cad]'"
+            "This Phase operation requires the CAD extra: pip install 'microgen[cad]'"
         )
         raise ImportError(err_msg) from err
 
@@ -97,7 +96,7 @@ class Phase:
     ) -> npt.NDArray[np.float64]:
         """Return the center of 'mass' of the phase.
 
-        :param compute: if False and centerOfMass already exists, \
+        :param compute: if False and center_of_mass already exists, \
             does not compute it (use carefully)
         """
         if isinstance(self._center_of_mass, np.ndarray) and not compute:
@@ -127,7 +126,7 @@ class Phase:
     ) -> npt.NDArray[np.float64]:
         """Calculate the inertia matrix of the phase.
 
-        :param compute: if False and inertiaMatrix already exists, \
+        :param compute: if False and inertia_matrix already exists, \
             does not compute it (use carefully)
         """
         if isinstance(self._inertia_matrix, np.ndarray) and not compute:
@@ -285,7 +284,6 @@ class Phase:
         self: Phase,
         rve: Rve,
         grid: list[int],
-        phasePerRaster: bool | None = None,  # noqa: N803
         *,
         phase_per_raster: bool = True,
     ) -> list[Phase] | None:
@@ -297,14 +295,6 @@ class Phase:
 
         :return: list of Phases if required
         """
-        if phasePerRaster is not None:
-            warnings.warn(
-                "phasePerRaster is deprecated, use phase_per_raster instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            phase_per_raster = phasePerRaster
-
         solids = self.split_solids(rve, grid)
 
         if phase_per_raster:
@@ -345,70 +335,3 @@ class Phase:
             ind = i + grid_arr[0] * j + grid_arr[0] * grid_arr[1] * k
             solids_phases[int(ind)].append(solid)
         return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
-
-    # -- Deprecated camelCase aliases --------------------------------------
-
-    @classmethod
-    def generatePhasePerRaster(  # noqa: N802
-        cls: type[Phase],
-        solidList: list[Any],  # noqa: N803
-        rve: Rve,
-        grid: list[int],
-    ) -> list[Phase]:
-        """See :meth:`generate_phase_per_raster`."""
-        warnings.warn(
-            "generatePhasePerRaster is deprecated, "
-            "use generate_phase_per_raster instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return cls.generate_phase_per_raster(solidList, rve, grid)
-
-    @staticmethod
-    def repeatShape(  # noqa: N802
-        unit_geom: Any,
-        rve: Rve,
-        grid: tuple[int, int, int],
-    ) -> CadShape:
-        """See :meth:`repeat_shape`."""
-        warnings.warn(
-            "repeatShape is deprecated, use repeat_shape instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return Phase.repeat_shape(unit_geom, rve, grid)
-
-    @staticmethod
-    def rescaleShape(  # noqa: N802
-        shape: Any,
-        scale: float | tuple[float, float, float],
-    ) -> CadShape:
-        """See :meth:`rescale_shape`."""
-        warnings.warn(
-            "rescaleShape is deprecated, use rescale_shape instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return Phase.rescale_shape(shape, scale)
-
-    def getCenterOfMass(self: Phase, compute: bool = True) -> np.ndarray:  # noqa: N802, FBT001, FBT002
-        """See :meth:`get_center_of_mass`."""
-        warnings.warn(
-            "centerOfMass is deprecated, use center_of_mass instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.get_center_of_mass(compute=compute)
-
-    centerOfMass = property(getCenterOfMass)  # noqa: N815
-
-    def getInertiaMatrix(self: Phase, compute: bool = True) -> np.ndarray:  # noqa: N802, FBT001, FBT002
-        """See :meth:`get_inertia_matrix`."""
-        warnings.warn(
-            "inertiaMatrix is deprecated, use inertia_matrix instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.get_inertia_matrix(compute=compute)
-
-    inertiaMatrix = property(getInertiaMatrix)  # noqa: N815

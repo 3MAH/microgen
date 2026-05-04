@@ -36,9 +36,9 @@ def test_operations() -> None:
     shape2 = elem.generate()
     microgen.rescale(shape2, 2.0)
 
-    microgen.cutPhaseByShapeList(phaseToCut=phase1, cqShapeList=[shape2])
+    microgen.cut_phase_by_shape_list(phase_to_cut=phase1, shapes=[shape2])
 
-    microgen.cutPhasesByShape(phaseList=[phase1], cut_obj=shape2)
+    microgen.cut_phases_by_shape(phases=[phase1], cut_obj=shape2)
 
     rve = microgen.Rve(dim=1, center=(0.5, 0.5, 0.5))
-    microgen.repeatShape(shape1, rve, grid=(2, 2, 2))
+    microgen.repeat_shape(shape1, rve, grid=(2, 2, 2))

@@ -98,7 +98,7 @@ def new_geometry(  # noqa: PLR0911
         return ExtrudedPolygon(
             center=center,
             orientation=orientation,
-            listCorners=param_geom["listCorners"],
+            list_corners=param_geom["list_corners"],
             height=param_geom["height"],
         )
     if shape.lower() == "capsule":
@@ -144,9 +144,6 @@ class ShapeError(Exception):
         super().__init__(message)
 
 
-# Deprecated
-newGeometry = new_geometry  # noqa: N816
-
 __all__ = [
     "AbstractLattice",
     "BodyCenteredCubic",
@@ -179,6 +176,5 @@ __all__ = [
     "TruncatedCuboctahedron",
     "TruncatedOctahedron",
     "new_geometry",
-    "newGeometry",
     "surface_functions",
 ]

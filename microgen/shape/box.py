@@ -7,7 +7,6 @@ Box (:mod:`microgen.shape.box`)
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
 
 import pyvista as pv
@@ -36,27 +35,10 @@ class Box(Shape):
     def __init__(
         self: Box,
         dim: tuple[float, float, float] = (1, 1, 1),
-        dim_x: float | None = None,
-        dim_y: float | None = None,
-        dim_z: float | None = None,
         **kwargs: Vector3DType,
     ) -> None:
         """Initialize the box."""
         super().__init__(**kwargs)
-        if dim_x is not None or dim_y is not None or dim_z is not None:
-            warnings.warn(
-                "The 'dim_x', 'dim_y', and 'dim_z' parameters are deprecated. \
-                    Use 'dim' instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if dim_x is None:
-                dim_x = dim[0]
-            if dim_y is None:
-                dim_y = dim[1]
-            if dim_z is None:
-                dim_z = dim[2]
-            self.dim = (dim_x, dim_y, dim_z)
         self.dim = dim
 
     def generate(self: Box, **_: KwargsGenerateType) -> CadShape:
@@ -85,7 +67,3 @@ class Box(Shape):
             quads=True,
         )
         return rotate(box, self.center, self.orientation)
-
-    def generateVtk(self: Box, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk(**kwargs)

@@ -1,4 +1,4 @@
-"""Tests for the meshPeriodic function."""
+"""Tests for the mesh_periodic function."""
 
 from __future__ import annotations
 
@@ -18,11 +18,11 @@ from microgen import (
     Cylinder,
     Phase,
     Rve,
-    cutPhases,
-    fuseShapes,
+    cut_phases,
+    fuse_shapes,
     is_periodic,
-    meshPeriodic,
-    periodic,
+    mesh_periodic,
+    periodic_split_and_translate,
 )
 from microgen.cad import CadShape, make_compound_from_solids
 
@@ -97,7 +97,9 @@ def _generate_cqcompound_octettruss(rve: Rve) -> list[Phase]:
         phase = Phase(shape=elem.generate())
         phases.append(phase)
 
-    return [periodic(phase=phase_elem, rve=rve) for phase_elem in phases]
+    return [
+        periodic_split_and_translate(phase=phase_elem, rve=rve) for phase_elem in phases
+    ]
 
 
 @pytest.fixture()
@@ -146,7 +148,7 @@ def octet_truss_homogeneous_unit(
 ) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous unit octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
-    merged = fuseShapes(
+    merged = fuse_shapes(
         [phase.shape for phase in list_periodic_phases],
         retain_edges=False,
     )
@@ -160,7 +162,7 @@ def octet_truss_homogeneous_double_centered(
 ) -> tuple[CadShape, list[Phase], Rve]:
     """Return a homogeneous double centered octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_double_centered)
-    merged = fuseShapes(
+    merged = fuse_shapes(
         [phase.shape for phase in list_periodic_phases],
         retain_edges=False,
     )
@@ -174,7 +176,7 @@ def octet_truss_heterogeneous(
 ) -> tuple[CadShape, list[Phase], Rve]:
     """Return a heterogeneous octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
-    listcqphases = cutPhases(phaseList=list_periodic_phases, reverseOrder=False)
+    listcqphases = cut_phases(phases=list_periodic_phases, reverse_order=False)
     return (
         make_compound_from_solids([phase.shape.wrapped for phase in listcqphases]),
         listcqphases,
@@ -204,10 +206,10 @@ def test_octettruss_mesh_must_be_periodic(
     cqoctet, listcqphases, rve = request.getfixturevalue(shape)
 
     cqoctet.export_step(tmp_output_compound_filename)
-    meshPeriodic(
+    mesh_periodic(
         mesh_file=tmp_output_compound_filename,
         rve=rve,
-        listPhases=listcqphases,
+        list_phases=listcqphases,
         size=0.03,
         order=1,
         output_file=tmp_output_vtk_filename,

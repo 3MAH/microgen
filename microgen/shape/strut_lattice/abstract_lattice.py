@@ -331,7 +331,7 @@ class AbstractLattice(Shape):
                     output_file=mesh_file.name,
                 )
 
-            vtk_lattice = pv.read(mesh_file.name).extract_surface()
+            vtk_lattice = pv.read(mesh_file.name).extract_surface(algorithm=None)
 
         # Solve compatibility issues of NamedTemporaryFiles with Windows
         trash_files_list = [
@@ -342,18 +342,3 @@ class AbstractLattice(Shape):
             Path(file).unlink()
 
         return vtk_lattice
-
-    def generateVtk(  # noqa: N802
-        self,
-        size: float = 0.02,
-        order: int = 1,
-        periodic: bool = True,
-        **kwargs: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk(
-            size=size,
-            order=order,
-            periodic=periodic,
-            **kwargs,
-        )

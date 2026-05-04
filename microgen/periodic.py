@@ -346,13 +346,3 @@ def periodic_split_and_translate(phase: Phase, rve: Rve) -> Phase:
     to_fuse = [CadShape(s) for s in all_solids]
     fused = fuse_shapes(to_fuse, retain_edges=False)
     return Phase(shape=fused)
-
-
-def periodic(phase: Phase, rve: Rve) -> Phase:
-    """See :func:`periodic_split_and_translate`.  Deprecated alias."""
-    warnings.warn(
-        "periodic is deprecated, use periodic_split_and_translate instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return periodic_split_and_translate(phase, rve)

@@ -27,7 +27,7 @@ compound.export_step(step_file)
 vtk_file = str(Path(__file__).parent / "Gyroid-voro.vtk")
 mesh(
     mesh_file=step_file,
-    listPhases=phases,
+    list_phases=phases,
     size=0.05,
     order=1,
     output_file=vtk_file,

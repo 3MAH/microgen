@@ -100,7 +100,7 @@ Extruded Polygon
 
    polygon = microgen.ExtrudedPolygon(
        center=(0, 0, 0),
-       listCorners=corners,
+       list_corners=corners,
        height=0.5,
        orientation=(0, 0, 0)
    )

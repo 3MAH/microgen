@@ -217,10 +217,6 @@ class Shape:
             )
             raise ShellCreationError(err_msg) from err
 
-    def generateVtk(self: Shape, **kwargs: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""  # noqa: D401
-        return self.generate_vtk(**kwargs)
-
     # ------------------------------------------------------------------
     # Boolean operators (on implicit field)
     # ------------------------------------------------------------------

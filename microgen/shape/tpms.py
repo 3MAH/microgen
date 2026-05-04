@@ -100,20 +100,20 @@ class Tpms(Shape):
 
     functions available :
         - :class:`~microgen.shape.surface_functions.gyroid`
-        - :class:`~microgen.shape.surface_functions.schwarzP`
-        - :class:`~microgen.shape.surface_functions.schwarzD`
+        - :class:`~microgen.shape.surface_functions.schwarz_p`
+        - :class:`~microgen.shape.surface_functions.schwarz_d`
         - :class:`~microgen.shape.surface_functions.neovius`
-        - :class:`~microgen.shape.surface_functions.schoenIWP`
-        - :class:`~microgen.shape.surface_functions.schoenFRD`
-        - :class:`~microgen.shape.surface_functions.fischerKochS`
+        - :class:`~microgen.shape.surface_functions.schoen_iwp`
+        - :class:`~microgen.shape.surface_functions.schoen_frd`
+        - :class:`~microgen.shape.surface_functions.fischer_koch_s`
         - :class:`~microgen.shape.surface_functions.pmy`
         - :class:`~microgen.shape.surface_functions.honeycomb`
         - :class:`~microgen.shape.surface_functions.lidinoid`
         - :class:`~microgen.shape.surface_functions.split_p`
         - :class:`~microgen.shape.surface_functions.honeycomb_gyroid`
-        - :class:`~microgen.shape.surface_functions.honeycomb_schwarzP`
-        - :class:`~microgen.shape.surface_functions.honeycomb_schwarzD`
-        - :class:`~microgen.shape.surface_functions.honeycomb_schoenIWP`
+        - :class:`~microgen.shape.surface_functions.honeycomb_schwarz_p`
+        - :class:`~microgen.shape.surface_functions.honeycomb_schwarz_d`
+        - :class:`~microgen.shape.surface_functions.honeycomb_schoen_iwp`
         - :class:`~microgen.shape.surface_functions.honeycomb_lidinoid`
     """
 
@@ -394,17 +394,25 @@ class Tpms(Shape):
     @property
     def sheet(self: Tpms) -> pv.PolyData:
         """Return sheet part."""
-        return self.grid_sheet.extract_surface().clean().triangulate()
+        return self.grid_sheet.extract_surface(algorithm=None).clean().triangulate()
 
     @property
     def upper_skeletal(self: Tpms) -> pv.PolyData:
         """Return upper skeletal part."""
-        return self.grid_upper_skeletal.extract_surface().clean().triangulate()
+        return (
+            self.grid_upper_skeletal.extract_surface(algorithm=None)
+            .clean()
+            .triangulate()
+        )
 
     @property
     def lower_skeletal(self: Tpms) -> pv.PolyData:
         """Return lower skeletal part."""
-        return self.grid_lower_skeletal.extract_surface().clean().triangulate()
+        return (
+            self.grid_lower_skeletal.extract_surface(algorithm=None)
+            .clean()
+            .triangulate()
+        )
 
     @property
     def skeletals(self: Tpms) -> tuple[pv.PolyData, pv.PolyData]:
@@ -888,7 +896,7 @@ class Tpms(Shape):
         """
         return (
             pv.Box(bounds=self._bounds, level=0, quads=False)
-            .extract_surface()
+            .extract_surface(algorithm=None)
             .clean()
             .triangulate()
         )
@@ -956,7 +964,7 @@ class Tpms(Shape):
             # Take the *unrotated* periodic structured-grid mesh so we can
             # apply orientation+center once on the OCCT shell at the end.
             grid_attr = f"grid_{type_part.replace(' ', '_')}"
-            mesh = getattr(self, grid_attr).extract_surface()
+            mesh = getattr(self, grid_attr).extract_surface(algorithm=None)
             if getattr(self, "_uses_parametric_grid", False):
                 seam_tol = min(
                     5e-3,
@@ -1112,7 +1120,7 @@ class Tpms(Shape):
         # because MC chooses isosurface-edge intersections per voxel without
         # enforcing periodic alignment.
         grid_attr = f"grid_{type_part.replace(' ', '_')}"
-        polydata = getattr(self, grid_attr).extract_surface()
+        polydata = getattr(self, grid_attr).extract_surface(algorithm=None)
 
         if getattr(self, "_uses_parametric_grid", False):
             # CylindricalTpms / SphericalTpms / Sweep have an angular seam
@@ -1156,18 +1164,6 @@ class Tpms(Shape):
             )
 
         return getattr(self, f"grid_{type_part.replace(' ', '_')}")
-
-    def generateVtk(  # noqa: N802
-        self: Tpms,
-        type_part: TpmsPartType = "sheet",
-        algo_resolution: int | None = None,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Deprecated. Use :meth:`generate_vtk` instead."""
-        return self.generate_vtk(
-            type_part=type_part,
-            algo_resolution=algo_resolution,
-        )
 
 
 class CylindricalTpms(Tpms):

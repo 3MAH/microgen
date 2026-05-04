@@ -2,7 +2,14 @@ from pathlib import Path
 
 import numpy as np
 
-from microgen import Cylinder, Phase, Rve, cutPhases, meshPeriodic, periodic
+from microgen import (
+    Cylinder,
+    Phase,
+    Rve,
+    cut_phases,
+    mesh_periodic,
+    periodic_split_and_translate,
+)
 from microgen.cad import make_compound
 
 # ----------LOADTXT------------------------------------------------------------------------------------------#
@@ -52,7 +59,7 @@ radius = DATA[9]
 # sections = read_sections(path_data,section_file)
 
 rve = Rve(dim=1)
-listPhases = []
+list_phases = []
 listPeriodicPhases = []
 
 n = len(xc)
@@ -64,13 +71,13 @@ for i in range(0, n):
         height=height[i],
         radius=radius[i],
     )
-    listPhases.append(Phase(shape=elem.generate()))
+    list_phases.append(Phase(shape=elem.generate()))
 
-for phase_elem in listPhases:
-    periodicPhase = periodic(phase=phase_elem, rve=rve)
+for phase_elem in list_phases:
+    periodicPhase = periodic_split_and_translate(phase=phase_elem, rve=rve)
     listPeriodicPhases.append(periodicPhase)
 
-phases_cut = cutPhases(phaseList=listPeriodicPhases, reverseOrder=False)
+phases_cut = cut_phases(phases=listPeriodicPhases, reverse_order=False)
 compound = make_compound([phase.shape for phase in phases_cut])
 
 step_file = str(Path(__file__).parent / "octettruss.step")
@@ -79,10 +86,10 @@ compound.export_step(step_file)
 compound.export_stl(stl_file)
 
 vtk_file = str(Path(__file__).parent / "octettruss.vtk")
-meshPeriodic(
+mesh_periodic(
     mesh_file=step_file,
     rve=rve,
-    listPhases=phases_cut,
+    list_phases=phases_cut,
     order=1,
     size=0.03,
     output_file=vtk_file,

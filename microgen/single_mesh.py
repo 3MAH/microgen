@@ -149,7 +149,7 @@ class SingleMesh:
         if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._pvmesh = self.to_pyvista()
 
-        return self._pvmesh.extract_surface()
+        return self._pvmesh.extract_surface(algorithm=None)
 
 
 def check_if_only_linear_tetrahedral(pvmesh: pv.UnstructuredGrid) -> None:

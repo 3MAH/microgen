@@ -150,9 +150,9 @@ def _check_triangle_on_boundary(
     triangle = surface_mesh.get_cell(triangle_index)
     triangle_nodes_coords = triangle.points.tolist()
     rve_boundaries = [
-        (rve.x_min, rve.x_max),
-        (rve.y_min, rve.y_max),
-        (rve.z_min, rve.z_max),
+        (rve.min_point[0], rve.max_point[0]),
+        (rve.min_point[1], rve.max_point[1]),
+        (rve.min_point[2], rve.max_point[2]),
     ]
     for i, rve_axis_min_max in enumerate(rve_boundaries):
         for rve_axis_boundary in rve_axis_min_max:
