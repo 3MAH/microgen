@@ -22,7 +22,7 @@ Dependencies:
 
 from pathlib import Path
 from microgen import Tpms, Phase, mesh_periodic, Rve
-from microgen.remesh import remesh_keeping_boundaries_for_fem
+from microgen.remesh import MmgOptions, remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
 import pyvista as pv
 
@@ -62,7 +62,7 @@ max_element_edge_length = 0.02
 remeshed_gyroid = remesh_keeping_boundaries_for_fem(
     initial_gyroid,
     periodic=True,
-    hmax=max_element_edge_length,
+    options=MmgOptions(hmax=max_element_edge_length),
 )
 remeshed_vtk_file = str(Path(__file__).parent / "remeshed_gyroid_mesh.vtk")
 # remeshed_gyroid.save(remeshed_vtk_file)

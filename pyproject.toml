@@ -90,7 +90,6 @@ exclude = [
     "tests/*",
     "microgen/external.py",
     "microgen/mesh.py",
-    "microgen/remesh.py",
     "examples/*",
 ] # external = ["E131", "D102", "D105"]
 select = ["ALL"]
