@@ -15,7 +15,9 @@ from .abstract_lattice import AbstractLattice
 
 class Cubic(AbstractLattice):
     """
-    Class to create a unit cubic lattice of given cell size and density or strut radius.
+    Class to create a unit cubic lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:

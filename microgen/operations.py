@@ -72,7 +72,8 @@ def rotate_euler(
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in degrees or scipy Rotation object
+    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in
+        degrees, or a scipy ``Rotation`` object
 
     :return: Rotated object
     """
@@ -92,7 +93,8 @@ def rotate_pv_euler(
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
-    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in degrees or scipy Rotation object
+    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in
+        degrees, or a scipy ``Rotation`` object
 
     :return: Rotated object
     """

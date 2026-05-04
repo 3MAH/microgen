@@ -631,13 +631,13 @@ class Tpms(Shape):
         return intersection(self.as_sheet(), self._cell_box())
 
     def _clipped_upper_skeletal(self: Tpms) -> Shape:
-        """Upper skeletal F-rep clipped to the cell box (closed under marching cubes)."""
+        """Clip the upper skeletal F-rep to the cell box (MC-closed)."""
         from .implicit_ops import intersection
 
         return intersection(self.as_upper_skeletal(), self._cell_box())
 
     def _clipped_lower_skeletal(self: Tpms) -> Shape:
-        """Lower skeletal F-rep clipped to the cell box (closed under marching cubes)."""
+        """Clip the lower skeletal F-rep to the cell box (MC-closed)."""
         from .implicit_ops import intersection
 
         return intersection(self.as_lower_skeletal(), self._cell_box())

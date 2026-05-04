@@ -15,7 +15,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 class OctetTruss(AbstractLattice):
     """
-    Class to create a unit octet-truss lattice of given cell size and density or strut radius
+    Class to create a unit octet-truss lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -49,7 +51,7 @@ class OctetTruss(AbstractLattice):
         return np.array(cube_vertices + face_centers)
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
-        """Generate index pairs representing the struts in the octet-truss using KDTree."""
+        """Generate octet-truss strut index pairs (via KDTree)."""
         tree = KDTree(self.base_vertices)
         pairs = set()
 

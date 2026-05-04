@@ -15,7 +15,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 class Cuboctahedron(AbstractLattice):
     """
-    Class to create a unit cuboctahedron lattice of given cell size and density or strut radius
+    Class to create a unit cuboctahedron lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:

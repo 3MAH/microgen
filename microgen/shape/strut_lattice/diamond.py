@@ -15,7 +15,9 @@ from .abstract_lattice import AbstractLattice
 
 class Diamond(AbstractLattice):
     """
-    Class to create a unit diamond lattice of given cell size and density or strut radius
+    Class to create a unit diamond lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
