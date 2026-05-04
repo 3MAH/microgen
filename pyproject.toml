@@ -91,7 +91,10 @@ exclude = [
     "examples/*",
 ] # external = ["E131", "D102", "D105"]
 select = ["ALL"]
-ignore = ["E501", "S101", "ANN101", "ANN102", "ANN003"]
+ignore = ["E501", "ANN003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # `assert` is the standard pytest idiom
 
 [tool.ruff.format]
 docstring-code-format = true
