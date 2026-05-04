@@ -171,7 +171,7 @@ class Shape:
         polydata = polydata.clean().triangulate()
 
         polydata = rotate_mesh(polydata, center=(0, 0, 0), rotation=self.orientation)
-        return polydata.translate(xyz=self.center)
+        return polydata.translate(self.center)
 
     def generate(
         self: Shape,

@@ -181,6 +181,8 @@ def cut_phases_by_shape(phases: list[Phase], cut_obj: CadShape) -> list[Phase]:
     phase_cut: list[Phase] = []
 
     for phase in phases:
+        if phase.shape is None:
+            continue
         cut = CadShape(BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped).Shape())
         if len(cut.Solids()) > 0:
             phase_cut.append(Phase(shape=cut))
@@ -201,6 +203,9 @@ def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[CadShape]) -> Phas
     from .phase import Phase  # noqa: PLC0415
 
     result = phase_to_cut.shape
+    if result is None:
+        err_msg = "phase_to_cut has no shape to cut"
+        raise ValueError(err_msg)
     for shape in shapes:
         result = CadShape(BRepAlgoAPI_Cut(result.wrapped, shape.wrapped).Shape())
     return Phase(shape=result)

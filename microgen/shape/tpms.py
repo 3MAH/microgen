@@ -26,7 +26,7 @@ from scipy.optimize import root_scalar
 
 from microgen.operations import fuse_shapes, rotate
 
-from .shape import Shape
+from .shape import BoundsType, Shape, ShellCreationError
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
@@ -2310,9 +2310,6 @@ class GradedInfill(Infill):
 
         return _graded_offset
 
-
-# Re-export for backward compatibility
-from .shape import BoundsType, ShellCreationError  # noqa: E402
 
 __all__ = [
     "CylindricalTpms",

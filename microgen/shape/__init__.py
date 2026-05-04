@@ -19,7 +19,6 @@ Shape (:mod:`microgen.shape`)
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Literal
 
 from . import implicit_ops, surface_functions
@@ -28,8 +27,8 @@ from .capsule import Capsule
 from .cylinder import Cylinder
 from .ellipsoid import Ellipsoid
 from .extruded_polygon import ExtrudedPolygon
-from .polyhedron import Polyhedron
 from .implicit_ops import batch_smooth_union, from_field
+from .polyhedron import Polyhedron
 from .shape import Shape
 from .sphere import Sphere
 from .strut_lattice import (
@@ -53,6 +52,8 @@ from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
 from .tpms_grading import NormedDistance
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     Vector3DType = tuple[float, float, float] | Sequence[float]
 
     TpmsPartType = Literal["sheet", "lower skeletal", "upper skeletal", "surface"]
@@ -68,7 +69,39 @@ if TYPE_CHECKING:
     )
 
 
-def new_geometry(  # noqa: PLR0911
+_SHAPE_FACTORIES: dict[str, Callable[..., Shape]] = {
+    "box": lambda center, orientation, p: Box(
+        center=center, orientation=orientation, dim=p["dim"],
+    ),
+    "cylinder": lambda center, orientation, p: Cylinder(
+        center=center, orientation=orientation,
+        height=p["height"], radius=p["radius"],
+    ),
+    "extrudedpolygon": lambda center, orientation, p: ExtrudedPolygon(
+        center=center, orientation=orientation,
+        list_corners=p["list_corners"], height=p["height"],
+    ),
+    "capsule": lambda center, orientation, p: Capsule(
+        center=center, orientation=orientation,
+        height=p["height"], radius=p["radius"],
+    ),
+    "sphere": lambda center, _orientation, p: Sphere(
+        center=center, radius=p["radius"],
+    ),
+    "ellipsoid": lambda center, orientation, p: Ellipsoid(
+        center=center, orientation=orientation, radii=p["radii"],
+    ),
+    "tpms": lambda center, orientation, p: Tpms(
+        center=center, orientation=orientation,
+        surface_function=p["surface_function"],
+        offset=p["offset"], cell_size=p["cell_size"],
+        repeat_cell=p["repeat_cell"], resolution=p["resolution"],
+    ),
+    "polyhedron": lambda _center, _orientation, p: Polyhedron(dic=p["dic"]),
+}
+
+
+def new_geometry(
     shape: str,
     param_geom: dict[str, GeometryParameterType],
     center: tuple[float, float, float] = (0, 0, 0),
@@ -83,55 +116,10 @@ def new_geometry(  # noqa: PLR0911
 
     :return geometry: Shape
     """
-    if shape.lower() == "box":
-        return Box(
-            center=center,
-            orientation=orientation,
-            dim=param_geom["dim"],
-        )
-    if shape.lower() == "cylinder":
-        return Cylinder(
-            center=center,
-            orientation=orientation,
-            height=param_geom["height"],
-            radius=param_geom["radius"],
-        )
-    if shape.lower() == "extrudedpolygon":
-        return ExtrudedPolygon(
-            center=center,
-            orientation=orientation,
-            list_corners=param_geom["list_corners"],
-            height=param_geom["height"],
-        )
-    if shape.lower() == "capsule":
-        return Capsule(
-            center=center,
-            orientation=orientation,
-            height=param_geom["height"],
-            radius=param_geom["radius"],
-        )
-    if shape.lower() == "sphere":
-        return Sphere(center=center, radius=param_geom["radius"])
-    if shape.lower() == "ellipsoid":
-        return Ellipsoid(
-            center=center,
-            orientation=orientation,
-            radii=param_geom["radii"],
-        )
-    if shape.lower() == "tpms":
-        return Tpms(
-            center=center,
-            orientation=orientation,
-            surface_function=param_geom["surface_function"],
-            offset=param_geom["offset"],
-            cell_size=param_geom["cell_size"],
-            repeat_cell=param_geom["repeat_cell"],
-            resolution=param_geom["resolution"],
-        )
-    if shape.lower() == "polyhedron":
-        return Polyhedron(dic=param_geom["dic"])
-
-    raise ShapeError(shape)
+    factory = _SHAPE_FACTORIES.get(shape.lower())
+    if factory is None:
+        raise ShapeError(shape)
+    return factory(center, orientation, param_geom)
 
 
 class ShapeError(Exception):
@@ -154,16 +142,13 @@ __all__ = [
     "Cubic",
     "Cuboctahedron",
     "CustomLattice",
-    "CylindricalTpms",
     "Cylinder",
+    "CylindricalTpms",
     "Diamond",
     "Ellipsoid",
     "ExtrudedPolygon",
     "FaceCenteredCubic",
     "Infill",
-    "batch_smooth_union",
-    "from_field",
-    "implicit_ops",
     "NormedDistance",
     "Octahedron",
     "OctetTruss",
@@ -171,13 +156,16 @@ __all__ = [
     "RhombicCuboctahedron",
     "RhombicDodecahedron",
     "Shape",
-    "SphericalTpms",
     "Sphere",
+    "SphericalTpms",
     "Spinodoid",
     "Tpms",
     "TruncatedCube",
     "TruncatedCuboctahedron",
     "TruncatedOctahedron",
+    "batch_smooth_union",
+    "from_field",
+    "implicit_ops",
     "new_geometry",
     "surface_functions",
 ]

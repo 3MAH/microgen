@@ -119,6 +119,10 @@ class Phase:
         from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
         from OCP.GProp import GProp_GProps  # noqa: PLC0415
 
+        if self.shape is None:
+            err_msg = "Cannot compute center of mass on an empty phase"
+            raise ValueError(err_msg)
+
         properties = GProp_GProps()
         BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
 
@@ -148,6 +152,10 @@ class Phase:
         _require_ocp()
         from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
         from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
+        if self.shape is None:
+            err_msg = "Cannot compute inertia matrix on an empty phase"
+            raise ValueError(err_msg)
 
         properties = GProp_GProps()
         BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
