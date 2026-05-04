@@ -107,13 +107,12 @@ class Phase:
         """
         if isinstance(self._center_of_mass, np.ndarray) and not compute:
             return self._center_of_mass
-
-        self._compute_center_of_mass()
+        self._center_of_mass = self._compute_center_of_mass()
         return self._center_of_mass
 
     center_of_mass = property(get_center_of_mass)
 
-    def _compute_center_of_mass(self: Phase) -> None:
+    def _compute_center_of_mass(self: Phase) -> npt.NDArray[np.float64]:
         """Calculate the center of 'mass' of the phase."""
         _require_ocp()
         from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
@@ -127,7 +126,7 @@ class Phase:
         BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
 
         com = properties.CentreOfMass()
-        self._center_of_mass = np.array([com.X(), com.Y(), com.Z()])
+        return np.array([com.X(), com.Y(), com.Z()])
 
     def get_inertia_matrix(
         self: Phase,
@@ -141,13 +140,12 @@ class Phase:
         """
         if isinstance(self._inertia_matrix, np.ndarray) and not compute:
             return self._inertia_matrix
-
-        self._compute_inertia_matrix()
+        self._inertia_matrix = self._compute_inertia_matrix()
         return self._inertia_matrix
 
     inertia_matrix = property(get_inertia_matrix)
 
-    def _compute_inertia_matrix(self: Phase) -> None:
+    def _compute_inertia_matrix(self: Phase) -> npt.NDArray[np.float64]:
         """Calculate the inertia matrix of the phase."""
         _require_ocp()
         from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
@@ -161,7 +159,7 @@ class Phase:
         BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
 
         inm = properties.MatrixOfInertia()
-        self._inertia_matrix = np.array(
+        return np.array(
             [
                 [inm.Value(1, 1), inm.Value(1, 2), inm.Value(1, 3)],
                 [inm.Value(2, 1), inm.Value(2, 2), inm.Value(2, 3)],
@@ -199,7 +197,7 @@ class Phase:
             err_msg = "Cannot translate a phase with no shape"
             raise ValueError(err_msg)
         self._shape = self._shape.translate(vec)
-        self._compute_center_of_mass()
+        self._center_of_mass = self._compute_center_of_mass()
 
     @staticmethod
     def rescale_shape(

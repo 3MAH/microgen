@@ -8,7 +8,7 @@ install.  Functions that use OCCT raise a clear ``ImportError`` (via
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -26,6 +26,22 @@ if TYPE_CHECKING:
     from .rve import Rve
 
     Rotatable = CadShape | pv.PolyData
+
+
+@overload
+def rotate(
+    obj: CadShape,
+    center: npt.NDArray[np.float64] | Sequence[float],
+    rotation: Rotation,
+) -> CadShape: ...
+
+
+@overload
+def rotate(
+    obj: pv.PolyData,
+    center: npt.NDArray[np.float64] | Sequence[float],
+    rotation: Rotation,
+) -> pv.PolyData: ...
 
 
 def rotate(
@@ -59,6 +75,22 @@ def rotate(
 
     err_msg = f"rotate(): object type {type(obj).__name__} not supported."
     raise ValueError(err_msg)
+
+
+@overload
+def rotate_euler(
+    obj: CadShape,
+    center: npt.NDArray[np.float64] | Sequence[float],
+    angles_or_rotation: Sequence[float] | Rotation,
+) -> CadShape: ...
+
+
+@overload
+def rotate_euler(
+    obj: pv.PolyData,
+    center: npt.NDArray[np.float64] | Sequence[float],
+    angles_or_rotation: Sequence[float] | Rotation,
+) -> pv.PolyData: ...
 
 
 def rotate_euler(
