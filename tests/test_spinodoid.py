@@ -92,7 +92,9 @@ def test_spinodoid_seed_reproducibility() -> None:
     sp_c = Spinodoid(k0=15.0, bandwidth=3.0, resolution=12, density=0.5, seed=99)
     np.testing.assert_array_equal(sp_a._frep.modes, sp_b._frep.modes)
     np.testing.assert_array_equal(sp_a._frep.amplitudes, sp_b._frep.amplitudes)
-    assert not np.array_equal(sp_a._frep.modes, sp_c._frep.modes) or len(sp_a._frep.modes) != len(sp_c._frep.modes)
+    assert not np.array_equal(sp_a._frep.modes, sp_c._frep.modes) or len(
+        sp_a._frep.modes
+    ) != len(sp_c._frep.modes)
 
 
 # ---------------------------------------------------------------------------
@@ -161,8 +163,13 @@ def test_spinodoid_grid_has_cap_endpoints() -> None:
 def test_spinodoid_repeat_cell_tiling() -> None:
     """repeat_cell extends the grid bbox to repeat_cell × cell_size."""
     sp = Spinodoid(
-        k0=15.0, bandwidth=3.0, resolution=8, density=0.5,
-        cell_size=1.0, repeat_cell=2, seed=0,
+        k0=15.0,
+        bandwidth=3.0,
+        resolution=8,
+        density=0.5,
+        cell_size=1.0,
+        repeat_cell=2,
+        seed=0,
     )
     bounds = sp.grid.bounds
     assert bounds[1] == 2.0
@@ -182,7 +189,9 @@ def test_spinodoid_frep_boolean_op_with_implicit_sphere() -> None:
     sp = Spinodoid(k0=15.0, bandwidth=3.0, resolution=12, density=0.5, seed=0)
 
     def sphere_sdf(
-        x: np.ndarray, y: np.ndarray, z: np.ndarray,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
     ) -> np.ndarray:
         return np.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2 + (z - 0.5) ** 2) - 0.3
 
@@ -193,5 +202,3 @@ def test_spinodoid_frep_boolean_op_with_implicit_sphere() -> None:
     pts = np.array([[0.5, 0.5, 0.5]])
     val = intersected._func(pts[:, 0], pts[:, 1], pts[:, 2])
     assert val.shape == (1,)
-
-

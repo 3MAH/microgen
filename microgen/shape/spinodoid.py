@@ -102,7 +102,9 @@ class Spinodoid(Shape):
         super().__init__(center=center, orientation=orientation, **kwargs)
 
         if offset is not None and density is not None:
-            err_msg = "offset and density cannot be given at the same time. Give only one."
+            err_msg = (
+                "offset and density cannot be given at the same time. Give only one."
+            )
             raise ValueError(err_msg)
         if offset is None and density is None:
             err_msg = "offset or density must be given. Give one of them."
@@ -134,7 +136,8 @@ class Spinodoid(Shape):
 
         if isinstance(repeat_cell, int):
             self.repeat_cell = np.array(
-                [repeat_cell, repeat_cell, repeat_cell], dtype=int,
+                [repeat_cell, repeat_cell, repeat_cell],
+                dtype=int,
             )
         elif len(repeat_cell) == 3:
             self.repeat_cell = np.asarray(repeat_cell, dtype=int)
@@ -158,7 +161,9 @@ class Spinodoid(Shape):
             self._frep.threshold = self.offset
         else:
             self._frep.threshold = compute_threshold_for_porosity(
-                self._frep, porosity=self.density, seed=self.seed,
+                self._frep,
+                porosity=self.density,
+                seed=self.seed,
             )
 
         # Shape uses "negative = inside"; _frep.evaluate is positive inside, so flip the sign.
