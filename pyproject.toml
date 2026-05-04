@@ -1,6 +1,6 @@
 [project]
 name = "microgen"
-version = "2.0.0.dev0"
+version = "2.0.0.dev1"
 authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation and meshing"
 readme = "README.md"
@@ -23,7 +23,7 @@ classifiers = [
 # (``.generate()`` → OCCT ``TopoDS_Shape``) requires the ``[cad]`` extra.
 dependencies = [
     "numpy",
-    "pyvista",
+    "pyvista>=0.46",
     "gmsh",
     "meshio",
     "scipy",
