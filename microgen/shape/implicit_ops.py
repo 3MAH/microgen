@@ -311,8 +311,9 @@ def blend(
     fa, fb = a.require_func(), b.require_func()
     t = factor
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb, _t=t: (1.0 - _t) * _fa(x, y, z)
-        + _t * _fb(x, y, z),
+        func=lambda x, y, z, _fa=fa, _fb=fb, _t=t: (
+            (1.0 - _t) * _fa(x, y, z) + _t * _fb(x, y, z)
+        ),
         bounds=_merge_bounds(a.bounds, b.bounds, "union"),
     )
 
