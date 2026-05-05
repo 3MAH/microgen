@@ -316,8 +316,11 @@ def _snap_to_expected_bounds(
         snap_max = np.abs(col - expected_max[axis]) <= tol
         col[snap_min] = expected_min[axis]
         col[snap_max] = expected_max[axis]
-        col[col < expected_min[axis]] = expected_min[axis] + interior_offset
-        col[col > expected_max[axis]] = expected_max[axis] - interior_offset
+        max_drift = tol * 100.0
+        below = (col < expected_min[axis]) & (col >= expected_min[axis] - max_drift)
+        above = (col > expected_max[axis]) & (col <= expected_max[axis] + max_drift)
+        col[below] = expected_min[axis] + interior_offset
+        col[above] = expected_max[axis] - interior_offset
         points[:, axis] = col
     mesh.points = points
 
