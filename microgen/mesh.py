@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Iterator
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import gmsh
 import numpy as np

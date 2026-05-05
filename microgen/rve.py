@@ -7,7 +7,8 @@ extra (``cadquery-ocp-novtk``).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Tuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -16,7 +17,7 @@ _DIM = 3
 if TYPE_CHECKING:
     from .cad import CadShape
 
-    Vector3DType = Tuple[float, float, float] | Sequence[float]
+    Vector3DType = tuple[float, float, float] | Sequence[float]
 
 
 class Rve:

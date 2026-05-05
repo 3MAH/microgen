@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pyvista as pv
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
-Vertex = Tuple[float, float, float]
-Face = Dict[str, List[int]]
+Vertex = tuple[float, float, float]
+Face = dict[str, list[int]]
 
 
 class Polyhedron(Shape):

@@ -86,9 +86,9 @@ def test_lattice_generate_vtk_periodic_must_produce_periodic_mesh() -> None:
     lattice = OctetTruss(strut_radius=0.05, cell_size=1.0)
     mesh = lattice.generate_vtk(size=0.1, periodic=True)
 
-    assert is_periodic(
-        mesh.points
-    ), "Mesh generated with periodic=True must be periodic"
+    assert is_periodic(mesh.points), (
+        "Mesh generated with periodic=True must be periodic"
+    )
 
 
 def test_lattice_generate_vtk_must_not_reuse_non_periodic_mesh_for_periodic_request() -> (

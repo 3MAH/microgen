@@ -1,0 +1,67 @@
+{
+  "title": "microgen: microstructure generation and meshing",
+  "description": "microgen is a Python library for the generation and meshing of microstructures, including repeated cells, strut-based and TPMS lattices, virtual composite microstructures, and 3D Voronoi tessellations.",
+  "license": "GPL-3.0-only",
+  "upload_type": "software",
+  "access_right": "open",
+  "keywords": [
+    "microstructure",
+    "lattice",
+    "periodic",
+    "TPMS",
+    "mesh",
+    "F-rep",
+    "Voronoi"
+  ],
+  "creators": [
+    {
+      "name": "Marchais, Kevin",
+      "affiliation": "Hivelix",
+      "orcid": "0000-0001-8842-6329"
+    },
+    {
+      "name": "Chemisky, Yves",
+      "affiliation": "Université Grenoble Alpes - laboratoire TIMC"
+    },
+    {
+      "name": "Legerstee, Yasmin",
+      "affiliation": "Université de Bordeaux - laboratoire I2M",
+      "orcid": "0009-0001-5249-2882"
+    },
+    {
+      "name": "Guevara Garban, Manuel Ricardo",
+      "affiliation": "Université de Bordeaux - laboratoire I2M / TU Bergakademie Freiberg",
+      "orcid": "0009-0007-8208-3020",
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Le Barbenchon, Louise",
+      "affiliation": "CNRS - laboratoire I2M",
+      "orcid": "0000-0002-5631-248X",
+      "type": "ProjectMember"
+    },
+    {
+      "name": "Haffar, Karim",
+      "affiliation": "Université Grenoble Alpes - laboratoire TIMC",
+      "type": "ProjectMember"
+    },
+    {
+      "name": "d'Esparbès, Romain",
+      "affiliation": "GEOSAT 3D",
+      "type": "ProjectMember"
+    },
+    {
+      "name": "Sahoo, Sudeep Kumar",
+      "affiliation": "Titan Company Limited",
+      "type": "ProjectMember"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/3MAH/microgen",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

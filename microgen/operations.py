@@ -8,7 +8,8 @@ install.  Functions that use OCCT raise a clear ``ImportError`` (via
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Any, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt

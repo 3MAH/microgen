@@ -7,7 +7,8 @@ Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
 import numpy as np
 import pyvista as pv
