@@ -7,9 +7,19 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import overload
 
+import numpy as np
+import numpy.typing as npt
 import pyvista as pv
 
 from microgen import BoxMesh, Mmg, is_periodic
+from microgen.external import MmgError
+
+# mmg3d's iso-zero adaptation (`-ls 0`) is non-deterministic on the metric .sol
+# left by the first pass and can produce a non-periodic mesh, or crash, on
+# dense / high-frequency input. Empirically the next attempt almost always
+# converges, so retry the whole pipeline up to this many times before giving
+# up.
+_MMG_MAX_ATTEMPTS = 5
 
 
 class InputMeshNotPeriodicError(Exception):
@@ -101,18 +111,78 @@ def remesh_keeping_boundaries_for_fem(
         err_msg = "Input mesh is not periodic"
         raise InputMeshNotPeriodicError(err_msg)
 
+    with NamedTemporaryFile(suffix=".mesh", delete=False) as boundary_triangles_file:
+        pass
+
+    _generate_mesh_with_required_triangles(
+        input_box_mesh,
+        boundary_triangles_file.name,
+    )
+
+    last_error: Exception | None = None
+    output_mesh: pv.UnstructuredGrid | None = None
+    for _ in range(_MMG_MAX_ATTEMPTS):
+        try:
+            output_mesh = _run_mmg_pipeline(
+                boundary_triangles_file.name,
+                mesh_version=mesh_version,
+                dimension=dimension,
+                hausd=hausd,
+                hgrad=hgrad,
+                hmax=hmax,
+                hmin=hmin,
+                hsiz=hsiz,
+            )
+        except MmgError as err:
+            last_error = err
+            continue
+
+        if periodic:
+            _snap_to_expected_bounds(output_mesh, nodes_coords, tol)
+            if not is_periodic(output_mesh.points, tol):
+                last_error = OutputMeshNotPeriodicError(
+                    "Something went wrong: output mesh is not periodic"
+                )
+                output_mesh = None
+                continue
+        break
+
+    Path(boundary_triangles_file.name).unlink(missing_ok=True)
+
+    if output_mesh is None:
+        assert last_error is not None
+        raise last_error
+
+    if isinstance(input_mesh, BoxMesh):
+        return BoxMesh.from_pyvista(output_mesh)
+    return output_mesh
+
+
+def _run_mmg_pipeline(  # noqa: PLR0913
+    boundary_triangles_file: str,
+    *,
+    mesh_version: int,
+    dimension: int,
+    hausd: float | None,
+    hgrad: float | None,
+    hmax: float | None,
+    hmin: float | None,
+    hsiz: float | None,
+) -> pv.UnstructuredGrid:
+    """Run the two mmg3d passes and return the parsed output mesh.
+
+    Owns its own temp files so a caller retrying after a failure starts from
+    a clean state.
+    """
     with (
-        NamedTemporaryFile(suffix=".mesh", delete=False) as boundary_triangles_file,
         NamedTemporaryFile(suffix=".mesh", delete=False) as premeshed_mesh_file,
         NamedTemporaryFile(suffix=".mesh", delete=False) as raw_output_mesh_file,
         NamedTemporaryFile(suffix=".mesh", delete=False) as output_mesh_file,
     ):
-        _generate_mesh_with_required_triangles(
-            input_box_mesh,
-            boundary_triangles_file.name,
-        )
+        pass
+    try:
         Mmg.mmg3d(
-            input=boundary_triangles_file.name,
+            input=boundary_triangles_file,
             output=premeshed_mesh_file.name,
             nofem=True,
         )
@@ -127,36 +197,22 @@ def remesh_keeping_boundaries_for_fem(
             ls=True,
             nr=True,
         )
-
-    _remove_unnecessary_fields_from_mesh_file(
-        raw_output_mesh_file.name,
-        output_mesh_file.name,
-        mesh_version,
-        dimension,
-    )
-
-    output_mesh = pv.UnstructuredGrid(output_mesh_file.name)
-
-    if periodic and not is_periodic(output_mesh.points, tol):
-        err_msg = "Something went wrong: output mesh is not periodic"
-        raise OutputMeshNotPeriodicError(err_msg)
-
-    # Remove unused .sol files created by mmg
-    # Solve compatibility issues of NamedTemporaryFiles with Windows
-    trash_files_list = [
-        boundary_triangles_file.name,
-        premeshed_mesh_file.name,
-        premeshed_mesh_file.name.replace(".mesh", ".sol"),
-        raw_output_mesh_file.name,
-        raw_output_mesh_file.name.replace(".mesh", ".sol"),
-        output_mesh_file.name,
-    ]
-    for file in trash_files_list:
-        Path(file).unlink()
-
-    if isinstance(input_mesh, BoxMesh):
-        return BoxMesh.from_pyvista(output_mesh)
-    return output_mesh
+        _remove_unnecessary_fields_from_mesh_file(
+            raw_output_mesh_file.name,
+            output_mesh_file.name,
+            mesh_version,
+            dimension,
+        )
+        return pv.UnstructuredGrid(output_mesh_file.name)
+    finally:
+        for path in (
+            premeshed_mesh_file.name,
+            premeshed_mesh_file.name.replace(".mesh", ".sol"),
+            raw_output_mesh_file.name,
+            raw_output_mesh_file.name.replace(".mesh", ".sol"),
+            output_mesh_file.name,
+        ):
+            Path(path).unlink(missing_ok=True)
 
 
 def _generate_mesh_with_required_triangles(
@@ -228,6 +284,45 @@ def _remove_unnecessary_fields_from_mesh_file(
 
 def _only_numbers_in_line(line: list[str]) -> bool:
     return all(not flag.isalpha() for flag in line)
+
+
+def _snap_to_expected_bounds(
+    mesh: pv.UnstructuredGrid,
+    reference_coords: npt.NDArray[np.float64],
+    tol: float,
+) -> None:
+    """Reconcile the output bounding box with the input's.
+
+    mmg sometimes writes coordinates that drift past the input bounds:
+
+    * by floating-point noise (e.g. y = -1e-22 instead of 0). The bulk of the
+      boundary is intact; snap coordinates within ``tol`` of an expected face
+      back exactly onto it.
+    * by a few microns (e.g. y = 1.00006 instead of 1.0). The boundary face
+      itself still has the correct node count, so this stray vertex does not
+      have a periodic twin. Pull it just inside the cell — it then contributes
+      no boundary node and doesn't anchor ``_get_bounding_box`` past the cell.
+
+    Both forms confuse ``is_periodic`` even when the periodic boundary is
+    otherwise intact.
+    """
+    expected_min = reference_coords.min(axis=0)
+    expected_max = reference_coords.max(axis=0)
+    interior_offset = tol * 10.0
+    points = np.asarray(mesh.points, dtype=np.float64).copy()
+    for axis in range(points.shape[1]):
+        col = points[:, axis]
+        snap_min = np.abs(col - expected_min[axis]) <= tol
+        snap_max = np.abs(col - expected_max[axis]) <= tol
+        col[snap_min] = expected_min[axis]
+        col[snap_max] = expected_max[axis]
+        max_drift = tol * 100.0
+        below = (col < expected_min[axis]) & (col >= expected_min[axis] - max_drift)
+        above = (col > expected_max[axis]) & (col <= expected_max[axis] + max_drift)
+        col[below] = expected_min[axis] + interior_offset
+        col[above] = expected_max[axis] - interior_offset
+        points[:, axis] = col
+    mesh.points = points
 
 
 def remesh_keeping_periodicity_for_fem(
