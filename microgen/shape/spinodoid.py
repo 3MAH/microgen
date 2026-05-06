@@ -19,8 +19,9 @@ axis), so periodicity is a data-structure invariant, not a runtime flag.
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Sequence
 from functools import cached_property
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
