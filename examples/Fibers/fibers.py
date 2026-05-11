@@ -55,7 +55,7 @@ for i in range(len(x)):
         height=height,
         radius=radius,
     )
-    shapes.append(elem.generate())
+    shapes.append(elem.generate_cad())
     bar.update(i)
 
 compound = make_compound(shapes)

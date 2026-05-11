@@ -45,7 +45,7 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
     )
 
     # Act
-    shape_cadquery = tpms.generate(type_part=type_part)
+    shape_cadquery = tpms.generate_cad(type_part=type_part)
     shape_vtk = tpms.generate_surface_mesh(type_part=type_part)
 
     # Assert
@@ -63,7 +63,7 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     )
 
     # Act
-    shape_cadquery = tpms.generate(type_part=type_part)
+    shape_cadquery = tpms.generate_cad(type_part=type_part)
     shape_vtk = tpms.generate_surface_mesh(type_part=type_part)
 
     # Assert
@@ -81,7 +81,7 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
         repeat_cell=(2, 1, 2),
     )
 
-    shape_cadquery = tpms.generate(type_part="sheet")
+    shape_cadquery = tpms.generate_cad(type_part="sheet")
     shape_vtk = tpms.generate_surface_mesh(type_part="sheet")
 
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
@@ -249,7 +249,7 @@ def test_tpms_given_generate_surface_must_not_be_empty() -> None:
     """Test for the surface of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(surface_function=TEST_DEFAULT_SURFACE_FUNCTION, offset=0)
 
-    surface = tpms.generate(type_part="surface")
+    surface = tpms.generate_cad(type_part="surface")
     assert np.any(surface.Vertices())
     assert np.any(surface.Faces())
     assert not surface.Closed()
@@ -270,7 +270,7 @@ def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond() -
         offset=variable_offset,
     )
 
-    shape_cadquery = tpms.generate(type_part="sheet", smoothing=0, verbose=True)
+    shape_cadquery = tpms.generate_cad(type_part="sheet", smoothing=0, verbose=True)
     shape_vtk = tpms.generate_surface_mesh(type_part="sheet")
 
     assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
@@ -296,7 +296,7 @@ def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_error
     )
 
     with pytest.raises((ValueError, NotImplementedError)):
-        tpms.generate(type_part="sheet")
+        tpms.generate_cad(type_part="sheet")
 
 
 def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error() -> None:
@@ -315,7 +315,7 @@ def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error() -> Non
     with pytest.raises(ValueError, match=expected_err_msg):
         tpms.generate_surface_mesh(type_part=fake_type_part)
     with pytest.raises(ValueError, match=expected_err_msg):
-        tpms.generate(type_part=fake_type_part)
+        tpms.generate_cad(type_part=fake_type_part)
 
 
 def test_tpms_given_wrong_cell_size_parameter_must_raise_error() -> None:
@@ -436,7 +436,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
         offset=-1.0,
     )
     with pytest.raises(NotImplementedError):
-        tpms.generate(type_part="lower skeletal")
+        tpms.generate_cad(type_part="lower skeletal")
 
     sheet = tpms.generate_surface_mesh(type_part="lower skeletal")
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
@@ -453,7 +453,7 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
         offset=including_negative_values,
     )
     with pytest.raises(NotImplementedError):
-        tpms.generate(type_part="lower skeletal")
+        tpms.generate_cad(type_part="lower skeletal")
 
     sheet = tpms.generate_surface_mesh(type_part="lower skeletal")
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
@@ -483,7 +483,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
         + r"-?\d*\.\d+"  # float
     )
     with pytest.raises(ValueError, match=err_msg_pattern):
-        tpms.generate(type_part="sheet")
+        tpms.generate_cad(type_part="sheet")
 
     assert tpms.generate_surface_mesh(type_part="sheet").volume == 0.0
 
@@ -499,7 +499,7 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
         offset=including_negative_values,
     )
     with pytest.raises(NotImplementedError):
-        tpms.generate(type_part="sheet")
+        tpms.generate_cad(type_part="sheet")
 
     sheet = tpms.generate_surface_mesh(type_part="sheet")
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
@@ -517,7 +517,7 @@ def test_tpms_center_and_orientation_must_correspond() -> None:
         orientation=orientation,
     )
     vtk_sheet = tpms.generate_surface_mesh(type_part="sheet")
-    cad_sheet = tpms.generate(type_part="sheet")
+    cad_sheet = tpms.generate_cad(type_part="sheet")
 
     no_orientation = microgen.Tpms(
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,

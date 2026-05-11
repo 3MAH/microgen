@@ -17,7 +17,7 @@ geometry = Tpms(
     repeat_cell=3,
     resolution=15,
 )
-shape = geometry.generate(type_part="sheet", smoothing=0)
+shape = geometry.generate_cad(type_part="sheet", smoothing=0)
 
 compound = make_compound([shell, shape])
 stl_file = str(Path(__file__).parent / "tpms_shell.stl")

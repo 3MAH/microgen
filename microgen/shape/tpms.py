@@ -914,7 +914,7 @@ class Tpms(Shape):
             resolution=self._isotropic_resolution(),
         )
 
-    def generate(
+    def generate_cad(
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         smoothing: int = 0,
@@ -1069,7 +1069,7 @@ class Tpms(Shape):
         """
         Generate the PyVista mesh of the requested TPMS part.
 
-        Same F-rep pipeline as :meth:`generate` (skeletals are clipped to the
+        Same F-rep pipeline as :meth:`generate_cad` (skeletals are clipped to the
         cell box), so the two outputs share the exact same triangulation and
         therefore the same volume.
 
@@ -1102,7 +1102,7 @@ class Tpms(Shape):
                 resolution=algo_resolution,
             )
         # Note: no `_check_offset` here — the F-rep VTK path handles negative
-        # / zero / variable offsets gracefully.  ``generate()`` still applies
+        # / zero / variable offsets gracefully.  ``generate_cad()`` still applies
         # the historical CAD-side restriction.
 
         # Always use the structured-grid clip-scalar path (the same one
@@ -2167,7 +2167,7 @@ class Infill(Tpms):
         Override the cell-box clip with the *object envelope* SDF.
 
         Without this override the F-rep marching cubes path (used by
-        :meth:`Tpms.generate_surface_mesh` and :meth:`Tpms.generate`) would clip the
+        :meth:`Tpms.generate_surface_mesh` and :meth:`Tpms.generate_cad`) would clip the
         TPMS to the cartesian bounding box rather than to the input object —
         producing volumes well above ``obj.volume`` and corrupting density.
         """

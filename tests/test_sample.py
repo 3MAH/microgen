@@ -28,11 +28,11 @@ def test_neper() -> None:
 def test_operations() -> None:
     """Test operations on shapes."""
     elem = microgen.Box(center=(0.5, 0.5, 0.5), dim=(1, 1, 1))
-    shape1 = elem.generate()
+    shape1 = elem.generate_cad()
     phase1 = microgen.Phase(shape=shape1)
 
     elem = microgen.Box(center=(0, 0, 0), dim=(0.5, 0.5, 0.5))
-    shape2 = elem.generate()
+    shape2 = elem.generate_cad()
     microgen.rescale(shape2, 2.0)
 
     microgen.cut_phase_by_shape_list(phase_to_cut=phase1, shapes=[shape2])

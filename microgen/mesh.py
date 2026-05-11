@@ -271,7 +271,7 @@ def _finalize_mesh(
 ) -> None:
     list_dim_tags: list[tuple[int, int]] = gmsh.model.getEntities()
     gmsh.model.mesh.setSize(dimTags=list_dim_tags, size=size)
-    gmsh.model.mesh.generate(dim=_DIM_COUNT)
+    gmsh.model.mesh.generate_cad(dim=_DIM_COUNT)
     gmsh.write(fileName=output_file)
     gmsh.finalize()
 

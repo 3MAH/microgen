@@ -17,7 +17,7 @@ N_PARTS_ON_CORNER = 8
 def _generate_sphere(x: float, y: float, z: float, rve: Rve) -> Phase:
     """Generate a sphere at the given position and test periodicity."""
     elem = shape.sphere.Sphere(center=(x, y, z), radius=0.1)
-    phase = Phase(shape=elem.generate())
+    phase = Phase(shape=elem.generate_cad())
     return periodic_split_and_translate(phase=phase, rve=rve)
 
 
@@ -26,7 +26,7 @@ def test_periodic_generates_warning_on_intersection_with_opposite_faces() -> Non
     rve = Rve(dim=1, center=(0.5, 0.5, 0.5))
 
     elem = shape.capsule.Capsule(center=(0.5, 0, 0.5), height=1, radius=0.1)
-    phase = Phase(shape=elem.generate())
+    phase = Phase(shape=elem.generate_cad())
 
     expected_warning_msg = r"Object intersecting ([xyz])\+ and ([xyz])\- faces: not doing anything in this direction"
     with pytest.warns(UserWarning, match=expected_warning_msg):

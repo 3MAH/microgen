@@ -45,7 +45,7 @@ class Shape:
     Every shape has a ``center`` and ``orientation``.  It may also carry an
     implicit scalar field (``_func``) where ``f(x, y, z) < 0`` means *inside*.
     When the implicit field is present, the default :meth:`generate_surface_mesh` and
-    :meth:`generate` produce geometry via marching cubes.  Subclasses
+    :meth:`generate_cad` produce geometry via marching cubes.  Subclasses
     (e.g. ``Sphere``, ``Tpms``) override these methods with their own
     implementations.
 
@@ -244,7 +244,7 @@ class Shape:
         grid = self._sample_implicit_grid(bounds, resolution, "generate_volume_mesh")
         return grid.clip_scalar(scalars=_IMPLICIT_SCALAR, value=0.0, invert=True)
 
-    def generate(
+    def generate_cad(
         self: Shape,
         bounds: BoundsType | None = None,
         resolution: int = 50,

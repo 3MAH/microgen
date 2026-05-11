@@ -228,14 +228,14 @@ class AbstractLattice(Shape):
 
         return rotations_list
 
-    def generate(self, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self, **_: KwargsGenerateType) -> CadShape:
         if isinstance(self._cad_shape, CadShape):
             return self._cad_shape
 
         self._cad_shape = self._generate_cad()
         return self._cad_shape
 
-    cad_shape = property(generate)
+    cad_shape = property(generate_cad)
 
     def _generate_cad(self, **_: KwargsGenerateType) -> CadShape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
@@ -249,7 +249,7 @@ class AbstractLattice(Shape):
                 height=self.strut_heights[i],
                 radius=self.strut_radius,
             )
-            shape = strut.generate()
+            shape = strut.generate_cad()
             list_phases.append(Phase(shape))
         if self.strut_joints:
             for vertex in self.vertices:
@@ -257,7 +257,7 @@ class AbstractLattice(Shape):
                     center=tuple(vertex),
                     radius=self.strut_radius,
                 )
-                shape = joint.generate()
+                shape = joint.generate_cad()
                 list_phases.append(Phase(shape))
 
         for phase in list_phases:
@@ -272,7 +272,7 @@ class AbstractLattice(Shape):
         bounding_box = Box(
             center=self.center,
             dim=(self.cell_size, self.cell_size, self.cell_size),
-        ).generate()
+        ).generate_cad()
 
         cut_lattice = bounding_box.intersect(lattice)
 

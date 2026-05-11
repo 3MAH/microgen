@@ -107,7 +107,7 @@ To create CAD-compatible solids (for 3D printing or CAD software):
 .. code-block:: python
 
    # Generate the CadQuery shape
-   cad_shape = gyroid.generate(type_part='sheet')
+   cad_shape = gyroid.generate_cad(type_part='sheet')
 
 
 Exporting Results
@@ -123,7 +123,7 @@ Export to STEP (from OCCT ``CadShape``):
 
 .. code-block:: python
 
-   cad_shape = gyroid.generate(type_part='sheet')
+   cad_shape = gyroid.generate_cad(type_part='sheet')
    cad_shape.export_step('gyroid_sheet.step')
 
 Export to VTK:

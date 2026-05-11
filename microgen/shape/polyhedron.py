@@ -73,7 +73,7 @@ class Polyhedron(Shape):
         for ixs in self.faces_ixs:
             ixs.append(ixs[0])
 
-    def generate(self: Polyhedron, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Polyhedron, **_: KwargsGenerateType) -> CadShape:
         """Generate a polyhedron CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_polyhedron
 

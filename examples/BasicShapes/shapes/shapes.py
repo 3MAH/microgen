@@ -40,7 +40,7 @@ for shape, param_geom in shapes.items():
         orientation=(90, 90, 90),
         param_geom=param_geom,
     )
-    parts.append(elem.generate())
+    parts.append(elem.generate_cad())
     i = i + 1
 
 compound = make_compound(parts)

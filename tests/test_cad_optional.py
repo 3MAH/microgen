@@ -63,7 +63,7 @@ def test_tpms_generate_surface_mesh_without_cad_extra() -> None:
 
 
 def test_cad_capable_entry_points_raise_cleanly_without_ocp() -> None:
-    """Calling ``.generate()`` / ``make_box()`` without OCP gives a clear error.
+    """Calling ``.generate_cad()`` / ``make_box()`` without OCP gives a clear error.
 
     Only meaningful in a true no-CAD env; when OCP *is* installed these calls
     succeed.  We just verify the function exists and does not, for instance,
@@ -85,7 +85,7 @@ def test_cad_capable_entry_points_raise_cleanly_without_ocp() -> None:
     reason="Test asserts the no-OCP error path; only meaningful when OCP is absent",
 )
 def test_shape_generate_raises_importerror_without_ocp() -> None:
-    """``Shape.generate()`` must raise ImportError pointing at ``microgen[cad]``.
+    """``Shape.generate_cad()`` must raise ImportError pointing at ``microgen[cad]``.
 
     Locks in the user-facing message so a future refactor that silently swaps
     the error type (e.g. raises a bare ``ModuleNotFoundError`` from a stray
@@ -94,7 +94,7 @@ def test_shape_generate_raises_importerror_without_ocp() -> None:
     from microgen.shape.sphere import Sphere
 
     with pytest.raises(ImportError, match=r"microgen\[cad\]"):
-        Sphere().generate()
+        Sphere().generate_cad()
 
 
 @pytest.mark.skipif(

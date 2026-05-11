@@ -108,7 +108,7 @@ def test_spinodoid_generate_returns_solid_or_compound() -> None:
     from OCP.TopAbs import TopAbs_COMPOUND, TopAbs_SOLID
 
     sp = Spinodoid(k0=15.0, bandwidth=3.0, resolution=16, density=0.5, seed=0)
-    shape = sp.generate()
+    shape = sp.generate_cad()
     shape_type = shape.wrapped.ShapeType()
     assert shape_type in (TopAbs_SOLID, TopAbs_COMPOUND)
     # Volume should match grid_solid within 5% (mesh→CAD roundtrip noise)
@@ -126,7 +126,7 @@ def test_spinodoid_generate_step_export_is_3d() -> None:
     import gmsh
 
     sp = Spinodoid(k0=15.0, bandwidth=3.0, resolution=12, density=0.5, seed=0)
-    shape = sp.generate()
+    shape = sp.generate_cad()
     with tempfile.NamedTemporaryFile(suffix=".step", delete=False) as f:
         step_path = f.name
     shape.export_step(step_path)

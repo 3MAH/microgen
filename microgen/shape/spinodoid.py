@@ -79,7 +79,7 @@ class Spinodoid(Shape):
         ``|F̂| > threshold * max(|F̂|)``.
     :param seed: RNG seed; ``None`` for non-deterministic behavior.
     :param center: geometry center after construction (translation applied
-        in :meth:`generate_surface_mesh` / :meth:`generate`).
+        in :meth:`generate_surface_mesh` / :meth:`generate_cad`).
     :param orientation: rotation angles (Euler) applied at the end.
     """
 
@@ -222,13 +222,13 @@ class Spinodoid(Shape):
         polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
 
-    def generate(
+    def generate_cad(
         self: Spinodoid,
         **_: KwargsGenerateType,
     ) -> CadShape:
         """Generate an OCCT CAD shape (Solid or Compound) of the spinodoid.
 
-        Mirrors :meth:`microgen.Tpms.generate`: extracts the structured-grid
+        Mirrors :meth:`microgen.Tpms.generate_cad`: extracts the structured-grid
         surface, builds a closed multi-face periodic shell with planar BREP
         faces on the cell sides plus per-triangle planar faces on the
         spinodoid interior, and applies the ``center`` / ``orientation``

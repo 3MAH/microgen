@@ -61,7 +61,7 @@ class ExtrudedPolygon(Shape):
             self.list_corners = list_corners
         self.height = height
 
-    def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
         """Generate an extruded polygon CAD shape (OCCT).
 
         Requires the ``[cad]`` extra.

@@ -32,7 +32,7 @@ class Capsule(Shape):
     (Inigo Quilez capsule SDF), evaluated in the local frame so
     ``center`` and ``orientation`` transform the field correctly. Set on
     every instance so capsules compose via ``|`` / ``&`` / ``-`` and
-    stay usable without the ``[cad]`` extra (only :meth:`generate`
+    stay usable without the ``[cad]`` extra (only :meth:`generate_cad`
     requires CAD).
 
     .. jupyter-execute::
@@ -96,7 +96,7 @@ class Capsule(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    def generate(self: Capsule, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Capsule, **_: KwargsGenerateType) -> CadShape:
         """Generate a capsule CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_capsule
 
