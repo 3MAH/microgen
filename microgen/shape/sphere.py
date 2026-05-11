@@ -89,12 +89,3 @@ class Sphere(Shape):
             theta_resolution=theta_resolution,
             phi_resolution=phi_resolution,
         )
-
-    def generateVtk(  # noqa: N802
-        self: Sphere,
-        theta_resolution: int = 50,
-        phi_resolution: int = 50,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Deprecated method. Use generate_vtk instead."""  # noqa: D401
-        return self.generate_vtk(theta_resolution, phi_resolution)

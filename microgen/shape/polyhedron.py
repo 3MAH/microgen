@@ -96,10 +96,6 @@ class Polyhedron(Shape):
 
         return pv.PolyData(vertices, faces).compute_normals()
 
-    def generateVtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated method. Use generate_vtk instead."""  # noqa: D401
-        return self.generate_vtk()
-
 
 def read_obj(filename: str) -> dict[str, list[Vertex | Face]]:
     """Read vertices and faces from obj format file for polyhedron."""

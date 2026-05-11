@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 
-from microgen import Box, ExtrudedPolygon, Phase, cutPhaseByShapeList, mesh
+from microgen import Box, ExtrudedPolygon, Phase, cut_phase_by_shape_list, mesh
 
 side_length = 2.5  # side in mm of the hexagon
 poly_height = 2.5  # height in mm of the hexagon
@@ -25,7 +25,7 @@ shapeList = []
 for seed in seedList:
     poly = ExtrudedPolygon(
         center=(seed[0] - thickness, seed[1], seed[2]),
-        listCorners=[
+        list_corners=[
             (0, h2 + h0),
             (h1, h0),
             (h1, -h0),
@@ -40,7 +40,7 @@ for seed in seedList:
 
 boxPhase = Phase(shape=box.generate())
 
-honeycomb = cutPhaseByShapeList(phaseToCut=boxPhase, cqShapeList=shapeList)
+honeycomb = cut_phase_by_shape_list(phase_to_cut=boxPhase, shapes=shapeList)
 
 step_file = str(Path(__file__).parent / "honeycomb.step")
 stl_file = str(Path(__file__).parent / "honeycomb.stl")
@@ -49,7 +49,7 @@ honeycomb.shape.export_stl(stl_file)
 vtk_file = str(Path(__file__).parent / "honeycomb.vtk")
 mesh(
     mesh_file=step_file,
-    listPhases=[honeycomb],
+    list_phases=[honeycomb],
     size=1,
     order=1,
     output_file=vtk_file,

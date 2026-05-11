@@ -18,7 +18,7 @@ Periodic Mesh
 .. include:: ../../examples/Lattices/octetTruss/octetTruss.py
    :literal:
 
-.. image:: ../_static/examples/meshPeriodic.png
+.. image:: ../_static/examples/mesh_periodic.png
 
 
 mmg

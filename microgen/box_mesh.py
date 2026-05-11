@@ -507,12 +507,12 @@ class BoxMesh(SingleMesh):
             np.array([0.0, 0.0, 1.0]),
         ]
         origins_p = [
-            np.array([rve.x_min, rve.center[1], rve.center[2]]),
-            np.array([rve.x_max, rve.center[1], rve.center[2]]),
-            np.array([rve.center[0], rve.y_min, rve.center[2]]),
-            np.array([rve.center[0], rve.y_max, rve.center[2]]),
-            np.array([rve.center[0], rve.center[1], rve.z_min]),
-            np.array([rve.center[0], rve.center[1], rve.z_max]),
+            np.array([rve.min_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.max_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.center[0], rve.min_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.max_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.center[1], rve.min_point[2]]),
+            np.array([rve.center[0], rve.center[1], rve.max_point[2]]),
         ]
         size_planes = [
             2.0 * np.max([rve.dim[1], rve.dim[2]]),
@@ -540,7 +540,7 @@ class BoxMesh(SingleMesh):
                 [-tol, tol],
                 all_scalars=True,
                 scalars="implicit_distance",
-            ).extract_surface()
+            ).extract_surface(algorithm=None)
             boundary_elements = boundary_elements.append_polydata(surface_p)
 
         return boundary_elements, boundary_elements["CellIDs"]

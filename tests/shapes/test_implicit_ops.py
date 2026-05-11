@@ -306,11 +306,6 @@ class TestGenerateVtk:
         mesh = s.generate_vtk(bounds=(-2, 2, -2, 2, -2, 2), resolution=30)
         assert mesh.n_cells > 0
 
-    def test_generateVtk_deprecated(self):
-        s = _make_sphere()
-        mesh = s.generateVtk(resolution=20)
-        assert isinstance(mesh, pv.PolyData)
-
 
 # ---------------------------------------------------------------------------
 # Bounds propagation

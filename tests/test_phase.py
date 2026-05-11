@@ -29,12 +29,12 @@ def test_phase_rasterize_phase_per_raster_should_return_the_right_object() -> No
     phase = Phase(shape=sphere)
 
     grid = [3, 3, 3]
-    phases = phase.rasterize(rve, grid, phasePerRaster=True)
+    phases = phase.rasterize(rve, grid, phase_per_raster=True)
     assert isinstance(phases, list)
     assert len(phases) == np.prod(grid)
 
     grid = [2, 2, 2]
-    phase.rasterize(rve, grid, phasePerRaster=False)
+    phase.rasterize(rve, grid, phase_per_raster=False)
     assert len(phase.solids) == np.prod(grid)
 
 
@@ -68,19 +68,19 @@ def test_phase_translate_should_shift_centers_corresponding_to_the_translation()
     center = (1.0, 0.5, -0.5)
     phase = Phase(shape=Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate())
     phase.translate((1, 0, 0))
-    assert np.allclose(phase.centerOfMass, (2.0, 0.5, -0.5), rtol=1e-4)
+    assert np.allclose(phase.center_of_mass, (2.0, 0.5, -0.5), rtol=1e-4)
     phase.translate(np.array([0, 1, 1]))
-    assert np.allclose(phase.centerOfMass, (2.0, 1.5, 0.5), rtol=1e-4)
+    assert np.allclose(phase.center_of_mass, (2.0, 1.5, 0.5), rtol=1e-4)
 
 
 def test_phase_center_of_mass_should_return_the_right_values() -> None:
     """Test the Phase class with a shape."""
     center = (1.0, 0.5, -0.5)
     phase = Phase(shape=Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate())
-    assert np.allclose(phase.centerOfMass, center, rtol=1e-4)
+    assert np.allclose(phase.center_of_mass, center, rtol=1e-4)
     assert np.allclose(
-        phase.getCenterOfMass(compute=False),
-        phase.centerOfMass,
+        phase.get_center_of_mass(compute=False),
+        phase.center_of_mass,
         rtol=1e-4,
     )
 
@@ -90,10 +90,10 @@ def test_phase_inertia_matrix_should_return_the_right_values() -> None:
     radius = 1.5
     phase = Phase(shape=Sphere(radius=radius).generate())
     assert np.allclose(
-        phase.inertiaMatrix,
+        phase.inertia_matrix,
         np.diag([phase.shape.Volume() * 2 / 5 * radius**2] * 3),
     )
-    assert np.allclose(phase.getInertiaMatrix(compute=False), phase.inertiaMatrix)
+    assert np.allclose(phase.get_inertia_matrix(compute=False), phase.inertia_matrix)
 
 
 def test_phase_solids_and_shape_properties_should_return_the_right_values() -> None:

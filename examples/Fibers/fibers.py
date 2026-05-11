@@ -66,4 +66,4 @@ compound.export_step(step_file)
 compound.export_stl(stl_file)
 
 
-# mesh(mesh_file='compound.step', listPhases=raster[1], size=0.03, order=1, output_file='Mesh.msh')
+# mesh(mesh_file='compound.step', list_phases=raster[1], size=0.03, order=1, output_file='Mesh.msh')

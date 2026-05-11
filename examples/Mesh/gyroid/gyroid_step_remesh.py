@@ -21,8 +21,8 @@ Dependencies:
 """
 
 from pathlib import Path
-from microgen import Tpms, Phase, meshPeriodic, Rve
-from microgen.remesh import remesh_keeping_periodicity_for_fem
+from microgen import Tpms, Phase, mesh_periodic, Rve
+from microgen.remesh import remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
 import pyvista as pv
 
@@ -46,10 +46,10 @@ phases[0].shape.export_step(step_file)
 
 vtk_file = str(Path(__file__).parent / "gyroid.vtk")
 
-meshPeriodic(
+mesh_periodic(
     mesh_file=step_file,
     rve=rve,
-    listPhases=phases,
+    list_phases=phases,
     order=1,
     size=0.03,
     output_file=vtk_file,
@@ -59,8 +59,9 @@ meshPeriodic(
 
 initial_gyroid = pv.UnstructuredGrid(vtk_file)
 max_element_edge_length = 0.02
-remeshed_gyroid = remesh_keeping_periodicity_for_fem(
+remeshed_gyroid = remesh_keeping_boundaries_for_fem(
     initial_gyroid,
+    periodic=True,
     hmax=max_element_edge_length,
 )
 remeshed_vtk_file = str(Path(__file__).parent / "remeshed_gyroid_mesh.vtk")

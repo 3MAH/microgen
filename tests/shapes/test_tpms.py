@@ -23,15 +23,13 @@ TEST_DEFAULT_SURFACE_FUNCTION = microgen.surface_functions.gyroid
 def _get_microgen_surface_functions() -> list[str]:
     """List the actual TPMS surface functions in microgen.surface_functions.
 
-    Filters out:
-    - deprecated camelCase aliases (any uppercase letter)
-    - non-TPMS callables exposed via re-import (autograd ``cos``/``sin``) —
-      they take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
+    Filters out non-TPMS callables exposed via re-import (autograd ``cos``/``sin``)
+    that take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
     """
     return [
         name
         for name, fn in getmembers(microgen.surface_functions, isfunction)
-        if not any(c.isupper() for c in name) and len(signature(fn).parameters) == 3
+        if len(signature(fn).parameters) == 3
     ]
 
 
@@ -60,7 +58,9 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
 ) -> None:
     """Test for the volume of the TPMS skeletals generated with CadQuery and VTK."""
     # Arrange
-    tpms = microgen.Tpms(surface_function=microgen.surface_functions.schwarzP, offset=0)
+    tpms = microgen.Tpms(
+        surface_function=microgen.surface_functions.schwarz_p, offset=0
+    )
 
     # Act
     shape_cadquery = tpms.generate(type_part=type_part)

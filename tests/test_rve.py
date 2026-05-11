@@ -58,21 +58,6 @@ def test_rve_dim_must_have_expected_value() -> None:
     assert np.all(rve.dim == [2, 3, 4])
 
 
-def test_rve_deprecated_dim() -> None:
-    """Test Rve dim with deprecated inputs, dim_x, dim_y, dim_z are deprecated."""
-    with pytest.warns(DeprecationWarning):
-        rve = Rve(dim_x=1, dim_y=2, dim_z=1)
-        assert np.all(rve.dim == [1, 2, 1])
-
-    with pytest.warns(DeprecationWarning):
-        rve = Rve(dim_x=2)
-        assert np.all(rve.dim == [2, 1, 1])
-
-    with pytest.warns(DeprecationWarning):
-        rve = Rve(dim_x=1, dim_y=1, dim_z=1, dim=(2, 2, 2))
-        assert np.all(rve.dim == [1, 1, 1])
-
-
 def test_rve_given_negative_or_zero_dim_must_raise_error() -> None:
     """Test Rve dim with negative values must raise error."""
     invalid_dim_msg = "dimensions of the RVE must be greater than 0"
