@@ -89,6 +89,10 @@ exclude = [
     "docs/*",
     "tests/*",
     "examples/*",
+    # The Mmg wrapper mirrors mmg's CLI flags verbatim (input/ls/nr/A/...);
+    # a redesign of this interface is planned, so the file is excluded
+    # rather than littered with per-flag noqa pragmas.
+    "microgen/external.py",
 ]
 
 [tool.ruff.format]

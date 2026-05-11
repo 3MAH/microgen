@@ -12,7 +12,6 @@ from __future__ import annotations
 import shutil
 import subprocess
 import warnings
-from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -298,245 +297,343 @@ class MmgError(Exception):
     """Raised when an mmg command fails."""
 
 
-# Maps dataclass field name -> mmg command-line flag.  ``None`` means flag-only
-# (no value), other values mean the field's value is rendered into the cmd.
-_MMG_FLAG_MAP: dict[str, str | None] = {
-    "debug": "-d",
-    "show_help": "-h",
-    "memory": "-m",
-    "verbosity": "-v",
-    "val": "-val",
-    "default": "-default",
-    "input_file": "-in",
-    "output_file": "-out",
-    "solution_file": "-sol",
-    "metric_file": "-met",
-    "no_angle_detection": "-A",
-    "angle_threshold": "-ar",
-    "octree": "-octree",
-    "hausd": "-hausd",
-    "hgrad": "-hgrad",
-    "hmax": "-hmax",
-    "hmin": "-hmin",
-    "hsiz": "-hsiz",
-    "lagrangian": "-lag",
-    "level_set": "-ls",
-    "nofem": "-nofem",
-    "no_insert": "-noinsert",
-    "no_move": "-nomove",
-    "no_surface": "-nosurf",
-    "no_swap": "-noswap",
-    "no_ridge": "-nr",
-    "n_regions": "-nreg",
-    "n_subdomain": "-nsd",
-    "optim": "-optim",
-    "optim_les": "-optimLES",
-    "open_boundary": "-opnbdy",
-    "rmc": "-rmc",
-    "rebuild_normals": "-rn",
-    "medit_3d": "-3dMedit",
-}
+class Mmg:
+    """Wrapper around the ``mmg2d_O3`` / ``mmgs_O3`` / ``mmg3d_O3`` binaries.
 
+    Each method exposes the underlying mmg CLI flags as keyword arguments
+    using the same short names as the binaries themselves (``input``,
+    ``output``, ``ls``, ``nr``, ``A``, ``ar``, ...). See the
+    `mmg documentation <https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options>`_
+    for the full reference.
 
-@dataclass(frozen=True)
-class MmgOptions:
-    """Common command-line options for the mmg tools.
-
-    Each field maps to one mmg CLI flag. Fields with ``bool`` defaults render as
-    flag-only options (``-foo``); fields with optional value defaults render as
-    ``-foo VALUE`` when set. Not every flag is accepted by every mmg variant
-    (mmg2d, mmgs, mmg3d); see the
-    `mmg documentation <https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options>`_.
+    A larger redesign of this interface is planned; for now it intentionally
+    mirrors the original flat-kwarg shape.
     """
 
-    debug: bool = False
-    show_help: bool = False
-    memory: int | None = None
-    verbosity: int | None = None
-    val: bool = False
-    default: bool = False
-    input_file: str | None = None
-    output_file: str | None = None
-    solution_file: str | None = None
-    metric_file: str | None = None
-    no_angle_detection: bool = False
-    angle_threshold: float | None = None
-    octree: int | None = None
-    hausd: float | None = None
-    hgrad: float | None = None
-    hmax: float | None = None
-    hmin: float | None = None
-    hsiz: float | None = None
-    lagrangian: int | None = None
-    level_set: float | None = None
-    nofem: bool = False
-    no_insert: bool = False
-    no_move: bool = False
-    no_surface: bool = False
-    no_swap: bool = False
-    no_ridge: bool = False
-    n_regions: int | None = None
-    n_subdomain: int | None = None
-    optim: bool = False
-    optim_les: bool = False
-    open_boundary: bool = False
-    rmc: float | None = None
-    rebuild_normals: bool = False
-    medit_3d: int | None = None
-
-
-# Per-tool whitelist of supported MmgOptions fields.
-_MMG2D_FIELDS = {
-    "debug",
-    "show_help",
-    "memory",
-    "verbosity",
-    "val",
-    "default",
-    "input_file",
-    "output_file",
-    "solution_file",
-    "metric_file",
-    "no_angle_detection",
-    "angle_threshold",
-    "hausd",
-    "hgrad",
-    "hmax",
-    "hmin",
-    "hsiz",
-    "lagrangian",
-    "level_set",
-    "medit_3d",
-    "no_insert",
-    "no_move",
-    "no_surface",
-    "no_swap",
-    "no_ridge",
-    "n_regions",
-    "n_subdomain",
-    "optim",
-    "open_boundary",
-    "rmc",
-}
-
-_MMGS_FIELDS = {
-    "debug",
-    "show_help",
-    "memory",
-    "verbosity",
-    "val",
-    "default",
-    "input_file",
-    "output_file",
-    "solution_file",
-    "metric_file",
-    "no_angle_detection",
-    "angle_threshold",
-    "hausd",
-    "hgrad",
-    "hmax",
-    "hmin",
-    "hsiz",
-    "level_set",
-    "no_insert",
-    "no_move",
-    "no_surface",
-    "no_swap",
-    "no_ridge",
-    "n_regions",
-    "n_subdomain",
-    "optim",
-    "rebuild_normals",
-}
-
-_MMG3D_FIELDS = {
-    "debug",
-    "show_help",
-    "memory",
-    "verbosity",
-    "val",
-    "default",
-    "input_file",
-    "output_file",
-    "solution_file",
-    "metric_file",
-    "no_angle_detection",
-    "angle_threshold",
-    "octree",
-    "hausd",
-    "hgrad",
-    "hmax",
-    "hmin",
-    "hsiz",
-    "lagrangian",
-    "level_set",
-    "nofem",
-    "no_insert",
-    "no_move",
-    "no_surface",
-    "no_swap",
-    "no_ridge",
-    "n_regions",
-    "n_subdomain",
-    "optim",
-    "optim_les",
-    "open_boundary",
-    "rmc",
-    "rebuild_normals",
-}
-
-
-def _build_mmg_cmd(
-    binary: str,
-    options: MmgOptions,
-    allowed: set[str],
-) -> list[str]:
-    """Render an :class:`MmgOptions` into an mmg CLI argument list."""
-    cmd = [binary]
-    for field in fields(options):
-        if field.name not in allowed:
-            continue
-        value = getattr(options, field.name)
-        flag = _MMG_FLAG_MAP[field.name]
-        if isinstance(value, bool):
-            if value:
-                cmd.append(flag)
-        elif value is not None:
-            cmd.extend([flag, str(value)])
-    return cmd
-
-
-def _run_mmg_command(cmd: list[str]) -> None:
-    """Run an mmg subprocess and raise :class:`MmgError` on failure."""
-    binary = shutil.which(cmd[0])
-    if binary is None:
-        err_msg = f"mmg command '{cmd[0]}' not found in PATH"
-        raise MmgError(err_msg)
-    try:
-        subprocess.check_output([binary, *cmd[1:]], stderr=subprocess.STDOUT)  # noqa: S603
-    except (subprocess.CalledProcessError, FileNotFoundError) as error:
-        joined = " ".join([binary, *cmd[1:]])
-        err_msg = f"mmg command '{joined}' failed"
-        raise MmgError(err_msg) from error
-
-
-class Mmg:
-    """Wrapper around the ``mmg2d_O3`` / ``mmgs_O3`` / ``mmg3d_O3`` binaries."""
+    @staticmethod
+    def _run_mmg_command(cmd: list[str]) -> None:
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        except (subprocess.CalledProcessError, FileNotFoundError) as error:
+            mmg_failed_command = " ".join(cmd)
+            raise MmgError(
+                f"mmg command '{mmg_failed_command}' failed",
+            ) from error
 
     @staticmethod
-    def mmg2d(options: MmgOptions | None = None) -> None:
-        """Run ``mmg2d_O3`` from the command line."""
-        opts = options if options is not None else MmgOptions()
-        _run_mmg_command(_build_mmg_cmd("mmg2d_O3", opts, _MMG2D_FIELDS))
+    def mmg2d(
+        d=None,
+        h=None,
+        m=None,
+        v=None,
+        val=None,
+        default=None,
+        input=None,
+        output=None,
+        solution=None,
+        metric=None,
+        A=None,
+        ar=None,
+        hausd=None,
+        hgrad=None,
+        hmax=None,
+        hmin=None,
+        hsiz=None,
+        lag=None,
+        ls=None,
+        _3dMedit=None,
+        noinsert=None,
+        nomove=None,
+        nosurf=None,
+        noswap=None,
+        nr=None,
+        nreg=None,
+        nsd=None,
+        optim=None,
+        opnbdy=None,
+        rmc=None,
+    ):
+        """Run mmg2d_O3 from the command line with given arguments."""
+        cmd = ["mmg2d_O3"]
+        if d:
+            cmd.append("-d")
+        if h:
+            cmd.append("-h")
+        if m:
+            if isinstance(m, bool):
+                m = ""
+            cmd.extend(["-m", str(m)])
+        if v:
+            if isinstance(v, bool):
+                v = 1
+            cmd.extend(["-v", str(v)])
+        if val:
+            cmd.append("-val")
+        if default:
+            cmd.append("-default")
+        if input:
+            cmd.extend(["-in", input])
+        if output:
+            cmd.extend(["-out", output])
+        if solution:
+            cmd.extend(["-sol", solution])
+        if metric:
+            cmd.extend(["-met", metric])
+        if A:
+            cmd.append("-A")
+        if ar:
+            cmd.extend(["-ar", str(ar)])
+        if hausd:
+            cmd.extend(["-hausd", str(hausd)])
+        if hgrad:
+            cmd.extend(["-hgrad", str(hgrad)])
+        if hmax:
+            cmd.extend(["-hmax", str(hmax)])
+        if hmin:
+            cmd.extend(["-hmin", str(hmin)])
+        if hsiz:
+            cmd.extend(["-hsiz", str(hsiz)])
+        if lag or lag == 0:
+            if isinstance(lag, bool):
+                lag = 0
+            cmd.extend(["-lag", str(lag)])
+        if ls or ls == 0:
+            ls_value = ls
+            if isinstance(ls_value, bool):
+                ls_value = 0
+            cmd.extend(["-ls", str(ls_value)])
+        if _3dMedit:
+            cmd.extend(["-3dMedit", str(_3dMedit)])
+        if noinsert:
+            cmd.append("-noinsert")
+        if nomove:
+            cmd.append("-nomove")
+        if nosurf:
+            cmd.append("-nosurf")
+        if noswap:
+            cmd.append("-noswap")
+        if nr:
+            cmd.append("-nr")
+        if nreg:
+            cmd.extend(["-nreg", str(nreg)])
+        if nsd:
+            cmd.extend(["-nsd", str(nsd)])
+        if optim:
+            cmd.append("-optim")
+        if opnbdy:
+            cmd.append("-opnbdy")
+        if rmc:
+            cmd.extend(["-rmc", str(rmc)])
+
+        Mmg._run_mmg_command(cmd)
 
     @staticmethod
-    def mmgs(options: MmgOptions | None = None) -> None:
-        """Run ``mmgs_O3`` from the command line."""
-        opts = options if options is not None else MmgOptions()
-        _run_mmg_command(_build_mmg_cmd("mmgs_O3", opts, _MMGS_FIELDS))
+    def mmgs(
+        d=None,
+        h=None,
+        m=None,
+        v=None,
+        val=None,
+        default=None,
+        input=None,
+        output=None,
+        solution=None,
+        metric=None,
+        A=None,
+        ar=None,
+        hausd=None,
+        hgrad=None,
+        hmax=None,
+        hmin=None,
+        hsiz=None,
+        ls=None,
+        noinsert=None,
+        nomove=None,
+        nosurf=None,
+        noswap=None,
+        nr=None,
+        nreg=None,
+        nsd=None,
+        optim=None,
+        rn=None,
+    ):
+        """Run mmgs_O3 from the command line with given arguments."""
+        cmd = ["mmgs_O3"]
+        if d:
+            cmd.append("-d")
+        if h:
+            cmd.append("-h")
+        if m:
+            if isinstance(m, bool):
+                m = ""
+            cmd.extend(["-m", str(m)])
+        if v:
+            if isinstance(v, bool):
+                v = 1
+            cmd.extend(["-v", str(v)])
+        if val:
+            cmd.append("-val")
+        if default:
+            cmd.append("-default")
+        if input:
+            cmd.extend(["-in", input])
+        if output:
+            cmd.extend(["-out", output])
+        if solution:
+            cmd.extend(["-sol", solution])
+        if metric:
+            cmd.extend(["-met", metric])
+        if A:
+            cmd.append("-A")
+        if ar:
+            cmd.extend(["-ar", str(ar)])
+        if hausd:
+            cmd.extend(["-hausd", str(hausd)])
+        if hgrad:
+            cmd.extend(["-hgrad", str(hgrad)])
+        if hmax:
+            cmd.extend(["-hmax", str(hmax)])
+        if hmin:
+            cmd.extend(["-hmin", str(hmin)])
+        if hsiz:
+            cmd.extend(["-hsiz", str(hsiz)])
+        if ls or ls == 0:
+            ls_value = ls
+            if isinstance(ls_value, bool):
+                ls_value = 0
+            cmd.extend(["-ls", str(ls_value)])
+        if noinsert:
+            cmd.append("-noinsert")
+        if nomove:
+            cmd.append("-nomove")
+        if nosurf:
+            cmd.append("-nosurf")
+        if noswap:
+            cmd.append("-noswap")
+        if nr:
+            cmd.append("-nr")
+        if nreg:
+            cmd.extend(["-nreg", str(nreg)])
+        if nsd:
+            cmd.extend(["-nsd", str(nsd)])
+        if optim:
+            cmd.append("-optim")
+        if rn:
+            cmd.append("-rn")
+        Mmg._run_mmg_command(cmd)
 
     @staticmethod
-    def mmg3d(options: MmgOptions | None = None) -> None:
-        """Run ``mmg3d_O3`` from the command line."""
-        opts = options if options is not None else MmgOptions()
-        _run_mmg_command(_build_mmg_cmd("mmg3d_O3", opts, _MMG3D_FIELDS))
+    def mmg3d(
+        d=None,
+        h=None,
+        m=None,
+        v=None,
+        val=None,
+        default=None,
+        input=None,
+        output=None,
+        solution=None,
+        metric=None,
+        A=None,
+        ar=None,
+        octree=None,
+        hausd=None,
+        hgrad=None,
+        hmax=None,
+        hmin=None,
+        hsiz=None,
+        lag=None,
+        ls=None,
+        nofem=None,
+        noinsert=None,
+        nomove=None,
+        nosurf=None,
+        noswap=None,
+        nr=None,
+        nreg=None,
+        nsd=None,
+        optim=None,
+        optimLES=None,
+        opnbdy=None,
+        rmc=None,
+        rn=None,
+    ):
+        """Run mmg3d_O3 from the command line with given arguments."""
+        cmd = ["mmg3d_O3"]
+        if d:
+            cmd.append("-d")
+        if h:
+            cmd.append("-h")
+        if m:
+            if isinstance(m, bool):
+                m = ""
+            cmd.extend(["-m", str(m)])
+        if v:
+            if isinstance(v, bool):
+                v = 1
+            cmd.extend(["-v", str(v)])
+        if val:
+            cmd.append("-val")
+        if default:
+            cmd.append("-default")
+        if input:
+            cmd.extend(["-in", input])
+        if output:
+            cmd.extend(["-out", output])
+        if solution:
+            cmd.extend(["-sol", solution])
+        if metric:
+            cmd.extend(["-met", metric])
+        if A:
+            cmd.append("-A")
+        if ar:
+            cmd.extend(["-ar", str(ar)])
+        if octree:
+            cmd.extend(["-octree", str(octree)])
+        if hausd:
+            cmd.extend(["-hausd", str(hausd)])
+        if hgrad:
+            cmd.extend(["-hgrad", str(hgrad)])
+        if hmax:
+            cmd.extend(["-hmax", str(hmax)])
+        if hmin:
+            cmd.extend(["-hmin", str(hmin)])
+        if hsiz:
+            cmd.extend(["-hsiz", str(hsiz)])
+        if lag or lag == 0:
+            if isinstance(lag, bool):
+                lag = 0
+            cmd.extend(["-lag", str(lag)])
+        if ls or ls == 0:
+            ls_value = ls
+            if isinstance(ls_value, bool):
+                ls_value = 0
+            cmd.extend(["-ls", str(ls_value)])
+        if nofem:
+            cmd.append("-nofem")
+        if noinsert:
+            cmd.append("-noinsert")
+        if nomove:
+            cmd.append("-nomove")
+        if nosurf:
+            cmd.append("-nosurf")
+        if noswap:
+            cmd.append("-noswap")
+        if nr:
+            cmd.append("-nr")
+        if nreg:
+            cmd.extend(["-nreg", str(nreg)])
+        if nsd:
+            cmd.extend(["-nsd", str(nsd)])
+        if optim:
+            cmd.append("-optim")
+        if optimLES:
+            cmd.append("-optimLES")
+        if opnbdy:
+            cmd.append("-opnbdy")
+        if rmc:
+            cmd.extend(["-rmc", str(rmc)])
+        if rn:
+            cmd.append("-rn")
+
+        Mmg._run_mmg_command(cmd)

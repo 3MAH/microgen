@@ -12,7 +12,6 @@ import pyvista as pv
 
 from microgen import BoxMesh, Mmg, is_periodic
 from microgen.external import MmgError
-from microgen.external import MmgOptions as _CliMmgOptions
 
 # mmg3d's iso-zero adaptation (`-ls 0`) is non-deterministic on the metric .sol
 # left by the first pass and can produce a non-periodic mesh, or crash, on
@@ -193,24 +192,20 @@ def _run_mmg_pipeline(  # noqa: PLR0913
         pass
     try:
         Mmg.mmg3d(
-            _CliMmgOptions(
-                input_file=boundary_triangles_file,
-                output_file=premeshed_mesh_file.name,
-                nofem=True,
-            ),
+            input=boundary_triangles_file,
+            output=premeshed_mesh_file.name,
+            nofem=True,
         )
         Mmg.mmg3d(
-            _CliMmgOptions(
-                input_file=premeshed_mesh_file.name,
-                output_file=raw_output_mesh_file.name,
-                hausd=hausd,
-                hgrad=hgrad,
-                hmax=hmax,
-                hmin=hmin,
-                hsiz=hsiz,
-                level_set=0.0,
-                no_ridge=True,
-            ),
+            input=premeshed_mesh_file.name,
+            output=raw_output_mesh_file.name,
+            hausd=hausd,
+            hgrad=hgrad,
+            hmax=hmax,
+            hmin=hmin,
+            hsiz=hsiz,
+            ls=True,
+            nr=True,
         )
         _remove_unnecessary_fields_from_mesh_file(
             raw_output_mesh_file.name,
