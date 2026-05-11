@@ -11,4 +11,4 @@ mesh.save(vtk_file)
 
 # pl = pv.Plotter()
 # pl.add_mesh(mesh)
-# pl.save_graphic('fischerKochS.pdf')
+# pl.save_graphic('fischer_koch_s.pdf')

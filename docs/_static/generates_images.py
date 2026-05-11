@@ -98,7 +98,7 @@ show_example(
     show_edges=True,
     color="white",
     cmap=None,
-    screen_name="meshPeriodic.png",
+    screen_name="mesh_periodic.png",
 )
 show_example(
     filename=example_path + "Mesh/mmg/finalmesh.vtk",
