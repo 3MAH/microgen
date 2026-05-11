@@ -997,7 +997,7 @@ class Tpms(Shape):
             return shape.translate(self.center)
 
         # Periodic-aware shell, upgraded to a Solid where possible so
-        # :meth:`CadShape.Volume` reads the enclosed volume rather than a
+        # :meth:`CadShape.volume` reads the enclosed volume rather than a
         # meaningless surface integral on an open shell. Stash the trusted
         # mesh volume after rigid transforms (which preserve volume); used as
         # a fallback when OCCT flags the solid invalid (self-intersecting or
@@ -1149,7 +1149,12 @@ class Tpms(Shape):
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
-        """Generate VTK UnstructuredGrid object of the required TPMS part."""
+        """Generate VTK UnstructuredGrid object of the required TPMS part.
+
+        Applies ``center`` and ``orientation`` to the cached grid so the
+        returned mesh lands at the declared world position — matching the
+        contract of :meth:`generate_surface_mesh`.
+        """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = (
                 f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
@@ -1163,7 +1168,9 @@ class Tpms(Shape):
                 resolution=algo_resolution,
             )
 
-        return getattr(self, f"grid_{type_part.replace(' ', '_')}")
+        grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
+        grid = rotate(grid, center=(0, 0, 0), rotation=self.orientation)
+        return grid.translate(xyz=self.center)
 
 
 class CylindricalTpms(Tpms):

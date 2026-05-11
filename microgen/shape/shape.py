@@ -16,8 +16,6 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.spatial.transform import Rotation
 
-from microgen.operations import rotate as rotate_mesh
-
 from . import implicit_ops as _ops
 
 if TYPE_CHECKING:
@@ -211,6 +209,12 @@ class Shape:
         with non-zero ``center`` / ``orientation`` should bake those into
         ``_func`` during construction).  Returns the mesh unchanged.
 
+        The sampled structured grid is cached per ``(bounds, resolution)``
+        on the instance, shared with :meth:`generate_volume_mesh`. The cache
+        is unbounded — calling this method with many distinct ``resolution``
+        values on the same instance retains every sampled grid until the
+        instance is GC'd.
+
         :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
         :param resolution: number of grid points per axis
         :return: triangulated surface mesh
@@ -264,7 +268,9 @@ class Shape:
         :return: :class:`microgen.cad.CadShape` wrapping an OCCT ``TopoDS_Shell``
         """
         if self._func is None:
-            err_msg = "No implicit field defined — subclasses must override generate()"
+            err_msg = (
+                "No implicit field defined — subclasses must override generate_cad()"
+            )
             raise NotImplementedError(err_msg)
 
         from microgen.cad import mesh_to_shape  # noqa: PLC0415

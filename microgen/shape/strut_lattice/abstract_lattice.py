@@ -112,32 +112,25 @@ class AbstractLattice(Shape):
         else:
             self.strut_radius = strut_radius
 
-    def _compute_radius_to_fit_density(
-        self,
-    ) -> float:
-        _generate_cad_find_radius = None
-        """Compute the radius to fit the required density.
+    def _compute_radius_to_fit_density(self) -> float:
+        """Solve for the strut radius matching the requested density.
 
-        ``computed_radius`` is an objective function to find the adequate
-        radius from a given density. The last cad_shape generated is stored
-        to avoid regenerating it afterwards.
+        Each ``root_scalar`` step builds a CAD shape; we stash the final
+        one on ``self._cad_shape`` so :meth:`generate_cad` doesn't have to
+        rebuild it afterwards.
         """
-
         RADIUS_MIN = 10e-4
         RADIUS_MAX_MULTIPLIER = 1.0
 
         def calc_density(radius: float) -> float:
             self.strut_radius = radius
-            _generate_cad_find_radius = self._generate_cad()
-            return _generate_cad_find_radius.volume() / (self.cell_size**3)
+            self._cad_shape = self._generate_cad()
+            return self._cad_shape.volume() / (self.cell_size**3)
 
-        computed_radius = root_scalar(
+        return root_scalar(
             lambda radius: float(calc_density(radius)) - self.density,
             bracket=[RADIUS_MIN, RADIUS_MAX_MULTIPLIER * self.cell_size],
         ).root
-
-        self._cad_shape = _generate_cad_find_radius
-        return computed_radius
 
     @property
     def base_vertices(self) -> npt.NDArray[np.float64]:
@@ -286,32 +279,51 @@ class AbstractLattice(Shape):
 
     def generate_surface_mesh(
         self,
-        size: float = 0.02,
-        order: int = 1,
-        periodic: bool = True,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Generate a strut-based lattice VTK shape using the given parameters."""
-        lattice_params = (size, order, periodic)
-        if self._vtk_shape is not None:
-            cached_params, cached_mesh = self._vtk_shape
-            if cached_params == lattice_params:
-                return cached_mesh
+        """Return a surface mesh of the lattice (for visualisation).
 
-        mesh = self._generate_surface_mesh(*lattice_params)
-        self._vtk_shape = (lattice_params, mesh)
-        return mesh
+        Today this delegates to :meth:`mesh_for_fem` with default parameters
+        (``size=0.02, order=1, periodic=True``), which runs CAD → STEP →
+        gmsh → pyvista. When the F-rep implicit-lattice work lands, this
+        method will switch to F-rep marching cubes (no CAD/gmsh required)
+        and :meth:`mesh_for_fem` will remain as the explicit FEM-meshing
+        path.
+
+        Users who need to control mesh size / element order / periodicity
+        should call :meth:`mesh_for_fem` directly.
+        """
+        return self.mesh_for_fem()
 
     vtk_shape = property(generate_surface_mesh)
 
-    def _generate_surface_mesh(
+    def mesh_for_fem(
         self,
         size: float = 0.02,
         order: int = 1,
+        *,
         periodic: bool = True,
-        **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Generate a strut-based lattice VTK shape using the given parameters."""
+        """Build a periodic / non-periodic FEM tet mesh and return its surface.
+
+        Path: ``cad_shape`` → STEP → gmsh (:func:`microgen.mesh_periodic` or
+        :func:`microgen.mesh`) → ``pv.read`` → :meth:`extract_surface`.
+        Requires the ``[cad]`` extra and gmsh.
+
+        Cached per ``(size, order, periodic)`` tuple on the instance, so
+        repeated calls with the same parameters are O(1).
+
+        :param size: target element size (gmsh)
+        :param order: element order (gmsh)
+        :param periodic: enforce periodicity via :func:`mesh_periodic`
+        :return: surface ``pv.PolyData`` extracted from the tet mesh
+        """
+        params = (size, order, periodic)
+        if self._vtk_shape is not None:
+            cached_params, cached_mesh = self._vtk_shape
+            if cached_params == params:
+                return cached_mesh
+
         cad_lattice = self.cad_shape
         list_phases = [Phase(cad_lattice)]
 
@@ -320,32 +332,24 @@ class AbstractLattice(Shape):
             NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
         ):
             cad_lattice.export_step(cad_step_file.name)
-            if periodic:
-                mesh_periodic(
-                    mesh_file=cad_step_file.name,
-                    rve=self.rve,
-                    list_phases=list_phases,
-                    size=size,
-                    order=order,
-                    output_file=mesh_file.name,
-                )
-            else:
-                mesh(
-                    mesh_file=cad_step_file.name,
-                    list_phases=list_phases,
-                    size=size,
-                    order=order,
-                    output_file=mesh_file.name,
-                )
-
+            mesher = mesh_periodic if periodic else mesh
+            mesher_kwargs = (
+                {"rve": self.rve, "list_phases": list_phases}
+                if periodic
+                else {"list_phases": list_phases}
+            )
+            mesher(
+                mesh_file=cad_step_file.name,
+                size=size,
+                order=order,
+                output_file=mesh_file.name,
+                **mesher_kwargs,
+            )
             vtk_lattice = pv.read(mesh_file.name).extract_surface(algorithm=None)
 
-        # Solve compatibility issues of NamedTemporaryFiles with Windows
-        trash_files_list = [
-            cad_step_file.name,
-            mesh_file.name,
-        ]
-        for file in trash_files_list:
-            Path(file).unlink()
+        # Solve compatibility issues of NamedTemporaryFiles with Windows.
+        for tmp in (cad_step_file.name, mesh_file.name):
+            Path(tmp).unlink()
 
+        self._vtk_shape = (params, vtk_lattice)
         return vtk_lattice

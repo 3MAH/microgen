@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from .phase import Phase
     from .rve import Rve
 
-    Rotatable = CadShape | pv.PolyData
+    Rotatable = CadShape | pv.DataSet
 
 
 @overload
@@ -44,6 +44,14 @@ def rotate(
 ) -> pv.PolyData: ...
 
 
+@overload
+def rotate(
+    obj: pv.UnstructuredGrid,
+    center: npt.NDArray[np.float64] | Sequence[float],
+    rotation: Rotation,
+) -> pv.UnstructuredGrid: ...
+
+
 def rotate(
     obj: Rotatable,
     center: npt.NDArray[np.float64] | Sequence[float],
@@ -51,7 +59,9 @@ def rotate(
 ) -> Rotatable:
     """Rotate object according to given rotation.
 
-    Supports :class:`microgen.cad.CadShape` and :class:`pyvista.PolyData`.
+    Supports :class:`microgen.cad.CadShape` and any :class:`pyvista.DataSet`
+    (``PolyData``, ``UnstructuredGrid``, ``StructuredGrid``, …) — i.e. any
+    pyvista mesh exposing ``rotate_vector``.
 
     :param obj: Object to rotate
     :param center: numpy array (x, y, z)
@@ -70,7 +80,7 @@ def rotate(
 
     if isinstance(obj, CadShape):
         return obj.rotate(center, axis, float(angle))
-    if isinstance(obj, pv.PolyData):
+    if isinstance(obj, pv.DataSet):
         return obj.rotate_vector(axis, angle, point=tuple(center))
 
     err_msg = f"rotate(): object type {type(obj).__name__} not supported."
