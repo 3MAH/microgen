@@ -20,7 +20,7 @@ microgen.external.Mmg.mmg3d(
 microgen.external.Mmg.mmg3d(
     input=str(data_dir / "intermesh.mesh"),
     output=str(data_dir / "finalmesh.mesh"),
-    ls=0.0,
+    ls=True,
     hsiz=0.03,
 )
 
