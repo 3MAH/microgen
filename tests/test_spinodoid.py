@@ -113,7 +113,7 @@ def test_spinodoid_generate_returns_solid_or_compound() -> None:
     assert shape_type in (TopAbs_SOLID, TopAbs_COMPOUND)
     # Volume should match grid_solid within 5% (mesh→CAD roundtrip noise)
     grid_vol = abs(sp.grid_solid.volume)
-    cad_vol = abs(shape.Volume())
+    cad_vol = abs(shape.volume())
     assert abs(cad_vol - grid_vol) / max(grid_vol, 1e-12) < 0.05
 
 

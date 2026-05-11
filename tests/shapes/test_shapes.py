@@ -79,7 +79,7 @@ def test_shape_cad_and_vtk_volume_must_correspond(shape: type[Shape]) -> None:
     shape_cad = geom.generate_cad()
     shape_vtk = geom.generate_surface_mesh()
 
-    volume_cad = shape_cad.Volume()
+    volume_cad = shape_cad.volume()
 
     assert volume_cad > 0
     assert np.isclose(volume_cad, shape_vtk.volume, rtol=1e-2)

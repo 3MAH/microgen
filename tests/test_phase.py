@@ -42,13 +42,13 @@ def test_phase_repeat_should_repeat_the_shape_in_the_rve() -> None:
     """Test the Phase class with a shape."""
     rve = Rve(dim=1)
     box = Box(dim=(1.0, 1.0, 1.0)).generate_cad()
-    volume_before = box.Volume()
+    volume_before = box.volume()
     phase = Phase(shape=box)
 
     repeat = (1, 2, 1)
     phase.repeat(rve, grid=repeat)
     assert len(phase.solids) == np.prod(repeat)
-    assert phase.shape.Volume() == 2.0 * volume_before
+    assert phase.shape.volume() == 2.0 * volume_before
 
 
 def test_phase_rescale_should_change_the_size_of_the_shape() -> None:
@@ -56,9 +56,9 @@ def test_phase_rescale_should_change_the_size_of_the_shape() -> None:
     radius = 1.0
     scale = 1.5
     phase = Phase(shape=Sphere(radius=radius).generate_cad())
-    volume_before = phase.shape.Volume()
+    volume_before = phase.shape.volume()
     phase.rescale(scale)
-    assert np.isclose(phase.shape.Volume(), volume_before * scale**3, rtol=1e-2)
+    assert np.isclose(phase.shape.volume(), volume_before * scale**3, rtol=1e-2)
 
 
 def test_phase_translate_should_shift_centers_corresponding_to_the_translation() -> (
@@ -95,7 +95,7 @@ def test_phase_inertia_matrix_should_return_the_right_values() -> None:
     phase = Phase(shape=Sphere(radius=radius).generate_cad())
     assert np.allclose(
         phase.inertia_matrix,
-        np.diag([phase.shape.Volume() * 2 / 5 * radius**2] * 3),
+        np.diag([phase.shape.volume() * 2 / 5 * radius**2] * 3),
     )
     assert np.allclose(phase.get_inertia_matrix(compute=False), phase.inertia_matrix)
 

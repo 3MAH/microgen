@@ -49,7 +49,7 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
     shape_vtk = tpms.generate_surface_mesh(type_part=type_part)
 
     # Assert
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal"])
@@ -67,7 +67,7 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     shape_vtk = tpms.generate_surface_mesh(type_part=type_part)
 
     # Assert
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_with_cad_and_vtk() -> (
@@ -84,7 +84,7 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
     shape_cadquery = tpms.generate_cad(type_part="sheet")
     shape_vtk = tpms.generate_surface_mesh(type_part="sheet")
 
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize(
@@ -250,9 +250,9 @@ def test_tpms_given_generate_surface_must_not_be_empty() -> None:
     tpms = microgen.Tpms(surface_function=TEST_DEFAULT_SURFACE_FUNCTION, offset=0)
 
     surface = tpms.generate_cad(type_part="surface")
-    assert np.any(surface.Vertices())
-    assert np.any(surface.Faces())
-    assert not surface.Closed()
+    assert np.any(surface.vertices())
+    assert np.any(surface.faces())
+    assert not surface.is_closed()
 
 
 def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond() -> None:
@@ -273,7 +273,7 @@ def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond() -
     shape_cadquery = tpms.generate_cad(type_part="sheet", smoothing=0, verbose=True)
     shape_vtk = tpms.generate_surface_mesh(type_part="sheet")
 
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize("param", [0.3, 4.0])
@@ -526,9 +526,9 @@ def test_tpms_center_and_orientation_must_correspond() -> None:
     )
 
     assert np.allclose(vtk_sheet.center, center)
-    assert np.allclose(cad_sheet.Center().toTuple(), center, rtol=1e-3)
+    assert np.allclose(cad_sheet.center().to_tuple(), center, rtol=1e-3)
 
-    bbox = cad_sheet.BoundingBox()
+    bbox = cad_sheet.bounding_box()
     bounds = (bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax, bbox.zmin, bbox.zmax)
     assert np.allclose(bounds, vtk_sheet.bounds)
 

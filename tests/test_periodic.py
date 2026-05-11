@@ -124,7 +124,7 @@ _VOL_REL_TOL = 5e-3  # OCCT booleans have small volumetric drift
 def _total_volume(phase: Phase) -> float:
     # phase.solids is a list of raw TopoDS_Solid; wrap each so we can call
     # the CadShape helpers (Volume / BoundingBox).
-    return sum(float(CadShape(s).Volume()) for s in phase.solids)
+    return sum(float(CadShape(s).volume()) for s in phase.solids)
 
 
 def _all_solids_inside(phase: Phase, rve: Rve, tol: float = 1e-3) -> bool:
@@ -134,7 +134,7 @@ def _all_solids_inside(phase: Phase, rve: Rve, tol: float = 1e-3) -> bool:
     # so 1e-3 is loose enough for OCCT noise yet tight enough to catch the
     # bug class this test targets.
     for solid in phase.solids:
-        bb = CadShape(solid).BoundingBox()
+        bb = CadShape(solid).bounding_box()
         if (
             bb.xmin < rve.min_point[0] - tol
             or bb.xmax > rve.max_point[0] + tol

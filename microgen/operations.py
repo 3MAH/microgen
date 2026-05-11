@@ -216,7 +216,7 @@ def cut_phases_by_shape(phases: list[Phase], cut_obj: CadShape) -> list[Phase]:
         if phase.shape is None:
             continue
         cut = CadShape(BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped).Shape())
-        if len(cut.Solids()) > 0:
+        if len(cut.solids()) > 0:
             phase_cut.append(Phase(shape=cut))
     return phase_cut
 
