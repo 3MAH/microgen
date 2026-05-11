@@ -7,10 +7,12 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 
 from __future__ import annotations
 
+import itertools
 import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 import pyvista as pv
 
 from microgen.operations import rotate
@@ -24,6 +26,14 @@ if TYPE_CHECKING:
 
 class Ellipsoid(Shape):
     """Class to generate an ellipsoid.
+
+    The implicit field is the canonical ellipsoid scalar
+    ``sqrt((x/rx)^2 + (y/ry)^2 + (z/rz)^2) - 1`` (approximate SDF with
+    the correct zero-level set), evaluated in the local frame so
+    ``center`` and ``orientation`` transform the field correctly. Set
+    on every instance so ellipsoids compose via ``|`` / ``&`` / ``-``
+    and stay usable without the ``[cad]`` extra (only :meth:`generate`
+    requires CAD).
 
     .. jupyter-execute::
        :hide-code:
@@ -60,6 +70,40 @@ class Ellipsoid(Shape):
             radii = (a_x, a_y, a_z)
 
         self.radii = radii
+        self._setup_frep_field()
+
+    def _setup_frep_field(self: Ellipsoid) -> None:
+        """Bake the ellipsoid field and AABB onto ``_func`` / ``_bounds``."""
+        cx, cy, cz = (float(c) for c in self.center)
+        rx, ry, rz = (float(r) for r in self.radii)
+        rot_inv = self.orientation.inv().as_matrix()
+
+        def _field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            px = x - cx
+            py = y - cy
+            pz = z - cz
+            lx = rot_inv[0, 0] * px + rot_inv[0, 1] * py + rot_inv[0, 2] * pz
+            ly = rot_inv[1, 0] * px + rot_inv[1, 1] * py + rot_inv[1, 2] * pz
+            lz = rot_inv[2, 0] * px + rot_inv[2, 1] * py + rot_inv[2, 2] * pz
+            return np.sqrt((lx / rx) ** 2 + (ly / ry) ** 2 + (lz / rz) ** 2) - 1.0
+
+        rot = self.orientation.as_matrix()
+        corners = np.array(list(itertools.product([-rx, rx], [-ry, ry], [-rz, rz])))
+        rotated = corners @ rot.T
+        margin = max(rx, ry, rz) * 0.1
+        self._func = _field
+        self._bounds = (
+            cx + float(rotated[:, 0].min()) - margin,
+            cx + float(rotated[:, 0].max()) + margin,
+            cy + float(rotated[:, 1].min()) - margin,
+            cy + float(rotated[:, 1].max()) + margin,
+            cz + float(rotated[:, 2].min()) - margin,
+            cz + float(rotated[:, 2].max()) + margin,
+        )
 
     def generate(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
         """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""
