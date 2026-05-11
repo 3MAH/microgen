@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import overload
@@ -41,13 +40,58 @@ class OutputMeshNotPeriodicError(Exception):
     """
 
 
-@dataclass(frozen=True)
-class MmgOptions:
-    """Tuning options for the mmg remesher.
+@overload
+def remesh_keeping_boundaries_for_fem(
+    input_mesh: BoxMesh,
+    *,
+    periodic: bool = True,
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: float | None = None,
+    hgrad: float | None = None,
+    hmax: float | None = None,
+    hmin: float | None = None,
+    hsiz: float | None = None,
+) -> BoxMesh: ...
+
+
+@overload
+def remesh_keeping_boundaries_for_fem(
+    input_mesh: pv.UnstructuredGrid,
+    *,
+    periodic: bool = True,
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: float | None = None,
+    hgrad: float | None = None,
+    hmax: float | None = None,
+    hmin: float | None = None,
+    hsiz: float | None = None,
+) -> pv.UnstructuredGrid: ...
+
+
+def remesh_keeping_boundaries_for_fem(  # noqa: PLR0913
+    input_mesh: BoxMesh | pv.UnstructuredGrid,
+    *,
+    periodic: bool = True,
+    mesh_version: int = 2,
+    dimension: int = 3,
+    tol: float = 1e-8,
+    hausd: float | None = None,
+    hgrad: float | None = None,
+    hmax: float | None = None,
+    hmin: float | None = None,
+    hsiz: float | None = None,
+) -> BoxMesh | pv.UnstructuredGrid:
+    """Remesh a mesh using mmg while keeping boundary elements untouched.
 
     See https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
     for the full reference on each ``h*`` parameter.
 
+    :param input_mesh: BoxMesh or pv.UnstructuredGrid mesh to be remeshed
+    :param periodic: whether the mesh is periodic and must stay periodic
     :param mesh_version: mesh file version
     :param dimension: mesh dimension
     :param tol: tolerance for the periodicity check
@@ -58,50 +102,6 @@ class MmgOptions:
     :param hmin: minimal edge size
     :param hsiz: build a constant size map of size ``hsiz``
     """
-
-    mesh_version: int = 2
-    dimension: int = 3
-    tol: float = 1e-8
-    hausd: float | None = None
-    hgrad: float | None = None
-    hmax: float | None = None
-    hmin: float | None = None
-    hsiz: float | None = None
-
-
-@overload
-def remesh_keeping_boundaries_for_fem(
-    input_mesh: BoxMesh,
-    *,
-    periodic: bool = True,
-    options: MmgOptions | None = None,
-) -> BoxMesh: ...
-
-
-@overload
-def remesh_keeping_boundaries_for_fem(
-    input_mesh: pv.UnstructuredGrid,
-    *,
-    periodic: bool = True,
-    options: MmgOptions | None = None,
-) -> pv.UnstructuredGrid: ...
-
-
-def remesh_keeping_boundaries_for_fem(
-    input_mesh: BoxMesh | pv.UnstructuredGrid,
-    *,
-    periodic: bool = True,
-    options: MmgOptions | None = None,
-) -> BoxMesh | pv.UnstructuredGrid:
-    """Remesh a mesh using mmg while keeping boundary elements untouched.
-
-    :param input_mesh: BoxMesh or pv.UnstructuredGrid mesh to be remeshed
-    :param periodic: whether the mesh is periodic and must stay periodic
-    :param options: mmg tuning options; see :class:`MmgOptions`
-    """
-    if options is None:
-        options = MmgOptions()
-
     if isinstance(input_mesh, pv.UnstructuredGrid):
         is_only_tetra = (
             len(input_mesh.cells_dict) == 1
@@ -118,7 +118,7 @@ def remesh_keeping_boundaries_for_fem(
         err_msg = "Input mesh must be either a BoxMesh or a pv.UnstructuredGrid"
         raise TypeError(err_msg)
 
-    if periodic and not is_periodic(nodes_coords, options.tol):
+    if periodic and not is_periodic(nodes_coords, tol):
         err_msg = "Input mesh is not periodic"
         raise InputMeshNotPeriodicError(err_msg)
 
@@ -134,14 +134,23 @@ def remesh_keeping_boundaries_for_fem(
     output_mesh: pv.UnstructuredGrid | None = None
     for _ in range(_MMG_MAX_ATTEMPTS):
         try:
-            output_mesh = _run_mmg_pipeline(boundary_triangles_file.name, options)
+            output_mesh = _run_mmg_pipeline(
+                boundary_triangles_file.name,
+                mesh_version=mesh_version,
+                dimension=dimension,
+                hausd=hausd,
+                hgrad=hgrad,
+                hmax=hmax,
+                hmin=hmin,
+                hsiz=hsiz,
+            )
         except MmgError as err:
             last_error = err
             continue
 
         if periodic:
-            _snap_to_expected_bounds(output_mesh, nodes_coords, options.tol)
-            if not is_periodic(output_mesh.points, options.tol):
+            _snap_to_expected_bounds(output_mesh, nodes_coords, tol)
+            if not is_periodic(output_mesh.points, tol):
                 last_error = OutputMeshNotPeriodicError(
                     "Something went wrong: output mesh is not periodic",
                 )
@@ -160,9 +169,16 @@ def remesh_keeping_boundaries_for_fem(
     return output_mesh
 
 
-def _run_mmg_pipeline(
+def _run_mmg_pipeline(  # noqa: PLR0913
     boundary_triangles_file: str,
-    options: MmgOptions,
+    *,
+    mesh_version: int,
+    dimension: int,
+    hausd: float | None,
+    hgrad: float | None,
+    hmax: float | None,
+    hmin: float | None,
+    hsiz: float | None,
 ) -> pv.UnstructuredGrid:
     """Run the two mmg3d passes and return the parsed output mesh.
 
@@ -187,11 +203,11 @@ def _run_mmg_pipeline(
             _CliMmgOptions(
                 input_file=premeshed_mesh_file.name,
                 output_file=raw_output_mesh_file.name,
-                hausd=options.hausd,
-                hgrad=options.hgrad,
-                hmax=options.hmax,
-                hmin=options.hmin,
-                hsiz=options.hsiz,
+                hausd=hausd,
+                hgrad=hgrad,
+                hmax=hmax,
+                hmin=hmin,
+                hsiz=hsiz,
                 level_set=0.0,
                 no_ridge=True,
             ),
@@ -199,8 +215,8 @@ def _run_mmg_pipeline(
         _remove_unnecessary_fields_from_mesh_file(
             raw_output_mesh_file.name,
             output_mesh_file.name,
-            options.mesh_version,
-            options.dimension,
+            mesh_version,
+            dimension,
         )
         return pv.UnstructuredGrid(output_mesh_file.name)
     finally:

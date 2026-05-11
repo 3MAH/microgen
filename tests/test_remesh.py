@@ -11,7 +11,6 @@ from _pytest.fixtures import FixtureRequest
 from microgen import BoxMesh, Tpms, is_periodic
 from microgen.remesh import (
     InputMeshNotPeriodicError,
-    MmgOptions,
     remesh_keeping_boundaries_for_fem,
 )
 from microgen.shape.surface_functions import gyroid
@@ -185,7 +184,7 @@ def test_given_periodic_mesh_remesh_keeping_boundaries_for_fem_with_periodic_opt
         edge_length_gradient = 1.05
         remeshed_shape = remesh_keeping_boundaries_for_fem(
             input_mesh,
-            options=MmgOptions(hgrad=edge_length_gradient),
+            hgrad=edge_length_gradient,
         )
 
         if isinstance(input_mesh, BoxMesh):
@@ -208,7 +207,7 @@ def test_given_non_periodic_mesh_remesh_with_periodic_option_must_raise_inputmes
         ):
             remesh_keeping_boundaries_for_fem(
                 non_periodic_mesh,
-                options=MmgOptions(hgrad=edge_length_gradient),
+                hgrad=edge_length_gradient,
             )
 
 
@@ -235,7 +234,7 @@ def test_given_non_periodic_mesh_remesh_without_periodic_option_must_remesh_keep
         remeshed_mesh = remesh_keeping_boundaries_for_fem(
             non_periodic_mesh,
             periodic=False,
-            options=MmgOptions(hgrad=edge_length_gradient),
+            hgrad=edge_length_gradient,
         )
         remeshed_mesh_nodes_coords = remeshed_mesh.points
         remeshed_mesh_boundary_nodes_coords = (
