@@ -5,7 +5,6 @@ Face Centered Cubic (:mod:`microgen.shape.strut_lattice.face_centered_cubic`)
 """
 
 from itertools import product
-from typing import List
 
 import numpy as np
 import numpy.typing as npt
