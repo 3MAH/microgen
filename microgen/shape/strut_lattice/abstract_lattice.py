@@ -35,11 +35,10 @@ BALL_POINT_RADIUS_TOLERANCE = 1e-5
 
 
 class AbstractLattice(Shape):
-    """
-    Abstract Class to create strut-based lattice
-    """
+    """Abstract Class to create strut-based lattice."""
 
     _UNIT_CUBE_SIZE = 1.0
+    _DEFAULT_STRUT_HEIGHTS: float | list[float] | None = None
 
     def __init__(
         self,
@@ -52,8 +51,8 @@ class AbstractLattice(Shape):
         density: float | None = None,
         **kwargs: Vector3DType | Rotation,
     ) -> None:
-        """
-        Abstract Class to create strut-based lattice.
+        """Abstract Class to create strut-based lattice.
+
         The lattice will be created in a cube which size can be
         modified with 'cell_size'.
 
@@ -69,9 +68,13 @@ class AbstractLattice(Shape):
         :param strut_joints: option to add spherical joints at the vertices
         to better manage strut junctions
         """
-        kwargs.pop("strut_heights", None)
+        if strut_heights is None:
+            strut_heights = type(self)._DEFAULT_STRUT_HEIGHTS
         if strut_radius is not None and density is not None:
-            err_msg = "strut radius and density cannot be given at the same time. Give only one."
+            err_msg = (
+                "strut radius and density cannot be given at the same time. "
+                "Give only one."
+            )
             raise ValueError(err_msg)
 
         if strut_radius is None and density is None:
@@ -114,8 +117,10 @@ class AbstractLattice(Shape):
     ) -> float:
         _generate_cad_find_radius = None
         """Compute the radius to fit the required density.
-            The computed_radius is an objective function to find the adequate radiuus from a given density
-            Note that the last cad_shape generated is stored to avoid to generate it afterwards.
+
+        ``computed_radius`` is an objective function to find the adequate
+        radius from a given density. The last cad_shape generated is stored
+        to avoid regenerating it afterwards.
         """
 
         RADIUS_MIN = 10e-4
@@ -180,9 +185,11 @@ class AbstractLattice(Shape):
             isinstance(self._strut_heights, list)
             and len(self._strut_heights) != self.strut_number
         ):
-            raise ValueError(
-                f"strut_heights must contain {self.strut_number} values, but {len(self._strut_heights)} were provided."
+            err_msg = (
+                f"strut_heights must contain {self.strut_number} values, "
+                f"but {len(self._strut_heights)} were provided."
             )
+            raise ValueError(err_msg)
 
     @property
     def strut_number(self) -> int:
@@ -190,8 +197,8 @@ class AbstractLattice(Shape):
 
     @property
     def strut_heights(self) -> list[float]:
-        """
-        Returns the list of strut lengths.
+        """Return the list of strut lengths.
+
         If a single value is given, it is converted to a list.
         """
         if isinstance(self._strut_heights, float):

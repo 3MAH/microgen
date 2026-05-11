@@ -22,18 +22,27 @@ _MMG_MAX_ATTEMPTS = 5
 
 
 class InputMeshNotPeriodicError(Exception):
-    """Raised when input mesh of remesh_keeping_boundaries_for_fem
-    with periodic=True option is not periodic."""
+    """Raised when the input mesh is not periodic.
+
+    Triggered when ``periodic=True`` is passed to
+    :func:`remesh_keeping_boundaries_for_fem` but the supplied input mesh
+    fails the periodicity check.
+    """
 
 
 class OutputMeshNotPeriodicError(Exception):
-    """Raised when output mesh of remesh_keeping_boundaries_for_fem
-    with periodic=True option is not periodic."""
+    """Raised when the remeshed output is not periodic.
+
+    Triggered when ``periodic=True`` is passed to
+    :func:`remesh_keeping_boundaries_for_fem` but mmg's output fails the
+    periodicity check.
+    """
 
 
 @overload
 def remesh_keeping_boundaries_for_fem(
     input_mesh: BoxMesh,
+    *,
     periodic: bool = True,
     mesh_version: int = 2,
     dimension: int = 3,
@@ -49,6 +58,7 @@ def remesh_keeping_boundaries_for_fem(
 @overload
 def remesh_keeping_boundaries_for_fem(
     input_mesh: pv.UnstructuredGrid,
+    *,
     periodic: bool = True,
     mesh_version: int = 2,
     dimension: int = 3,
@@ -61,8 +71,9 @@ def remesh_keeping_boundaries_for_fem(
 ) -> pv.UnstructuredGrid: ...
 
 
-def remesh_keeping_boundaries_for_fem(
+def remesh_keeping_boundaries_for_fem(  # noqa: PLR0913
     input_mesh: BoxMesh | pv.UnstructuredGrid,
+    *,
     periodic: bool = True,
     mesh_version: int = 2,
     dimension: int = 3,
@@ -75,20 +86,20 @@ def remesh_keeping_boundaries_for_fem(
 ) -> BoxMesh | pv.UnstructuredGrid:
     """Remesh a mesh using mmg while keeping boundary elements untouched.
 
+    See https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
+    for the full reference on each ``h*`` parameter.
+
     :param input_mesh: BoxMesh or pv.UnstructuredGrid mesh to be remeshed
-    :param periodic: whether the mesh is periodic and must stay periodic (default: True)
-    :param mesh_version: mesh file version (default: 2)
-    :param dimension: mesh dimension (default: 3)
-    :param tol: tolerance for periodicity check
-
-    The following parameters are used to control mmg remeshing, see here for more info :
-    https://www.mmgtools.org/mmg-remesher-try-mmg/mmg-remesher-options
-
-    :param hausd: Maximal Hausdorff distance for the boundaries approximation
-    :param hgrad: Gradation value, ie ratio between lengths of adjacent mesh edges
-    :param hmax: Maximal edge size
-    :param hmin: Minimal edge size
-    :param hsiz: Build a constant size map of size hsiz
+    :param periodic: whether the mesh is periodic and must stay periodic
+    :param mesh_version: mesh file version
+    :param dimension: mesh dimension
+    :param tol: tolerance for the periodicity check
+    :param hausd: maximal Hausdorff distance for the boundaries approximation
+    :param hgrad: gradation value, i.e. ratio between lengths of adjacent
+        mesh edges
+    :param hmax: maximal edge size
+    :param hmin: minimal edge size
+    :param hsiz: build a constant size map of size ``hsiz``
     """
     if isinstance(input_mesh, pv.UnstructuredGrid):
         is_only_tetra = (
@@ -140,7 +151,7 @@ def remesh_keeping_boundaries_for_fem(
             _snap_to_expected_bounds(output_mesh, nodes_coords, tol)
             if not is_periodic(output_mesh.points, tol):
                 last_error = OutputMeshNotPeriodicError(
-                    "Something went wrong: output mesh is not periodic"
+                    "Something went wrong: output mesh is not periodic",
                 )
                 output_mesh = None
                 continue
@@ -254,9 +265,8 @@ def _add_required_triangles_to_mesh_file(
     with Path(output_mesh_file).open(mode="w+") as output_file:
         output_file.writelines(lines)
         output_file.write("RequiredTriangles\n")
-        output_file.write(str(n_required_triangles) + "\n")
-        for i in range(n_required_triangles):
-            output_file.write(str(i + 1) + "\n")
+        output_file.write(f"{n_required_triangles}\n")
+        output_file.writelines(f"{i + 1}\n" for i in range(n_required_triangles))
         output_file.write("End\n")
 
 
@@ -271,8 +281,8 @@ def _remove_unnecessary_fields_from_mesh_file(
 
     write_bool = True
     with Path(output_mesh_file).open(mode="w+") as output_file:
-        output_file.write(f"MeshVersionFormatted {mesh_version}" + "\n\n")
-        output_file.write(f"Dimension {dimension}" + "\n\n")
+        output_file.write(f"MeshVersionFormatted {mesh_version}\n\n")
+        output_file.write(f"Dimension {dimension}\n\n")
         for line in lines:
             if not _only_numbers_in_line(line.strip().split(" ")):
                 write_bool = line.strip() in ("Vertices", "Tetrahedra")
@@ -299,7 +309,7 @@ def _snap_to_expected_bounds(
       back exactly onto it.
     * by a few microns (e.g. y = 1.00006 instead of 1.0). The boundary face
       itself still has the correct node count, so this stray vertex does not
-      have a periodic twin. Pull it just inside the cell — it then contributes
+      have a periodic twin. Pull it just inside the cell -- it then contributes
       no boundary node and doesn't anchor ``_get_bounding_box`` past the cell.
 
     Both forms confuse ``is_periodic`` even when the periodic boundary is

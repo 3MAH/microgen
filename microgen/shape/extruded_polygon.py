@@ -62,7 +62,10 @@ class ExtrudedPolygon(Shape):
         self.height = height
 
     def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
-        """Generate an extruded polygon CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+        """Generate an extruded polygon CAD shape (OCCT).
+
+        Requires the ``[cad]`` extra.
+        """
         from microgen.cad import make_extruded_polygon
 
         shape = make_extruded_polygon(

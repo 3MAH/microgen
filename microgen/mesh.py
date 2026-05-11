@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 import gmsh
@@ -11,6 +10,8 @@ import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from .phase import Phase
     from .rve import Rve
 
@@ -25,7 +26,7 @@ class OutputMeshNotPeriodicError(Exception):
     """Raised when output mesh from mesh_periodic is not periodic."""
 
 
-def mesh(
+def mesh(  # noqa: PLR0913
     mesh_file: str,
     list_phases: list[Phase],
     size: float,
@@ -49,7 +50,7 @@ def mesh(
     _finalize_mesh(size, output_file)
 
 
-def mesh_periodic(
+def mesh_periodic(  # noqa: PLR0913
     mesh_file: str,
     rve: Rve,
     list_phases: list[Phase],
@@ -119,7 +120,7 @@ def _extract_face_nodes(
     axes = "xyz"[:dim]
     faces = {}
     for i, axis in enumerate(axes):
-        for sign, point in zip("-+", [min_point, max_point]):
+        for sign, point in zip("-+", [min_point, max_point], strict=True):
             face = f"{axis}{sign}"
             faces[face] = np.where(np.abs(nodes_coords[:, i] - point[i]) < tol)[0]
     return faces

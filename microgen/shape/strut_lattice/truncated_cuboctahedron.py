@@ -14,8 +14,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class TruncatedCuboctahedron(AbstractLattice):
-    """
-    Class to create a unit truncated cuboctahedron lattice of given cell size and density or strut radius
+    """Class to create a unit truncated cuboctahedron lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -31,9 +32,7 @@ class TruncatedCuboctahedron(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", 1 / (1.0 + 2.0 * np.sqrt(2)))
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = 1 / (1.0 + 2.0 * np.sqrt(2))
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         values = [1, -(1 + np.sqrt(2)), -(1 + 2 * np.sqrt(2))]

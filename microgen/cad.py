@@ -1193,7 +1193,9 @@ def make_plane_face(
 
 
 def transform_geometry(shape: CadShape, matrix: npt.NDArray[np.float64]) -> CadShape:
-    """Apply a 3x4 affine matrix (linear + translation) via ``BRepBuilderAPI_GTransform``.
+    """Apply a 3x4 affine matrix (linear + translation).
+
+    Wraps OCCT ``BRepBuilderAPI_GTransform``.
 
     :param matrix: ``(3, 4)`` array; rows are ``[a b c tx; d e f ty; g h i tz]``.
     """

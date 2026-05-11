@@ -9,8 +9,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
-
 from .cad import (
     CadShape,
     enumerate_solids,
@@ -78,8 +76,10 @@ def _base_pnt(face: str, rve: Rve) -> tuple[float, float, float]:
 
 
 def _translate(face: str, rve: Rve) -> tuple[float, float, float]:
-    """Translation applied to solids on the 'outside' half of *face*
-    to wrap them through the opposite RVE face.
+    """Compute the wrap-around translation for solids on a face.
+
+    The translation is applied to solids sitting on the 'outside' half of
+    *face* so they re-enter the RVE through the opposite face.
     """
     if face == "x-":
         return (float(rve.dim[0]), 0.0, 0.0)
@@ -179,7 +179,7 @@ def _intersect_edge(
     )
     pp = select_solids_on_side(split_pp, base_1, _SIDE_DIR[f_1])
 
-    # (+−) — inside first, outside second: translate by tr_1
+    # (+-) -- inside first, outside second: translate by tr_1
     pm = select_solids_on_side(
         split_pp,
         base_1,

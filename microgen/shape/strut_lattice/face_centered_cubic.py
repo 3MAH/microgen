@@ -5,7 +5,6 @@ Face Centered Cubic (:mod:`microgen.shape.strut_lattice.face_centered_cubic`)
 """
 
 from itertools import product
-from typing import List
 
 import numpy as np
 import numpy.typing as npt
@@ -14,8 +13,9 @@ from .abstract_lattice import AbstractLattice
 
 
 class FaceCenteredCubic(AbstractLattice):
-    """
-    Class to create a unit face-centered cubic lattice of given cell size and density or strut radius
+    """Class to create a unit face-centered cubic lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -31,9 +31,7 @@ class FaceCenteredCubic(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(2.0) / 2.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(2.0) / 2.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = list(
@@ -49,9 +47,7 @@ class FaceCenteredCubic(AbstractLattice):
         return np.array(cube_vertices + face_centers)
 
     def _generate_face_center_to_cube_vertices_dict(self) -> dict[int, list[int]]:
-        """
-        Dynamically generates a dictionary associating the indices of the face centers with the indices of the cube vertices.
-        """
+        """Map each face-center index to its connected cube-vertex indices."""
         num_cube_vertices = 8
         cube_vertices = self.base_vertices[:num_cube_vertices]
         face_centers = self.base_vertices[num_cube_vertices:]
@@ -73,9 +69,7 @@ class FaceCenteredCubic(AbstractLattice):
         return face_to_vertices
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
-        """
-        Generates the pairs of indices of the fcc strut vertices between the face centers and the cube vertices.
-        """
+        """Generate fcc strut vertex pairs (face center, cube vertex)."""
         face_to_vertices = self._generate_face_center_to_cube_vertices_dict()
 
         vertex_pairs_indices = [

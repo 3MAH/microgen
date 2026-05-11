@@ -14,8 +14,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class TruncatedCube(AbstractLattice):
-    """
-    Class to create a unit truncated cubic lattice of given cell size and density or strut radius
+    """Class to create a unit truncated cubic lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -31,9 +32,7 @@ class TruncatedCube(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(2.0) - 1.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(2.0) - 1.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         values = [

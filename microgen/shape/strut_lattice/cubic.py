@@ -14,8 +14,9 @@ from .abstract_lattice import AbstractLattice
 
 
 class Cubic(AbstractLattice):
-    """
-    Class to create a unit cubic lattice of given cell size and density or strut radius.
+    """Class to create a unit cubic lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -31,9 +32,7 @@ class Cubic(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", self._UNIT_CUBE_SIZE)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = AbstractLattice._UNIT_CUBE_SIZE
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         return np.array(

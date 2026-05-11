@@ -12,8 +12,9 @@ from .abstract_lattice import AbstractLattice
 
 
 class Octahedron(AbstractLattice):
-    """
-    Class to create a unit octahedron lattice of given cell size and density or strut radius
+    """Class to create a unit octahedron lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -29,9 +30,7 @@ class Octahedron(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(2.0) / 2.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(2.0) / 2.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         return np.array(

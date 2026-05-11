@@ -3,7 +3,7 @@
 import importlib.metadata
 
 from .box_mesh import BoxMesh, NonBoxMeshError
-from .external import Mmg, Neper, parseNeper
+from .external import Mmg, Neper
 from .mesh import is_periodic, mesh, mesh_periodic
 from .operations import (
     cut_phase_by_shape_list,
@@ -108,7 +108,6 @@ __all__ = [
     "mesh",
     "mesh_periodic",
     "new_geometry",
-    "parseNeper",
     "periodic_split_and_translate",
     "raster_phase",
     "repeat_polydata",
