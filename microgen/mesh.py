@@ -34,19 +34,17 @@ def mesh(  # noqa: PLR0913
     output_file: str = "Mesh.msh",
     msh_file_version: int = 4,
 ) -> None:
-    """Mesh a step file with gmsh, with list-of-phases management.
+    """Mesh step file with gmsh with list of phases management.
 
     :param mesh_file: step file to mesh
     :param list_phases: list of phases to mesh
-    :param size: mesh size constraint
-    :param order: element order
-    :param output_file: output file path (``.msh`` or ``.vtk``)
-    :param msh_file_version: gmsh ``.msh`` file version
+    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
+    :param order: see `gmsh.model.mesh.setOrder(order)`_
+    :param output_file: output file (.msh, .vtk)
+    :param msh_file_version: gmsh file version
 
-    .. note::
-        The flat-keyword design here is deliberate; a follow-up PR will
-        refactor ``mesh`` / ``mesh_periodic`` into a stateful ``Mesher``
-        class so a single loaded model can be written at multiple sizes.
+    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
     _finalize_mesh(size, output_file)
@@ -67,11 +65,14 @@ def mesh_periodic(  # noqa: PLR0913
     :param mesh_file: step file to mesh
     :param rve: RVE for periodicity
     :param list_phases: list of phases to mesh
-    :param size: mesh size constraint
-    :param order: element order
-    :param output_file: output file path (``.msh`` or ``.vtk``)
-    :param msh_file_version: gmsh ``.msh`` file version
-    :param tol: tolerance for the periodicity check
+    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
+    :param order: see `gmsh.model.mesh.setOrder(order)`_
+    :param output_file: output file (.msh, .vtk)
+    :param msh_file_version: gmsh file version
+    :param tol: tolerance for periodicity check
+
+    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
+    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
     _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
     _set_periodic(rve)

@@ -9,10 +9,7 @@ import pyvista as pv
 from _pytest.fixtures import FixtureRequest
 
 from microgen import BoxMesh, Tpms, is_periodic
-from microgen.remesh import (
-    InputMeshNotPeriodicError,
-    remesh_keeping_boundaries_for_fem,
-)
+from microgen.remesh import InputMeshNotPeriodicError, remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
