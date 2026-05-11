@@ -57,7 +57,7 @@ What you can do in each mode:
 
 |                                       | Core install | `[cad]` install |
 | ------------------------------------- | :----------: | :-------------: |
-| `Shape.generate_vtk()` (mesh output)  |      ✅      |        ✅        |
+| `Shape.generate_surface_mesh()` (viz) |      ✅      |        ✅        |
 | Implicit fields, TPMS F-rep, booleans |      ✅      |        ✅        |
 | `Shape.generate()` (OCCT BREP)        |      ❌      |        ✅        |
 | `Phase`, `fuse_shapes`, `cut_*`       |      ❌      |        ✅        |

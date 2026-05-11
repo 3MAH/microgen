@@ -40,7 +40,7 @@ class Cylinder(Shape):
 
        import microgen
 
-       shape = microgen.Cylinder().generate_vtk()
+       shape = microgen.Cylinder().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -111,7 +111,7 @@ class Cylinder(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Cylinder,
         resolution: int = 100,
         **_: KwargsGenerateType,

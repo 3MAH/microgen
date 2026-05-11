@@ -33,7 +33,7 @@ class Sphere(Shape):
 
        import microgen
 
-       shape = microgen.Sphere().generate_vtk()
+       shape = microgen.Sphere().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -76,7 +76,7 @@ class Sphere(Shape):
 
         return make_sphere(self.radius, self.center)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Sphere,
         theta_resolution: int = 50,
         phi_resolution: int = 50,

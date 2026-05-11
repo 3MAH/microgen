@@ -32,7 +32,7 @@ class ExtrudedPolygon(Shape):
 
        import microgen
 
-       shape = microgen.ExtrudedPolygon().generate_vtk()
+       shape = microgen.ExtrudedPolygon().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -75,7 +75,9 @@ class ExtrudedPolygon(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(
+        self: ExtrudedPolygon, **_: KwargsGenerateType
+    ) -> pv.PolyData:
         """Generate an extruded polygon VTK shape using the given parameters."""
         vertices = [
             [

@@ -41,24 +41,24 @@ def test_implicit_ops_module_does_not_need_ocp() -> None:
     assert hasattr(implicit_ops, "normalize_to_sdf")
 
 
-def test_primitive_generate_vtk_without_cad_extra() -> None:
-    """Every primitive's ``generate_vtk()`` works without the CAD extra."""
+def test_primitive_generate_surface_mesh_without_cad_extra() -> None:
+    """Every primitive's ``generate_surface_mesh()`` works without the CAD extra."""
     from microgen.shape.box import Box
     from microgen.shape.cylinder import Cylinder
     from microgen.shape.sphere import Sphere
 
-    assert Box().generate_vtk().n_cells > 0
-    assert Sphere().generate_vtk().n_cells > 0
-    assert Cylinder().generate_vtk().n_cells > 0
+    assert Box().generate_surface_mesh().n_cells > 0
+    assert Sphere().generate_surface_mesh().n_cells > 0
+    assert Cylinder().generate_surface_mesh().n_cells > 0
 
 
-def test_tpms_generate_vtk_without_cad_extra() -> None:
+def test_tpms_generate_surface_mesh_without_cad_extra() -> None:
     """TPMS F-rep + marching cubes work without the CAD extra."""
     from microgen import surface_functions
     from microgen.shape.tpms import Tpms
 
     tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.5)
-    mesh = tpms.generate_vtk(type_part="sheet")
+    mesh = tpms.generate_surface_mesh(type_part="sheet")
     assert mesh.n_cells > 0
 
 

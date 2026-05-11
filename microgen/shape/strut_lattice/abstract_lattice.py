@@ -284,7 +284,7 @@ class AbstractLattice(Shape):
 
         return volume
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self,
         size: float = 0.02,
         order: int = 1,
@@ -298,13 +298,13 @@ class AbstractLattice(Shape):
             if cached_params == lattice_params:
                 return cached_mesh
 
-        mesh = self._generate_vtk(*lattice_params)
+        mesh = self._generate_surface_mesh(*lattice_params)
         self._vtk_shape = (lattice_params, mesh)
         return mesh
 
-    vtk_shape = property(generate_vtk)
+    vtk_shape = property(generate_surface_mesh)
 
-    def _generate_vtk(
+    def _generate_surface_mesh(
         self,
         size: float = 0.02,
         order: int = 1,

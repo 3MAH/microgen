@@ -35,7 +35,7 @@ class Polyhedron(Shape):
 
        import microgen
 
-       shape = microgen.Polyhedron().generate_vtk()
+       shape = microgen.Polyhedron().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -84,7 +84,7 @@ class Polyhedron(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate a polyhedron VTK shape using the given parameters."""
         faces_pv = copy.deepcopy(self.faces_ixs)
         for vertices_in_face in faces_pv:

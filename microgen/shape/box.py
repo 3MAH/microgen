@@ -38,7 +38,7 @@ class Box(Shape):
 
        import microgen
 
-       shape = microgen.Box().generate_vtk()
+       shape = microgen.Box().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -103,7 +103,7 @@ class Box(Shape):
         shape = make_box(self.dim, self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Box,
         level: int = 0,
         **_: KwargsGenerateType,

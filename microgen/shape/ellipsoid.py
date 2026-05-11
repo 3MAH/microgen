@@ -39,7 +39,7 @@ class Ellipsoid(Shape):
 
        import microgen
 
-       shape = microgen.Ellipsoid().generate_vtk()
+       shape = microgen.Ellipsoid().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -93,7 +93,7 @@ class Ellipsoid(Shape):
         shape = make_ellipsoid(radii=self.radii, center=self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""
         transform_matrix = np.array(
             [

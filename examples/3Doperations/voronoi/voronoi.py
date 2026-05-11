@@ -17,7 +17,7 @@ from microgen.cad import make_compound
 #         ),
 #         dic=polyhedron,
 #     )
-#     phases.append(Phase(shape=elem.generate()))
+#     phases.append(Phase(shape=elem.generate_cad()))
 
 # compound = cq.Compound.makeCompound([phase.shape for phase in phases])
 # cq.exporters.export(compound, "compound.step")
@@ -33,7 +33,7 @@ from microgen.cad import make_compound
 tess_file = str(Path(__file__).parent / "test1.tess")
 polyhedra = Neper.voronoi_from_tess_file(tess_file)
 
-shapes = [poly.generate() for poly in polyhedra]
+shapes = [poly.generate_cad() for poly in polyhedra]
 
 compound = make_compound(shapes)
 step_file = str(Path(__file__).parent / "compound.step")

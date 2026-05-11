@@ -34,7 +34,7 @@ Box
        dim=(1.0, 0.6, 0.4),
        orientation=(0, 0, 0)
    )
-   box.generate_vtk().plot(color='white')
+   box.generate_surface_mesh().plot(color='white')
 
 
 Sphere
@@ -46,7 +46,7 @@ Sphere
        center=(0, 0, 0),
        radius=0.5
    )
-   sphere.generate_vtk().plot(color='white')
+   sphere.generate_surface_mesh().plot(color='white')
 
 
 Cylinder
@@ -60,7 +60,7 @@ Cylinder
        radius=0.3,
        orientation=(0, 0, 0)
    )
-   cylinder.generate_vtk().plot(color='white')
+   cylinder.generate_surface_mesh().plot(color='white')
 
 
 Ellipsoid
@@ -73,7 +73,7 @@ Ellipsoid
        radii=(0.5, 0.3, 0.2),
        orientation=(0, 0, 0)
    )
-   ellipsoid.generate_vtk().plot(color='white')
+   ellipsoid.generate_surface_mesh().plot(color='white')
 
 
 Capsule
@@ -87,7 +87,7 @@ Capsule
        radius=0.2,
        orientation=(0, 0, 0)
    )
-   capsule.generate_vtk().plot(color='white')
+   capsule.generate_surface_mesh().plot(color='white')
 
 
 Extruded Polygon
@@ -104,7 +104,7 @@ Extruded Polygon
        height=0.5,
        orientation=(0, 0, 0)
    )
-   polygon.generate_vtk().plot(color='white')
+   polygon.generate_surface_mesh().plot(color='white')
 
 
 TPMS Surfaces

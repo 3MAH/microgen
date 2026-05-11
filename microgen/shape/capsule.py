@@ -40,7 +40,7 @@ class Capsule(Shape):
 
        import microgen
 
-       shape = microgen.Capsule().generate_vtk()
+       shape = microgen.Capsule().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -107,7 +107,7 @@ class Capsule(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Capsule,
         resolution: int = 100,
         theta_resolution: int = 50,

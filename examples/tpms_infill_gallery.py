@@ -65,7 +65,7 @@ sph = SphericalTpms(
     cell_size=CELL_SIZE,
     repeat_cell=(2, 0, 0),
 )
-m_sph = sph.generate_vtk(type_part="sheet")
+m_sph = sph.generate_surface_mesh(type_part="sheet")
 clip_y(m_sph).save(OUT / "sphere_g4_tpms.vtk")
 report("1. SphericalTpms (R=3)", m_sph)
 
@@ -80,7 +80,7 @@ cyl = CylindricalTpms(
     cell_size=CELL_SIZE,
     repeat_cell=(2, 0, int(CYLINDER_HEIGHT / CELL_SIZE)),
 )
-m_cyl = cyl.generate_vtk(type_part="sheet")
+m_cyl = cyl.generate_surface_mesh(type_part="sheet")
 clip_y(m_cyl).save(OUT / "cylinder_g5_tpms.vtk")
 report("2. CylindricalTpms (R=1.5)", m_cyl)
 
@@ -104,7 +104,7 @@ sw = Sweep(
     repeat_cell=(8, 1, 6),
     n_curve_samples=200,
 )
-m_sw = sw.generate_vtk(type_part="sheet")
+m_sw = sw.generate_surface_mesh(type_part="sheet")
 clip_y(m_sw).save(OUT / "sweep_g7_helix.vtk")
 report("3. Sweep along helix", m_sw)
 

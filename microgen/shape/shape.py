@@ -31,6 +31,9 @@ Field = Callable[
 
 BoundsType = tuple[float, float, float, float, float, float]
 
+# Scalar-field name on the StructuredGrid used by the default mesh generators.
+_IMPLICIT_SCALAR = "implicit"
+
 
 class ShellCreationError(Exception):
     """Raised when an OCCT shell cannot be created from a mesh."""
@@ -41,7 +44,7 @@ class Shape:
 
     Every shape has a ``center`` and ``orientation``.  It may also carry an
     implicit scalar field (``_func``) where ``f(x, y, z) < 0`` means *inside*.
-    When the implicit field is present, the default :meth:`generate_vtk` and
+    When the implicit field is present, the default :meth:`generate_surface_mesh` and
     :meth:`generate` produce geometry via marching cubes.  Subclasses
     (e.g. ``Sphere``, ``Tpms``) override these methods with their own
     implementations.
@@ -63,18 +66,46 @@ class Shape:
         bounds: BoundsType | None = None,
     ) -> None:
         """Initialize the shape."""
-        self.center = center
-        self.orientation = (
+        self._center = center
+        self._orientation = (
             orientation
             if isinstance(orientation, Rotation)
             else Rotation.from_euler("ZXZ", orientation, degrees=True)
         )
         self._func = func
         self._bounds = bounds
+        # Cache of sampled structured grids keyed on (bounds, resolution).
+        # Shared between generate_surface_mesh and generate_volume_mesh so
+        # users calling both on the same instance only pay one N^3 field
+        # evaluation. Cleared lazily — Shape is immutable post-construction
+        # (center/orientation are read-only properties, _func is fixed).
+        self._grid_cache: dict[tuple[BoundsType, int], pv.StructuredGrid] = {}
 
     # ------------------------------------------------------------------
-    # Public read-only accessors for implicit field
+    # Public read-only accessors
     # ------------------------------------------------------------------
+
+    @property
+    def center(self: Shape) -> Vector3DType:
+        """Geometric center (set at construction, immutable).
+
+        Subclasses with a native renderer (``Sphere``, ``Tpms``, …) read
+        this in their ``generate_*`` overrides. For an implicit-only
+        :class:`Shape` (built via :func:`microgen.shape.implicit_ops.from_field`
+        or by a boolean composition), use :meth:`translate` to shift the
+        field — assigning to ``.center`` after construction has no effect
+        on a bare ``Shape``, so the attribute is read-only at the base.
+        """
+        return self._center
+
+    @property
+    def orientation(self: Shape) -> Rotation:
+        """Rotation applied by subclasses' renderers (set at construction, immutable).
+
+        Implicit-only shapes should compose with :meth:`rotate` instead
+        of mutating this attribute.
+        """
+        return self._orientation
 
     @property
     def func(self: Shape) -> Field | None:
@@ -107,7 +138,7 @@ class Shape:
 
         Coordinates are in the **field's local frame** — ``center`` and
         ``orientation`` are NOT applied here (they only affect mesh output
-        in :meth:`generate_vtk`).  Use :meth:`translate` / :meth:`rotate`
+        in :meth:`generate_surface_mesh`).  Use :meth:`translate` / :meth:`rotate`
         to bake transforms into the field itself.
 
         :param x: x coordinates
@@ -121,34 +152,33 @@ class Shape:
     # Mesh generation (defaults use the implicit field)
     # ------------------------------------------------------------------
 
-    def generate_vtk(
+    def _sample_implicit_grid(
         self: Shape,
-        bounds: BoundsType | None = None,
-        resolution: int = 50,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Generate a VTK mesh of the shape.
+        bounds: BoundsType | None,
+        resolution: int,
+        caller: str,
+    ) -> pv.StructuredGrid:
+        """Build a structured grid over ``bounds`` and sample ``_func`` onto it.
 
-        The default implementation meshes the implicit field via marching cubes
-        (``f < 0`` convention).  Subclasses override this with their own
-        geometry generation.
-
-        :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
-        :param resolution: number of grid points per axis
-        :return: triangulated surface mesh
+        Shared by :meth:`generate_surface_mesh` and :meth:`generate_volume_mesh`,
+        with a per-instance ``(bounds, resolution)`` cache so consecutive calls
+        on the same shape only pay one N^3 field evaluation. Raises
+        ``NotImplementedError`` (with a caller-specific message) when ``_func``
+        is unset, and ``ValueError`` when bounds can't be resolved.
         """
         if self._func is None:
-            err_msg = (
-                "No implicit field defined — subclasses must override generate_vtk()"
-            )
+            err_msg = f"No implicit field defined — subclasses must override {caller}()"
             raise NotImplementedError(err_msg)
 
         bounds = bounds or self._bounds
         if bounds is None:
-            err_msg = (
-                "Bounds must be provided either at construction or in generate_vtk()"
-            )
+            err_msg = f"Bounds must be provided either at construction or in {caller}()"
             raise ValueError(err_msg)
+
+        cache_key = (tuple(bounds), resolution)
+        cached = self._grid_cache.get(cache_key)
+        if cached is not None:
+            return cached
 
         xmin, xmax, ymin, ymax, zmin, zmax = bounds
         xi = np.linspace(xmin, xmax, resolution)
@@ -157,21 +187,62 @@ class Shape:
         x, y, z = np.meshgrid(xi, yi, zi, indexing="ij")
 
         grid = pv.StructuredGrid(x, y, z)
-        field = self.evaluate(
+        grid[_IMPLICIT_SCALAR] = self.evaluate(
             x.ravel(order="F"),
             y.ravel(order="F"),
             z.ravel(order="F"),
         )
-        grid["implicit"] = field
+        self._grid_cache[cache_key] = grid
+        return grid
 
-        polydata = grid.contour(isosurfaces=[0.0], scalars="implicit")
+    def generate_surface_mesh(
+        self: Shape,
+        bounds: BoundsType | None = None,
+        resolution: int = 50,
+        **_: KwargsGenerateType,
+    ) -> pv.PolyData:
+        """Generate a surface VTK mesh of the shape.
+
+        The default implementation meshes the implicit field via marching cubes
+        (``f < 0`` convention).  Subclasses with a native renderer (``Sphere``,
+        ``Box``, ``Tpms``, …) override this.
+
+        The implicit field is expected to be in world coordinates (subclasses
+        with non-zero ``center`` / ``orientation`` should bake those into
+        ``_func`` during construction).  Returns the mesh unchanged.
+
+        :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+        :param resolution: number of grid points per axis
+        :return: triangulated surface mesh
+        """
+        grid = self._sample_implicit_grid(bounds, resolution, "generate_surface_mesh")
+        polydata = grid.contour(isosurfaces=[0.0], scalars=_IMPLICIT_SCALAR)
         if polydata.n_cells == 0:
             return pv.PolyData()
+        return polydata.clean().triangulate()
 
-        polydata = polydata.clean().triangulate()
+    def generate_volume_mesh(
+        self: Shape,
+        bounds: BoundsType | None = None,
+        resolution: int = 50,
+        **_: KwargsGenerateType,
+    ) -> pv.UnstructuredGrid:
+        """Generate a volumetric VTK mesh of the shape's interior.
 
-        polydata = rotate_mesh(polydata, center=(0, 0, 0), rotation=self.orientation)
-        return polydata.translate(xyz=self.center)
+        Default implementation samples the implicit field on a structured
+        grid over ``bounds`` and keeps cells where ``f < 0``. Subclasses
+        with a native volumetric representation (``Tpms``, ``Spinodoid``)
+        override this with their cached-grid path.
+
+        The implicit field is expected to be in world coordinates (same
+        contract as :meth:`generate_surface_mesh`).
+
+        :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+        :param resolution: number of grid points per axis
+        :return: clipped ``pv.UnstructuredGrid`` covering the shape's interior
+        """
+        grid = self._sample_implicit_grid(bounds, resolution, "generate_volume_mesh")
+        return grid.clip_scalar(scalars=_IMPLICIT_SCALAR, value=0.0, invert=True)
 
     def generate(
         self: Shape,
@@ -198,7 +269,7 @@ class Shape:
 
         from microgen.cad import mesh_to_shape  # noqa: PLC0415
 
-        mesh = self.generate_vtk(bounds=bounds, resolution=resolution)
+        mesh = self.generate_surface_mesh(bounds=bounds, resolution=resolution)
         if mesh.n_cells == 0:
             err_msg = "Generated mesh is empty — check bounds and field function"
             raise ValueError(err_msg)
@@ -258,7 +329,12 @@ class Shape:
     # ------------------------------------------------------------------
 
     def translate(self: Shape, offset: tuple[float, float, float]) -> Shape:
-        """Return a new shape translated by *offset* (implicit field)."""
+        """Return a new shape translated by *offset*.
+
+        The returned :class:`Shape` has its ``center`` shifted by *offset*
+        and its ``bounds`` updated; ``orientation`` is preserved. The
+        implicit field is composed so ``evaluate(p) == old.evaluate(p - offset)``.
+        """
         f = self.require_func()
         dx, dy, dz = offset
         new_bounds = None
@@ -272,6 +348,7 @@ class Shape:
                 b[4] + dz,
                 b[5] + dz,
             )
+        cx, cy, cz = self._center
         return Shape(
             func=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
                 x - _dx,
@@ -279,6 +356,8 @@ class Shape:
                 z - _dz,
             ),
             bounds=new_bounds,
+            center=(cx + dx, cy + dy, cz + dz),
+            orientation=self._orientation,
         )
 
     def rotate(
@@ -286,18 +365,24 @@ class Shape:
         angles: tuple[float, float, float],
         convention: str = "ZXZ",
     ) -> Shape:
-        """Return a new shape rotated by Euler *angles* (degrees, implicit field)."""
+        """Return a new shape rotated by Euler *angles* (degrees).
+
+        The rotation is applied **about the world origin**. The returned
+        shape's ``center`` is the rotated original center, ``orientation``
+        composes left with the rotation, and ``bounds`` is the AABB of
+        the rotated original AABB.
+        """
         f = self.require_func()
         rot = Rotation.from_euler(convention, angles, degrees=True)
+        rot_matrix = rot.as_matrix()
         inv_matrix = rot.inv().as_matrix()
-        # Recompute AABB by rotating the 8 corners of the original box
         new_bounds = None
         if self._bounds is not None:
             b = self._bounds
             corners = np.array(
                 list(itertools.product(b[0:2], b[2:4], b[4:6])),
             )
-            rotated = (rot.as_matrix() @ corners.T).T
+            rotated = (rot_matrix @ corners.T).T
             new_bounds = (
                 float(rotated[:, 0].min()),
                 float(rotated[:, 0].max()),
@@ -306,15 +391,23 @@ class Shape:
                 float(rotated[:, 2].min()),
                 float(rotated[:, 2].max()),
             )
+        rotated_center = rot_matrix @ np.asarray(self._center, dtype=np.float64)
         return Shape(
             func=lambda x, y, z, _f=f, _m=inv_matrix: _f(
                 *(_m @ np.array([x, y, z])),
             ),
             bounds=new_bounds,
+            center=tuple(rotated_center.tolist()),
+            orientation=rot * self._orientation,
         )
 
     def scale(self: Shape, factor: float) -> Shape:
-        """Return a new shape uniformly scaled by *factor* (implicit field)."""
+        """Return a new shape uniformly scaled by *factor* about the world origin.
+
+        ``center`` is scaled by the same factor; ``orientation`` is
+        preserved; ``bounds`` is scaled (with axis-pair swap for
+        negative factors).
+        """
         f = self.require_func()
         new_bounds = None
         if self._bounds is not None:
@@ -328,7 +421,6 @@ class Shape:
                 b[5] * factor,
             )
             if factor < 0:
-                # Negative factor inverts min/max — swap each axis pair
                 new_bounds = (
                     new_bounds[1],
                     new_bounds[0],
@@ -337,7 +429,10 @@ class Shape:
                     new_bounds[5],
                     new_bounds[4],
                 )
+        cx, cy, cz = self._center
         return Shape(
             func=lambda x, y, z, _f=f, _s=factor: _f(x / _s, y / _s, z / _s) * _s,
             bounds=new_bounds,
+            center=(cx * factor, cy * factor, cz * factor),
+            orientation=self._orientation,
         )

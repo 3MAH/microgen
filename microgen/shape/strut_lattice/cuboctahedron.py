@@ -24,7 +24,7 @@ class Cuboctahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Cuboctahedron(strut_radius=0.1).generate_vtk()
+       shape = microgen.Cuboctahedron(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:
