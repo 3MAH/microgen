@@ -25,7 +25,6 @@ from microgen import (
     periodic_split_and_translate,
 )
 from microgen.cad import CadShape, make_compound_from_solids
-from microgen.mesh import MeshOptions
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
@@ -211,11 +210,9 @@ def test_octettruss_mesh_must_be_periodic(
         mesh_file=tmp_output_compound_filename,
         rve=rve,
         list_phases=listcqphases,
-        options=MeshOptions(
-            size=0.03,
-            order=1,
-            output_file=tmp_output_vtk_filename,
-        ),
+        size=0.03,
+        order=1,
+        output_file=tmp_output_vtk_filename,
     )
 
     # Act

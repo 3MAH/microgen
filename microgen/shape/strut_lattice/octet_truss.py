@@ -33,9 +33,7 @@ class OctetTruss(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args: object, **kwargs: object) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(2.0) / 2.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(2.0) / 2.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = list(

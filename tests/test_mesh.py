@@ -9,7 +9,6 @@ import pytest
 pytest.importorskip("OCP")
 
 from microgen import Phase, Rve, Sphere, mesh, raster_phase
-from microgen.mesh import MeshOptions
 from microgen.cad import make_compound_from_solids
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
@@ -35,11 +34,9 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells() -> None:
     mesh(
         mesh_file="tests/data/compound.step",
         list_phases=phases,
-        options=MeshOptions(
-            size=0.03,
-            order=1,
-            output_file="tests/data/compound.vtk",
-        ),
+        size=0.03,
+        order=1,
+        output_file="tests/data/compound.vtk",
     )
 
     vtk_mesh = pv.read("tests/data/compound.vtk")

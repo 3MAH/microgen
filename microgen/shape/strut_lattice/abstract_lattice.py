@@ -18,7 +18,7 @@ from scipy.optimize import root_scalar
 from scipy.spatial.transform import Rotation
 
 from ...cad import CadShape
-from ...mesh import MeshOptions, mesh, mesh_periodic
+from ...mesh import mesh, mesh_periodic
 from ...operations import fuse_shapes
 from ...periodic import periodic_split_and_translate
 from ...phase import Phase
@@ -40,6 +40,7 @@ class AbstractLattice(Shape):
     """
 
     _UNIT_CUBE_SIZE = 1.0
+    _DEFAULT_STRUT_HEIGHTS: float | list[float] | None = None
 
     def __init__(
         self,
@@ -69,7 +70,8 @@ class AbstractLattice(Shape):
         :param strut_joints: option to add spherical joints at the vertices
         to better manage strut junctions
         """
-        kwargs.pop("strut_heights", None)
+        if strut_heights is None:
+            strut_heights = type(self)._DEFAULT_STRUT_HEIGHTS
         if strut_radius is not None and density is not None:
             err_msg = (
                 "strut radius and density cannot be given at the same time. "
@@ -320,23 +322,22 @@ class AbstractLattice(Shape):
             NamedTemporaryFile(suffix=".vtk", delete=False) as mesh_file,
         ):
             cad_lattice.export_step(cad_step_file.name)
-            mesh_options = MeshOptions(
-                size=size,
-                order=order,
-                output_file=mesh_file.name,
-            )
             if periodic:
                 mesh_periodic(
                     mesh_file=cad_step_file.name,
                     rve=self.rve,
                     list_phases=list_phases,
-                    options=mesh_options,
+                    size=size,
+                    order=order,
+                    output_file=mesh_file.name,
                 )
             else:
                 mesh(
                     mesh_file=cad_step_file.name,
                     list_phases=list_phases,
-                    options=mesh_options,
+                    size=size,
+                    order=order,
+                    output_file=mesh_file.name,
                 )
 
             vtk_lattice = pv.read(mesh_file.name).extract_surface(algorithm=None)

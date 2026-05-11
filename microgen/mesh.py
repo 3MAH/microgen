@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import gmsh
@@ -27,58 +26,57 @@ class OutputMeshNotPeriodicError(Exception):
     """Raised when output mesh from mesh_periodic is not periodic."""
 
 
-@dataclass(frozen=True)
-class MeshOptions:
-    """Settings for gmsh meshing.
-
-    :param size: mesh size constraint
-        (see ``gmsh.model.mesh.setSize(dimTags, size)``)
-    :param order: element order
-        (see ``gmsh.model.mesh.setOrder(order)``)
-    :param output_file: output file path (``.msh`` or ``.vtk``)
-    :param msh_file_version: gmsh ``.msh`` file version
-    :param tol: tolerance for the periodicity check (``mesh_periodic`` only)
-    """
-
-    size: float
-    order: int
-    output_file: str = "Mesh.msh"
-    msh_file_version: int = 4
-    tol: float = 1e-8
-
-
-def mesh(
+def mesh(  # noqa: PLR0913
     mesh_file: str,
     list_phases: list[Phase],
-    options: MeshOptions,
+    size: float,
+    order: int,
+    output_file: str = "Mesh.msh",
+    msh_file_version: int = 4,
 ) -> None:
     """Mesh a step file with gmsh, with list-of-phases management.
 
     :param mesh_file: step file to mesh
     :param list_phases: list of phases to mesh
-    :param options: gmsh meshing options (see :class:`MeshOptions`)
+    :param size: mesh size constraint
+    :param order: element order
+    :param output_file: output file path (``.msh`` or ``.vtk``)
+    :param msh_file_version: gmsh ``.msh`` file version
+
+    .. note::
+        The flat-keyword design here is deliberate; a follow-up PR will
+        refactor ``mesh`` / ``mesh_periodic`` into a stateful ``Mesher``
+        class so a single loaded model can be written at multiple sizes.
     """
-    _initialize_mesh(mesh_file, list_phases, options.order, options.msh_file_version)
-    _finalize_mesh(options.size, options.output_file)
+    _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
+    _finalize_mesh(size, output_file)
 
 
-def mesh_periodic(
+def mesh_periodic(  # noqa: PLR0913
     mesh_file: str,
     rve: Rve,
     list_phases: list[Phase],
-    options: MeshOptions,
+    size: float,
+    order: int,
+    output_file: str = "Mesh.msh",
+    msh_file_version: int = 4,
+    tol: float = 1e-8,
 ) -> None:
     """Mesh periodic geometries with gmsh.
 
     :param mesh_file: step file to mesh
     :param rve: RVE for periodicity
     :param list_phases: list of phases to mesh
-    :param options: gmsh meshing options (see :class:`MeshOptions`)
+    :param size: mesh size constraint
+    :param order: element order
+    :param output_file: output file path (``.msh`` or ``.vtk``)
+    :param msh_file_version: gmsh ``.msh`` file version
+    :param tol: tolerance for the periodicity check
     """
-    _initialize_mesh(mesh_file, list_phases, options.order, options.msh_file_version)
+    _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
     _set_periodic(rve)
-    _finalize_mesh(options.size, options.output_file)
-    _check_output_mesh_periodicity(options.output_file, options.tol)
+    _finalize_mesh(size, output_file)
+    _check_output_mesh_periodicity(output_file, tol)
 
 
 def _get_bounding_box(

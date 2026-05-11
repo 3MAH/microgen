@@ -2,7 +2,6 @@ from pathlib import Path
 
 from microgen import Neper, Phase, Tpms, mesh
 from microgen.cad import make_compound
-from microgen.mesh import MeshOptions
 from microgen.shape import surface_functions
 
 # We import the Polyhedra from Neper tessellation file
@@ -29,5 +28,7 @@ vtk_file = str(Path(__file__).parent / "Gyroid-voro.vtk")
 mesh(
     mesh_file=step_file,
     list_phases=phases,
-    options=MeshOptions(size=0.05, order=1, output_file=vtk_file),
+    size=0.05,
+    order=1,
+    output_file=vtk_file,
 )

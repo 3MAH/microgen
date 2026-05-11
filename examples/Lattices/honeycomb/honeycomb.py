@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 
 from microgen import Box, ExtrudedPolygon, Phase, cut_phase_by_shape_list, mesh
-from microgen.mesh import MeshOptions
 
 side_length = 2.5  # side in mm of the hexagon
 poly_height = 2.5  # height in mm of the hexagon
@@ -51,5 +50,7 @@ vtk_file = str(Path(__file__).parent / "honeycomb.vtk")
 mesh(
     mesh_file=step_file,
     list_phases=[honeycomb],
-    options=MeshOptions(size=1, order=1, output_file=vtk_file),
+    size=1,
+    order=1,
+    output_file=vtk_file,
 )

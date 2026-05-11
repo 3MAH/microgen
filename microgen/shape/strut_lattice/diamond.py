@@ -4,6 +4,7 @@ Diamond (:mod:`microgen.shape.strut_lattice.diamond`)
 =====================================================
 """
 
+from functools import cached_property
 from itertools import product
 
 import numpy as np
@@ -33,13 +34,10 @@ class Diamond(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args: object, **kwargs: object) -> None:
-        self._tetrahedra_centers = self._generate_tetrahedra_centers()
-        self._tetrahedra_vertices = self._generate_tetrahedra_vertices()
-        kwargs.setdefault("strut_heights", np.sqrt(3.0) / 4.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(3.0) / 4.0
 
-    def _generate_tetrahedra_centers(self) -> npt.NDArray[np.float64]:
+    @cached_property
+    def _tetrahedra_centers(self) -> npt.NDArray[np.float64]:
         candidates = np.array(
             list(
                 product([-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4], repeat=3)
@@ -49,7 +47,8 @@ class Diamond(AbstractLattice):
 
         return centers
 
-    def _generate_tetrahedra_vertices(self) -> npt.NDArray[np.float64]:
+    @cached_property
+    def _tetrahedra_vertices(self) -> npt.NDArray[np.float64]:
         face_centers = [
             [sign * self._UNIT_CUBE_SIZE / 2 if i == axis else 0.0 for i in range(3)]
             for axis in range(3)

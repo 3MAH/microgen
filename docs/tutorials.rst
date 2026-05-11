@@ -361,6 +361,7 @@ Generate a tetrahedral mesh using Gmsh:
    # Create mesh from STEP file
    microgen.mesh(
        mesh_file='gyroid.step',
+       list_phases=[microgen.Phase(shape=shape)],
        size=0.1,
        order=1,
        output_file='gyroid_mesh.msh'
