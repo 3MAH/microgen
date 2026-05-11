@@ -13,8 +13,7 @@ from .abstract_lattice import AbstractLattice
 
 
 class FaceCenteredCubic(AbstractLattice):
-    """
-    Class to create a unit face-centered cubic lattice.
+    """Class to create a unit face-centered cubic lattice.
 
     Built from a given cell size and density or strut radius.
 

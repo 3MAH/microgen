@@ -13,8 +13,7 @@ from .abstract_lattice import AbstractLattice
 
 
 class BodyCenteredCubic(AbstractLattice):
-    """
-    Class to create a unit body-centered cubic lattice.
+    """Class to create a unit body-centered cubic lattice.
 
     Built from a given cell size and density or strut radius.
 

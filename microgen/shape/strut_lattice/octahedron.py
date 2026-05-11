@@ -12,8 +12,7 @@ from .abstract_lattice import AbstractLattice
 
 
 class Octahedron(AbstractLattice):
-    """
-    Class to create a unit octahedron lattice.
+    """Class to create a unit octahedron lattice.
 
     Built from a given cell size and density or strut radius.
 

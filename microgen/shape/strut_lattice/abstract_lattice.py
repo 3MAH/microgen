@@ -35,9 +35,7 @@ BALL_POINT_RADIUS_TOLERANCE = 1e-5
 
 
 class AbstractLattice(Shape):
-    """
-    Abstract Class to create strut-based lattice
-    """
+    """Abstract Class to create strut-based lattice."""
 
     _UNIT_CUBE_SIZE = 1.0
     _DEFAULT_STRUT_HEIGHTS: float | list[float] | None = None
@@ -53,8 +51,8 @@ class AbstractLattice(Shape):
         density: float | None = None,
         **kwargs: Vector3DType | Rotation,
     ) -> None:
-        """
-        Abstract Class to create strut-based lattice.
+        """Abstract Class to create strut-based lattice.
+
         The lattice will be created in a cube which size can be
         modified with 'cell_size'.
 
@@ -199,8 +197,8 @@ class AbstractLattice(Shape):
 
     @property
     def strut_heights(self) -> list[float]:
-        """
-        Returns the list of strut lengths.
+        """Return the list of strut lengths.
+
         If a single value is given, it is converted to a list.
         """
         if isinstance(self._strut_heights, float):

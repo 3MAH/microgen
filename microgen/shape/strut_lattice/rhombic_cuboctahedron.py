@@ -14,8 +14,7 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class RhombicCuboctahedron(AbstractLattice):
-    """
-    Class to create a unit rhombic cuboctahedron lattice.
+    """Class to create a unit rhombic cuboctahedron lattice.
 
     Built from a given cell size and density or strut radius.
 

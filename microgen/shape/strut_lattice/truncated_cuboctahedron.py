@@ -14,8 +14,7 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class TruncatedCuboctahedron(AbstractLattice):
-    """
-    Class to create a unit truncated cuboctahedron lattice.
+    """Class to create a unit truncated cuboctahedron lattice.
 
     Built from a given cell size and density or strut radius.
 

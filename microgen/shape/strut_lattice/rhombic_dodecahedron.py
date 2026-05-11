@@ -14,8 +14,7 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class RhombicDodecahedron(AbstractLattice):
-    """
-    Class to create a unit rhombic dodecahedron lattice.
+    """Class to create a unit rhombic dodecahedron lattice.
 
     Built from a given cell size and density or strut radius.
 

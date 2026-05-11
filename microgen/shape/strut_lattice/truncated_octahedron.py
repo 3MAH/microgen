@@ -14,8 +14,7 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class TruncatedOctahedron(AbstractLattice):
-    """
-    Class to create a unit truncated octahedron lattice.
+    """Class to create a unit truncated octahedron lattice.
 
     Built from a given cell size and density or strut radius.
 
