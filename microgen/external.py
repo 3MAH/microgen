@@ -29,6 +29,9 @@ _TESS_VERTEX_Y_INDEX = 2
 _TESS_VERTEX_Z_INDEX = 3
 _TESS_VERTEX_STATE_INDEX = 4
 
+# Seed-row index in the *cell seed* section.
+_TESS_SEED_WEIGHT_INDEX = 4
+
 
 # ---------------------------------------------------------------------------
 # Neper
@@ -76,7 +79,7 @@ class Neper:
             )
             return
 
-        cube = f"'cube({cube_dim[0]},{cube_dim[1]},{cube_dim[2]})'"
+        cube = f"cube({cube_dim[0]},{cube_dim[1]},{cube_dim[2]})"
         command = [
             neper,
             "-T",
@@ -201,7 +204,7 @@ class Neper:
             "seed_x": float(data[1]),
             "seed_y": float(data[2]),
             "seed_z": float(data[3]),
-            "seed_weight": float(data[_TESS_VERTEX_STATE_INDEX]),
+            "seed_weight": float(data[_TESS_SEED_WEIGHT_INDEX]),
         }
 
     @staticmethod
@@ -278,7 +281,7 @@ class Neper:
         }
         for _ in range(n):
             data = f.readline().split()
-            polyhedra["poly_id"] = int(data[0])
+            polyhedra["poly_id"].append(int(data[0]))
             n_fac = int(data[1])
             polyhedra["faces"].append(
                 [int(np.abs(int(data[j + 2]))) for j in range(n_fac)],

@@ -58,7 +58,7 @@ def mesh_periodic(  # noqa: PLR0913
     list_phases: list[Phase],
     size: float,
     order: int,
-    output_file: str = "Mesh.msh",
+    output_file: str = "MeshPeriodic.msh",
     msh_file_version: int = 4,
     tol: float = 1e-8,
 ) -> None:
