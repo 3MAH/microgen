@@ -6,6 +6,7 @@ Abstract Lattice (:mod:`microgen.shape.strut_lattice.abstract_lattice`)
 
 from __future__ import annotations
 
+import warnings
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -100,6 +101,12 @@ class AbstractLattice(Shape):
         self._strut_joints: bool = False
         self._density: float | None = density
 
+        # Track which of strut_radius / density was last set by the user, so
+        # the setters can warn on a mode switch without false-firing after the
+        # lazy density-fit writes back to ``_strut_radius``.
+        self._strut_radius_explicit: bool = strut_radius is not None
+        self._density_explicit: bool = density is not None
+
         # Lazy caches (invalidated by setters).
         self._cad_shape: CadShape | None = None
         self._vtk_shape: tuple[tuple[float, int, bool], pv.PolyData] | None = None
@@ -114,8 +121,17 @@ class AbstractLattice(Shape):
         """Set the strut radius.
 
         Clears any previously set density (last-set wins between strut radius
-        and density).
+        and density).  Emits a :class:`UserWarning` if density was already
+        explicitly set, so the override is visible to the caller.
         """
+        if self._density_explicit:
+            warnings.warn(
+                "Overriding explicit density with strut_radius; the previous "
+                "density value will be cleared.",
+                stacklevel=2,
+            )
+            self._density_explicit = False
+        self._strut_radius_explicit = True
         self._strut_radius = radius
         self._density = None
         self._invalidate_caches()
@@ -146,11 +162,20 @@ class AbstractLattice(Shape):
         """Set target density in (0, 1].
 
         Clears any previously set strut radius (last-set wins between strut
-        radius and density).
+        radius and density).  Emits a :class:`UserWarning` if strut_radius
+        was already explicitly set, so the override is visible to the caller.
         """
         if not 0.0 < density <= 1.0:
             err_msg = f"density must be between 0 and 1. Given: {density}"
             raise ValueError(err_msg)
+        if self._strut_radius_explicit:
+            warnings.warn(
+                "Overriding explicit strut_radius with density; the previous "
+                "strut_radius value will be cleared.",
+                stacklevel=2,
+            )
+            self._strut_radius_explicit = False
+        self._density_explicit = True
         self._density = density
         self._strut_radius = None
         self._invalidate_caches()
@@ -346,7 +371,7 @@ class AbstractLattice(Shape):
             self._strut_radius = radius
             cad = self._generate_cad()
             last_cad[0] = cad
-            return cad.Volume() / (self._cell_size**3)
+            return cad.volume() / (self._cell_size**3)
 
         result = root_scalar(
             lambda r: calc_density(r) - self._density,

@@ -16,6 +16,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Literal
 
@@ -155,6 +156,12 @@ class Tpms(Shape):
         self.phase_shift: Sequence[float] = (0.0, 0.0, 0.0)
         self.density: float | None = None
 
+        # Track which of offset / density was last explicitly set by the user,
+        # so the setters can warn on a mode switch without false-firing after
+        # the internal density-fit writes back to ``_offset``.
+        self._offset_explicit: bool = False
+        self._density_explicit: bool = False
+
         self.grid: pv.StructuredGrid
         self._grid_sheet: pv.UnstructuredGrid = None
         self._grid_upper_skeletal: pv.UnstructuredGrid = None
@@ -206,8 +213,18 @@ class Tpms(Shape):
     ) -> Tpms:
         """Set the isosurface offset (controls TPMS thickness).
 
-        Clears any previously set density (last-set wins).
+        Clears any previously set density (last-set wins).  Emits a
+        :class:`UserWarning` if density was already explicitly set, so the
+        override is visible to the caller.
         """
+        if self._density_explicit:
+            warnings.warn(
+                "Overriding explicit density with offset; the previous density "
+                "value will be cleared.",
+                stacklevel=2,
+            )
+            self._density_explicit = False
+        self._offset_explicit = True
         self.density = None
         self.offset = offset  # uses the property setter to update grid arrays
         return self
@@ -240,13 +257,24 @@ class Tpms(Shape):
         """Set the target density (0, 1].
 
         Clears any previously set offset; the offset that yields this density
-        is computed lazily on terminal generation calls.
+        is computed lazily on terminal generation calls.  Emits a
+        :class:`UserWarning` if offset was already explicitly set, so the
+        override is visible to the caller.
         """
         if not 0.0 < density <= 1.0:
             err_msg = f"density must be between 0 and 1. Given: {density}"
             raise ValueError(err_msg)
+        if self._offset_explicit:
+            warnings.warn(
+                "Overriding explicit offset with density; the previous offset "
+                "value will be cleared.",
+                stacklevel=2,
+            )
+            self._offset_explicit = False
+        self._density_explicit = True
         self.density = density
         self._offset = None
+        self._offset_func = None
         self._invalidate_part_caches()
         return self
 
