@@ -94,9 +94,8 @@ def helix(t: float) -> np.ndarray:
 
 
 sw = (
-    Sweep(
-        curve_points=helix, surface_function=gyroid, radial_max=0.6, n_curve_samples=200
-    )
+    Sweep(curve_points=helix, surface_function=gyroid, radial_max=0.6)
+    .with_n_curve_samples(200)
     .with_offset(OFFSET)
     .with_cell_size(CELL_SIZE)
     .with_repeat_cell((8, 1, 6))

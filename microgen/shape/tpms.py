@@ -16,18 +16,26 @@ TPMS (:mod:`microgen.shape.tpms`)
 from __future__ import annotations
 
 import logging
+import sys
 import warnings
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Literal
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
+from scipy.spatial.transform import Rotation
 
 from microgen.operations import fuse_shapes, rotate
 
 from .shape import BoundsType, Shape, ShellCreationError
+from .surface_functions import gyroid as _default_surface_function
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
@@ -120,22 +128,22 @@ class Tpms(Shape):
 
     def __init__(
         self: Tpms,
-        surface_function: Field,
+        surface_function: Field = _default_surface_function,
         *,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         r"""Initialize with the TPMS implicit function and default config.
 
-        ``surface_function`` is the only positional argument.  All other
-        parameters (offset / density, cell size, repeat cell, resolution,
-        phase shift) are configured via chained ``with_*`` setters before
-        calling :meth:`generate_surface_mesh` / :meth:`generate_cad`.
+        All parameters have defaults: ``surface_function`` defaults to
+        :func:`~microgen.surface_functions.gyroid` (the canonical TPMS).
+        Every parameter is also exposed via a chained ``with_*`` setter, so
+        ``Tpms()`` produces a valid, configurable gyroid in one step.
 
         Example::
 
             shape = (
-                Tpms(surface_function=gyroid)
+                Tpms()
                 .with_offset(0.3)
                 .with_cell_size(1.0)
                 .with_resolution(30)
@@ -143,6 +151,7 @@ class Tpms(Shape):
             )
 
         :param surface_function: tpms function or custom ``f(x, y, z) -> array``
+            (default: gyroid)
         :param center: shape center (passed to :class:`Shape`)
         :param orientation: shape orientation (passed to :class:`Shape`)
         """
@@ -162,7 +171,8 @@ class Tpms(Shape):
         self._offset_explicit: bool = False
         self._density_explicit: bool = False
 
-        self.grid: pv.StructuredGrid
+        self._grid: pv.StructuredGrid | None = None
+        self._grid_dirty: bool = True
         self._grid_sheet: pv.UnstructuredGrid = None
         self._grid_upper_skeletal: pv.UnstructuredGrid = None
         self._grid_lower_skeletal: pv.UnstructuredGrid = None
@@ -172,18 +182,35 @@ class Tpms(Shape):
         self._init_cell_parameters(1.0, 1)
         self.resolution = 20
 
-        self._build_grid()
+        # Grid is built lazily on first access (see ``grid`` property).
+        # Chained setters such as ``with_cell_size(...).with_repeat_cell(...)
+        # .with_offset(...)`` would otherwise rebuild the grid once per call.
 
     # ------------------------------------------------------------------
-    # Internal grid rebuild (called from __init__ and grid-affecting setters)
+    # Lazy grid build
     # ------------------------------------------------------------------
+
+    @property
+    def grid(self: Tpms) -> pv.StructuredGrid:
+        """TPMS structured grid (built on first access; rebuilt if dirty)."""
+        self._ensure_grid()
+        return self._grid
+
+    def _ensure_grid(self: Tpms) -> None:
+        """Build the grid if marked dirty by a setter (or never built)."""
+        if not self._grid_dirty:
+            return
+        # Clear the flag *before* building so reads of ``self.grid`` inside
+        # the build helpers don't recurse back into ``_ensure_grid``.
+        self._grid_dirty = False
+        self._build_grid()
 
     def _build_grid(self: Tpms) -> None:
         """Compute the TPMS field + F-rep, refresh offset limits, reapply offset."""
         self._compute_tpms_field()
         self._setup_frep_field()
-        min_field = float(np.min(self.grid["surface"]))
-        max_field = float(np.max(self.grid["surface"]))
+        min_field = float(np.min(self._grid["surface"]))
+        max_field = float(np.max(self._grid["surface"]))
         self.offset_lim = {
             "sheet": (0.0, 2.0 * max(-min_field, max_field)),
             "skeletal": (2.0 * min_field, 2.0 * max_field),
@@ -208,9 +235,9 @@ class Tpms(Shape):
     # ------------------------------------------------------------------
 
     def with_offset(
-        self: Tpms,
+        self: Self,
         offset: float | npt.NDArray[np.float64] | OffsetGrading | Field,
-    ) -> Tpms:
+    ) -> Self:
         """Set the isosurface offset (controls TPMS thickness).
 
         Clears any previously set density (last-set wins).  Emits a
@@ -229,31 +256,64 @@ class Tpms(Shape):
         self.offset = offset  # uses the property setter to update grid arrays
         return self
 
-    def with_phase_shift(self: Tpms, phase_shift: Sequence[float]) -> Tpms:
+    def with_phase_shift(self: Self, phase_shift: Sequence[float]) -> Self:
         r"""Set the phase shift :math:`(\phi_x, \phi_y, \phi_z)` of the field."""
         self.phase_shift = phase_shift
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
-    def with_cell_size(self: Tpms, cell_size: float | Sequence[float]) -> Tpms:
+    def with_cell_size(self: Self, cell_size: float | Sequence[float]) -> Self:
         """Set the unit-cell dimensions (scalar applies to all 3 axes)."""
         self._init_cell_parameters(cell_size, self.repeat_cell)
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
-    def with_repeat_cell(self: Tpms, repeat_cell: int | Sequence[int]) -> Tpms:
+    def with_repeat_cell(self: Self, repeat_cell: int | Sequence[int]) -> Self:
         """Set the number of cell repetitions along each axis."""
         self._init_cell_parameters(self.cell_size, repeat_cell)
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
-    def with_resolution(self: Tpms, resolution: int) -> Tpms:
+    def with_resolution(self: Self, resolution: int) -> Self:
         """Set the grid resolution per unit cell used to evaluate the TPMS field."""
         self.resolution = resolution
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
-    def with_density(self: Tpms, density: float) -> Tpms:
+    def with_surface_function(self: Self, surface_function: Field) -> Self:
+        """Set the TPMS implicit function (e.g. ``schwarz_p``, ``neovius``)."""
+        self.surface_function = surface_function
+        self._mark_grid_dirty()
+        return self
+
+    def with_center(self: Self, center: Vector3DType) -> Self:
+        """Set the shape center.
+
+        Applied at the end of :meth:`generate_cad` / :meth:`generate_surface_mesh`,
+        so the cached grid does not need to be rebuilt.
+        """
+        self._center = center
+        return self
+
+    def with_orientation(self: Self, orientation: Vector3DType | Rotation) -> Self:
+        """Set the shape orientation (Euler ZXZ degrees or :class:`Rotation`).
+
+        Applied at the end of :meth:`generate_cad` / :meth:`generate_surface_mesh`,
+        so the cached grid does not need to be rebuilt.
+        """
+        self._orientation = (
+            orientation
+            if isinstance(orientation, Rotation)
+            else Rotation.from_euler("ZXZ", orientation, degrees=True)
+        )
+        return self
+
+    def _mark_grid_dirty(self: Tpms) -> None:
+        """Defer the next grid rebuild until a terminal accessor reads it."""
+        self._grid_dirty = True
+        self._invalidate_part_caches()
+
+    def with_density(self: Self, density: float) -> Self:
         """Set the target density (0, 1].
 
         Clears any previously set offset; the offset that yields this density
@@ -340,6 +400,7 @@ class Tpms(Shape):
             err_msg = f"density must be between 0 and 1. Given: {self.density}"
             raise ValueError(err_msg)
 
+        self._ensure_grid()
         part = "skeletal" if "skeletal" in part_type else part_type
         if self.density == 1.0:
             self.offset = (
@@ -531,17 +592,17 @@ class Tpms(Shape):
 
         x, y, z = np.meshgrid(*linspaces)
 
-        self.grid = self._create_grid(x, y, z)
+        self._grid = self._create_grid(x, y, z)
 
         k_x, k_y, k_z = 2.0 * np.pi / self.cell_size
-        x, y, z = self.grid["coords"].T
+        x, y, z = self._grid["coords"].T
         tpms_field = self.surface_function(
             k_x * (x + self.phase_shift[0]),
             k_y * (y + self.phase_shift[1]),
             k_z * (z + self.phase_shift[2]),
         )
 
-        self.grid["surface"] = tpms_field.ravel(order="F")
+        self._grid["surface"] = tpms_field.ravel(order="F")
 
     def _finalize_frep(
         self: Tpms,
@@ -595,6 +656,7 @@ class Tpms(Shape):
         from .implicit_ops import shell
         from .shape import Shape
 
+        self._ensure_grid()
         if thickness is not None:
             t: float | npt.NDArray | Field = float(thickness)
         elif self._offset_func is not None:
@@ -635,6 +697,7 @@ class Tpms(Shape):
         """
         from .implicit_ops import from_field
 
+        self._ensure_grid()
         f = self._func
         h = self._half_offset_field()
         if callable(h):
@@ -653,6 +716,7 @@ class Tpms(Shape):
         """F-rep Shape for the *lower* skeletal: ``{p : f(p) < -offset/2}``."""
         from .implicit_ops import from_field
 
+        self._ensure_grid()
         f = self._func
         h = self._half_offset_field()
         if callable(h):
@@ -676,12 +740,14 @@ class Tpms(Shape):
         """
         from .implicit_ops import from_field
 
+        self._ensure_grid()
         return from_field(func=self._func, bounds=self._bounds)
 
     def _cell_box(self: Tpms) -> Shape:
         """SDF Shape of this TPMS' cell (cell_size × repeat_cell, centered origin)."""
         from .implicit_ops import box
 
+        self._ensure_grid()
         dims = tuple(float(d) for d in (self.cell_size * self.repeat_cell))
         return box(dims=dims, center=(0.0, 0.0, 0.0))
 
@@ -1016,6 +1082,7 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        self._ensure_grid()
         if type_part == "surface":
             if self.offset != 0.0:
                 logging.warning("offset is ignored for 'surface' part")
@@ -1155,6 +1222,7 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        self._ensure_grid()
         if self.density == 1.0:
             envelope_mesh = self._envelope_mesh_at_full_density()
             envelope_mesh = rotate(
@@ -1230,6 +1298,7 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        self._ensure_grid()
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
@@ -1255,15 +1324,15 @@ class CylindricalTpms(Tpms):
 
     def __init__(
         self: CylindricalTpms,
-        radius: float,
-        surface_function: Field,
+        radius: float = 1.0,
+        surface_function: Field = _default_surface_function,
         *,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         r"""Cylindrical TPMS geometry.
 
-        ``radius`` and ``surface_function`` are required positional.  Configure
+        All parameters have defaults (``radius=1.0``, gyroid).  Configure
         cell size / repeat cell / resolution / offset / density via chained
         ``with_*`` setters.
 
@@ -1457,15 +1526,15 @@ class SphericalTpms(Tpms):
 
     def __init__(
         self: SphericalTpms,
-        radius: float,
-        surface_function: Field,
+        radius: float = 1.0,
+        surface_function: Field = _default_surface_function,
         *,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         r"""Spherical TPMS geometry.
 
-        ``radius`` and ``surface_function`` are required positional.  Configure
+        All parameters have defaults (``radius=1.0``, gyroid).  Configure
         cell size / repeat cell / resolution / offset / density via chained
         ``with_*`` setters.
 
@@ -1694,22 +1763,37 @@ class Sweep(Tpms):
 
     _DEFAULT_N_CURVE_SAMPLES = 200
 
+    @staticmethod
+    def _default_helix_curve() -> npt.NDArray[np.float64]:
+        """Default Sweep curve: a 2-turn helix of radius 0.3 along z in [-0.5, 0.5]."""
+        n = 50
+        t = np.linspace(0.0, 1.0, n)
+        return np.column_stack(
+            [
+                0.3 * np.cos(2.0 * np.pi * 2.0 * t),
+                0.3 * np.sin(2.0 * np.pi * 2.0 * t),
+                t - 0.5,
+            ],
+        )
+
     def __init__(
         self: Sweep,
         curve_points: npt.NDArray[np.float64]
-        | Callable[[float], npt.NDArray[np.float64]],
-        surface_function: Field,
-        radial_max: float,
+        | Callable[[float], npt.NDArray[np.float64]]
+        | None = None,
+        surface_function: Field = _default_surface_function,
+        radial_max: float = 0.3,
         *,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         r"""Build a TPMS swept along a curve.
 
-        ``curve_points``, ``surface_function`` and ``radial_max`` are required
-        positional.  Configure cell size / repeat cell / resolution / offset /
-        density / phase shift / seed normal / curve sample count via chained
-        ``with_*`` setters.
+        All parameters have defaults: ``curve_points`` defaults to a 2-turn
+        helix of radius 0.3, ``surface_function`` to gyroid, ``radial_max`` to
+        0.3.  Configure everything (curve, tube radius, cell size / repeat
+        cell / resolution / offset / density / phase shift / seed normal /
+        curve sample count) via chained ``with_*`` setters.
 
         :param curve_points: either an ``(M, 3)`` array of polyline samples
             or a callable ``t in [0, 1] -> (3,)``.  Callables are sampled
@@ -1720,13 +1804,18 @@ class Sweep(Tpms):
         :param center: center of the geometry
         :param orientation: orientation of the geometry
         """
-        self._curve_points_input = curve_points
+        self._curve_points_input = (
+            curve_points if curve_points is not None else self._default_helix_curve()
+        )
         self._n_curve_samples = self._DEFAULT_N_CURVE_SAMPLES
         self._seed_normal: Sequence[float] | None = None
         self.radial_max = float(radial_max)
 
+        # Build the parallel-transport frames + arc-length parametrisation
+        # BEFORE ``super().__init__`` so that any future grid build (lazily
+        # triggered via ``self.grid``) finds the curve state ready, even if
+        # a future change to ``Tpms.__init__`` accesses the grid eagerly.
         self._discretise_curve()
-        # Build the parallel-transport frames + arc-length parametrisation.
         self._build_curve_frames(seed_normal=self._seed_normal)
 
         # Cell parameters now live in (s, r, θ) parametric space.
@@ -1753,19 +1842,38 @@ class Sweep(Tpms):
             raise ValueError(err_msg)
         self.curve = curve
 
-    def with_seed_normal(self: Sweep, seed_normal: Sequence[float]) -> Sweep:
+    def with_curve_points(
+        self: Self,
+        curve_points: npt.NDArray[np.float64]
+        | Callable[[float], npt.NDArray[np.float64]],
+    ) -> Self:
+        """Set the sweep curve (array of polyline samples or a callable ``t->point``)."""
+        self._curve_points_input = curve_points
+        self._discretise_curve()
+        self._build_curve_frames(seed_normal=self._seed_normal)
+        self._mark_grid_dirty()
+        return self
+
+    def with_radial_max(self: Self, radial_max: float) -> Self:
+        """Set the outer tube radius around the curve."""
+        self.radial_max = float(radial_max)
+        self._build_curve_frames(seed_normal=self._seed_normal)
+        self._mark_grid_dirty()
+        return self
+
+    def with_seed_normal(self: Self, seed_normal: Sequence[float]) -> Self:
         """Set the initial normal direction for parallel transport along the curve."""
         self._seed_normal = seed_normal
         self._build_curve_frames(seed_normal=self._seed_normal)
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
-    def with_n_curve_samples(self: Sweep, n_curve_samples: int) -> Sweep:
+    def with_n_curve_samples(self: Self, n_curve_samples: int) -> Self:
         """Set the number of polyline samples (only used when curve was given as a callable)."""
         self._n_curve_samples = int(n_curve_samples)
         self._discretise_curve()
         self._build_curve_frames(seed_normal=self._seed_normal)
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
     # -- Curve preprocessing -----------------------------------------------
@@ -2075,16 +2183,17 @@ class Infill(Tpms):
 
     def __init__(
         self: Infill,
-        obj: pv.PolyData,
-        surface_function: Field,
+        obj: pv.PolyData | None = None,
+        surface_function: Field = _default_surface_function,
         *,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         r"""Initialize the Infill TPMS.
 
-        ``obj`` and ``surface_function`` are required positional.  Configure
-        cell size (or repeat_cell — they auto-derive from each other), offset /
+        All parameters have defaults: ``obj`` defaults to a :class:`pyvista.Sphere`
+        envelope, ``surface_function`` to gyroid.  Configure cell size (or
+        repeat_cell — they auto-derive from each other), envelope, offset /
         density, resolution, phase shift via chained ``with_*`` setters.
 
         :param obj: envelope mesh in which the infill is generated.  Normals
@@ -2094,6 +2203,8 @@ class Infill(Tpms):
         :param center: shape center
         :param orientation: shape orientation
         """
+        if obj is None:
+            obj = pv.Sphere()
         # Capture the original volume *before* re-orienting normals — for
         # non-manifold inputs (e.g. pyvista's caps-less Cylinder, the
         # Stanford bunny) ``compute_normals(auto_orient_normals=True)`` flips
@@ -2113,10 +2224,21 @@ class Infill(Tpms):
             orientation=orientation,
         )
 
+    def with_obj(self: Self, obj: pv.PolyData) -> Self:
+        """Set the envelope mesh; clears the cached grid so it is rebuilt at next access."""
+        self._obj_volume = abs(obj.volume)
+        self.obj = obj.compute_normals(
+            auto_orient_normals=True,
+            point_normals=True,
+            cell_normals=True,
+        )
+        self._mark_grid_dirty()
+        return self
+
     def with_cell_size(
-        self: Infill,
+        self: Self,
         cell_size: float | Sequence[float],
-    ) -> Infill:
+    ) -> Self:
         """Set the unit-cell dimensions; ``repeat_cell`` is derived from the envelope."""
         bounds = np.array(self.obj.bounds)
         margin_factor = 1.001
@@ -2129,20 +2251,20 @@ class Infill(Tpms):
             raise ValueError(err_msg)
         repeat_cell = np.round(obj_dim / cell_size).astype(int)
         self._init_cell_parameters(cell_size, repeat_cell)
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
     def with_repeat_cell(
-        self: Infill,
+        self: Self,
         repeat_cell: int | Sequence[int],
-    ) -> Infill:
+    ) -> Self:
         """Set ``repeat_cell``; ``cell_size`` is derived from the envelope."""
         bounds = np.array(self.obj.bounds)
         margin_factor = 1.001
         obj_dim = margin_factor * (bounds[1::2] - bounds[::2])
         cell_size = obj_dim / np.asarray(repeat_cell)
         self._init_cell_parameters(cell_size, repeat_cell)
-        self._build_grid()
+        self._mark_grid_dirty()
         return self
 
     def _create_grid(
@@ -2247,18 +2369,19 @@ class GradedInfill(Infill):
 
     def __init__(
         self: GradedInfill,
-        obj: pv.PolyData,
-        surface_function: Field,
+        obj: pv.PolyData | None = None,
+        surface_function: Field = _default_surface_function,
         *,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType = (0, 0, 0),
     ) -> None:
         """Build a graded TPMS infill.
 
-        ``obj`` and ``surface_function`` are required positional.  Configure
-        the gradation profile via :meth:`with_gradation`, and the cell layout /
-        resolution / phase shift via the chained ``with_*`` setters inherited
-        from :class:`Infill` / :class:`Tpms`.
+        All parameters have defaults: ``obj`` defaults to :class:`pyvista.Sphere`,
+        ``surface_function`` to gyroid.  Configure the gradation profile via
+        :meth:`with_gradation`, and the cell layout / resolution / phase shift /
+        envelope via the chained ``with_*`` setters inherited from :class:`Infill`
+        / :class:`Tpms`.
 
         Defaults: ``offset_skin=0.6``, ``offset_core=0.0``, ``transition=0.5``,
         ``smoothness=0.2`` — a graded shell (dense skin, hollow core).
@@ -2287,13 +2410,13 @@ class GradedInfill(Infill):
         )
 
     def with_gradation(
-        self: GradedInfill,
+        self: Self,
         *,
         offset_skin: float = 0.6,
         offset_core: float = 0.0,
         transition: float = 0.5,
         smoothness: float = 0.2,
-    ) -> GradedInfill:
+    ) -> Self:
         """Set the gradation profile and re-apply the graded offset.
 
         :param offset_skin: TPMS thickness at the envelope surface

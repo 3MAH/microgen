@@ -6,6 +6,7 @@ Abstract Lattice (:mod:`microgen.shape.strut_lattice.abstract_lattice`)
 
 from __future__ import annotations
 
+import sys
 import warnings
 from abc import abstractmethod
 from pathlib import Path
@@ -17,6 +18,11 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 from scipy.spatial.transform import Rotation
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from ...cad import CadShape
 from ...mesh import mesh, mesh_periodic
@@ -34,28 +40,27 @@ if TYPE_CHECKING:
 
 BALL_POINT_RADIUS_TOLERANCE = 1e-5
 _DENSITY_ROOT_RADIUS_MIN = 1e-3
+_DEFAULT_STRUT_RADIUS = 0.05
 
 
 class AbstractLattice(Shape):
     """Abstract class for strut-based lattices, configured via method chaining.
 
-    Construction starts cheap: ``__init__`` only stashes ``center`` and
-    ``orientation``.  Geometry parameters are set via chained ``with_*``
-    setters; heavy work (vertex layout, density root-finding, CAD assembly)
-    runs lazily on the first call to :meth:`generate_cad` /
+    Every parameter has a default: ``__init__`` is callable with no arguments
+    and produces a lattice with ``strut_radius=0.05`` and ``cell_size=1.0``.
+    All parameters (radius / density, cell size, strut heights, joints,
+    center, orientation, custom vertices / pairs) are also exposed via chained
+    ``with_*`` setters; heavy work (vertex layout, density root-finding, CAD
+    assembly) runs lazily on the first call to :meth:`generate_cad` /
     :meth:`generate_surface_mesh`.
 
     Example::
 
-        lattice = (
-            OctetTruss()
-            .with_strut_radius(0.05)
-            .with_cell_size(1.0)
-            .generate_surface_mesh()
-        )
+        lattice = OctetTruss().with_cell_size(1.0).generate_surface_mesh()
 
-    Mutual exclusivity: ``with_strut_radius`` and ``with_density`` cannot both
-    be set; the validator raises at the first terminal call if both are.
+    Mutual exclusivity: ``strut_radius`` and ``density`` cannot both be set
+    explicitly.  Passing both to ``__init__`` raises; the ``with_*`` setters
+    emit a :class:`UserWarning` and clear the previous value on a mode switch.
     """
 
     _UNIT_CUBE_SIZE = 1.0
@@ -117,7 +122,7 @@ class AbstractLattice(Shape):
     # Chained setters
     # ------------------------------------------------------------------
 
-    def with_strut_radius(self, radius: float) -> AbstractLattice:
+    def with_strut_radius(self: Self, radius: float) -> Self:
         """Set the strut radius.
 
         Clears any previously set density (last-set wins between strut radius
@@ -138,27 +143,27 @@ class AbstractLattice(Shape):
         return self
 
     def with_strut_heights(
-        self,
+        self: Self,
         heights: float | list[float],
-    ) -> AbstractLattice:
+    ) -> Self:
         """Set strut heights, as a scalar or per-strut list (unit-cell units)."""
         self._strut_heights = heights
         self._invalidate_caches()
         return self
 
-    def with_cell_size(self, size: float) -> AbstractLattice:
+    def with_cell_size(self: Self, size: float) -> Self:
         """Set the cubic cell edge length."""
         self._cell_size = size
         self._invalidate_caches()
         return self
 
-    def with_strut_joints(self, *, enabled: bool = True) -> AbstractLattice:
+    def with_strut_joints(self: Self, *, enabled: bool = True) -> Self:
         """Enable (default) or disable spherical joints at vertices."""
         self._strut_joints = enabled
         self._invalidate_caches()
         return self
 
-    def with_density(self, density: float) -> AbstractLattice:
+    def with_density(self: Self, density: float) -> Self:
         """Set target density in (0, 1].
 
         Clears any previously set strut radius (last-set wins between strut
@@ -182,20 +187,36 @@ class AbstractLattice(Shape):
         return self
 
     def with_base_vertices(
-        self,
+        self: Self,
         vertices: npt.NDArray[np.float64],
-    ) -> AbstractLattice:
+    ) -> Self:
         """Override the subclass's default vertex layout (unit-cube units)."""
         self._user_base_vertices = vertices
         self._invalidate_caches()
         return self
 
     def with_strut_vertex_pairs(
-        self,
+        self: Self,
         pairs: npt.NDArray[np.int64],
-    ) -> AbstractLattice:
+    ) -> Self:
         """Override the subclass's default strut connectivity."""
         self._user_strut_vertex_pairs = pairs
+        self._invalidate_caches()
+        return self
+
+    def with_center(self: Self, center: Vector3DType) -> Self:
+        """Set the lattice center; clears caches so the next generate reuses it."""
+        self._center = center
+        self._invalidate_caches()
+        return self
+
+    def with_orientation(self: Self, orientation: Vector3DType | Rotation) -> Self:
+        """Set the lattice orientation (Euler ZXZ degrees or :class:`Rotation`)."""
+        self._orientation = (
+            orientation
+            if isinstance(orientation, Rotation)
+            else Rotation.from_euler("ZXZ", orientation, degrees=True)
+        )
         self._invalidate_caches()
         return self
 
@@ -225,14 +246,18 @@ class AbstractLattice(Shape):
         return self._density
 
     @property
-    def strut_radius(self) -> float | None:
+    def strut_radius(self) -> float:
         """Effective strut radius.
 
         If only :meth:`with_density` was set, this triggers the lazy
-        density-to-radius root-find on first access.
+        density-to-radius root-find on first access.  If neither
+        ``strut_radius`` nor ``density`` was explicitly chosen, falls back to
+        :data:`_DEFAULT_STRUT_RADIUS`.
         """
         if self._strut_radius is None and self._density is not None:
             self._strut_radius = self._compute_radius_to_fit_density()
+        if self._strut_radius is None:
+            self._strut_radius = _DEFAULT_STRUT_RADIUS
         return self._strut_radius
 
     @property
@@ -329,12 +354,6 @@ class AbstractLattice(Shape):
         return self._geometry
 
     def _validate(self) -> None:
-        if self._strut_radius is None and self._density is None:
-            err_msg = (
-                "strut_radius or density must be set via .with_strut_radius() "
-                "or .with_density()."
-            )
-            raise ValueError(err_msg)
         if self._strut_heights is None:
             err_msg = "strut_heights must be defined by the subclass"
             raise NotImplementedError(err_msg)
@@ -364,20 +383,22 @@ class AbstractLattice(Shape):
         return rotations_list
 
     def _compute_radius_to_fit_density(self) -> float:
-        """Root-find the strut radius that matches :attr:`density`."""
-        last_cad: list[CadShape | None] = [None]
+        """Root-find the strut radius that matches :attr:`density`.
+
+        Does NOT cache the CAD produced during the search: ``root_scalar``'s
+        final evaluation is at the bracket midpoint, not exactly at the root,
+        so the last CAD does not correspond to the returned radius.  The
+        caller (``generate_cad``) rebuilds at ``result.root``.
+        """
 
         def calc_density(radius: float) -> float:
             self._strut_radius = radius
-            cad = self._generate_cad()
-            last_cad[0] = cad
-            return cad.volume() / (self._cell_size**3)
+            return self._generate_cad().volume() / (self._cell_size**3)
 
         result = root_scalar(
             lambda r: calc_density(r) - self._density,
             bracket=[_DENSITY_ROOT_RADIUS_MIN, self._cell_size],
         )
-        self._cad_shape = last_cad[0]
         return float(result.root)
 
     # ------------------------------------------------------------------
@@ -390,8 +411,6 @@ class AbstractLattice(Shape):
             return self._cad_shape
         # Trigger lazy radius resolution + validation via the property.
         _ = self.strut_radius
-        if self._cad_shape is not None:
-            return self._cad_shape
         self._cad_shape = self._generate_cad()
         return self._cad_shape
 

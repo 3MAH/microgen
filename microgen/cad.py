@@ -83,7 +83,7 @@ class _Centre(tuple):
 class _BBox:
     """Axis-aligned bounding box exposing ``xmin`` / ``xmax`` / ….
 
-    Returned by :meth:`CadShape.BoundingBox`.
+    Returned by :meth:`CadShape.bounding_box`.
     """
 
     xmin: float
