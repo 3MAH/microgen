@@ -39,17 +39,18 @@ full_density_offset = CylindricalTpms.offset_from_density(
     density=1.0,
 )
 
-geometry = CylindricalTpms(
-    radius=5,
-    surface_function=swapped_gyroid,
-    offset=partial(
-        grading,
-        min_offset=0.0,
-        max_offset=full_density_offset,
-    ),
-    cell_size=(1, 1, 1),
-    repeat_cell=(5, 0, 1),
-    resolution=20,
+geometry = (
+    CylindricalTpms(radius=5, surface_function=swapped_gyroid)
+    .with_offset(
+        partial(
+            grading,
+            min_offset=0.0,
+            max_offset=full_density_offset,
+        )
+    )
+    .with_cell_size((1, 1, 1))
+    .with_repeat_cell((5, 0, 1))
+    .with_resolution(20)
 )
 sheet = geometry.sheet
 

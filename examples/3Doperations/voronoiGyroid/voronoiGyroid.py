@@ -9,10 +9,8 @@ tess_file = str(Path(__file__).parent / "test1.tess")
 polyhedra = Neper.voronoi_from_tess_file(tess_file)
 
 gyroid = Tpms(
-    center=(0.5, 0.5, 0.5),
-    surface_function=surface_functions.gyroid,
-    offset=0.2,
-)
+    center=(0.5, 0.5, 0.5), surface_function=surface_functions.gyroid
+).with_offset(0.2)
 gyroid = gyroid.generate_cad(type_part="sheet").translate((0.5, 0.5, 0.5))
 
 phases = []

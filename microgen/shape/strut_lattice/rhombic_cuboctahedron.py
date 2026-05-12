@@ -24,7 +24,7 @@ class RhombicCuboctahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.RhombicCuboctahedron(strut_radius=0.1).generate_surface_mesh()
+       shape = microgen.RhombicCuboctahedron(0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:

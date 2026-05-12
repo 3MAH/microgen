@@ -57,7 +57,7 @@ def test_tpms_generate_surface_mesh_without_cad_extra() -> None:
     from microgen import surface_functions
     from microgen.shape.tpms import Tpms
 
-    tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.5)
+    tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.5)
     mesh = tpms.generate_surface_mesh(type_part="sheet")
     assert mesh.n_cells > 0
 

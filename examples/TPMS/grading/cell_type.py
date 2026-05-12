@@ -92,11 +92,11 @@ def trigraded(
     )
 
 
-geometry = Tpms(
-    surface_function=trigraded,
-    offset=0.3,
-    repeat_cell=REPEAT,
-    resolution=50,
+geometry = (
+    Tpms(surface_function=trigraded)
+    .with_offset(0.3)
+    .with_repeat_cell(REPEAT)
+    .with_resolution(50)
 )
 sheet = geometry.sheet
 

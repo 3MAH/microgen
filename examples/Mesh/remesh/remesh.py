@@ -9,7 +9,7 @@ from microgen.shape.surface_functions import gyroid
 data_dir = Path(__file__).parent / "data"
 Path.mkdir(data_dir, exist_ok=True)
 
-tpms = Tpms(surface_function=gyroid, offset=1.0, resolution=50)
+tpms = Tpms(surface_function=gyroid).with_offset(1.0).with_resolution(50)
 initial_gyroid = tpms.grid_sheet
 initial_gyroid.save(data_dir / "initial_gyroid_mesh.vtk")
 

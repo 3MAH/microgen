@@ -56,11 +56,11 @@ def graded(
     )
 
 
-geometry = Tpms(
-    surface_function=graded,
-    offset=0.3,
-    repeat_cell=(5, 2, 2),
-    resolution=30,
+geometry = (
+    Tpms(surface_function=graded)
+    .with_offset(0.3)
+    .with_repeat_cell((5, 2, 2))
+    .with_resolution(30)
 )
 sheet = geometry.sheet
 

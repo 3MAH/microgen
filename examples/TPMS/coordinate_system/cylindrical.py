@@ -6,13 +6,12 @@ def swapped_gyroid(x, y, z):
     return gyroid(x=z, y=y, z=x)
 
 
-geometry = CylindricalTpms(
-    surface_function=swapped_gyroid,
-    offset=0.5,
-    cell_size=(1, 1, 1),
-    repeat_cell=(1, 0, 1),
-    radius=1,
-    resolution=20,
+geometry = (
+    CylindricalTpms(surface_function=swapped_gyroid, radius=1)
+    .with_offset(0.5)
+    .with_cell_size((1, 1, 1))
+    .with_repeat_cell((1, 0, 1))
+    .with_resolution(20)
 )
 sheet = geometry.sheet
 

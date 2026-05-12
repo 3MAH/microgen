@@ -34,12 +34,12 @@ Let's create a Gyroid TPMS structure, one of the most common triply periodic min
 
 .. jupyter-execute::
 
-   gyroid = microgen.Tpms(
-       surface_function=microgen.surface_functions.gyroid,
-       offset=0.3,
-       cell_size=1.0,
-       repeat_cell=2,
-       resolution=20
+   gyroid = (
+       microgen.Tpms(surface_function=microgen.surface_functions.gyroid)
+       .with_offset(0.3)
+       .with_cell_size(1.0)
+       .with_repeat_cell(2)
+       .with_resolution(20)
    )
 
    # Get the sheet geometry as a PyVista mesh
@@ -54,10 +54,10 @@ Each TPMS can generate different part types:
 
 .. jupyter-execute::
 
-   tpms = microgen.Tpms(
-       surface_function=microgen.surface_functions.gyroid,
-       offset=0.5,
-       resolution=20
+   tpms = (
+       microgen.Tpms(surface_function=microgen.surface_functions.gyroid)
+       .with_offset(0.5)
+       .with_resolution(20)
    )
 
    # Sheet (wall) geometry
