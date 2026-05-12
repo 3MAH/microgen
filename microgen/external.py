@@ -1,9 +1,9 @@
-"""
-Functions related to external software
-    - `Neper - Polycrystal Generation and Meshing`_
-    - `mmg - Robust, Open-source & Multidisciplinary Software for Remeshing`_
-      (via the ``mmgpy`` Python bindings — install with
-      ``pip install mmgpy`` or ``conda install -c conda-forge mmgpy``)
+"""Wrappers around external command-line tools.
+
+- `Neper - Polycrystal Generation and Meshing`_
+- `mmg - Robust, Open-source & Multidisciplinary Software for Remeshing`_
+  (via the ``mmgpy`` Python bindings — install with
+  ``pip install mmgpy`` or ``conda install -c conda-forge mmgpy``)
 
 .. _Neper - Polycrystal Generation and Meshing: https://neper.info/
 .. _mmg - Robust, Open-source & Multidisciplinary Software for Remeshing: https://www.mmgtools.org/
@@ -11,12 +11,27 @@ Functions related to external software
 
 from __future__ import annotations
 
+import shutil
 import subprocess
-from typing import Any
+import warnings
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from microgen.shape import Polyhedron
+
+if TYPE_CHECKING:
+    from typing import TextIO
+
+# Vertex-data row indices in the polyhedron-faces section of a .tess file.
+_TESS_VERTEX_X_INDEX = 1
+_TESS_VERTEX_Y_INDEX = 2
+_TESS_VERTEX_Z_INDEX = 3
+_TESS_VERTEX_STATE_INDEX = 4
+
+# Seed-row index in the *cell seed* section.
+_TESS_SEED_WEIGHT_INDEX = 4
 
 _MMGPY_INSTALL_HINT = (
     "microgen's MMG remeshing path requires mmgpy. "
@@ -34,107 +49,127 @@ def _require_mmgpy() -> Any:
     return mmgpy
 
 
-class Neper:
-    @staticmethod
-    def run(filename: str, nbCell: int, dimCube: tuple[float, float, float]) -> None:
-        """
-        Runs neper command from the command line
+# ---------------------------------------------------------------------------
+# Neper
+# ---------------------------------------------------------------------------
 
-        command = neper -T -n nbCell -id 1 -dim 3 -domain 'cube(dimCube[0], dimCube[1], dimCube[2])' -morpho gg -o filename
+
+class Neper:
+    """Wrapper around the ``neper`` command-line tool."""
+
+    @staticmethod
+    def run(
+        filename: str,
+        n_cells: int,
+        cube_dim: tuple[float, float, float],
+    ) -> None:
+        r"""Run a neper tessellation from the command line.
+
+        Equivalent to::
+
+            neper -T -n n_cells -id 1 -dim 3 \
+                  -domain 'cube(cube_dim[0], cube_dim[1], cube_dim[2])' \
+                  -morpho gg -o filename
 
         :param filename: output file
-        :param nbCell: Specify the number of cells of the tessellation
-        :param dimCube: `neper's documentation`_
+        :param n_cells: number of cells of the tessellation
+        :param cube_dim: see `neper's documentation`_
 
         .. _neper's documentation: https://neper.info/doc/neper_t.html#cmdoption-domain
         """
-
-        try:
-            # Check if neper is installed and available in the PATH
-            subprocess.run(["neper", "--version"], check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(
-                "Neper is not installed. Please install Neper before running this command."
+        neper = shutil.which("neper")
+        if neper is None:
+            warnings.warn(
+                "Neper is not installed. "
+                "Please install Neper before running this command.",
+                stacklevel=2,
             )
             return
 
-        command = ["neper", "-T", "-n", str(nbCell), "-id", "1", "-dim", "3"]
-        command += [
+        try:
+            subprocess.run([neper, "--version"], check=True)  # noqa: S603
+        except subprocess.CalledProcessError:
+            warnings.warn(
+                "Neper is installed but '--version' failed.",
+                stacklevel=2,
+            )
+            return
+
+        cube = f"cube({cube_dim[0]},{cube_dim[1]},{cube_dim[2]})"
+        command = [
+            neper,
+            "-T",
+            "-n",
+            str(n_cells),
+            "-id",
+            "1",
+            "-dim",
+            "3",
             "-domain",
-            "'cube(",
-            str(dimCube[0]),
-            ",",
-            str(dimCube[1]),
-            ",",
-            str(dimCube[2]),
-            ")'",
+            cube,
+            "-morpho",
+            "gg",
+            "-o",
+            filename,
         ]
-        command += ["-morpho", "gg", "-o", filename]
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True)  # noqa: S603
 
     @staticmethod
-    def generateVoronoiFromTessFile(filename: str) -> list[Polyhedron]:
-        """
-        Generates list of Voronoi polyhedron shapes from a tessellation file generated with neper
-        """
-        polyhedra = []
-        tess = Neper.tessParse(filename)
-        for i in range(tess["cells"]["number_of_cells"]):
-            global_ind_faces = tess["polyhedra"]["faces"][i]
-            global_ind_vertices = []
-            for face_ind in global_ind_faces:
-                face_vertices = tess["faces"]["vertices"][face_ind - 1]
-                global_ind_vertices += face_vertices
-            global_ind_vertices = list(
-                dict.fromkeys(global_ind_vertices)
-            )  # remove duplicates
-            global_ind_vertices.sort()
+    def voronoi_from_tess_file(filename: str) -> list[Polyhedron]:
+        """Build :class:`Polyhedron` shapes from a neper-generated .tess file."""
+        polyhedra: list[Polyhedron] = []
+        tess = Neper.parse_tess(filename)
+        for cell_index in range(tess["cells"]["number_of_cells"]):
+            global_face_indices = tess["polyhedra"]["faces"][cell_index]
+            global_vertex_indices: list[int] = []
+            for face_ind in global_face_indices:
+                global_vertex_indices += tess["faces"]["vertices"][face_ind - 1]
+            global_vertex_indices = sorted(dict.fromkeys(global_vertex_indices))
 
-            vertices = []
-            local_ind_vertices = []
-            for i in range(len(global_ind_vertices)):
-                ind = global_ind_vertices[i]
-                x = tess["vertices"]["ver_x"][ind - 1]
-                y = tess["vertices"]["ver_y"][ind - 1]
-                z = tess["vertices"]["ver_z"][ind - 1]
-                vertices.append((x, y, z))
-                local_ind_vertices.append(i)
+            vertices: list[tuple[float, float, float]] = [
+                (
+                    tess["vertices"]["ver_x"][ind - 1],
+                    tess["vertices"]["ver_y"][ind - 1],
+                    tess["vertices"]["ver_z"][ind - 1],
+                )
+                for ind in global_vertex_indices
+            ]
 
-            faces = []
-            for face_ind in global_ind_faces:
+            faces: list[dict[str, list[int]]] = []
+            for face_ind in global_face_indices:
                 face_vertices = tess["faces"]["vertices"][face_ind - 1]
-                faces.append({"vertices": []})
-                for ver in face_vertices:
-                    faces[-1]["vertices"].append(global_ind_vertices.index(ver))
+                faces.append(
+                    {
+                        "vertices": [
+                            global_vertex_indices.index(v) for v in face_vertices
+                        ],
+                    },
+                )
 
             polyhedra.append(Polyhedron(dic={"vertices": vertices, "faces": faces}))
         return polyhedra
 
     @staticmethod
-    def tessParse(filename: str) -> dict[str, dict]:
-        """
-        Parses tessellation file (.tess) generated with neper.
-        Following .tess structure from `neper's`_ documentation:
-        Returns a dictionary containing information cells,
-        vertices, edges, faces, polyhedra
+    def parse_tess(filename: str) -> dict[str, dict]:
+        """Parse a tessellation (.tess) file generated by neper.
 
-        .. _neper's: https://neper.info/doc/fileformat.html#tessellation-file-tess
+        Returns a dictionary with keys ``cells``, ``vertices``, ``edges``,
+        ``faces``, ``polyhedra``. Follows the .tess structure from
+        `neper's documentation`_.
+
+        .. _neper's documentation: https://neper.info/doc/fileformat.html#tessellation-file-tess
         """
-        if len(filename.split(".")) == 1:
-            filename += ".tess"
-        with open(filename) as f:
-            f.readline()  # ***tess
-            f.readline()  # **format
-            f.readline()  # <format>
-            f.readline()  # **general
-            f.readline()  # <dim> <type>
-            f.readline()  # **cell
-            cells = Neper._readCells(f)
-            vertices = Neper._readVertices(f)
-            edges = Neper._readEdges(f)
-            faces = Neper._readFaces(f)
-            polyhedra = Neper._readPolyhedra(f)
-            # not reading the rest of the file
+        path = Path(filename)
+        if path.suffix == "":
+            path = path.with_suffix(".tess")
+        with path.open() as f:
+            for _ in range(6):
+                f.readline()
+            cells = Neper._read_cells(f)
+            vertices = Neper._read_vertices(f)
+            edges = Neper._read_edges(f)
+            faces = Neper._read_faces(f)
+            polyhedra = Neper._read_polyhedra(f)
         return {
             "cells": cells,
             "vertices": vertices,
@@ -144,87 +179,82 @@ class Neper:
         }
 
     @staticmethod
-    def _readCells(f):
-        cells = {"number_of_cells": int(f.readline())}
+    def _read_cells(f: TextIO) -> dict:
+        cells: dict = {"number_of_cells": int(f.readline())}
+        n = cells["number_of_cells"]
         while True:
             tag = f.readline().rstrip()
             if tag == "  *id":
-                cells["id"] = []
-                while len(cells["id"]) < cells["number_of_cells"]:
-                    data = f.readline().split()
-                    for id in data:
-                        cells["id"].append(int(id))
-            elif tag == "  *mode" or tag == "  *modeid":
-                cells["mode"] = []
-                while len(cells["mode"]) < cells["number_of_cells"]:
-                    data = f.readline().split()
-                    for id in data:
-                        cells["mode"].append(int(id))
+                cells["id"] = Neper._read_int_block(f, n)
+            elif tag in {"  *mode", "  *modeid"}:
+                cells["mode"] = Neper._read_int_block(f, n)
             elif tag == "  *seed":
-                cells["seed"] = []
-                for i in range(cells["number_of_cells"]):
-                    data = f.readline().split()
-                    cells["seed"].append(
-                        {
-                            "seed_id": int(data[0]),
-                            "seed_x": float(data[1]),
-                            "seed_y": float(data[2]),
-                            "seed_z": float(data[3]),
-                            "seed_weight": float(data[4]),
-                        }
-                    )
+                cells["seed"] = [Neper._parse_seed_row(f.readline()) for _ in range(n)]
             elif tag == "  *ori":
                 cells["ori"] = {"descriptor": f.readline()}
-                for i in range(cells["number_of_cells"]):
+                for _ in range(n):
                     data = f.readline().split()
-                    cells["ori"]["cellid_param"] = [
-                        float(data[0]),
-                        float(data[1]),
-                        float(data[2]),
-                    ]
-            elif tag == "  *orispread":
-                pass
-            elif tag == "  *lam":
-                pass
-            elif tag == "  *mode":
+                    cells["ori"]["cellid_param"] = [float(x) for x in data[:3]]
+            elif tag in {"  *orispread", "  *lam"}:
                 pass
             elif tag == "  *crysym":
                 cells["crysym"] = f.readline()
             elif tag == " **vertex":
                 return cells
             else:
-                raise ValueError(f"tag {tag} not known")
+                err_msg = f"tag {tag} not known"
+                raise ValueError(err_msg)
 
     @staticmethod
-    def _readVertices(f):
-        vertices = {
-            "total_number_of_vertices": int(f.readline()),
+    def _read_int_block(f: TextIO, count: int) -> list[int]:
+        values: list[int] = []
+        while len(values) < count:
+            values.extend(int(x) for x in f.readline().split())
+        return values
+
+    @staticmethod
+    def _parse_seed_row(line: str) -> dict:
+        data = line.split()
+        return {
+            "seed_id": int(data[0]),
+            "seed_x": float(data[1]),
+            "seed_y": float(data[2]),
+            "seed_z": float(data[3]),
+            "seed_weight": float(data[_TESS_SEED_WEIGHT_INDEX]),
+        }
+
+    @staticmethod
+    def _read_vertices(f: TextIO) -> dict:
+        n = int(f.readline())
+        vertices: dict = {
+            "total_number_of_vertices": n,
             "ver_id": [],
             "ver_x": [],
             "ver_y": [],
             "ver_z": [],
             "ver_state": [],
         }
-        for i in range(vertices["total_number_of_vertices"]):
+        for _ in range(n):
             data = f.readline().split()
             vertices["ver_id"].append(int(data[0]))
-            vertices["ver_x"].append(float(data[1]))
-            vertices["ver_y"].append(float(data[2]))
-            vertices["ver_z"].append(float(data[3]))
-            vertices["ver_state"].append(int(data[4]))
+            vertices["ver_x"].append(float(data[_TESS_VERTEX_X_INDEX]))
+            vertices["ver_y"].append(float(data[_TESS_VERTEX_Y_INDEX]))
+            vertices["ver_z"].append(float(data[_TESS_VERTEX_Z_INDEX]))
+            vertices["ver_state"].append(int(data[_TESS_VERTEX_STATE_INDEX]))
         return vertices
 
     @staticmethod
-    def _readEdges(f):
+    def _read_edges(f: TextIO) -> dict:
         f.readline()  # **edge
-        edges = {
-            "total_number_of_edges": int(f.readline().rstrip()),
+        n = int(f.readline().rstrip())
+        edges: dict = {
+            "total_number_of_edges": n,
             "edge_id": [],
             "ver_1": [],
             "ver_2": [],
             "edge_state": [],
         }
-        for i in range(edges["total_number_of_edges"]):
+        for _ in range(n):
             data = f.readline().split()
             edges["edge_id"].append(int(data[0]))
             edges["ver_1"].append(int(data[1]))
@@ -233,361 +263,132 @@ class Neper:
         return edges
 
     @staticmethod
-    def _readFaces(f):
+    def _read_faces(f: TextIO) -> dict:
         f.readline()  # **face
-        faces = {
-            "total_number_of_faces": int(f.readline().rstrip()),
+        n = int(f.readline().rstrip())
+        faces: dict = {
+            "total_number_of_faces": n,
             "face_id": [],
             "vertices": [],
             "edges": [],
         }
-        for i in range(faces["total_number_of_faces"]):
+        for _ in range(n):
             data = f.readline().split()
             faces["face_id"].append(int(data[0]))
             n_ver = int(data[1])
-            faces["vertices"].append([])
-            for j in range(n_ver):
-                faces["vertices"][-1].append(int(data[j + 2]))
+            faces["vertices"].append([int(data[j + 2]) for j in range(n_ver)])
             data = f.readline().split()
             n_edg = int(data[0])
-            faces["edges"].append([])
-            for j in range(n_edg):
-                faces["edges"][-1].append(np.abs(int(data[j + 1])))
+            faces["edges"].append(
+                [int(np.abs(int(data[j + 1]))) for j in range(n_edg)],
+            )
             f.readline()  # not reading this line
             f.readline()  # not reading this line
         return faces
 
     @staticmethod
-    def _readPolyhedra(f):
+    def _read_polyhedra(f: TextIO) -> dict:
         f.readline()  # **polyhedron
-        polyhedra = {
-            "total_number_of_polyhedra": int(f.readline().rstrip()),
+        n = int(f.readline().rstrip())
+        polyhedra: dict = {
+            "total_number_of_polyhedra": n,
             "poly_id": [],
             "faces": [],
         }
-        for i in range(polyhedra["total_number_of_polyhedra"]):
+        for _ in range(n):
             data = f.readline().split()
-            polyhedra["poly_id"] = int(data[0])
+            polyhedra["poly_id"].append(int(data[0]))
             n_fac = int(data[1])
-            polyhedra["faces"].append([])
-            for j in range(n_fac):
-                polyhedra["faces"][-1].append(np.abs(int(data[j + 2])))
+            polyhedra["faces"].append(
+                [int(np.abs(int(data[j + 2]))) for j in range(n_fac)],
+            )
         return polyhedra
 
 
-def parseNeper(filename: str) -> tuple:
-    """
-    Parses .tess tessellation file obtained with neper
-    :param filename: .tess file name
-    """
-
-    # First step: read coordinates of seeds, coordinates of vertices, global labels
-    # of vertices for each segment, global labels of segments for each face, global
-    # labels of faces for each polyhedron from the tessellation file filename.tess
-    # generated by NEPER
-
-    file = filename + ".tess"
-    fid = open(file)
-
-    flagChercheSeed = False
-    seed = []
-
-    flagChercheVertex = False
-    vertices = []
-
-    flagChercheEdges = False
-    edges = []
-
-    flagChercheFaces = False
-    faces = []
-    iLigneFace = 1
-
-    flagCherchePolys = False
-    polys = []
-
-    flagExtraction = False
-    i = 0
-
-    for line in fid:
-        if flagExtraction:
-            if "*" in line:
-                flagExtraction = False
-            else:
-                if i == 1:  # Extraction des germes
-                    ligneDecoupee = line.split()
-                    seed.append(
-                        [
-                            float(ligneDecoupee[1]),
-                            float(ligneDecoupee[2]),
-                            float(ligneDecoupee[3]),
-                        ]
-                    )
-                if i == 2:  # Extraction des sommets
-                    ligneDecoupee = line.split()
-                    vertices.append(
-                        [
-                            int(ligneDecoupee[0]),
-                            float(ligneDecoupee[1]),
-                            float(ligneDecoupee[2]),
-                            float(ligneDecoupee[3]),
-                        ]
-                    )
-                if i == 3:  # Extraction des segments
-                    ligneDecoupee = line.split()
-                    edges.append(
-                        [
-                            int(ligneDecoupee[0]),
-                            int(ligneDecoupee[1]),
-                            int(ligneDecoupee[2]),
-                        ]
-                    )
-                if i == 4:  # Extraction des faces
-                    if iLigneFace == 1:
-                        tmp = []
-                        tmp.append(int(line.split()[0]))
-                    if iLigneFace == 2:
-                        ligneDecoupee = line.split()
-                        nbEdges = int(ligneDecoupee[0])
-                        for k in range(nbEdges):
-                            tmp.append(int(ligneDecoupee[k + 1]))
-                        faces.append(tmp)
-                    if iLigneFace == 4:
-                        iLigneFace = 0
-
-                    iLigneFace += 1
-                if i == 5:  # Extraction des cellules
-                    tmp = []
-                    ligneDecoupee = line.split()
-                    tmp.append(int(ligneDecoupee[0]))
-                    nbFaces = int(ligneDecoupee[1])
-                    for k in range(nbFaces):
-                        tmp.append(np.abs(int(ligneDecoupee[k + 2])))
-                    polys.append(tmp)
-
-        if "*seed" in line:
-            flagChercheSeed = True
-            i += 1
-
-        if "**vertex" in line:
-            flagChercheVertex = True
-            i += 1
-            next(fid)
-
-        if "**edge" in line:
-            flagChercheEdges = True
-            i += 1
-            next(fid)
-
-        if "**face" in line:
-            flagChercheFaces = True
-            i += 1
-            next(fid)
-
-        if "**polyhedron" in line:
-            flagCherchePolys = True
-            i += 1
-            next(fid)
-
-        if flagChercheSeed:
-            flagExtraction = True
-            flagChercheSeed = False
-
-        if flagChercheVertex:
-            flagExtraction = True
-            flagChercheVertex = False
-
-        if flagChercheEdges:
-            flagExtraction = True
-            flagChercheEdges = False
-
-        if flagChercheFaces:
-            flagExtraction = True
-            flagChercheFaces = False
-
-        if flagCherchePolys:
-            flagExtraction = True
-            flagCherchePolys = False
-
-    fid.close()
-
-    # Second step: create an object for the polycrystal having a structure similar
-    # to the output of compute_voronoi from the py_voro library, compatible with the
-    # definition of the polyhedra of the Microgen library
-
-    A = []
-    nbPolys = len(polys)
-    listeSommets = []
-    listeSommetsOut = []
-    for i in range(nbPolys):
-        voro: dict[str, dict | list] = {}
-        voro["original"] = seed[i]
-        voro["faces"] = []
-        listeSommetsPoly = []
-        sommets = []
-        for facePoly in polys[i][1:]:
-            listeSommetsFace = []
-            dicVertices: dict[str, list] = {}
-            dicVertices["vertices"] = []
-            for segment in faces[facePoly - 1][1:]:
-                # Listes des sommets avec numérotation globale et faces associées
-                if edges[np.abs(segment) - 1][1] not in listeSommets:
-                    dicFacesAssociees = {}
-                    dicFacesAssociees["cell_associees"] = [facePoly]
-                    listeSommets.append(edges[np.abs(segment) - 1][1])
-                    listeSommetsOut.append(
-                        (edges[np.abs(segment) - 1][1], dicFacesAssociees)
-                    )
-                else:
-                    idx = listeSommets.index(edges[np.abs(segment) - 1][1])
-                    if facePoly not in listeSommetsOut[idx][1]["cell_associees"]:
-                        listeSommetsOut[idx][1]["cell_associees"].append(facePoly)
-                    # sommets.append(vertices[edges[np.abs(segment)-1][1]-1][1:])
-                if edges[np.abs(segment) - 1][2] not in listeSommets:
-                    dicFacesAssociees = {}
-                    dicFacesAssociees["cell_associees"] = [facePoly]
-                    listeSommets.append(edges[np.abs(segment) - 1][2])
-                    listeSommetsOut.append(
-                        (edges[np.abs(segment) - 1][2], dicFacesAssociees)
-                    )
-                else:
-                    idx = listeSommets.index(edges[np.abs(segment) - 1][2])
-                    if facePoly not in listeSommetsOut[idx][1]["cell_associees"]:
-                        listeSommetsOut[idx][1]["cell_associees"].append(facePoly)
-                    # sommets.append(vertices[edges[np.abs(segment)-1][2]-1][1:])
-
-                # Listes des sommets et de leurs coordonnées avec numérotation locale
-                # à inclure dans voro
-                if segment < 0:
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][2])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][2] - 1][1:])
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][2])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][2])
-                        )
-
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][1])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][1] - 1][1:])
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][1])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][1])
-                        )
-
-                if segment > 0:
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][1])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][1] - 1][1:])
-                    if edges[np.abs(segment) - 1][1] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][1])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][1])
-                        )
-
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsPoly:
-                        listeSommetsPoly.append(edges[np.abs(segment) - 1][2])
-                        sommets.append(vertices[edges[np.abs(segment) - 1][2] - 1][1:])
-                    if edges[np.abs(segment) - 1][2] not in listeSommetsFace:
-                        listeSommetsFace.append(edges[np.abs(segment) - 1][2])
-                        dicVertices["vertices"].append(
-                            listeSommetsPoly.index(edges[np.abs(segment) - 1][2])
-                        )
-            voro["faces"].append(dicVertices)
-
-        voro["vertices"] = sommets
-        A.append(voro)
-
-    return A, seed, listeSommetsOut, edges, faces, polys
+# ---------------------------------------------------------------------------
+# Mmg
+# ---------------------------------------------------------------------------
 
 
 class MmgError(Exception):
     """Raised when an Mmg invocation fails."""
 
-    ...
+
+# CLI flag → mmgpy option-key translation.  Most flags map 1:1 to mmgpy's
+# options dict; two flags use renamed keys (``-nr`` → ``angle=0`` disables
+# ridge detection; ``-A`` → ``anisosize=1`` requests anisotropic adaptation).
+_SKIP = object()
 
 
-# CLI flag → mmgpy option-key translation table.  The CLI flag names below
-# match those of the historical subprocess ``Mmg`` wrapper so the public
-# Python API of this module is unchanged: callers keep passing the same
-# keyword arguments, and we forward them as a typed options dict to mmgpy.
-#
-# A handful of CLI-only flags have **no library equivalent** and are dropped:
-#   * ``-d`` / ``-h`` / ``-default`` / ``-val`` — debug/help switches
-#   * ``-3dMedit``                              — mmg2d Medit format toggle
-#
-# Two flags map to **non-1:1** option keys:
-#   * ``-nr``  → ``angle=0``     (disable ridge detection)
-#   * ``-A``   → ``anisosize=1`` (request anisotropic adaptation)
+def _as_float(v: Any) -> Any:
+    return _SKIP if v is None or v is False else float(v)
 
 
-def _build_mmg_options(
-    flag_kwargs: dict[str, Any],
-    *,
-    cli_unsupported: tuple[str, ...] = (),
-) -> dict[str, Any]:
-    """Translate Mmg CLI-style kwargs into an ``mmgpy`` options dict.
+def _as_int_or_one(v: Any) -> Any:
+    return _SKIP if v is None or v is False else (1 if v is True else int(v))
 
-    Boolean flags map to ``1`` when truthy.  Numeric flags pass through.
-    Unsupported flags are silently ignored (matching the historical
-    behaviour where unused CLI switches were simply omitted from argv).
-    """
-    opts: dict[str, Any] = {}
 
-    # Numeric / value-carrying flags.
-    for key in ("hausd", "hgrad", "hmax", "hmin", "hsiz", "rmc", "ar"):
-        v = flag_kwargs.get(key)
-        if v is not None and v is not False:
-            opts[key] = float(v)
+def _as_int_or_zero(v: Any) -> Any:
+    return _SKIP if v is None or v is False else (0 if v is True else int(v))
 
-    for key in ("nreg", "nsd", "octree", "v", "m"):
-        v = flag_kwargs.get(key)
-        if v is not None and v is not False:
-            # ``v`` and ``m`` were typed as bool in the old wrapper too —
-            # default them to 1 when explicitly enabled.
-            opts["verbose" if key == "v" else "mem" if key == "m" else key] = (
-                1 if v is True else int(v)
-            )
 
-    # ``lag`` and ``ls`` accept 0 as a meaningful value, so guard truthiness.
-    lag = flag_kwargs.get("lag")
-    if lag is not None and lag is not False:
-        opts["lag"] = 0 if lag is True else int(lag)
-    ls = flag_kwargs.get("ls")
-    if ls is not None and ls is not False:
-        opts["ls"] = 0.0 if ls is True else float(ls)
+def _as_float_or_zero(v: Any) -> Any:
+    return _SKIP if v is None or v is False else (0.0 if v is True else float(v))
 
-    # Boolean / presence-only flags.
-    for key in (
-        "noinsert",
-        "nomove",
-        "nosurf",
-        "noswap",
-        "optim",
-        "optimLES",
-        "opnbdy",
-        "nofem",
-    ):
-        if flag_kwargs.get(key):
-            opts[key] = 1
 
+def _as_presence(v: Any) -> Any:
+    return 1 if v else _SKIP
+
+
+def _as_angle_zero(v: Any) -> Any:
+    return 0 if v else _SKIP
+
+
+_FLAG_SPEC: dict[str, tuple[str, Any]] = {
+    # Numeric / value-carrying.
+    "hausd": ("hausd", _as_float),
+    "hgrad": ("hgrad", _as_float),
+    "hmax": ("hmax", _as_float),
+    "hmin": ("hmin", _as_float),
+    "hsiz": ("hsiz", _as_float),
+    "rmc": ("rmc", _as_float),
+    "ar": ("ar", _as_float),
+    # Bool-true → 1, otherwise int cast; some keys are renamed.
+    "v": ("verbose", _as_int_or_one),
+    "m": ("mem", _as_int_or_one),
+    "nreg": ("nreg", _as_int_or_one),
+    "nsd": ("nsd", _as_int_or_one),
+    "octree": ("octree", _as_int_or_one),
+    # 0 is meaningful (bool-true defaults to 0).
+    "lag": ("lag", _as_int_or_zero),
+    "ls": ("ls", _as_float_or_zero),
+    # Boolean / presence-only.
+    "noinsert": ("noinsert", _as_presence),
+    "nomove": ("nomove", _as_presence),
+    "nosurf": ("nosurf", _as_presence),
+    "noswap": ("noswap", _as_presence),
+    "optim": ("optim", _as_presence),
+    "optimLES": ("optimLES", _as_presence),
+    "opnbdy": ("opnbdy", _as_presence),
+    "nofem": ("nofem", _as_presence),
     # CLI synonyms with renamed option keys.
-    if flag_kwargs.get("A"):
-        opts["anisosize"] = 1
-    if flag_kwargs.get("rn"):
-        opts["renum"] = 1
-    if flag_kwargs.get("nr"):
-        # ``-nr`` disables ridge detection: in the library this is
-        # exposed as ``angle = 0`` (set the ridge-detection angle to 0°).
-        opts["angle"] = 0
+    "A": ("anisosize", _as_presence),
+    "rn": ("renum", _as_presence),
+    "nr": ("angle", _as_angle_zero),
+}
 
-    for unsupported in cli_unsupported:
-        if flag_kwargs.get(unsupported):
-            # Silent skip — the flag was never used inside microgen and
-            # mmgpy has no equivalent option key.
-            pass
 
+def _build_mmg_options(flag_kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Translate Mmg CLI-style kwargs into an ``mmgpy`` options dict."""
+    opts: dict[str, Any] = {}
+    for raw_key, raw_val in flag_kwargs.items():
+        spec = _FLAG_SPEC.get(raw_key)
+        if spec is None:
+            continue
+        out_key, mapper = spec
+        result = mapper(raw_val)
+        if result is not _SKIP:
+            opts[out_key] = result
     return opts
 
 
@@ -627,33 +428,15 @@ def _run_mmg(
 class Mmg:
     """Thin wrapper around :mod:`mmgpy` with a CLI-style keyword interface.
 
-    Each static method preserves the keyword-argument names of the original
-    subprocess wrapper (``input``, ``output``, ``hausd``, ``hgrad``, …) so
-    existing call sites keep working.  Internally we translate to an
-    ``mmgpy`` options dict and call :func:`mmgpy.mmg{2d,s,3d}.remesh`.
+    Each static method accepts CLI-named keyword arguments (``input``,
+    ``output``, ``hausd``, ``hgrad``, …), translates them to an ``mmgpy``
+    options dict, and forwards to :func:`mmgpy.mmg{2d,s,3d}.remesh`.
     """
 
     @staticmethod
-    def _run_mmg_command(cmd: list[str]) -> None:
-        """Legacy hook — kept for backwards compatibility with old tests.
-
-        Wraps :mod:`subprocess` exactly as the original implementation did,
-        but is no longer used by :meth:`mmg2d` / :meth:`mmgs` / :meth:`mmg3d`.
-        """
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            mmg_failed_command = " ".join(cmd)
-            raise MmgError(f"mmg command '{mmg_failed_command}' failed") from error
-
-    @staticmethod
     def mmg2d(
-        d=None,
-        h=None,
         m=None,
         v=None,
-        val=None,
-        default=None,
         input=None,
         output=None,
         solution=None,
@@ -667,7 +450,6 @@ class Mmg:
         hsiz=None,
         lag=None,
         ls=None,
-        _3dMedit=None,
         noinsert=None,
         nomove=None,
         nosurf=None,
@@ -681,9 +463,7 @@ class Mmg:
     ):
         """Run mmg2d on ``input`` writing to ``output``.
 
-        Forwards to :func:`mmgpy.mmg2d.remesh`.  CLI-only flags
-        (``d``, ``h``, ``val``, ``default``, ``_3dMedit``) are accepted for
-        signature compatibility but have no effect.
+        Forwards to :func:`mmgpy.mmg2d.remesh`.
         """
         opts = _build_mmg_options(
             {
@@ -709,7 +489,6 @@ class Mmg:
                 "opnbdy": opnbdy,
                 "rmc": rmc,
             },
-            cli_unsupported=("d", "h", "val", "default", "_3dMedit"),
         )
         _run_mmg(
             "mmg2d",
@@ -722,12 +501,8 @@ class Mmg:
 
     @staticmethod
     def mmgs(
-        d=None,
-        h=None,
         m=None,
         v=None,
-        val=None,
-        default=None,
         input=None,
         output=None,
         solution=None,
@@ -752,8 +527,7 @@ class Mmg:
     ):
         """Run mmgs (surface remesher) on ``input`` writing to ``output``.
 
-        Forwards to :func:`mmgpy.mmgs.remesh`.  CLI-only flags
-        (``d``, ``h``, ``val``, ``default``) are accepted but have no effect.
+        Forwards to :func:`mmgpy.mmgs.remesh`.
         """
         opts = _build_mmg_options(
             {
@@ -777,7 +551,6 @@ class Mmg:
                 "optim": optim,
                 "rn": rn,
             },
-            cli_unsupported=("d", "h", "val", "default"),
         )
         _run_mmg(
             "mmgs",
@@ -790,12 +563,8 @@ class Mmg:
 
     @staticmethod
     def mmg3d(
-        d=None,
-        h=None,
         m=None,
         v=None,
-        val=None,
-        default=None,
         input=None,
         output=None,
         solution=None,
@@ -826,8 +595,7 @@ class Mmg:
     ):
         """Run mmg3d (volume remesher) on ``input`` writing to ``output``.
 
-        Forwards to :func:`mmgpy.mmg3d.remesh`.  CLI-only flags
-        (``d``, ``h``, ``val``, ``default``) are accepted but have no effect.
+        Forwards to :func:`mmgpy.mmg3d.remesh`.
         """
         opts = _build_mmg_options(
             {
@@ -857,7 +625,6 @@ class Mmg:
                 "rmc": rmc,
                 "rn": rn,
             },
-            cli_unsupported=("d", "h", "val", "default"),
         )
         _run_mmg(
             "mmg3d",

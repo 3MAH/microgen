@@ -10,8 +10,8 @@ geometry = Tpms(
     repeat_cell=3,
     resolution=30,
 )
-shape = geometry.generateVtk(type_part="sheet")
-shape.flip_normals()
+shape = geometry.generate_surface_mesh(type_part="sheet")
+shape = shape.flip_faces()
 
 sphere = pv.Sphere(radius=1.45)
 

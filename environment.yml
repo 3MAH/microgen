@@ -3,11 +3,10 @@ channels:
   - conda-forge
   - set3mah
 
-# Core deps only.  cadquery is REMOVED from microgen; the CAD path goes
-# through OCCT directly via `ocp` (conda-forge name for cadquery-ocp).
-# Install `ocp` if you need Shape.generate() / Phase / fuse_shapes /
-# periodic / lattice CAD.  Without it, mesh + implicit-field workflows
-# still work.
+# Full dev environment.  cadquery is REMOVED from microgen; the CAD path goes
+# through OCCT directly via `ocp` (conda-forge's name; on PyPI the [cad] extra
+# pulls `cadquery-ocp-novtk`).  On conda-forge `ocp` installs cleanly, so we
+# bring it in by default, matching the conda recipe.
 dependencies:
   - numpy
   - pyvista           # unpinned: VTK 9.4+ is unblocked (cadquery no longer in the tree)
@@ -16,7 +15,7 @@ dependencies:
   - python-gmsh
   - meshio
   - ocp               # OCP (OCCT Python binding) — enables the CAD path
-  - mmgpy             # MMG remeshing (Python bindings, bundles MMG natives)
   - pip:
     - autograd
+  - mmg
 #  - neper

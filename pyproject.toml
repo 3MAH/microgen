@@ -1,6 +1,6 @@
 [project]
 name = "microgen"
-version = "1.4.0.dev0"
+version = "2.0.0.dev1"
 authors = [{ name = "3MAH", email = 'set3mah@gmail.com' }]
 description = "Microstructure generation and meshing"
 readme = "README.md"
@@ -23,22 +23,19 @@ classifiers = [
 # (``.generate()`` → OCCT ``TopoDS_Shape``) requires the ``[cad]`` extra.
 dependencies = [
     "numpy",
-    "pyvista",
+    "pyvista>=0.46",
     "gmsh",
     "meshio",
     "scipy",
-    "nlopt",
     "autograd",
 ]
 
 [project.optional-dependencies]
-# CAD backend: OCCT via cadquery-ocp (no cadquery itself).  Installing this
-# extra unlocks Shape.generate(), Phase, fuse_shapes, lattice CAD, etc.
-cad = ["cadquery-ocp"]
-# MMG remeshing via the kmarchais/mmgpy Python bindings.  Bundles the MMG
-# native library, so no system MMG install is needed.  Used by
-# ``microgen.external.Mmg`` and ``microgen.remesh``.
-mmg = ["mmgpy"]
+# CAD backend: OCCT via cadquery-ocp-novtk (no cadquery, no bundled VTK; we
+# use VTK via PyVista already).  Installing this extra unlocks
+# Shape.generate(), Phase, fuse_shapes, lattice CAD, etc., and ships cp314
+# wheels on Linux/macOS arm64/Windows.
+cad = ["cadquery-ocp-novtk"]
 dev = [
     'pre-commit>=3.5.0',
     "ruff>=0.9",
@@ -64,7 +61,7 @@ jupyter = [
     "sidecar>=0.5.2",
     "jupyterview>=0.7.0",
 ]
-all = ["microgen[cad, dev, docs, jupyter, mmg, ray]"]
+all = ["microgen[cad, dev, docs, jupyter, ray]"]
 
 [project.urls]
 Documentation = 'https://3mah.github.io/microgen-docs/'
@@ -91,62 +88,11 @@ target-version = "py310"
 exclude = [
     "docs/*",
     "tests/*",
-    "microgen/box_mesh.py",
-    "microgen/external.py",
-    "microgen/mesh.py",
-    "microgen/operations.py",
-    "microgen/periodic.py",
-    "microgen/phase.py",
-    "microgen/remesh.py",
-    "microgen/report.py",
-    "microgen/rve.py",
-    "microgen/single_mesh.py",
     "examples/*",
-    "gyroid_gd_bunny.py",
-] # external = ["E131", "D102", "D105"]
-select = ["ALL"]
-ignore = [
-    "E501",     # line too long — ruff-format handles wrapping
-    "S101",     # assert in tests is fine
-    "ANN101",   # removed rule
-    "ANN102",   # removed rule
-    "ANN001",   # missing type hint on argument
-    "ANN002",   # missing type hint on *args
-    "ANN003",   # missing **kwargs annotation
-    "ANN202",   # missing return-type on private function
-    "ANN401",   # typing.Any — needed for raw OCCT TopoDS_Shape passthrough
-    "PLC0415",  # late imports needed to avoid circular deps
-    "N806",     # capitalised local variables (T, N, B for tangent/normal/binormal)
-    "PLR2004",  # magic-value comparison — too noisy in scientific code
-    "PLR0913",  # too many arguments — APIs are wide on purpose
-    "PLR0915",  # too many statements
-    "LOG015",   # root logger usage
-    "SLF001",   # private member access between class siblings
-    "RUF001",   # ambiguous unicode (we use Greek letters intentionally)
-    "RUF002",   # same, in docstrings
-    "RUF003",   # same, in comments
-    "RUF046",   # int(...) on already-int — bookkeeping
-    "RUF007",   # zip strict
-    "ARG002",   # unused method argument (pyvista hook signatures)
-    "ARG005",   # unused lambda argument (kwargs trampolines)
-    "TID252",   # relative imports are the project convention
-    "FBT001",   # boolean positional argument
-    "FBT002",   # boolean default-value
-    "FBT003",   # boolean positional value — third-party OCP/CadQuery API
-    "COM812",   # trailing comma — conflicts with ruff-format
-    "PYI034",   # __new__ return type — _Centre/_BBox use tuple subclassing
-    "D301",     # raw docstring with backslashes — needed for LaTeX in docs
-    "TC003",    # typing-only imports — minor
-    "RET504",   # unnecessary assignment before return
-    "PERF401",  # list comprehension — readability tradeoff
-    "TRY003",   # long messages outside exception class
-    "EM101",    # raw string in exception
-    "EM102",    # f-string in exception
-    "SIM108",   # ternary instead of if/else
-    "UP038",    # isinstance with X | Y — deprecated rule (perf regression)
-    # Docstring style — too noisy for scientific code
-    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
-    "D203", "D205", "D211", "D212", "D213", "D400", "D401", "D415",
+    # The Mmg wrapper mirrors mmg's CLI flags verbatim (input/ls/nr/A/...);
+    # a redesign of this interface is planned, so the file is excluded
+    # rather than littered with per-flag noqa pragmas.
+    "microgen/external.py",
 ]
 
 [tool.ruff.format]

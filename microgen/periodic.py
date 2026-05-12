@@ -1,6 +1,6 @@
 """Periodic cut — rearrange a shape so it wraps around an RVE.
 
-Pure OCP implementation (``cadquery-ocp``); no ``cadquery`` dependency.
+Pure OCP implementation (``cadquery-ocp-novtk``); no ``cadquery`` dependency.
 Requires the ``[cad]`` extra.
 """
 
@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import warnings
 from typing import TYPE_CHECKING, Any
-
-import numpy as np
 
 from .cad import (
     CadShape,
@@ -78,8 +76,10 @@ def _base_pnt(face: str, rve: Rve) -> tuple[float, float, float]:
 
 
 def _translate(face: str, rve: Rve) -> tuple[float, float, float]:
-    """Translation applied to solids on the 'outside' half of *face*
-    to wrap them through the opposite RVE face.
+    """Compute the wrap-around translation for solids on a face.
+
+    The translation is applied to solids sitting on the 'outside' half of
+    *face* so they re-enter the RVE through the opposite face.
     """
     if face == "x-":
         return (float(rve.dim[0]), 0.0, 0.0)
@@ -179,7 +179,7 @@ def _intersect_edge(
     )
     pp = select_solids_on_side(split_pp, base_1, _SIDE_DIR[f_1])
 
-    # (+−) — inside first, outside second: translate by tr_1
+    # (+-) -- inside first, outside second: translate by tr_1
     pm = select_solids_on_side(
         split_pp,
         base_1,
@@ -346,13 +346,3 @@ def periodic_split_and_translate(phase: Phase, rve: Rve) -> Phase:
     to_fuse = [CadShape(s) for s in all_solids]
     fused = fuse_shapes(to_fuse, retain_edges=False)
     return Phase(shape=fused)
-
-
-def periodic(phase: Phase, rve: Rve) -> Phase:
-    """See :func:`periodic_split_and_translate`.  Deprecated alias."""
-    warnings.warn(
-        "periodic is deprecated, use periodic_split_and_translate instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return periodic_split_and_translate(phase, rve)

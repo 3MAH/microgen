@@ -441,14 +441,3 @@ def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
     return 1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y)) - (
         cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
-
-
-# Deprecated functions
-schwarzP = schwarz_p  # noqa: N816
-schwarzD = schwarz_d  # noqa: N816
-schoenIWP = schoen_iwp  # noqa: N816
-schoenFRD = schoen_frd  # noqa: N816
-fischerKochS = fischer_koch_s  # noqa: N816
-honeycomb_schwarzP = honeycomb_schwarz_p  # noqa: N816
-honeycomb_schoenIWP = honeycomb_schoen_iwp  # noqa: N816
-honeycomb_schwarzD = honeycomb_schwarz_d  # noqa: N816

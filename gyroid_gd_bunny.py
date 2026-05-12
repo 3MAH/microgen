@@ -47,8 +47,8 @@ dist = -1.0 * grid["implicit_distance"]
 dist[dist > 0] = 0
 dist_norm = (dist - min(dist)) / (max(dist) - min(dist))
 x_t = 0.5
-l = 0.2
-reg_func = 0.6 * (1.0 + np.tanh((dist_norm - x_t) / l)) - 0.2
+length = 0.2
+reg_func = 0.6 * (1.0 + np.tanh((dist_norm - x_t) / length)) - 0.2
 
 print(min(dist))
 print(max(dist))

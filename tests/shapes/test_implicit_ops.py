@@ -264,7 +264,7 @@ class TestTransforms:
 
 
 # ---------------------------------------------------------------------------
-# generate_vtk
+# generate_surface_mesh
 # ---------------------------------------------------------------------------
 
 
@@ -273,13 +273,13 @@ class TestGenerateVtk:
 
     def test_sphere_mesh(self):
         s = _make_sphere()
-        mesh = s.generate_vtk(resolution=30)
+        mesh = s.generate_surface_mesh(resolution=30)
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
     def test_box_mesh(self):
         b = _make_box()
-        mesh = b.generate_vtk(resolution=30)
+        mesh = b.generate_surface_mesh(resolution=30)
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
@@ -287,29 +287,24 @@ class TestGenerateVtk:
         s1 = _make_sphere()
         s2 = _make_box(hx=0.6, hy=0.6, hz=0.6)
         result = s1 & s2
-        mesh = result.generate_vtk(resolution=30)
+        mesh = result.generate_surface_mesh(resolution=30)
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
     def test_no_func_raises(self):
         s = Shape()
         with pytest.raises(NotImplementedError, match="No implicit field"):
-            s.generate_vtk()
+            s.generate_surface_mesh()
 
     def test_no_bounds_raises(self):
         s = Shape(func=lambda x, y, z: x**2 + y**2 + z**2 - 1)
         with pytest.raises(ValueError, match="Bounds must be provided"):
-            s.generate_vtk()
+            s.generate_surface_mesh()
 
     def test_explicit_bounds_override(self):
         s = _make_sphere()
-        mesh = s.generate_vtk(bounds=(-2, 2, -2, 2, -2, 2), resolution=30)
+        mesh = s.generate_surface_mesh(bounds=(-2, 2, -2, 2, -2, 2), resolution=30)
         assert mesh.n_cells > 0
-
-    def test_generateVtk_deprecated(self):
-        s = _make_sphere()
-        mesh = s.generateVtk(resolution=20)
-        assert isinstance(mesh, pv.PolyData)
 
 
 # ---------------------------------------------------------------------------

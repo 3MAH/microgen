@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import itertools
-import warnings
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 import gmsh
 import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from .phase import Phase
     from .rve import Rve
 
@@ -22,101 +23,34 @@ _DIM_3D = 3
 
 
 class OutputMeshNotPeriodicError(Exception):
-    """Raised when output mesh from meshPeriodic is not periodic."""
+    """Raised when output mesh from mesh_periodic is not periodic."""
 
 
-def mesh(
+def mesh(  # noqa: PLR0913
     mesh_file: str,
-    list_phases: list[Phase] | None = None,
-    size: float | None = None,
-    order: int | None = None,
+    list_phases: list[Phase],
+    size: float,
+    order: int,
     output_file: str = "Mesh.msh",
     msh_file_version: int = 4,
-    listPhases: list[Phase] | None = None,
-    mshFileVersion: int | None = None,
 ) -> None:
     """Mesh step file with gmsh with list of phases management.
 
     :param mesh_file: step file to mesh
-    :param listPhases: list of phases to mesh
+    :param list_phases: list of phases to mesh
     :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
     :param order: see `gmsh.model.mesh.setOrder(order)`_
     :param output_file: output file (.msh, .vtk)
-    :param mshFileVersion: gmsh file version
+    :param msh_file_version: gmsh file version
 
     .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
     .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
     """
-    if listPhases is not None:
-        warnings.warn(
-            "listPhases is deprecated, use list_phases instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        list_phases = listPhases
-
-    if mshFileVersion is not None:
-        warnings.warn(
-            "mshFileVersion is deprecated, use msh_file_version instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        msh_file_version = mshFileVersion
-
-    if size is None:
-        err_msg = "size parameter must be provided"
-        raise ValueError(err_msg)
-
-    if order is None:
-        err_msg = "order parameter must be provided"
-        raise ValueError(err_msg)
-
     _initialize_mesh(mesh_file, list_phases, order, msh_file_version)
     _finalize_mesh(size, output_file)
 
 
-def meshPeriodic(
-    mesh_file: str,
-    rve: Rve,
-    listPhases: list[Phase],
-    size: float,
-    order: int,
-    output_file: str = "MeshPeriodic.msh",
-    mshFileVersion: int = 4,
-    tol: float = 1e-8,
-) -> None:
-    """Mesh periodic geometries with gmsh.
-
-    :param mesh_file: step file to mesh
-    :param rve: RVE for periodicity
-    :param listPhases: list of phases to mesh
-    :param size: mesh size constraint (see: `gmsh.model.mesh.setSize(dimTags, size)`_)
-    :param order: see `gmsh.model.mesh.setOrder(order)`_
-    :param output_file: output file (.msh, .vtk)
-    :param mshFileVersion: gmsh file version
-    :param tol: tolerance for periodicity check
-
-    .. _gmsh.model.mesh.setOrder(order): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L1688
-    .. _gmsh.model.mesh.setSize(dimTags, size): https://gitlab.onelab.info/gmsh/gmsh/blob/master/api/gmsh.py#L3140
-    """
-    warnings.warn(
-        "meshPeriodic is deprecated, use mesh_periodic instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    mesh_periodic(
-        mesh_file,
-        rve,
-        listPhases,
-        size,
-        order,
-        output_file,
-        mshFileVersion,
-        tol,
-    )
-
-
-def mesh_periodic(
+def mesh_periodic(  # noqa: PLR0913
     mesh_file: str,
     rve: Rve,
     list_phases: list[Phase],
@@ -186,7 +120,7 @@ def _extract_face_nodes(
     axes = "xyz"[:dim]
     faces = {}
     for i, axis in enumerate(axes):
-        for sign, point in zip("-+", [min_point, max_point]):
+        for sign, point in zip("-+", [min_point, max_point], strict=True):
             face = f"{axis}{sign}"
             faces[face] = np.where(np.abs(nodes_coords[:, i] - point[i]) < tol)[0]
     return faces
@@ -245,20 +179,12 @@ def _sort_adjacent_faces_3d(
 def is_periodic(
     nodes_coords: npt.NDArray[np.float64],
     tol: float = 1e-8,
-    dim: int | None = None,
 ) -> bool:
     """Check whether a mesh is periodic, given its nodes' coordinates.
 
     :param nodes_coords: list of nodes coordinates of the analyzed mesh
     :param tol: tolerance
-    :param dim: mesh dimension (deprecated: unnecessary parameter)
     """
-    if dim is not None:
-        warnings.warn(
-            "dim is deprecated, it is now inferred from the nodes' coordinates.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     dim = nodes_coords.shape[1]
     axes = "xyz"[:dim]
     min_point, max_point = _get_bounding_box(nodes_coords)
@@ -356,12 +282,12 @@ def _check_output_mesh_periodicity(output_mesh_file: str, tol: float = 1e-8) -> 
     dimension = gmsh.model.getDimension()
     _, nodes_coords, _ = gmsh.model.mesh.getNodes(dim=dimension)
     nodes_coords = nodes_coords.reshape((-1, dimension))
-    check_periodicity = is_periodic(nodes_coords, tol, dimension)
+    check_periodicity = is_periodic(nodes_coords, tol)
     gmsh.finalize()
 
     if not check_periodicity:
         err_msg = (
-            "Something went wrong: output mesh from meshPeriodic is not periodic."
+            "Something went wrong: output mesh from mesh_periodic is not periodic."
             "\n Try changing tolerance value or mesh size parameter"
         )
         raise OutputMeshNotPeriodicError(err_msg)

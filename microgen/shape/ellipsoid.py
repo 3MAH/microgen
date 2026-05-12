@@ -1,5 +1,4 @@
-"""
-Ellipsoid.
+"""Ellipsoid.
 
 =============================================
 Ellipsoid (:mod:`microgen.shape.ellipsoid`)
@@ -8,10 +7,11 @@ Ellipsoid (:mod:`microgen.shape.ellipsoid`)
 
 from __future__ import annotations
 
-import warnings
+import itertools
 from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 import pyvista as pv
 
 from microgen.operations import rotate
@@ -24,53 +24,76 @@ if TYPE_CHECKING:
 
 
 class Ellipsoid(Shape):
-    """
-    Class to generate an ellipsoid.
+    """Class to generate an ellipsoid.
+
+    The implicit field is the canonical ellipsoid scalar
+    ``sqrt((x/rx)^2 + (y/ry)^2 + (z/rz)^2) - 1`` (approximate SDF with
+    the correct zero-level set), evaluated in the local frame so
+    ``center`` and ``orientation`` transform the field correctly. Set
+    on every instance so ellipsoids compose via ``|`` / ``&`` / ``-``
+    and stay usable without the ``[cad]`` extra (only :meth:`generate_cad`
+    requires CAD).
 
     .. jupyter-execute::
        :hide-code:
 
        import microgen
 
-       shape = microgen.Ellipsoid().generate_vtk()
+       shape = microgen.Ellipsoid().generate_surface_mesh()
        shape.plot(color='white')
     """
 
     def __init__(
         self: Ellipsoid,
         radii: tuple[float, float, float] = (1, 0.5, 0.25),
-        a_x: float | None = None,
-        a_y: float | None = None,
-        a_z: float | None = None,
         **kwargs: Vector3DType,
     ) -> None:
         """Initialize the ellipsoid."""
         super().__init__(**kwargs)
-        if a_x is not None or a_y is not None or a_z is not None:
-            warnings.warn(
-                "The 'a_x', 'a_y', and 'a_z' parameters are deprecated. \
-                    Use 'radii' instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if a_x is None:
-                a_x = radii[0]
-            if a_y is None:
-                a_y = radii[1]
-            if a_z is None:
-                a_z = radii[2]
-            radii = (a_x, a_y, a_z)
-
         self.radii = radii
+        self._setup_frep_field()
 
-    def generate(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
+    def _setup_frep_field(self: Ellipsoid) -> None:
+        """Bake the ellipsoid field and AABB onto ``_func`` / ``_bounds``."""
+        cx, cy, cz = (float(c) for c in self.center)
+        rx, ry, rz = (float(r) for r in self.radii)
+        rot_inv = self.orientation.inv().as_matrix()
+
+        def _field(
+            x: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64],
+            z: npt.NDArray[np.float64],
+        ) -> npt.NDArray[np.float64]:
+            px = x - cx
+            py = y - cy
+            pz = z - cz
+            lx = rot_inv[0, 0] * px + rot_inv[0, 1] * py + rot_inv[0, 2] * pz
+            ly = rot_inv[1, 0] * px + rot_inv[1, 1] * py + rot_inv[1, 2] * pz
+            lz = rot_inv[2, 0] * px + rot_inv[2, 1] * py + rot_inv[2, 2] * pz
+            return np.sqrt((lx / rx) ** 2 + (ly / ry) ** 2 + (lz / rz) ** 2) - 1.0
+
+        rot = self.orientation.as_matrix()
+        corners = np.array(list(itertools.product([-rx, rx], [-ry, ry], [-rz, rz])))
+        rotated = corners @ rot.T
+        margin = max(rx, ry, rz) * 0.1
+        self._func = _field
+        self._bounds = (
+            cx + float(rotated[:, 0].min()) - margin,
+            cx + float(rotated[:, 0].max()) + margin,
+            cy + float(rotated[:, 1].min()) - margin,
+            cy + float(rotated[:, 1].max()) + margin,
+            cz + float(rotated[:, 2].min()) - margin,
+            cz + float(rotated[:, 2].max()) + margin,
+        )
+
+    def generate_cad(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
         """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_ellipsoid
 
         shape = make_ellipsoid(radii=self.radii, center=self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""
         transform_matrix = np.array(
             [
@@ -83,7 +106,3 @@ class Ellipsoid(Shape):
         sphere = pv.Sphere(radius=1)
         ellipsoid = sphere.transform(transform_matrix, inplace=False)
         return rotate(ellipsoid, self.center, self.orientation)
-
-    def generateVtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""
-        return self.generate_vtk()

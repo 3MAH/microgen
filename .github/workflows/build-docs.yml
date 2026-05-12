@@ -37,7 +37,7 @@ jobs:
 
       - name: Install package with docs and CAD dependencies
         # Sphinx jupyter-execute cells render Shape.generate() / Tpms.generate()
-        # examples, which require the OCP backend (``cadquery-ocp``).
+        # examples, which require the OCP backend (``cadquery-ocp-novtk``).
         run: pip install .[docs,cad]
 
       - name: Build docs

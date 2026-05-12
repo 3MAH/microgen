@@ -10,23 +10,29 @@ between control points.
 
 from __future__ import annotations
 
-from typing import Callable, Tuple
+from typing import Tuple
+from collections.abc import Callable
 
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 
 from microgen import Tpms
-from microgen.shape.surface_functions import fischerKochS, gyroid, schwarzD, schwarzP
+from microgen.shape.surface_functions import (
+    fischer_koch_s,
+    gyroid,
+    schwarz_d,
+    schwarz_p,
+)
 
-ControlPoint = Tuple[float, float, float]
+ControlPoint = tuple[float, float, float]
 
 REPEAT = (4, 4, 2)
 TPMS_TYPES: dict[ControlPoint, Callable] = {
-    (-1, 0, 0): schwarzP,
+    (-1, 0, 0): schwarz_p,
     (1, 0, 0): gyroid,
-    (0, 1, 0): fischerKochS,
-    (0, -1, 0): schwarzD,
+    (0, 1, 0): fischer_koch_s,
+    (0, -1, 0): schwarz_d,
 }
 
 

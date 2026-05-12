@@ -14,8 +14,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class Cuboctahedron(AbstractLattice):
-    """
-    Class to create a unit cuboctahedron lattice of given cell size and density or strut radius
+    """Class to create a unit cuboctahedron lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -23,7 +24,7 @@ class Cuboctahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Cuboctahedron(strut_radius=0.1).generate_vtk()
+       shape = microgen.Cuboctahedron(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:
@@ -31,18 +32,13 @@ class Cuboctahedron(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(2.0) / 2.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(2.0) / 2.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = np.array(
             list(
-                product(
-                    [-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2],
-                    repeat=3,
-                ),
-            ),
+                product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
+            )
         )
 
         edges = [
@@ -62,7 +58,7 @@ class Cuboctahedron(AbstractLattice):
             tree.query_ball_point(
                 self.base_vertices,
                 r=self._UNIT_CUBE_SIZE / np.sqrt(2.0) + BALL_POINT_RADIUS_TOLERANCE,
-            ),
+            )
         ):
             for j in indices:
                 if i != j:

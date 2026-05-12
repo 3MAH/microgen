@@ -26,6 +26,18 @@ AXES_PAIRS = (("x", "y"), ("x", "z"), ("y", "z"))
 SIGNS = ("-", "+")
 
 
+class NonBoxMeshError(ValueError):
+    """Raised when an input mesh does not fill its bounding box.
+
+    A :class:`BoxMesh` represents a mesh whose external surface coincides with
+    its axis-aligned bounding box. The construction logic relies on this: faces,
+    edges and corners are derived by tolerance-binning nodes against the bbox
+    planes. If one or more of the eight bbox corners has no node on it, the mesh
+    is not box-shaped and the downstream periodicity / required-boundary logic
+    becomes ill-defined.
+    """
+
+
 class ClosestCellsOnBoundaries(NamedTuple):
     """Class to manage closest cells on boundaries.
 
@@ -111,8 +123,22 @@ class BoxMesh(SingleMesh):
                 np.abs(crd[:, a] - bound[a]) < tol,
             )[0]
             for a, axis in enumerate(AXES)
-            for bound, sign in zip((self.rve.min_point, self.rve.max_point), SIGNS)
+            for bound, sign in zip(
+                (self.rve.min_point, self.rve.max_point),
+                SIGNS,
+                strict=True,
+            )
         }
+
+        empty_faces = [key for key, idx in faces.items() if idx.size == 0]
+        if empty_faces:
+            err_msg = (
+                f"BoxMesh face(s) {empty_faces} have no node within tol={tol} "
+                "of the bbox plane. The mesh either doesn't reach the cube "
+                "faces, the rve doesn't match the mesh bbox, or face nodes "
+                "have drifted off the plane (snap-to-plane needed)."
+            )
+            raise NonBoxMeshError(err_msg)
 
         edges = {
             f"{axis1}{sign1}{axis2}{sign2}": np.intersect1d(
@@ -177,7 +203,11 @@ class BoxMesh(SingleMesh):
         """
         if not isinstance(self._pvmesh, pv.UnstructuredGrid):
             self._pvmesh = self.to_pyvista()
-        return Rve.from_min_max(*self._pvmesh.bounds)
+        x_min, x_max, y_min, y_max, z_min, z_max = self._pvmesh.bounds
+        return Rve.from_min_max(
+            min_point=(x_min, y_min, z_min),
+            max_point=(x_max, y_max, z_max),
+        )
 
     def _closest_points_on_faces(
         self: BoxMesh,
@@ -485,12 +515,12 @@ class BoxMesh(SingleMesh):
             np.array([0.0, 0.0, 1.0]),
         ]
         origins_p = [
-            np.array([rve.x_min, rve.center[1], rve.center[2]]),
-            np.array([rve.x_max, rve.center[1], rve.center[2]]),
-            np.array([rve.center[0], rve.y_min, rve.center[2]]),
-            np.array([rve.center[0], rve.y_max, rve.center[2]]),
-            np.array([rve.center[0], rve.center[1], rve.z_min]),
-            np.array([rve.center[0], rve.center[1], rve.z_max]),
+            np.array([rve.min_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.max_point[0], rve.center[1], rve.center[2]]),
+            np.array([rve.center[0], rve.min_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.max_point[1], rve.center[2]]),
+            np.array([rve.center[0], rve.center[1], rve.min_point[2]]),
+            np.array([rve.center[0], rve.center[1], rve.max_point[2]]),
         ]
         size_planes = [
             2.0 * np.max([rve.dim[1], rve.dim[2]]),
@@ -506,7 +536,12 @@ class BoxMesh(SingleMesh):
 
         boundary_elements = pv.PolyData()
 
-        for normal, origin_p, size_plane in zip(normals, origins_p, size_planes):
+        for normal, origin_p, size_plane in zip(
+            normals,
+            origins_p,
+            size_planes,
+            strict=True,
+        ):
             plane = pv.Plane(
                 center=origin_p,
                 direction=normal,
@@ -518,7 +553,7 @@ class BoxMesh(SingleMesh):
                 [-tol, tol],
                 all_scalars=True,
                 scalars="implicit_distance",
-            ).extract_surface()
+            ).extract_surface(algorithm=None)
             boundary_elements = boundary_elements.append_polydata(surface_p)
 
         return boundary_elements, boundary_elements["CellIDs"]

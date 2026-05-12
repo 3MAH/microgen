@@ -1,5 +1,4 @@
-"""
-Extruded Polygon.
+"""Extruded Polygon.
 
 ========================================================
 Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
@@ -8,8 +7,8 @@ Extruded Polygon (:mod:`microgen.shape.extruded_polygon`)
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
 import numpy as np
 import pyvista as pv
@@ -24,8 +23,7 @@ if TYPE_CHECKING:
 
 
 class ExtrudedPolygon(Shape):
-    """
-    ExtrudedPolygon.
+    """ExtrudedPolygon.
 
     Class to generate an extruded polygon with a given list of points and a thickness
 
@@ -34,7 +32,7 @@ class ExtrudedPolygon(Shape):
 
        import microgen
 
-       shape = microgen.ExtrudedPolygon().generate_vtk()
+       shape = microgen.ExtrudedPolygon().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -48,9 +46,6 @@ class ExtrudedPolygon(Shape):
         center = kwargs.get("center", (0, 0, 0))
         orientation = kwargs.get("orientation", (0, 0, 0))
         super().__init__(center=center, orientation=orientation)
-
-        if kwargs.get("listCorners") is not None:
-            list_corners = kwargs["listCorners"]
 
         if list_corners is None:
             self.list_corners = [
@@ -66,8 +61,11 @@ class ExtrudedPolygon(Shape):
             self.list_corners = list_corners
         self.height = height
 
-    def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
-        """Generate an extruded polygon CAD shape (OCCT).  Requires the ``[cad]`` extra."""
+    def generate_cad(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
+        """Generate an extruded polygon CAD shape (OCCT).
+
+        Requires the ``[cad]`` extra.
+        """
         from microgen.cad import make_extruded_polygon
 
         shape = make_extruded_polygon(
@@ -77,7 +75,9 @@ class ExtrudedPolygon(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(
+        self: ExtrudedPolygon, **_: KwargsGenerateType
+    ) -> pv.PolyData:
         """Generate an extruded polygon VTK shape using the given parameters."""
         vertices = [
             [
@@ -97,7 +97,3 @@ class ExtrudedPolygon(Shape):
         )
 
         return rotate(poly, self.center, self.orientation)
-
-    def generateVtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated. Use :meth:`generate_vtk` instead."""
-        return self.generate_vtk()

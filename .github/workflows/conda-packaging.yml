@@ -26,9 +26,11 @@ jobs:
       - name: Build Package
         shell: bash -l {0}
         env:
-          PACKAGE_VERSION: ${{ github.ref_name }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
+          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          export PACKAGE_VERSION
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
           conda install -y conda-build
           conda config --set anaconda_upload no
           conda-build conda.recipe -c conda-forge --output-folder .
@@ -38,5 +40,11 @@ jobs:
         env:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
         run: |
+          if [[ "$PACKAGE_VERSION" == *dev* || "$PACKAGE_VERSION" == *rc* \
+              || "$PACKAGE_VERSION" =~ [0-9]a[0-9] || "$PACKAGE_VERSION" =~ [0-9]b[0-9] ]]; then
+            UPLOAD_LABEL="dev"
+          else
+            UPLOAD_LABEL="main"
+          fi
           conda install -y anaconda-client
-          anaconda upload noarch/*.conda --force --no-progress
+          anaconda upload noarch/*.conda --force --no-progress -l "$UPLOAD_LABEL"

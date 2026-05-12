@@ -7,7 +7,7 @@
 Repeating unit geometry
 -----------------------
 
-.. include:: ../../examples/3Doperations/repeatShape/repeatShape.py
+.. include:: ../../examples/3Doperations/repeat_shape/repeat_shape.py
    :literal:
 
 .. image:: ../_static/examples/repeated_geometry.png

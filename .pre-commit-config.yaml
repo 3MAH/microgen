@@ -1,7 +1,7 @@
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-merge-conflict
   - id: check-case-conflict
@@ -15,10 +15,9 @@ repos:
   - id: detect-private-key
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.2
+  rev: v0.15.12
   hooks:
     - id: ruff
-      args: ["--fix"]
     - id: ruff-format
 
 # - repo: https://github.com/econchick/interrogate
@@ -28,13 +27,13 @@ repos:
 #       args: [-vv, --fail-under=100, --omit-covered-files]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.3.0
+  rev: v2.4.2
   hooks:
   - id: codespell
     files: ^.*\.(py|rst|md)$
 
 - repo: https://github.com/DanielNoord/pydocstringformatter
-  rev: v0.7.3
+  rev: v0.7.5
   hooks:
     - id: pydocstringformatter
       args: [
@@ -44,13 +43,13 @@ repos:
       ]
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.0
+  rev: v3.21.2
   hooks:
   - id: pyupgrade
-    args: [--py38-plus, --keep-runtime-typing]
+    args: [--py310-plus, --keep-runtime-typing]
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.30.0
+  rev: 0.37.2
   hooks:
     - id: check-github-workflows
 

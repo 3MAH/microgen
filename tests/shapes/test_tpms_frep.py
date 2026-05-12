@@ -122,7 +122,7 @@ class TestTpmsFrepMethods:
             resolution=20,
         )
         sheet = tpms.as_sheet(thickness=0.15)
-        mesh = sheet.generate_vtk(bounds=tpms.bounds, resolution=30)
+        mesh = sheet.generate_surface_mesh(bounds=tpms.bounds, resolution=30)
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
@@ -153,7 +153,7 @@ class TestTpmsBooleans:
         sphere = from_field(sphere_func, bounds=(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
         result = tpms & sphere
         assert isinstance(result, Shape)
-        mesh = result.generate_vtk(
+        mesh = result.generate_surface_mesh(
             bounds=(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5),
             resolution=30,
         )
@@ -165,7 +165,7 @@ class TestTpmsBooleans:
         sphere_func = lambda x, y, z: np.sqrt(x**2 + y**2 + z**2) - 0.4  # noqa: E731
         sphere = from_field(sphere_func, bounds=(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
         result = sheet & sphere
-        mesh = result.generate_vtk(
+        mesh = result.generate_surface_mesh(
             bounds=(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5),
             resolution=30,
         )
@@ -173,12 +173,12 @@ class TestTpmsBooleans:
 
 
 # ---------------------------------------------------------------------------
-# generate_vtk backward compatibility
+# generate_surface_mesh backward compatibility
 # ---------------------------------------------------------------------------
 
 
 class TestTpmsGenerateVtk:
-    """Test that generate_vtk(type_part=...) still works."""
+    """Test that generate_surface_mesh(type_part=...) still works."""
 
     def test_sheet(self):
         tpms = Tpms(
@@ -186,7 +186,7 @@ class TestTpmsGenerateVtk:
             offset=0.3,
             resolution=20,
         )
-        mesh = tpms.generate_vtk(type_part="sheet")
+        mesh = tpms.generate_surface_mesh(type_part="sheet")
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
@@ -196,7 +196,7 @@ class TestTpmsGenerateVtk:
             offset=0.3,
             resolution=20,
         )
-        mesh = tpms.generate_vtk(type_part="surface")
+        mesh = tpms.generate_surface_mesh(type_part="surface")
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
@@ -206,7 +206,7 @@ class TestTpmsGenerateVtk:
             offset=0.3,
         )
         with pytest.raises(ValueError, match="type_part"):
-            tpms.generate_vtk(type_part="invalid")
+            tpms.generate_surface_mesh(type_part="invalid")
 
     @pytest.mark.parametrize(
         "surface_fn",
@@ -214,7 +214,7 @@ class TestTpmsGenerateVtk:
     )
     def test_multiple_surface_functions(self, surface_fn):
         tpms = Tpms(surface_function=surface_fn, offset=0.3, resolution=20)
-        mesh = tpms.generate_vtk(type_part="sheet")
+        mesh = tpms.generate_surface_mesh(type_part="sheet")
         assert mesh.n_cells > 0
 
 

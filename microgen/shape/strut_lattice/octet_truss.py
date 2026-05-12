@@ -14,8 +14,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class OctetTruss(AbstractLattice):
-    """
-    Class to create a unit octet-truss lattice of given cell size and density or strut radius
+    """Class to create a unit octet-truss lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -23,7 +24,7 @@ class OctetTruss(AbstractLattice):
 
        import microgen
 
-       shape = microgen.OctetTruss(strut_radius=0.1).generate_vtk()
+       shape = microgen.OctetTruss(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:
@@ -31,13 +32,11 @@ class OctetTruss(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(2.0) / 2.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(2.0) / 2.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         cube_vertices = list(
-            product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3),
+            product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
         )
 
         face_centers = [
@@ -49,7 +48,7 @@ class OctetTruss(AbstractLattice):
         return np.array(cube_vertices + face_centers)
 
     def _generate_strut_vertex_pairs(self) -> npt.NDArray[np.int64]:
-        """Generate index pairs representing the struts in the octet-truss using KDTree."""
+        """Generate octet-truss strut index pairs (via KDTree)."""
         tree = KDTree(self.base_vertices)
         pairs = set()
 

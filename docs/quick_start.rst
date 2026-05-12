@@ -81,21 +81,21 @@ Microgen provides several basic geometric shapes:
 
    # Create a sphere
    sphere = microgen.Sphere(center=(0, 0, 0), radius=0.5)
-   sphere_vtk = sphere.generate_vtk()
+   sphere_vtk = sphere.generate_surface_mesh()
    sphere_vtk.plot(color='white')
 
 .. jupyter-execute::
 
    # Create a box
    box = microgen.Box(center=(0, 0, 0), dim=(1, 0.5, 0.3))
-   box_vtk = box.generate_vtk()
+   box_vtk = box.generate_surface_mesh()
    box_vtk.plot(color='white')
 
 .. jupyter-execute::
 
    # Create a cylinder
    cylinder = microgen.Cylinder(center=(0, 0, 0), height=1.0, radius=0.3)
-   cylinder_vtk = cylinder.generate_vtk()
+   cylinder_vtk = cylinder.generate_surface_mesh()
    cylinder_vtk.plot(color='white')
 
 
@@ -107,7 +107,7 @@ To create CAD-compatible solids (for 3D printing or CAD software):
 .. code-block:: python
 
    # Generate the CadQuery shape
-   cad_shape = gyroid.generate(type_part='sheet')
+   cad_shape = gyroid.generate_cad(type_part='sheet')
 
 
 Exporting Results
@@ -119,14 +119,12 @@ Export to STL (from PyVista mesh):
 
    sheet.save('gyroid_sheet.stl')
 
-Export to STEP (from CadQuery shape):
+Export to STEP (from OCCT ``CadShape``):
 
 .. code-block:: python
 
-   import cadquery as cq
-
-   cad_shape = gyroid.generate(type_part='sheet')
-   cq.exporters.export(cq.Workplane().add(cad_shape), 'gyroid_sheet.step')
+   cad_shape = gyroid.generate_cad(type_part='sheet')
+   cad_shape.export_step('gyroid_sheet.step')
 
 Export to VTK:
 

@@ -14,8 +14,9 @@ from .abstract_lattice import BALL_POINT_RADIUS_TOLERANCE, AbstractLattice
 
 
 class RhombicDodecahedron(AbstractLattice):
-    """
-    Class to create a unit rhombic dodecahedron lattice of given cell size and density or strut radius
+    """Class to create a unit rhombic dodecahedron lattice.
+
+    Built from a given cell size and density or strut radius.
 
     .. jupyter-execute::
        :hide-code:
@@ -23,7 +24,7 @@ class RhombicDodecahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.RhombicDodecahedron(strut_radius=0.1).generate_vtk()
+       shape = microgen.RhombicDodecahedron(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:
@@ -31,16 +32,14 @@ class RhombicDodecahedron(AbstractLattice):
        shape.plot(color='white')
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        kwargs.setdefault("strut_heights", np.sqrt(3.0) / 4.0)
-        super().__init__(*args, **kwargs)
+    _DEFAULT_STRUT_HEIGHTS = np.sqrt(3.0) / 4.0
 
     def _generate_base_vertices(self) -> npt.NDArray[np.float64]:
         outer_cube_vertices = list(
-            product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3),
+            product([-self._UNIT_CUBE_SIZE / 2, self._UNIT_CUBE_SIZE / 2], repeat=3)
         )
         inner_cube_vertices = list(
-            product([-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4], repeat=3),
+            product([-self._UNIT_CUBE_SIZE / 4, self._UNIT_CUBE_SIZE / 4], repeat=3)
         )
 
         face_centers = [

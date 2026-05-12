@@ -1,5 +1,4 @@
-"""
-Polyhedron.
+"""Polyhedron.
 
 =============================================
 Polyhedron (:mod:`microgen.shape.polyhedron`)
@@ -19,6 +18,7 @@ from microgen.operations import rotate
 
 from .shape import Shape
 
+
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
@@ -28,15 +28,14 @@ Face = dict[str, list[int]]
 
 
 class Polyhedron(Shape):
-    """
-    Class to generate a Polyhedron with a given set of faces and vertices.
+    """Class to generate a Polyhedron with a given set of faces and vertices.
 
     .. jupyter-execute::
        :hide-code:
 
        import microgen
 
-       shape = microgen.Polyhedron().generate_vtk()
+       shape = microgen.Polyhedron().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -45,8 +44,7 @@ class Polyhedron(Shape):
         dic: dict[str, list[Vertex | Face]] | None = None,
         **kwargs: Vector3DType,
     ) -> None:
-        """
-        Initialize the polyhedron.
+        """Initialize the polyhedron.
 
         .. warning:
             Give a center parameter only if the polyhedron must be translated
@@ -75,7 +73,7 @@ class Polyhedron(Shape):
         for ixs in self.faces_ixs:
             ixs.append(ixs[0])
 
-    def generate(self: Polyhedron, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Polyhedron, **_: KwargsGenerateType) -> CadShape:
         """Generate a polyhedron CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_polyhedron
 
@@ -86,7 +84,7 @@ class Polyhedron(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate a polyhedron VTK shape using the given parameters."""
         faces_pv = copy.deepcopy(self.faces_ixs)
         for vertices_in_face in faces_pv:
@@ -97,10 +95,6 @@ class Polyhedron(Shape):
         faces = np.hstack(faces_pv)
 
         return pv.PolyData(vertices, faces).compute_normals()
-
-    def generateVtk(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:  # noqa: N802
-        """Deprecated method. Use generate_vtk instead."""
-        return self.generate_vtk()
 
 
 def read_obj(filename: str) -> dict[str, list[Vertex | Face]]:

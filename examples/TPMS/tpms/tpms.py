@@ -9,12 +9,12 @@ from microgen.shape import surface_functions
 surfaces = [
     surface_functions.neovius,
     surface_functions.gyroid,
-    surface_functions.schwarzD,
-    surface_functions.schwarzP,
+    surface_functions.schwarz_d,
+    surface_functions.schwarz_p,
     surface_functions.honeycomb,
-    surface_functions.schoenIWP,
-    surface_functions.schoenFRD,
-    surface_functions.fischerKochS,
+    surface_functions.schoen_iwp,
+    surface_functions.schoen_frd,
+    surface_functions.fischer_koch_s,
     surface_functions.pmy,
 ]
 
