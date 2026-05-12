@@ -33,6 +33,43 @@ BoundsType = tuple[float, float, float, float, float, float]
 _IMPLICIT_SCALAR = "implicit"
 
 
+def _pad_grid_with_outside_halo(
+    grid: pv.StructuredGrid,
+    scalar: str,
+) -> pv.StructuredGrid:
+    """Wrap ``grid`` in a single-cell halo with a large positive scalar value.
+
+    Used by :meth:`Shape.generate_surface_mesh` so that ``contour(0.0)`` closes
+    the iso-surface at the original bbox: marching cubes finds zeros between
+    interior negative nodes and the halo's "outside" nodes, producing cap
+    triangles AT the original bounds rather than leaving them open.
+    """
+    nx, ny, nz = grid.dimensions
+    pts = np.asarray(grid.points).reshape((nx, ny, nz, 3), order="F")
+    dx = float(pts[1, 0, 0, 0] - pts[0, 0, 0, 0])
+    dy = float(pts[0, 1, 0, 1] - pts[0, 0, 0, 1])
+    dz = float(pts[0, 0, 1, 2] - pts[0, 0, 0, 2])
+    xi = np.concatenate(
+        [[pts[0, 0, 0, 0] - dx], pts[:, 0, 0, 0], [pts[-1, 0, 0, 0] + dx]]
+    )
+    yi = np.concatenate(
+        [[pts[0, 0, 0, 1] - dy], pts[0, :, 0, 1], [pts[0, -1, 0, 1] + dy]]
+    )
+    zi = np.concatenate(
+        [[pts[0, 0, 0, 2] - dz], pts[0, 0, :, 2], [pts[0, 0, -1, 2] + dz]]
+    )
+    x, y, z = np.meshgrid(xi, yi, zi, indexing="ij")
+
+    field = np.asarray(grid[scalar]).reshape((nx, ny, nz), order="F")
+    pad_val = max(float(np.nanmax(field)) + 1.0, 1e6)
+    padded = np.full((nx + 2, ny + 2, nz + 2), pad_val, dtype=field.dtype)
+    padded[1:-1, 1:-1, 1:-1] = field
+
+    out = pv.StructuredGrid(x, y, z)
+    out[scalar] = padded.ravel(order="F")
+    return out
+
+
 class ShellCreationError(Exception):
     """Raised when an OCCT shell cannot be created from a mesh."""
 
@@ -201,13 +238,16 @@ class Shape:
     ) -> pv.PolyData:
         """Generate a surface VTK mesh of the shape.
 
-        The default implementation meshes the implicit field via marching cubes
-        (``f < 0`` convention).  Subclasses with a native renderer (``Sphere``,
-        ``Box``, ``Tpms``, …) override this.
+        The default implementation runs marching cubes (``f < 0``) on the
+        cached implicit grid wrapped in a single-cell halo of "outside"
+        values, so the iso-surface naturally closes at the bbox: where the
+        volume reaches the bounds, cap faces are produced AT the bbox.
+        Subclasses with a native renderer (``Sphere``, ``Box``, ``Tpms``, …)
+        override this.
 
         The implicit field is expected to be in world coordinates (subclasses
         with non-zero ``center`` / ``orientation`` should bake those into
-        ``_func`` during construction).  Returns the mesh unchanged.
+        ``_func`` during construction).
 
         The sampled structured grid is cached per ``(bounds, resolution)``
         on the instance, shared with :meth:`generate_volume_mesh`. The cache
@@ -220,7 +260,8 @@ class Shape:
         :return: triangulated surface mesh
         """
         grid = self._sample_implicit_grid(bounds, resolution, "generate_surface_mesh")
-        polydata = grid.contour(isosurfaces=[0.0], scalars=_IMPLICIT_SCALAR)
+        padded = _pad_grid_with_outside_halo(grid, _IMPLICIT_SCALAR)
+        polydata = padded.contour(isosurfaces=[0.0], scalars=_IMPLICIT_SCALAR)
         if polydata.n_cells == 0:
             return pv.PolyData()
         return polydata.clean().triangulate()
