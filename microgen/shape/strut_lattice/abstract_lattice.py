@@ -46,6 +46,7 @@ class AbstractLattice(Shape):
         strut_heights: float | list[float] | None = None,
         base_vertices: npt.NDArray[np.float64] | None = None,
         strut_vertex_pairs: npt.NDArray[np.int64] | None = None,
+        *,
         cell_size: float = 1.0,
         strut_joints: bool = False,
         density: float | None = None,

@@ -85,6 +85,13 @@ ignore_missing_imports = true
 target-version = "py310"
 
 [tool.ruff.lint]
+extend-select = [
+    # Boolean traps — booleans in public APIs must be keyword-only.
+    "FBT001",
+    "FBT002",
+    # Function names must be lowercase.
+    "N802",
+]
 exclude = [
     "docs/*",
     "tests/*",

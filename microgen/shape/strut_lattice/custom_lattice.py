@@ -21,10 +21,11 @@ class CustomLattice(AbstractLattice):
     Uses user-defined base vertices and strut vertex pairs.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         base_vertices: npt.NDArray[np.float64],
         strut_vertex_pairs: npt.NDArray[np.int64],
+        *,
         strut_radius: float | None = None,
         strut_heights: float | list[float] | None = None,
         cell_size: float = 1.0,
