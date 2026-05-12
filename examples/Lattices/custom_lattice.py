@@ -92,6 +92,6 @@ auxetic_lattice = CustomLattice(
     strut_joints=True,
 )
 
-shape = auxetic_lattice.generate()
+shape = auxetic_lattice.generate_cad()
 stl_file = Path(__file__).parent / "auxetic_custom_lattice.stl"
 shape.export_stl(stl_file.name)

@@ -45,11 +45,11 @@ _INSTALL_HINT = (
 
 
 class _Centre(tuple):
-    """Tuple-like 3D point exposing ``.x``, ``.y``, ``.z`` and ``.toTuple()``.
+    """Tuple-like 3D point exposing ``.x``, ``.y``, ``.z`` and ``.to_tuple()``.
 
-    Returned by :meth:`CadShape.Center`.  Mimics just enough of
+    Returned by :meth:`CadShape.center`.  Mimics just enough of
     ``cadquery.Vector`` to drop-in where existing code uses
-    ``shape.Center().toTuple()`` or ``shape.Center().x``.
+    ``shape.center().to_tuple()`` or ``shape.center().x``.
     """
 
     __slots__ = ()
@@ -73,15 +73,15 @@ class _Centre(tuple):
         """Z coordinate."""
         return self[2]
 
-    def toTuple(self) -> tuple[float, float, float]:  # noqa: N802
-        """CadQuery-compatible alias returning ``(x, y, z)``."""
+    def to_tuple(self) -> tuple[float, float, float]:
+        """Return ``(x, y, z)`` as a plain tuple."""
         return (self[0], self[1], self[2])
 
 
 class _BBox:
-    """Axis-aligned bounding box exposing CadQuery-style ``xmin``/``xmax``/…
+    """Axis-aligned bounding box exposing ``xmin`` / ``xmax`` / ….
 
-    Returned by :meth:`CadShape.BoundingBox`.  Also indexable as a 6-tuple
+    Returned by :meth:`CadShape.bounding_box`.  Also indexable as a 6-tuple
     ``(xmin, ymin, zmin, xmax, ymax, zmax)`` matching OCCT's ``Bnd_Box.Get``.
     """
 
@@ -105,8 +105,8 @@ class _BBox:
         self.zmax = float(zmax)
 
     @property
-    def DiagonalLength(self) -> float:  # noqa: N802
-        """CadQuery-compatible diagonal length."""
+    def diagonal_length(self) -> float:
+        """Length of the box's space diagonal."""
         dx = self.xmax - self.xmin
         dy = self.ymax - self.ymin
         dz = self.zmax - self.zmin
@@ -162,7 +162,7 @@ class CadShape:
     ``_mesh_volume`` (optional) is a trusted volume in the source mesh's
     units, set by mesh-derived constructors (e.g. the TPMS periodic shell)
     where OCCT's surface-integral volume is unreliable on invalid topology.
-    :meth:`Volume` prefers it over the OCCT integral when present.
+    :meth:`volume` prefers it over the OCCT integral when present.
     """
 
     __slots__ = ("_mesh_volume", "wrapped")
@@ -246,16 +246,11 @@ class CadShape:
             exp.Next()
         return out
 
-    # CadQuery compatibility alias — some legacy callers use the camel-cased form.
-    def Solids(self) -> list[CadShape]:  # noqa: N802
-        """CadQuery-compatible alias for :meth:`solids`."""
-        return self.solids()
-
-    def Vertices(self) -> list[tuple[float, float, float]]:  # noqa: N802
+    def vertices(self) -> list[tuple[float, float, float]]:
         """Enumerate the vertex coordinates of the shape.
 
-        CadQuery-compatible: callers use this to check that a generated mesh
-        has any vertices at all (``assert np.any(shape.Vertices())``).
+        Callers use this to check that a generated mesh has any vertices at
+        all (``assert np.any(shape.vertices())``).
         """
         from OCP.BRep import BRep_Tool
         from OCP.TopAbs import TopAbs_VERTEX
@@ -272,8 +267,8 @@ class CadShape:
             exp.Next()
         return out
 
-    def Faces(self) -> list[CadShape]:  # noqa: N802
-        """Enumerate the faces of the shape (CadQuery compatibility)."""
+    def faces(self) -> list[CadShape]:
+        """Enumerate the faces of the shape."""
         from OCP.TopAbs import TopAbs_FACE
         from OCP.TopExp import TopExp_Explorer
 
@@ -285,8 +280,8 @@ class CadShape:
             exp.Next()
         return out
 
-    def Closed(self) -> bool:  # noqa: N802
-        """Whether the shape is topologically closed (CadQuery compatibility).
+    def is_closed(self) -> bool:
+        """Whether the shape is topologically closed.
 
         Solids are always closed; for shells/compounds we read OCCT's
         per-shape ``Closed`` flag (set by ``BRep_Builder::IsClosed`` when the
@@ -298,14 +293,13 @@ class CadShape:
             return True
         return bool(self.wrapped.Closed())
 
-    def Volume(self) -> float:  # noqa: N802
+    def volume(self) -> float:
         """Return the (unsigned) volume of the shape.
 
         OCCT's ``BRepGProp::VolumeProperties`` returns a *signed* volume that
         depends on face orientation; mesh-built shells from
         :func:`mesh_to_shell_brep` can carry inverted orientation and yield a
-        negative value.  We return ``abs(...)`` to match CadQuery's behaviour
-        and the natural expectation that volumes are non-negative.
+        negative value.  We return ``abs(...)`` so volumes are non-negative.
 
         If a mesh-derived volume was stashed on ``_mesh_volume`` AND the OCCT
         solid is not valid (BRepCheck_Analyzer flags self-intersection /
@@ -329,11 +323,11 @@ class CadShape:
         BRepGProp.VolumeProperties_s(self.wrapped, props)
         return float(abs(props.Mass()))
 
-    def Center(self) -> _Centre:  # noqa: N802
+    def center(self) -> _Centre:
         """Return the volumetric center of mass.
 
         The result is a :class:`_Centre` — exposes ``.x``, ``.y``, ``.z``,
-        ``.toTuple()`` (CadQuery compatibility), and unpacks like a tuple.
+        ``.to_tuple()``, and unpacks like a tuple.
         """
         from OCP.BRepGProp import BRepGProp
         from OCP.GProp import GProp_GProps
@@ -343,18 +337,17 @@ class CadShape:
         c = props.CentreOfMass()
         return _Centre(float(c.X()), float(c.Y()), float(c.Z()))
 
-    def BoundingBox(self) -> _BBox:  # noqa: N802
+    def bounding_box(self) -> _BBox:
         """Return the axis-aligned bounding box.
 
-        The result exposes CadQuery-compatible ``xmin``/``xmax``/… attributes
-        (see :class:`_BBox`).
+        The result exposes ``xmin`` / ``xmax`` / … attributes (see
+        :class:`_BBox`).
         """
         from OCP.Bnd import Bnd_Box
         from OCP.BRepBndLib import BRepBndLib
 
         box = Bnd_Box()
-        # AddOptimal uses exact geometric bounds (not cached triangulation),
-        # matching CadQuery's BoundingBox() behaviour.
+        # AddOptimal uses exact geometric bounds (not cached triangulation).
         BRepBndLib.AddOptimal_s(self.wrapped, box, True, True)
         xmin, ymin, zmin, xmax, ymax, zmax = box.Get()
         return _BBox(xmin, ymin, zmin, xmax, ymax, zmax)

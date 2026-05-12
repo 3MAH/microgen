@@ -31,14 +31,14 @@ class Box(Shape):
     evaluated in the box's local frame so ``center`` and ``orientation``
     transform the field correctly. Set on every instance so boxes compose
     via ``|`` / ``&`` / ``-`` and stay usable without the ``[cad]`` extra
-    (only :meth:`generate` requires CAD).
+    (only :meth:`generate_cad` requires CAD).
 
     .. jupyter-execute::
        :hide-code:
 
        import microgen
 
-       shape = microgen.Box().generate_vtk()
+       shape = microgen.Box().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -96,14 +96,14 @@ class Box(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    def generate(self: Box, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Box, **_: KwargsGenerateType) -> CadShape:
         """Generate a box CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_box
 
         shape = make_box(self.dim, self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Box,
         level: int = 0,
         **_: KwargsGenerateType,

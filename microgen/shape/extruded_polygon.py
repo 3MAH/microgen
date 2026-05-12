@@ -32,7 +32,7 @@ class ExtrudedPolygon(Shape):
 
        import microgen
 
-       shape = microgen.ExtrudedPolygon().generate_vtk()
+       shape = microgen.ExtrudedPolygon().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -61,7 +61,7 @@ class ExtrudedPolygon(Shape):
             self.list_corners = list_corners
         self.height = height
 
-    def generate(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: ExtrudedPolygon, **_: KwargsGenerateType) -> CadShape:
         """Generate an extruded polygon CAD shape (OCCT).
 
         Requires the ``[cad]`` extra.
@@ -75,7 +75,9 @@ class ExtrudedPolygon(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: ExtrudedPolygon, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(
+        self: ExtrudedPolygon, **_: KwargsGenerateType
+    ) -> pv.PolyData:
         """Generate an extruded polygon VTK shape using the given parameters."""
         vertices = [
             [

@@ -35,7 +35,7 @@ geometry = Tpms(
 
 # 2. Wrap the geometry into a microgen Phase object.
 phases = []
-phases.append(Phase(shape=geometry.generate()))
+phases.append(Phase(shape=geometry.generate_cad()))
 rve = Rve(dim=1)
 
 # 3. Export the geometry as a STEP file.

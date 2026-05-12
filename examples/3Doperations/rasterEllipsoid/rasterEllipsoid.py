@@ -6,7 +6,7 @@ from microgen.cad import make_compound_from_solids
 rve = Rve(dim=1)
 
 elem = Ellipsoid(radii=(0.15, 0.31, 0.4))
-elli = elem.generate()
+elli = elem.generate_cad()
 
 raster = raster_phase(phase=Phase(shape=elli), rve=rve, grid=[5, 5, 5])
 

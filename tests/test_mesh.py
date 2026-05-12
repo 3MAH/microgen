@@ -22,7 +22,7 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells() -> None:
 
     grid = [3 for _ in range(3)]
     phases = raster_phase(
-        phase=Phase(shape=Sphere(radius=0.5).generate()),
+        phase=Phase(shape=Sphere(radius=0.5).generate_cad()),
         rve=Rve(),
         grid=grid,
     )

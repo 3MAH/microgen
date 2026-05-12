@@ -24,7 +24,7 @@ class RhombicDodecahedron(AbstractLattice):
 
        import microgen
 
-       shape = microgen.RhombicDodecahedron(strut_radius=0.1).generate_vtk()
+       shape = microgen.RhombicDodecahedron(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:

@@ -257,7 +257,7 @@ class Tpms(Shape):
         """
         Compute the offset that yields the requested density.
 
-        Searches with the same F-rep ``generate_vtk`` pipeline the user
+        Searches with the same F-rep ``generate_surface_mesh`` pipeline the user
         invokes, so the offset returned actually reproduces the requested
         density at the user-facing resolution.  When the target density is
         too high to reach at this resolution (marching cubes saturates
@@ -283,7 +283,7 @@ class Tpms(Shape):
 
         # Density is measured directly on ``self`` so subclass envelopes are
         # respected without having to clone the instance.  ``self.density``
-        # is cleared during the search so that ``generate_vtk`` does NOT
+        # is cleared during the search so that ``generate_surface_mesh`` does NOT
         # recurse back into this method.  The final ``computed_offset`` is
         # set as the permanent offset before returning (and ``self.density``
         # is restored so that downstream callers can re-query it).
@@ -293,7 +293,7 @@ class Tpms(Shape):
 
         def density(offset: float) -> float:
             self.offset = offset  # setter; also clears _offset_func
-            mesh = self.generate_vtk(type_part=part_type)
+            mesh = self.generate_surface_mesh(type_part=part_type)
             # Empty-mesh guard: at offset extremes the field can produce no
             # isosurface, in which case ``mesh.volume`` triggers a noisy
             # ``vtkMassProperties: No data to measure`` stderr write.
@@ -879,7 +879,7 @@ class Tpms(Shape):
         """
         Map ``self.resolution`` (per-axis) to an isotropic Shape resolution.
 
-        ``Shape.generate_vtk`` takes a single resolution; we use the geometric
+        ``Shape.generate_surface_mesh`` takes a single resolution; we use the geometric
         mean of the per-axis cell counts so total grid points stay proportional.
         """
         return max(int(self.resolution * np.cbrt(np.prod(self.repeat_cell))), 10)
@@ -909,12 +909,12 @@ class Tpms(Shape):
         to delegate to the F-rep envelope SDF.
         """
         envelope_shape = self._cell_box()
-        return envelope_shape.generate_vtk(
+        return envelope_shape.generate_surface_mesh(
             bounds=envelope_shape.bounds or self._bounds,
             resolution=self._isotropic_resolution(),
         )
 
-    def generate(
+    def generate_cad(
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         smoothing: int = 0,
@@ -923,7 +923,7 @@ class Tpms(Shape):
     ) -> CadShape:
         """Generate an OCCT CAD shape of the requested TPMS part.
 
-        Builds the periodic structured-grid mesh (same as :meth:`generate_vtk`)
+        Builds the periodic structured-grid mesh (same as :meth:`generate_surface_mesh`)
         and converts it to an OCCT shell with **planar BREP faces on the
         cell-boundary planes** (one face per side, carrying its tessellation)
         plus per-triangle planar faces for the TPMS interior surface.  This
@@ -997,7 +997,7 @@ class Tpms(Shape):
             return shape.translate(self.center)
 
         # Periodic-aware shell, upgraded to a Solid where possible so
-        # :meth:`CadShape.Volume` reads the enclosed volume rather than a
+        # :meth:`CadShape.volume` reads the enclosed volume rather than a
         # meaningless surface integral on an open shell. Stash the trusted
         # mesh volume after rigid transforms (which preserve volume); used as
         # a fallback when OCCT flags the solid invalid (self-intersecting or
@@ -1060,7 +1060,7 @@ class Tpms(Shape):
             return solids[0]
         return fuse_shapes(solids, retain_edges=False)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
@@ -1069,7 +1069,7 @@ class Tpms(Shape):
         """
         Generate the PyVista mesh of the requested TPMS part.
 
-        Same F-rep pipeline as :meth:`generate` (skeletals are clipped to the
+        Same F-rep pipeline as :meth:`generate_cad` (skeletals are clipped to the
         cell box), so the two outputs share the exact same triangulation and
         therefore the same volume.
 
@@ -1102,7 +1102,7 @@ class Tpms(Shape):
                 resolution=algo_resolution,
             )
         # Note: no `_check_offset` here — the F-rep VTK path handles negative
-        # / zero / variable offsets gracefully.  ``generate()`` still applies
+        # / zero / variable offsets gracefully.  ``generate_cad()`` still applies
         # the historical CAD-side restriction.
 
         # Always use the structured-grid clip-scalar path (the same one
@@ -1143,13 +1143,18 @@ class Tpms(Shape):
         polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
 
-    def generate_grid_vtk(
+    def generate_volume_mesh(
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
-        """Generate VTK UnstructuredGrid object of the required TPMS part."""
+        """Generate VTK UnstructuredGrid object of the required TPMS part.
+
+        Applies ``center`` and ``orientation`` to the cached grid so the
+        returned mesh lands at the declared world position — matching the
+        contract of :meth:`generate_surface_mesh`.
+        """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = (
                 f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
@@ -1163,13 +1168,15 @@ class Tpms(Shape):
                 resolution=algo_resolution,
             )
 
-        return getattr(self, f"grid_{type_part.replace(' ', '_')}")
+        grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
+        grid = rotate(grid, center=(0, 0, 0), rotation=self.orientation)
+        return grid.translate(xyz=self.center)
 
 
 class CylindricalTpms(Tpms):
     """Class used to generate cylindrical TPMS geometries (sheet or skeletals parts)."""
 
-    # Use the parametric structured-grid clip for ``generate_vtk`` instead of
+    # Use the parametric structured-grid clip for ``generate_surface_mesh`` instead of
     # F-rep marching cubes.  An isotropic Cartesian MC grid samples the
     # angular axis poorly near the cylinder axis (rapid θ-derivative ⇒
     # under-sampled holes).  The structured grid in (ρ, θ, z) automatically
@@ -1634,7 +1641,7 @@ class Sweep(Tpms):
     (same as :class:`CylindricalTpms` / :class:`SphericalTpms`): we build a
     structured grid in (s, r, θ) parametric space, evaluate the TPMS field
     on that grid, and map the parametric points to Cartesian using the
-    parallel-transport frames.  ``generate_vtk`` then clips the structured
+    parallel-transport frames.  ``generate_surface_mesh`` then clips the structured
     grid by the relevant scalar threshold — much cleaner than F-rep MC at
     a uniform Cartesian resolution, which would under-sample the angular
     direction and produce dotted artefacts.
@@ -2009,25 +2016,25 @@ class Infill(Tpms):
 
     # The parent's ``sheet`` / ``upper_skeletal`` / ``lower_skeletal``
     # properties read from ``self.grid_*`` (legacy grid-clip path), but the
-    # density-fitting search optimises against :meth:`generate_vtk` (F-rep
+    # density-fitting search optimises against :meth:`generate_surface_mesh` (F-rep
     # marching cubes clipped to the obj envelope) — for small infill objects
     # the two paths discretise to noticeably different volumes.  Re-route
-    # these properties to ``generate_vtk`` so ``density=0.5`` reliably gives
+    # these properties to ``generate_surface_mesh`` so ``density=0.5`` reliably gives
     # ``infill.sheet.volume ≈ 0.5 * obj.volume``.
     @property
     def sheet(self: Infill) -> pv.PolyData:
-        """Sheet part as a PolyData mesh (uses :meth:`generate_vtk`)."""
-        return self.generate_vtk(type_part="sheet")
+        """Sheet part as a PolyData mesh (uses :meth:`generate_surface_mesh`)."""
+        return self.generate_surface_mesh(type_part="sheet")
 
     @property
     def upper_skeletal(self: Infill) -> pv.PolyData:
         """Upper-skeletal part as a PolyData mesh."""
-        return self.generate_vtk(type_part="upper skeletal")
+        return self.generate_surface_mesh(type_part="upper skeletal")
 
     @property
     def lower_skeletal(self: Infill) -> pv.PolyData:
         """Lower-skeletal part as a PolyData mesh."""
-        return self.generate_vtk(type_part="lower skeletal")
+        return self.generate_surface_mesh(type_part="lower skeletal")
 
     def __init__(
         self: Infill,
@@ -2167,7 +2174,7 @@ class Infill(Tpms):
         Override the cell-box clip with the *object envelope* SDF.
 
         Without this override the F-rep marching cubes path (used by
-        :meth:`Tpms.generate_vtk` and :meth:`Tpms.generate`) would clip the
+        :meth:`Tpms.generate_surface_mesh` and :meth:`Tpms.generate_cad`) would clip the
         TPMS to the cartesian bounding box rather than to the input object —
         producing volumes well above ``obj.volume`` and corrupting density.
         """

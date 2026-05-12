@@ -31,7 +31,7 @@ class Ellipsoid(Shape):
     the correct zero-level set), evaluated in the local frame so
     ``center`` and ``orientation`` transform the field correctly. Set
     on every instance so ellipsoids compose via ``|`` / ``&`` / ``-``
-    and stay usable without the ``[cad]`` extra (only :meth:`generate`
+    and stay usable without the ``[cad]`` extra (only :meth:`generate_cad`
     requires CAD).
 
     .. jupyter-execute::
@@ -39,7 +39,7 @@ class Ellipsoid(Shape):
 
        import microgen
 
-       shape = microgen.Ellipsoid().generate_vtk()
+       shape = microgen.Ellipsoid().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -86,14 +86,14 @@ class Ellipsoid(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    def generate(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
         """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_ellipsoid
 
         shape = make_ellipsoid(radii=self.radii, center=self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
+    def generate_surface_mesh(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
         """Generate an ellipsoid VTK polydta using the given parameters."""
         transform_matrix = np.array(
             [

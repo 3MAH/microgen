@@ -94,7 +94,7 @@ def _generate_cqcompound_octettruss(rve: Rve) -> list[Phase]:
             height=height[i],
             radius=radius[i],
         )
-        phase = Phase(shape=elem.generate())
+        phase = Phase(shape=elem.generate_cad())
         phases.append(phase)
 
     return [
@@ -109,7 +109,7 @@ def box_homogeneous_unit(rve_unit: Rve) -> tuple[CadShape, list[Phase], Rve]:
         center=tuple(rve_unit.center),
         orientation=(0.0, 0.0, 0.0),
         dim=(rve_unit.dim[0], rve_unit.dim[1], rve_unit.dim[2]),
-    ).generate()
+    ).generate_cad()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_unit)
 
@@ -123,7 +123,7 @@ def box_homogeneous_double(
         center=tuple(rve_double.center),
         orientation=(0.0, 0.0, 0.0),
         dim=tuple(rve_double.dim),
-    ).generate()
+    ).generate_cad()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double)
 
@@ -137,7 +137,7 @@ def box_homogeneous_double_centered(
         center=tuple(rve_double_centered.center),
         orientation=(0.0, 0.0, 0.0),
         dim=tuple(rve_double_centered.dim),
-    ).generate()
+    ).generate_cad()
     listcqphases = [Phase(shape=shape)]
     return (shape, listcqphases, rve_double_centered)
 

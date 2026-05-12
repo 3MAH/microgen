@@ -13,11 +13,11 @@ gyroid = Tpms(
     surface_function=surface_functions.gyroid,
     offset=0.2,
 )
-gyroid = gyroid.generate(type_part="sheet").translate((0.5, 0.5, 0.5))
+gyroid = gyroid.generate_cad(type_part="sheet").translate((0.5, 0.5, 0.5))
 
 phases = []
 for polyhedron in polyhedra:
-    shape = polyhedron.generate()
+    shape = polyhedron.generate_cad()
     phases.append(Phase(shape=shape.intersect(gyroid)))
 
 compound = make_compound([phase.shape for phase in phases])

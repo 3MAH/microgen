@@ -212,7 +212,7 @@ class Phase:
         if isinstance(scale, float):
             scale = (scale, scale, scale)
 
-        center = shape.Center()
+        center = shape.center()
         cx, cy, cz = center.x, center.y, center.z
         sx, sy, sz = (float(s) for s in scale)
 
@@ -247,7 +247,7 @@ class Phase:
         of translated copies of ``unit_geom``.
         """
         unit_geom = _to_cad_shape(unit_geom)
-        center = np.array(unit_geom.Center().toTuple())
+        center = np.array(unit_geom.center().to_tuple())
 
         copies: list[TopoDS_Solid] = []
         for idx in np.ndindex(*grid):

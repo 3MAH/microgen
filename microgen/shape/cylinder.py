@@ -32,7 +32,7 @@ class Cylinder(Shape):
     distance composition), evaluated in the local frame so ``center``
     and ``orientation`` transform the field correctly. Set on every
     instance so cylinders compose via ``|`` / ``&`` / ``-`` and stay
-    usable without the ``[cad]`` extra (only :meth:`generate` requires
+    usable without the ``[cad]`` extra (only :meth:`generate_cad` requires
     CAD).
 
     .. jupyter-execute::
@@ -40,7 +40,7 @@ class Cylinder(Shape):
 
        import microgen
 
-       shape = microgen.Cylinder().generate_vtk()
+       shape = microgen.Cylinder().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -99,7 +99,7 @@ class Cylinder(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    def generate(self: Cylinder, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Cylinder, **_: KwargsGenerateType) -> CadShape:
         """Generate a cylinder CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_cylinder
 
@@ -111,7 +111,7 @@ class Cylinder(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Cylinder,
         resolution: int = 100,
         **_: KwargsGenerateType,

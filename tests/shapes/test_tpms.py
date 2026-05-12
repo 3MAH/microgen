@@ -45,11 +45,11 @@ def test_tpms_given_cadquery_vtk_shapes_volume_must_be_equivalent(
     )
 
     # Act
-    shape_cadquery = tpms.generate(type_part=type_part)
-    shape_vtk = tpms.generate_vtk(type_part=type_part)
+    shape_cadquery = tpms.generate_cad(type_part=type_part)
+    shape_vtk = tpms.generate_surface_mesh(type_part=type_part)
 
     # Assert
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal"])
@@ -63,11 +63,11 @@ def test_tpms_given_cadquery_vtk_zero_offset_skeletals_volume_must_be_equivalent
     )
 
     # Act
-    shape_cadquery = tpms.generate(type_part=type_part)
-    shape_vtk = tpms.generate_vtk(type_part=type_part)
+    shape_cadquery = tpms.generate_cad(type_part=type_part)
+    shape_vtk = tpms.generate_surface_mesh(type_part=type_part)
 
     # Assert
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_with_cad_and_vtk() -> (
@@ -81,10 +81,10 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
         repeat_cell=(2, 1, 2),
     )
 
-    shape_cadquery = tpms.generate(type_part="sheet")
-    shape_vtk = tpms.generate_vtk(type_part="sheet")
+    shape_cadquery = tpms.generate_cad(type_part="sheet")
+    shape_vtk = tpms.generate_surface_mesh(type_part="sheet")
 
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ def test_tpms_given_density_must_match_computed_density(
     )
 
     # Act
-    sheet = tpms.generate_vtk(type_part="sheet")
+    sheet = tpms.generate_surface_mesh(type_part="sheet")
     computed_density = sheet.volume / abs(tpms.grid.volume)
 
     # Assert
@@ -249,10 +249,10 @@ def test_tpms_given_generate_surface_must_not_be_empty() -> None:
     """Test for the surface of the TPMS shapes generated with CadQuery and VTK."""
     tpms = microgen.Tpms(surface_function=TEST_DEFAULT_SURFACE_FUNCTION, offset=0)
 
-    surface = tpms.generate(type_part="surface")
-    assert np.any(surface.Vertices())
-    assert np.any(surface.Faces())
-    assert not surface.Closed()
+    surface = tpms.generate_cad(type_part="surface")
+    assert np.any(surface.vertices())
+    assert np.any(surface.faces())
+    assert not surface.is_closed()
 
 
 def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond() -> None:
@@ -270,10 +270,10 @@ def test_tpms_given_variable_offset_cadquery_and_vtk_volumes_must_correspond() -
         offset=variable_offset,
     )
 
-    shape_cadquery = tpms.generate(type_part="sheet", smoothing=0, verbose=True)
-    shape_vtk = tpms.generate_vtk(type_part="sheet")
+    shape_cadquery = tpms.generate_cad(type_part="sheet", smoothing=0, verbose=True)
+    shape_vtk = tpms.generate_surface_mesh(type_part="sheet")
 
-    assert np.isclose(shape_cadquery.Volume(), np.abs(shape_vtk.volume), rtol=1e-2)
+    assert np.isclose(shape_cadquery.volume(), np.abs(shape_vtk.volume), rtol=1e-2)
 
 
 @pytest.mark.parametrize("param", [0.3, 4.0])
@@ -296,7 +296,7 @@ def test_tpms_given_variable_offset_out_of_limits_with_cadquery_must_raise_error
     )
 
     with pytest.raises((ValueError, NotImplementedError)):
-        tpms.generate(type_part="sheet")
+        tpms.generate_cad(type_part="sheet")
 
 
 def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error() -> None:
@@ -313,9 +313,9 @@ def test_tpms_generate_given_wrong_type_part_parameter_must_raise_error() -> Non
         ),
     )
     with pytest.raises(ValueError, match=expected_err_msg):
-        tpms.generate_vtk(type_part=fake_type_part)
+        tpms.generate_surface_mesh(type_part=fake_type_part)
     with pytest.raises(ValueError, match=expected_err_msg):
-        tpms.generate(type_part=fake_type_part)
+        tpms.generate_cad(type_part=fake_type_part)
 
 
 def test_tpms_given_wrong_cell_size_parameter_must_raise_error() -> None:
@@ -370,7 +370,7 @@ def test_tpms_given_density_must_generate_tpms_with_correct_volume(
         density=expected_density,
     )
 
-    part = tpms.generate_vtk(type_part=type_part)
+    part = tpms.generate_surface_mesh(type_part=type_part)
     assert np.isclose(part.volume, abs(tpms.grid.volume) * expected_density, rtol=1e-2)
 
 
@@ -385,7 +385,7 @@ def test_tpms_given_100_percent_density_must_return_a_cube(
     )
 
     assert np.isclose(
-        tpms.generate_vtk(type_part=type_part).volume,
+        tpms.generate_surface_mesh(type_part=type_part).volume,
         abs(tpms.grid.volume),
         rtol=1.0e-9,
     )
@@ -416,7 +416,7 @@ def test_tpms_given_property_must_return_the_same_value() -> None:
     assert tpms.upper_skeletal == skeletals[0]
     assert tpms.lower_skeletal == skeletals[1]
     assert tpms.sheet == tpms.sheet
-    assert tpms.generate_vtk(type_part="surface") == tpms.surface
+    assert tpms.generate_surface_mesh(type_part="surface") == tpms.surface
 
 
 def test_tpms_given_surface_must_not_be_empty() -> None:
@@ -436,9 +436,9 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
         offset=-1.0,
     )
     with pytest.raises(NotImplementedError):
-        tpms.generate(type_part="lower skeletal")
+        tpms.generate_cad(type_part="lower skeletal")
 
-    sheet = tpms.generate_vtk(type_part="lower skeletal")
+    sheet = tpms.generate_surface_mesh(type_part="lower skeletal")
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
     def including_negative_values(
@@ -453,9 +453,9 @@ def test_tpms_given_negative_offset_for_skeletal_must_work_with_vtk_and_raise_er
         offset=including_negative_values,
     )
     with pytest.raises(NotImplementedError):
-        tpms.generate(type_part="lower skeletal")
+        tpms.generate_cad(type_part="lower skeletal")
 
-    sheet = tpms.generate_vtk(type_part="lower skeletal")
+    sheet = tpms.generate_surface_mesh(type_part="lower skeletal")
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
 
@@ -483,9 +483,9 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
         + r"-?\d*\.\d+"  # float
     )
     with pytest.raises(ValueError, match=err_msg_pattern):
-        tpms.generate(type_part="sheet")
+        tpms.generate_cad(type_part="sheet")
 
-    assert tpms.generate_vtk(type_part="sheet").volume == 0.0
+    assert tpms.generate_surface_mesh(type_part="sheet").volume == 0.0
 
     def including_negative_values(
         x: npt.NDArray[np.float64],
@@ -499,9 +499,9 @@ def test_tpms_given_negative_offset_for_sheet_must_work_with_vtk_and_raise_error
         offset=including_negative_values,
     )
     with pytest.raises(NotImplementedError):
-        tpms.generate(type_part="sheet")
+        tpms.generate_cad(type_part="sheet")
 
-    sheet = tpms.generate_vtk(type_part="sheet")
+    sheet = tpms.generate_surface_mesh(type_part="sheet")
     assert 0.0 < sheet.volume < np.abs(tpms.grid.volume)
 
 
@@ -516,8 +516,8 @@ def test_tpms_center_and_orientation_must_correspond() -> None:
         center=center,
         orientation=orientation,
     )
-    vtk_sheet = tpms.generate_vtk(type_part="sheet")
-    cad_sheet = tpms.generate(type_part="sheet")
+    vtk_sheet = tpms.generate_surface_mesh(type_part="sheet")
+    cad_sheet = tpms.generate_cad(type_part="sheet")
 
     no_orientation = microgen.Tpms(
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
@@ -526,20 +526,20 @@ def test_tpms_center_and_orientation_must_correspond() -> None:
     )
 
     assert np.allclose(vtk_sheet.center, center)
-    assert np.allclose(cad_sheet.Center().toTuple(), center, rtol=1e-3)
+    assert np.allclose(cad_sheet.center().to_tuple(), center, rtol=1e-3)
 
-    bbox = cad_sheet.BoundingBox()
+    bbox = cad_sheet.bounding_box()
     bounds = (bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax, bbox.zmin, bbox.zmax)
     assert np.allclose(bounds, vtk_sheet.bounds)
 
     assert not np.allclose(
         vtk_sheet.bounds,
-        no_orientation.generate_vtk(type_part="sheet").bounds,
+        no_orientation.generate_surface_mesh(type_part="sheet").bounds,
     )
 
 
 @pytest.mark.parametrize("part_type", ["sheet", "lower skeletal", "upper skeletal"])
-def test_tpms_generate_vtk_check_that_volume_has_changed_when_the_offset_is_updated(
+def test_tpms_generate_surface_mesh_check_that_volume_has_changed_when_the_offset_is_updated(
     part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
 ) -> None:
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
@@ -547,15 +547,15 @@ def test_tpms_generate_vtk_check_that_volume_has_changed_when_the_offset_is_upda
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
         offset=TEST_DEFAULT_OFFSET,
     )
-    first_part = tpms.generate_vtk(type_part=part_type)
+    first_part = tpms.generate_surface_mesh(type_part=part_type)
 
     tpms.offset *= 2.0
-    second_part = tpms.generate_vtk(type_part=part_type)
+    second_part = tpms.generate_surface_mesh(type_part=part_type)
     assert not np.isclose(first_part.volume, second_part.volume)
 
 
 @pytest.mark.parametrize("part_type", ["sheet", "lower skeletal", "upper skeletal"])
-def test_tpms_generate_grid_vtk_check_that_volume_has_changed_when_the_offset_is_updated(
+def test_tpms_generate_volume_mesh_check_that_volume_has_changed_when_the_offset_is_updated(
     part_type: Literal["sheet", "lower skeletal", "upper skeletal"],
 ) -> None:
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
@@ -563,17 +563,17 @@ def test_tpms_generate_grid_vtk_check_that_volume_has_changed_when_the_offset_is
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
         offset=TEST_DEFAULT_OFFSET,
     )
-    first_part = tpms.generate_grid_vtk(type_part=part_type)
+    first_part = tpms.generate_volume_mesh(type_part=part_type)
 
     tpms.offset *= 2.0
-    second_part = tpms.generate_grid_vtk(type_part=part_type)
+    second_part = tpms.generate_volume_mesh(type_part=part_type)
     assert not np.isclose(first_part.volume, second_part.volume)
 
 
 def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
     """Test if the repeat cell is computed correctly."""
     tpms = microgen.Infill(
-        obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_vtk(),
+        obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_surface_mesh(),
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
         offset=TEST_DEFAULT_OFFSET,
         cell_size=(0.5, 1.0, 1.0),
@@ -585,7 +585,7 @@ def test_infill_given_cell_size_must_use_corresponding_repeat_cell() -> None:
 def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
     """Test if the cell size is computed correctly."""
     tpms = microgen.Infill(
-        obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_vtk(),
+        obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_surface_mesh(),
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
         offset=TEST_DEFAULT_OFFSET,
         repeat_cell=(1, 1, 2),
@@ -598,7 +598,7 @@ def test_infill_given_repeat_cell_must_use_corresponding_cell_size() -> None:
 @pytest.mark.parametrize("kwarg", [{"cell_size": 0.5}, {"repeat_cell": 2}])
 def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
     """Test if the grid bounds match the object bounds."""
-    obj = microgen.Ellipsoid(radii=(1.0, 2.0 / 3.0, 0.5)).generate_vtk()
+    obj = microgen.Ellipsoid(radii=(1.0, 2.0 / 3.0, 0.5)).generate_surface_mesh()
     tpms = microgen.Infill(
         obj=obj,
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
@@ -619,7 +619,7 @@ def test_infill_bounds_match_obj_bounds(kwarg: dict[str, int | float]) -> None:
 def test_infill_cylinder_has_expected_volume() -> None:
     """Test if an infilled cylinder has the expected volume."""
     density = 0.5
-    cylinder = microgen.Cylinder().generate_vtk()
+    cylinder = microgen.Cylinder().generate_surface_mesh()
     infill = microgen.Infill(
         cylinder,
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
@@ -632,7 +632,7 @@ def test_infill_cylinder_has_expected_volume() -> None:
 def test_infill_cylinder_returns_single_connected_component_mesh() -> None:
     """Test if the infilled cylinder returns a single connected component mesh."""
     infill = microgen.Infill(
-        obj=microgen.Cylinder().generate_vtk(),
+        obj=microgen.Cylinder().generate_surface_mesh(),
         surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
         offset=TEST_DEFAULT_OFFSET,
         repeat_cell=2,
@@ -652,7 +652,7 @@ def test_infill_given_repeat_cell_and_cell_size_must_raise_an_error() -> None:
     )
     with pytest.raises(ValueError, match=expected_err_msg):
         microgen.Infill(
-            obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_vtk(),
+            obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_surface_mesh(),
             surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
             offset=TEST_DEFAULT_OFFSET,
             repeat_cell=(2, 1, 2),
@@ -670,7 +670,7 @@ def test_infill_raises_error_when_cell_size_is_too_large() -> None:
     )
     with pytest.raises(ValueError, match=expected_err_msg):
         microgen.Infill(
-            obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_vtk(),
+            obj=microgen.Box(dim=(1.0, 1.0, 1.0)).generate_surface_mesh(),
             surface_function=TEST_DEFAULT_SURFACE_FUNCTION,
             offset=TEST_DEFAULT_OFFSET,
             cell_size=too_large_cell_size,
@@ -723,7 +723,7 @@ def test_cylindrical_tpms_full_wrap_volume_matches_shell() -> None:
         cell_size=1.0,
         repeat_cell=(2, 0, int(height)),  # 0 → auto-fill full circle
     )
-    sheet = tpms.generate_vtk(type_part="sheet")
+    sheet = tpms.generate_surface_mesh(type_part="sheet")
 
     shell_envelope = 2.0 * np.pi * radius * delta_r * height
     density = abs(sheet.volume) / shell_envelope
@@ -748,7 +748,7 @@ def test_spherical_tpms_full_wrap_volume_matches_shell() -> None:
         cell_size=1.0,
         repeat_cell=(2, 0, 0),  # auto-fill θ + φ
     )
-    sheet = tpms.generate_vtk(type_part="sheet")
+    sheet = tpms.generate_surface_mesh(type_part="sheet")
 
     shell_envelope = 4.0 * np.pi * radius * radius * delta_r
     density = abs(sheet.volume) / shell_envelope
@@ -771,7 +771,7 @@ def test_cylindrical_tpms_partial_wrap_smaller_than_full() -> None:
         offset=0.5,
         cell_size=1.0,
         repeat_cell=(2, 0, 6),
-    ).generate_vtk(type_part="sheet")
+    ).generate_surface_mesh(type_part="sheet")
 
     quarter = CylindricalTpms(
         radius=1.5,
@@ -779,7 +779,7 @@ def test_cylindrical_tpms_partial_wrap_smaller_than_full() -> None:
         offset=0.5,
         cell_size=1.0,
         repeat_cell=(2, 2, 6),  # quarter wrap (~2 of 9 angular cells)
-    ).generate_vtk(type_part="sheet")
+    ).generate_surface_mesh(type_part="sheet")
 
     assert abs(quarter.volume) < abs(full.volume) / 3.0, (
         f"quarter wrap vol {abs(quarter.volume):.2f} should be ≲ "
@@ -803,7 +803,7 @@ def test_sweep_along_straight_line_is_finite_and_positive() -> None:
         cell_size=1.0,
         repeat_cell=(int(height), 1, 6),
     )
-    sheet = tpms.generate_vtk(type_part="sheet")
+    sheet = tpms.generate_surface_mesh(type_part="sheet")
 
     tube_volume = np.pi * radial_max * radial_max * height
     v = abs(sheet.volume)

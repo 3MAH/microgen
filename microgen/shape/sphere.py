@@ -26,14 +26,14 @@ class Sphere(Shape):
     The implicit field ``f(p) = ||p - center|| - radius`` (a true SDF,
     negative inside) is set on every instance so spheres compose with
     other shapes through ``|`` / ``&`` / ``-`` and stay usable when the
-    ``[cad]`` extra is not installed (only :meth:`generate` requires CAD).
+    ``[cad]`` extra is not installed (only :meth:`generate_cad` requires CAD).
 
     .. jupyter-execute::
        :hide-code:
 
        import microgen
 
-       shape = microgen.Sphere().generate_vtk()
+       shape = microgen.Sphere().generate_surface_mesh()
        shape.plot(color='white')
     """
 
@@ -70,13 +70,13 @@ class Sphere(Shape):
             cz + margin,
         )
 
-    def generate(self: Sphere, **_: KwargsGenerateType) -> CadShape:
+    def generate_cad(self: Sphere, **_: KwargsGenerateType) -> CadShape:
         """Generate a sphere CAD shape (OCCT).  Requires the ``[cad]`` extra."""
         from microgen.cad import make_sphere
 
         return make_sphere(self.radius, self.center)
 
-    def generate_vtk(
+    def generate_surface_mesh(
         self: Sphere,
         theta_resolution: int = 50,
         phi_resolution: int = 50,

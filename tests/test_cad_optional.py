@@ -41,29 +41,29 @@ def test_implicit_ops_module_does_not_need_ocp() -> None:
     assert hasattr(implicit_ops, "normalize_to_sdf")
 
 
-def test_primitive_generate_vtk_without_cad_extra() -> None:
-    """Every primitive's ``generate_vtk()`` works without the CAD extra."""
+def test_primitive_generate_surface_mesh_without_cad_extra() -> None:
+    """Every primitive's ``generate_surface_mesh()`` works without the CAD extra."""
     from microgen.shape.box import Box
     from microgen.shape.cylinder import Cylinder
     from microgen.shape.sphere import Sphere
 
-    assert Box().generate_vtk().n_cells > 0
-    assert Sphere().generate_vtk().n_cells > 0
-    assert Cylinder().generate_vtk().n_cells > 0
+    assert Box().generate_surface_mesh().n_cells > 0
+    assert Sphere().generate_surface_mesh().n_cells > 0
+    assert Cylinder().generate_surface_mesh().n_cells > 0
 
 
-def test_tpms_generate_vtk_without_cad_extra() -> None:
+def test_tpms_generate_surface_mesh_without_cad_extra() -> None:
     """TPMS F-rep + marching cubes work without the CAD extra."""
     from microgen import surface_functions
     from microgen.shape.tpms import Tpms
 
     tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.5)
-    mesh = tpms.generate_vtk(type_part="sheet")
+    mesh = tpms.generate_surface_mesh(type_part="sheet")
     assert mesh.n_cells > 0
 
 
 def test_cad_capable_entry_points_raise_cleanly_without_ocp() -> None:
-    """Calling ``.generate()`` / ``make_box()`` without OCP gives a clear error.
+    """Calling ``.generate_cad()`` / ``make_box()`` without OCP gives a clear error.
 
     Only meaningful in a true no-CAD env; when OCP *is* installed these calls
     succeed.  We just verify the function exists and does not, for instance,
@@ -85,7 +85,7 @@ def test_cad_capable_entry_points_raise_cleanly_without_ocp() -> None:
     reason="Test asserts the no-OCP error path; only meaningful when OCP is absent",
 )
 def test_shape_generate_raises_importerror_without_ocp() -> None:
-    """``Shape.generate()`` must raise ImportError pointing at ``microgen[cad]``.
+    """``Shape.generate_cad()`` must raise ImportError pointing at ``microgen[cad]``.
 
     Locks in the user-facing message so a future refactor that silently swaps
     the error type (e.g. raises a bare ``ModuleNotFoundError`` from a stray
@@ -94,7 +94,7 @@ def test_shape_generate_raises_importerror_without_ocp() -> None:
     from microgen.shape.sphere import Sphere
 
     with pytest.raises(ImportError, match=r"microgen\[cad\]"):
-        Sphere().generate()
+        Sphere().generate_cad()
 
 
 @pytest.mark.skipif(

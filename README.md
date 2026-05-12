@@ -12,7 +12,7 @@
 
 Generation of 3D objects is achievable through functions that utilize Open CASCADE (via [cadquery-ocp-novtk](https://github.com/CadQuery/ocp-build-system), the direct OCCT Python binding) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
 
-The CAD path (`.generate()` on shapes, `Phase`, `fuse_shapes`, periodic split, lattice CAD) is **optional** — install with `pip install 'microgen[cad]'`. The default `pip install microgen` gives you mesh + implicit-field (F-rep) workflows only, which is sufficient for many applications and has a much lighter dependency footprint (no OCCT, no VTK version pin).
+The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic split, lattice CAD) is **optional** — install with `pip install 'microgen[cad]'`. The default `pip install microgen` gives you mesh + implicit-field (F-rep) workflows only, which is sufficient for many applications and has a much lighter dependency footprint (no OCCT, no VTK version pin).
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
@@ -38,7 +38,7 @@ The CAD path (`.generate()` on shapes, `Phase`, `fuse_shapes`, periodic split, l
 pip install microgen
 ```
 
-**With CAD capabilities** (OCCT via `cadquery-ocp-novtk`, enables `.generate()`, `Phase`, `fuse_shapes`, periodic split, lattice CAD):
+**With CAD capabilities** (OCCT via `cadquery-ocp-novtk`, enables `.generate_cad()`, `Phase`, `fuse_shapes`, periodic split, lattice CAD):
 
 ```bash
 pip install 'microgen[cad]'
@@ -57,9 +57,9 @@ What you can do in each mode:
 
 |                                       | Core install | `[cad]` install |
 | ------------------------------------- | :----------: | :-------------: |
-| `Shape.generate_vtk()` (mesh output)  |      ✅      |        ✅        |
+| `Shape.generate_surface_mesh()` (viz) |      ✅      |        ✅        |
 | Implicit fields, TPMS F-rep, booleans |      ✅      |        ✅        |
-| `Shape.generate()` (OCCT BREP)        |      ❌      |        ✅        |
+| `Shape.generate_cad()` (OCCT BREP)        |      ❌      |        ✅        |
 | `Phase`, `fuse_shapes`, `cut_*`       |      ❌      |        ✅        |
 | Periodic split, lattice CAD export    |      ❌      |        ✅        |
 | VTK 9.4+                              |      ✅      |        ✅        |

@@ -17,7 +17,7 @@ N_PARTS_ON_CORNER = 8
 def _generate_sphere(x: float, y: float, z: float, rve: Rve) -> Phase:
     """Generate a sphere at the given position and test periodicity."""
     elem = shape.sphere.Sphere(center=(x, y, z), radius=0.1)
-    phase = Phase(shape=elem.generate())
+    phase = Phase(shape=elem.generate_cad())
     return periodic_split_and_translate(phase=phase, rve=rve)
 
 
@@ -26,7 +26,7 @@ def test_periodic_generates_warning_on_intersection_with_opposite_faces() -> Non
     rve = Rve(dim=1, center=(0.5, 0.5, 0.5))
 
     elem = shape.capsule.Capsule(center=(0.5, 0, 0.5), height=1, radius=0.1)
-    phase = Phase(shape=elem.generate())
+    phase = Phase(shape=elem.generate_cad())
 
     expected_warning_msg = r"Object intersecting ([xyz])\+ and ([xyz])\- faces: not doing anything in this direction"
     with pytest.warns(UserWarning, match=expected_warning_msg):
@@ -124,7 +124,7 @@ _VOL_REL_TOL = 5e-3  # OCCT booleans have small volumetric drift
 def _total_volume(phase: Phase) -> float:
     # phase.solids is a list of raw TopoDS_Solid; wrap each so we can call
     # the CadShape helpers (Volume / BoundingBox).
-    return sum(float(CadShape(s).Volume()) for s in phase.solids)
+    return sum(float(CadShape(s).volume()) for s in phase.solids)
 
 
 def _all_solids_inside(phase: Phase, rve: Rve, tol: float = 1e-3) -> bool:
@@ -134,7 +134,7 @@ def _all_solids_inside(phase: Phase, rve: Rve, tol: float = 1e-3) -> bool:
     # so 1e-3 is loose enough for OCCT noise yet tight enough to catch the
     # bug class this test targets.
     for solid in phase.solids:
-        bb = CadShape(solid).BoundingBox()
+        bb = CadShape(solid).bounding_box()
         if (
             bb.xmin < rve.min_point[0] - tol
             or bb.xmax > rve.max_point[0] + tol

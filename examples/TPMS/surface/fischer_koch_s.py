@@ -4,7 +4,7 @@ from microgen import Tpms
 from microgen.shape.surface_functions import fischer_koch_s
 
 geometry = Tpms(surface_function=fischer_koch_s, repeat_cell=5, offset=0)
-mesh = geometry.generate_vtk(type_part="surface")
+mesh = geometry.generate_surface_mesh(type_part="surface")
 
 vtk_file = Path(__file__).parent / "surface.vtk"
 mesh.save(vtk_file)

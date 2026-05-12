@@ -71,7 +71,7 @@ for i in range(0, n):
         height=height[i],
         radius=radius[i],
     )
-    list_phases.append(Phase(shape=elem.generate()))
+    list_phases.append(Phase(shape=elem.generate_cad()))
 
 for phase_elem in list_phases:
     periodicPhase = periodic_split_and_translate(phase=phase_elem, rve=rve)

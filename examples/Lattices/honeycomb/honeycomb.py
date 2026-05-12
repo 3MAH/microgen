@@ -36,9 +36,9 @@ for seed in seedList:
         ],
         height=thickness,
     )
-    shapeList.append(poly.generate())
+    shapeList.append(poly.generate_cad())
 
-boxPhase = Phase(shape=box.generate())
+boxPhase = Phase(shape=box.generate_cad())
 
 honeycomb = cut_phase_by_shape_list(phase_to_cut=boxPhase, shapes=shapeList)
 
