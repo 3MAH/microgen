@@ -24,7 +24,7 @@ class TruncatedCube(AbstractLattice):
 
        import microgen
 
-       shape = microgen.TruncatedCube(0.1).generate_surface_mesh()
+       shape = microgen.TruncatedCube(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:

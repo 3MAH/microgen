@@ -25,7 +25,7 @@ class Diamond(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Diamond(0.1).generate_surface_mesh()
+       shape = microgen.Diamond(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:

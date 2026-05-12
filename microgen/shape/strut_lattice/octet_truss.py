@@ -24,7 +24,7 @@ class OctetTruss(AbstractLattice):
 
        import microgen
 
-       shape = microgen.OctetTruss(0.1).generate_surface_mesh()
+       shape = microgen.OctetTruss(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:

@@ -19,18 +19,18 @@ from microgen import (
 )
 
 preset_lattice_list = [
-    BodyCenteredCubic(0.1),
-    Cubic(0.1),
-    Cuboctahedron(0.1),
-    Diamond(0.1),
-    FaceCenteredCubic(0.1),
-    Octahedron(0.1),
-    OctetTruss(0.1),
-    RhombicCuboctahedron(0.1),
-    RhombicDodecahedron(0.1),
-    TruncatedCube(0.1),
-    TruncatedCuboctahedron(0.1),
-    TruncatedOctahedron(0.1),
+    BodyCenteredCubic(strut_radius=0.1),
+    Cubic(strut_radius=0.1),
+    Cuboctahedron(strut_radius=0.1),
+    Diamond(strut_radius=0.1),
+    FaceCenteredCubic(strut_radius=0.1),
+    Octahedron(strut_radius=0.1),
+    OctetTruss(strut_radius=0.1),
+    RhombicCuboctahedron(strut_radius=0.1),
+    RhombicDodecahedron(strut_radius=0.1),
+    TruncatedCube(strut_radius=0.1),
+    TruncatedCuboctahedron(strut_radius=0.1),
+    TruncatedOctahedron(strut_radius=0.1),
 ]
 
 meshes = pv.PolyData()

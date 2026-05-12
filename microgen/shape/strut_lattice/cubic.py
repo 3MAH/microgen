@@ -24,7 +24,7 @@ class Cubic(AbstractLattice):
 
        import microgen
 
-       shape = microgen.Cubic(0.1).generate_surface_mesh()
+       shape = microgen.Cubic(strut_radius=0.1).generate_surface_mesh()
 
     .. jupyter-execute::
        :hide-code:
