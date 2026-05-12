@@ -55,7 +55,8 @@ class OffsetGrading(ABC):
         self: OffsetGrading,
         grid: pv.UnstructuredGrid | pv.StructuredGrid,
     ) -> npt.NDArray[np.float64]:
-        """Compute the offset of the grid.
+        """
+        Compute the offset of the grid.
 
         This method should compute the offset on each point of the grid and return \
             it as a 1D array.
@@ -87,7 +88,8 @@ class NormedDistance(OffsetGrading):
         furthest_offset: float,
         boundary_weight: float = 1.0,
     ) -> None:
-        """Initialize the ImplicitDistance object.
+        """
+        Initialize the ImplicitDistance object.
 
         Parameters
         ----------
