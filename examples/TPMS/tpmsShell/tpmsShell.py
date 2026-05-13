@@ -11,11 +11,11 @@ outer = make_box((3.0, 3.0, 3.0), (0.0, 0.0, 0.0))
 inner = make_box((2.8, 2.8, 2.8), (0.0, 0.0, 0.0))
 shell = outer.cut(inner)
 
-geometry = Tpms(
-    surface_function=surface_functions.gyroid,
-    offset=0.5,
-    repeat_cell=3,
-    resolution=15,
+geometry = (
+    Tpms(surface_function=surface_functions.gyroid)
+    .with_offset(0.5)
+    .with_repeat_cell(3)
+    .with_resolution(15)
 )
 shape = geometry.generate_cad(type_part="sheet", smoothing=0)
 

@@ -4,11 +4,11 @@ import pyvista as pv
 
 from microgen import Tpms, surface_functions
 
-geometry = Tpms(
-    surface_function=surface_functions.gyroid,
-    offset=0.3,
-    repeat_cell=3,
-    resolution=30,
+geometry = (
+    Tpms(surface_function=surface_functions.gyroid)
+    .with_offset(0.3)
+    .with_repeat_cell(3)
+    .with_resolution(30)
 )
 shape = geometry.generate_surface_mesh(type_part="sheet")
 shape = shape.flip_faces()

@@ -84,12 +84,11 @@ strut_vertex_pairs = np.vstack(
     [l1_strut_vertex_pairs, l2_strut_vertex_pairs, half_l1_strut_vertex_pairs]
 )
 
-auxetic_lattice = CustomLattice(
-    strut_radius=0.1,
-    strut_heights=strut_heights,
-    base_vertices=base_vertices,
-    strut_vertex_pairs=strut_vertex_pairs,
-    strut_joints=True,
+auxetic_lattice = (
+    CustomLattice(base_vertices, strut_vertex_pairs)
+    .with_strut_radius(0.1)
+    .with_strut_heights(strut_heights)
+    .with_strut_joints()
 )
 
 shape = auxetic_lattice.generate_cad()

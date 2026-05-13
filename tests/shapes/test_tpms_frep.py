@@ -43,10 +43,7 @@ class TestSdfNormalization:
 
     def test_saddle_point_safety(self):
         """SDF at known saddle points should not produce NaN or Inf."""
-        tpms = Tpms(
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-        )
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         # Gyroid saddle points are at (0, 0, 0) and equivalents
         x = np.array([0.0, 0.25, 0.5])
         y = np.array([0.0, 0.25, 0.5])
@@ -77,15 +74,15 @@ class TestTpmsFrepField:
     """Test that Tpms has a working F-rep implicit field."""
 
     def test_tpms_has_func(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         assert tpms.func is not None
 
     def test_tpms_has_bounds(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         assert tpms.bounds is not None
 
     def test_tpms_evaluate(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         x = np.array([0.0, 0.1, 0.2])
         y = np.array([0.0, 0.1, 0.2])
         z = np.array([0.0, 0.1, 0.2])
@@ -94,7 +91,7 @@ class TestTpmsFrepField:
         assert np.all(np.isfinite(vals))
 
     def test_tpms_raw_field(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         raw = tpms.raw_field
         assert callable(raw)
         val = raw(np.array([0.0]), np.array([0.0]), np.array([0.0]))
@@ -110,16 +107,16 @@ class TestTpmsFrepMethods:
     """Test as_sheet, as_upper_skeletal, as_lower_skeletal."""
 
     def test_as_sheet(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         sheet = tpms.as_sheet(thickness=0.15)
         assert isinstance(sheet, Shape)
         assert sheet.func is not None
 
     def test_as_sheet_mesh(self):
-        tpms = Tpms(
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=20,
+        tpms = (
+            Tpms(surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(20)
         )
         sheet = tpms.as_sheet(thickness=0.15)
         mesh = sheet.generate_surface_mesh(bounds=tpms.bounds, resolution=30)
@@ -127,13 +124,13 @@ class TestTpmsFrepMethods:
         assert mesh.n_cells > 0
 
     def test_as_upper_skeletal(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         skel = tpms.as_upper_skeletal()
         assert isinstance(skel, Shape)
         assert skel.func is not None
 
     def test_as_lower_skeletal(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         skel = tpms.as_lower_skeletal()
         assert isinstance(skel, Shape)
         assert skel.func is not None
@@ -148,7 +145,7 @@ class TestTpmsBooleans:
     """Test boolean composition of TPMS with other shapes."""
 
     def test_tpms_and_sphere(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         sphere_func = lambda x, y, z: np.sqrt(x**2 + y**2 + z**2) - 0.4  # noqa: E731
         sphere = from_field(sphere_func, bounds=(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
         result = tpms & sphere
@@ -160,7 +157,7 @@ class TestTpmsBooleans:
         assert isinstance(mesh, pv.PolyData)
 
     def test_sheet_and_sphere(self):
-        tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         sheet = tpms.as_sheet(thickness=0.15)
         sphere_func = lambda x, y, z: np.sqrt(x**2 + y**2 + z**2) - 0.4  # noqa: E731
         sphere = from_field(sphere_func, bounds=(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
@@ -181,30 +178,27 @@ class TestTpmsGenerateVtk:
     """Test that generate_surface_mesh(type_part=...) still works."""
 
     def test_sheet(self):
-        tpms = Tpms(
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=20,
+        tpms = (
+            Tpms(surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(20)
         )
         mesh = tpms.generate_surface_mesh(type_part="sheet")
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
     def test_surface(self):
-        tpms = Tpms(
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=20,
+        tpms = (
+            Tpms(surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(20)
         )
         mesh = tpms.generate_surface_mesh(type_part="surface")
         assert isinstance(mesh, pv.PolyData)
         assert mesh.n_cells > 0
 
     def test_invalid_type_part(self):
-        tpms = Tpms(
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-        )
+        tpms = Tpms(surface_function=surface_functions.gyroid).with_offset(0.3)
         with pytest.raises(ValueError, match="type_part"):
             tpms.generate_surface_mesh(type_part="invalid")
 
@@ -213,7 +207,7 @@ class TestTpmsGenerateVtk:
         [surface_functions.gyroid, surface_functions.schwarz_p],
     )
     def test_multiple_surface_functions(self, surface_fn):
-        tpms = Tpms(surface_function=surface_fn, offset=0.3, resolution=20)
+        tpms = Tpms(surface_function=surface_fn).with_offset(0.3).with_resolution(20)
         mesh = tpms.generate_surface_mesh(type_part="sheet")
         assert mesh.n_cells > 0
 
@@ -229,11 +223,10 @@ class TestCurvilinearTpms:
     def test_cylindrical_has_func(self):
         from microgen.shape.tpms import CylindricalTpms
 
-        tpms = CylindricalTpms(
-            radius=1.0,
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=10,
+        tpms = (
+            CylindricalTpms(radius=1.0, surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(10)
         )
         assert tpms.func is not None
         assert tpms.bounds is not None
@@ -241,11 +234,10 @@ class TestCurvilinearTpms:
     def test_cylindrical_evaluate(self):
         from microgen.shape.tpms import CylindricalTpms
 
-        tpms = CylindricalTpms(
-            radius=1.0,
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=10,
+        tpms = (
+            CylindricalTpms(radius=1.0, surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(10)
         )
         x = np.array([1.0, 0.5])
         y = np.array([0.0, 0.5])
@@ -256,11 +248,10 @@ class TestCurvilinearTpms:
     def test_spherical_has_func(self):
         from microgen.shape.tpms import SphericalTpms
 
-        tpms = SphericalTpms(
-            radius=1.0,
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=10,
+        tpms = (
+            SphericalTpms(radius=1.0, surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(10)
         )
         assert tpms.func is not None
         assert tpms.bounds is not None
@@ -268,11 +259,10 @@ class TestCurvilinearTpms:
     def test_spherical_evaluate(self):
         from microgen.shape.tpms import SphericalTpms
 
-        tpms = SphericalTpms(
-            radius=1.0,
-            surface_function=surface_functions.gyroid,
-            offset=0.3,
-            resolution=10,
+        tpms = (
+            SphericalTpms(radius=1.0, surface_function=surface_functions.gyroid)
+            .with_offset(0.3)
+            .with_resolution(10)
         )
         x = np.array([1.0, 0.5])
         y = np.array([0.0, 0.5])

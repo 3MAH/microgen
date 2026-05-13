@@ -26,6 +26,7 @@ working unchanged.
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -78,31 +79,19 @@ class _Centre(tuple):
         return (self[0], self[1], self[2])
 
 
+@dataclass
 class _BBox:
     """Axis-aligned bounding box exposing ``xmin`` / ``xmax`` / ….
 
-    Returned by :meth:`CadShape.bounding_box`.  Also indexable as a 6-tuple
-    ``(xmin, ymin, zmin, xmax, ymax, zmax)`` matching OCCT's ``Bnd_Box.Get``.
+    Returned by :meth:`CadShape.bounding_box`.
     """
 
-    __slots__ = ("xmax", "xmin", "ymax", "ymin", "zmax", "zmin")
-
-    def __init__(
-        self,
-        xmin: float,
-        ymin: float,
-        zmin: float,
-        xmax: float,
-        ymax: float,
-        zmax: float,
-    ) -> None:
-        """Initialize from the 6 axis-aligned extents."""
-        self.xmin = float(xmin)
-        self.ymin = float(ymin)
-        self.zmin = float(zmin)
-        self.xmax = float(xmax)
-        self.ymax = float(ymax)
-        self.zmax = float(zmax)
+    xmin: float
+    ymin: float
+    zmin: float
+    xmax: float
+    ymax: float
+    zmax: float
 
     @property
     def diagonal_length(self) -> float:

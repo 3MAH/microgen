@@ -46,7 +46,7 @@ from .test_lattice_utils import PRESET_LATTICE_DATA
 def test_lattice_vertices_strut_centers_and_directions_must_correspond_to_preset_lattice_data(
     shape,
 ) -> None:
-    lattice = shape(strut_radius=0.05, cell_size=1.0, strut_joints=False)
+    lattice = shape(0.05).with_cell_size(1.0)
 
     assert np.allclose(
         np.sort(lattice.vertices.flat),
@@ -72,7 +72,7 @@ def test_lattice_given_density_and_cell_size_must_match_computed_density(
 ) -> None:
     """Test for the density of lattice shapes generated with CadQuery and VTK."""
     # Arrange
-    shape_fit_to_density = shape(density=expected_density, cell_size=cell_size)
+    shape_fit_to_density = shape(density=expected_density).with_cell_size(cell_size)
 
     # Act
     shape_density = shape_fit_to_density.density
@@ -81,10 +81,10 @@ def test_lattice_given_density_and_cell_size_must_match_computed_density(
     assert np.isclose(expected_density, shape_density, rtol=0.01)
 
 
-def test_lattice_mesh_for_fem_periodic_must_produce_periodic_mesh() -> None:
-    """mesh_for_fem(periodic=True) must produce a mesh with periodic node positions."""
-    lattice = OctetTruss(strut_radius=0.05, cell_size=1.0)
-    mesh = lattice.mesh_for_fem(size=0.1, periodic=True)
+def test_lattice_generate_vtk_periodic_must_produce_periodic_mesh() -> None:
+    """generate_vtk(periodic=True) must produce a mesh with periodic node positions."""
+    lattice = OctetTruss(0.05).with_cell_size(1.0)
+    mesh = lattice.generate_surface_mesh(size=0.1, periodic=True)
 
     assert is_periodic(mesh.points), (
         "Mesh generated with periodic=True must be periodic"
@@ -94,8 +94,8 @@ def test_lattice_mesh_for_fem_periodic_must_produce_periodic_mesh() -> None:
 def test_lattice_mesh_for_fem_must_not_reuse_non_periodic_mesh_for_periodic_request() -> (
     None
 ):
-    """mesh_for_fem must cache by parameters, not by instance only."""
-    lattice = OctetTruss(strut_radius=0.05, cell_size=1.0)
+    """generate_vtk must cache by parameters, not by instance only."""
+    lattice = OctetTruss(0.05).with_cell_size(1.0)
 
     non_periodic_mesh = lattice.mesh_for_fem(size=0.1, periodic=False)
     periodic_mesh = lattice.mesh_for_fem(size=0.1, periodic=True)

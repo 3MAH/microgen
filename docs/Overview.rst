@@ -65,9 +65,8 @@ Brief examples
    import microgen
 
    geometry = microgen.Tpms(
-      surface_function=microgen.surface_functions.gyroid,
-      offset=0.3
-   )
+       surface_function=microgen.surface_functions.gyroid,
+   ).with_offset(0.3)
    shape = geometry.sheet
 
    shape.plot(color='white')

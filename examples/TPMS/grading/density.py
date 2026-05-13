@@ -35,11 +35,11 @@ def circular_graded_offset(
     return (max_offset - min_offset) * (x**2 + y**2) / radius**2 + min_offset
 
 
-geometry = Tpms(
-    surface_function=gyroid,
-    offset=linear_graded_offset,
-    repeat_cell=(5, 2, 1),
-    resolution=30,
+geometry = (
+    Tpms(surface_function=gyroid)
+    .with_offset(linear_graded_offset)
+    .with_repeat_cell((5, 2, 1))
+    .with_resolution(30)
 )
 sheet = geometry.sheet
 

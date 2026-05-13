@@ -5,18 +5,13 @@ import pyvista as pv
 from microgen import Infill, Tpms
 from microgen.shape.surface_functions import gyroid
 
-tpms = Tpms(
-    surface_function=gyroid,
-    offset=1.0,
-    resolution=30,
-)
+tpms = Tpms(surface_function=gyroid).with_offset(1.0).with_resolution(30)
 
-infill = Infill(
-    obj=tpms.sheet,
-    surface_function=gyroid,
-    cell_size=0.1,
-    offset=0.5,
-    resolution=15,
+infill = (
+    Infill(obj=tpms.sheet, surface_function=gyroid)
+    .with_cell_size(0.1)
+    .with_offset(0.5)
+    .with_resolution(15)
 )
 
 pl = pv.Plotter()
