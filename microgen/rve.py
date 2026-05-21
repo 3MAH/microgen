@@ -26,7 +26,9 @@ if TYPE_CHECKING:
 
     from .cad import CadShape
 
-    Vector3DType = tuple[float, float, float] | Sequence[float] | npt.NDArray[np.float64]
+    Vector3DType = (
+        tuple[float, float, float] | Sequence[float] | npt.NDArray[np.float64]
+    )
     ResolutionType = int | tuple[int, int, int] | Sequence[int]
 
 
