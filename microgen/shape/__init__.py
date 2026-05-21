@@ -48,7 +48,7 @@ from .strut_lattice import (
     TruncatedOctahedron,
 )
 from .spinodoid import Spinodoid
-from .tpms import CylindricalTpms, Infill, SphericalTpms, Tpms
+from .tpms import CylindricalTpms, GradedInfill, Infill, SphericalTpms, Sweep, Tpms
 from .tpms_grading import NormedDistance
 
 if TYPE_CHECKING:
@@ -162,6 +162,7 @@ __all__ = [
     "Ellipsoid",
     "ExtrudedPolygon",
     "FaceCenteredCubic",
+    "GradedInfill",
     "Infill",
     "NormedDistance",
     "Octahedron",
@@ -173,6 +174,7 @@ __all__ = [
     "Sphere",
     "SphericalTpms",
     "Spinodoid",
+    "Sweep",
     "Tpms",
     "TruncatedCube",
     "TruncatedCuboctahedron",

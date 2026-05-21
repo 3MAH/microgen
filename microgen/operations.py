@@ -126,39 +126,6 @@ def rotate_euler(
     return rotate(obj, center, rotation)
 
 
-def rotate_pv_euler(
-    obj: pv.PolyData,
-    center: Sequence[float],
-    angles_or_rotation: Sequence[float] | Rotation,
-) -> pv.PolyData:
-    """Rotate object according to ZXZ Euler angle convention.
-
-    :param obj: Object to rotate
-    :param center: numpy array (x, y, z)
-    :param angles_or_rotation: list of Euler angles (psi, theta, phi) in
-        degrees, or a scipy ``Rotation`` object
-
-    :return: Rotated object
-    """
-    if isinstance(angles_or_rotation, Rotation):
-        rotation = angles_or_rotation
-    else:
-        rotation = Rotation.from_euler("ZXZ", angles_or_rotation, degrees=True)
-
-    rotvec = rotation.as_rotvec(degrees=True)
-    angle = np.linalg.norm(rotvec)
-    if angle == 0:
-        return obj
-    axis = rotvec / angle
-
-    return obj.rotate_vector(
-        vector=axis,
-        angle=angle,
-        point=tuple(center),
-        inplace=False,
-    )
-
-
 def rescale(shape: CadShape, scale: float | tuple[float, float, float]) -> CadShape:
     """Rescale given object according to scale parameters [dim_x, dim_y, dim_z]."""
     from .phase import Phase  # noqa: PLC0415

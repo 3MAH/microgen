@@ -17,7 +17,6 @@ from .operations import (
     rescale,
     rotate,
     rotate_euler,
-    rotate_pv_euler,
 )
 from .periodic import periodic_split_and_translate
 from .phase import Phase
@@ -37,6 +36,7 @@ from .shape import (
     Ellipsoid,
     ExtrudedPolygon,
     FaceCenteredCubic,
+    GradedInfill,
     Infill,
     NormedDistance,
     Octahedron,
@@ -48,6 +48,7 @@ from .shape import (
     Sphere,
     SphericalTpms,
     Spinodoid,
+    Sweep,
     Tpms,
     TruncatedCube,
     TruncatedCuboctahedron,
@@ -76,6 +77,7 @@ __all__ = [
     "Ellipsoid",
     "ExtrudedPolygon",
     "FaceCenteredCubic",
+    "GradedInfill",
     "Infill",
     "NonBoxMeshError",
     "NormedDistance",
@@ -91,6 +93,7 @@ __all__ = [
     "Shape",
     "Sphere",
     "Spinodoid",
+    "Sweep",
     "Tpms",
     "TruncatedCube",
     "TruncatedCuboctahedron",
@@ -117,7 +120,6 @@ __all__ = [
     "rescale",
     "rotate",
     "rotate_euler",
-    "rotate_pv_euler",
     "Report",
     "SingleMesh",
     "surface_functions",

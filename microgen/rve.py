@@ -59,9 +59,6 @@ class Rve:
         self.min_point = self.center - 0.5 * self.dim
         self.max_point = self.center + 0.5 * self.dim
 
-        self.is_matrix = False
-        self.matrix_number = 0
-
         self._cached_box: CadShape | None = None
 
     @property
