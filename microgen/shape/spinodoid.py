@@ -34,6 +34,7 @@ from .shape import Shape
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.shape import BoundsType
 
 
 class Spinodoid(Shape):
@@ -215,9 +216,23 @@ class Spinodoid(Shape):
 
     def generate_surface_mesh(
         self: Spinodoid,
+        bounds: BoundsType | None = None,
+        resolution: int | None = None,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Generate the iso-surface as a PolyData with center+rotation applied."""
+        """Generate the iso-surface as a PolyData with center+rotation applied.
+
+        The native path uses the cached structured-grid surface whose resolution
+        is fixed at construction time (``Spinodoid(resolution=…)``). When
+        ``bounds`` or ``resolution`` is explicitly provided here, fall back to
+        the implicit (marching-cubes-on-SDF) base implementation so polymorphic
+        callers can re-sample the field at an arbitrary resolution / bbox.
+        """
+        if bounds is not None or resolution is not None:
+            return super().generate_surface_mesh(
+                bounds=bounds,
+                resolution=resolution if resolution is not None else 50,
+            )
         polydata = self.surface.copy()
         polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
         return polydata.translate(xyz=self.center)
