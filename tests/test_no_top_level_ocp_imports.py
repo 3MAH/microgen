@@ -24,12 +24,10 @@ from pathlib import Path
 
 MICROGEN_ROOT = Path(__file__).resolve().parent.parent / "microgen"
 
-# Files allowed to have top-level OCP imports (the CAD boundary).  Paths are
-# relative to ``microgen/``.  Extend this list as the CAD subpackage grows
-# (PR 4 splits ``cad.py`` into a ``cad/`` subpackage).
-_CAD_BOUNDARY = {
-    "cad.py",
-}
+# The CAD boundary: every file under ``microgen/cad/`` is allowed to have
+# top-level OCP imports.  Everything outside it must keep OCP imports lazy
+# (inside a function body) or guarded by ``if TYPE_CHECKING:``.
+_CAD_BOUNDARY_PREFIX = "cad/"
 
 
 def _is_type_checking_block(node: ast.stmt) -> bool:
@@ -74,7 +72,7 @@ def test_no_top_level_ocp_imports_outside_cad_boundary() -> None:
     offenders: list[str] = []
     for py in MICROGEN_ROOT.rglob("*.py"):
         rel = py.relative_to(MICROGEN_ROOT).as_posix()
-        if rel in _CAD_BOUNDARY:
+        if rel.startswith(_CAD_BOUNDARY_PREFIX):
             continue
         tree = ast.parse(py.read_text(encoding="utf-8"), filename=str(py))
         for node in _top_level_imports(tree):
@@ -82,7 +80,7 @@ def test_no_top_level_ocp_imports_outside_cad_boundary() -> None:
                 offenders.append(f"{rel}:{node.lineno}")
     assert not offenders, (
         "Top-level OCP imports outside the CAD boundary "
-        f"({sorted(_CAD_BOUNDARY)}): {offenders}. "
+        f"(microgen/{_CAD_BOUNDARY_PREFIX}*): {offenders}. "
         "Move them inside a function body or under "
         "``if TYPE_CHECKING:``."
     )
