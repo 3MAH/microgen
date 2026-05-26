@@ -29,12 +29,14 @@ import pyvista as pv
 
 from ..operations import rotate
 from ._frep_grf import _FrepGRF, _normalize_cell_size, compute_threshold_for_porosity
+from .periodic_shell import mesh_to_periodic_shell
 from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
-    from microgen.shape.shape import BoundsType
+
+    from ._types import BoundsType
 
 
 class Spinodoid(Shape):
@@ -181,6 +183,11 @@ class Spinodoid(Shape):
         self._func = _signed_field
         lx, ly, lz = (self.cell_size * self.repeat_cell).tolist()
         self._bounds = (0.0, float(lx), 0.0, float(ly), 0.0, float(lz))
+        # Spinodoid's field is *bit-exact* periodic on ``cell_size`` along each
+        # axis — every kept Fourier mode lives on the reciprocal lattice, so
+        # ``frep.evaluate(p + cell_size) == frep.evaluate(p)`` (see _frep_grf.py).
+        cs = np.asarray(self.cell_size, dtype=float)
+        self._period = (float(cs[0]), float(cs[1]), float(cs[2]))
 
     @cached_property
     def grid(self: Spinodoid) -> pv.StructuredGrid:
@@ -256,100 +263,13 @@ class Spinodoid(Shape):
         pts = np.asarray(mesh.points, dtype=np.float64)
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
 
-        shape = _try_make_solid(_mesh_to_periodic_shell(pts, tris, self._bounds))
+        shape = _try_make_solid(mesh_to_periodic_shell(pts, tris, self._bounds))
         shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
         shape = shape.translate(self.center)
         # Fallback for OCCT Volume() on solids it flags invalid (rigid transforms preserve volume).
         with contextlib.suppress(AttributeError, ValueError):
             shape._mesh_volume = float(abs(self.grid_solid.volume))
         return shape
-
-
-def _mesh_to_periodic_shell(
-    points: npt.NDArray[np.float64],
-    triangles: npt.NDArray[np.int64],
-    bounds: Sequence[float],
-) -> CadShape:
-    """Build a sewn OCCT shell from a triangulated surface inside an axis-aligned box.
-
-    Triangles whose three vertices share the mesh's exact extremum on a cube
-    plane are grouped per face and converted to a single planar BREP face via
-    :func:`microgen.cad.mesh_to_planar_face`. Remaining triangles become one
-    planar BREP face per triangle (raw, not pre-sewn — sewing must stitch
-    them to cap wires along the seam). Everything is sewn into a closed shell.
-
-    Mirrors :meth:`microgen.Tpms._mesh_to_periodic_shell` (tpms.py:683) but
-    parameterised by ``bounds`` rather than an instance's
-    ``cell_size × repeat_cell`` (Spinodoid lives at ``[0, L]^3``, Tpms at
-    ``[-L/2, +L/2]^3``).
-    """
-    from OCP.BRepBuilderAPI import (
-        BRepBuilderAPI_MakeEdge,
-        BRepBuilderAPI_MakeFace,
-        BRepBuilderAPI_MakeWire,
-        BRepBuilderAPI_Sewing,
-    )
-    from OCP.gp import gp_Pnt
-    from OCP.TopAbs import TopAbs_FACE
-    from OCP.TopExp import TopExp_Explorer
-
-    from microgen.cad import CadShape as _CadShape
-    from microgen.cad import mesh_to_planar_face
-
-    pts = np.asarray(points, dtype=np.float64)
-    tris = np.asarray(triangles, dtype=np.int64).reshape(-1, 3)
-
-    drift_tol = 1e-9 * float(max(abs(b) for b in bounds) or 1.0)
-
-    consumed = np.zeros(tris.shape[0], dtype=bool)
-    on_plane: list[tuple[int, int, float, npt.NDArray[np.int64]]] = []
-    for axis in range(3):
-        for sign in (-1, +1):
-            extremum = (
-                float(pts[:, axis].max()) if sign > 0 else float(pts[:, axis].min())
-            )
-            expected = bounds[2 * axis + (1 if sign > 0 else 0)]
-            if abs(extremum - expected) > drift_tol:
-                continue
-            vert_on = pts[:, axis] == extremum
-            tri_on = np.all(vert_on[tris], axis=1) & ~consumed
-            if tri_on.any():
-                on_plane.append((axis, sign, extremum, np.where(tri_on)[0]))
-                consumed |= tri_on
-    interior_idx = np.where(~consumed)[0]
-
-    bbox_diag = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
-    sew_tol = max(1e-9, 1e-6 * bbox_diag)
-    sewing = BRepBuilderAPI_Sewing(sew_tol)
-
-    for axis, sign, extremum, tri_idx in on_plane:
-        origin = [0.0, 0.0, 0.0]
-        origin[axis] = extremum
-        normal = [0.0, 0.0, 0.0]
-        normal[axis] = float(sign)
-        planar = mesh_to_planar_face(pts, tris[tri_idx], origin, normal)
-        exp = TopExp_Explorer(planar.wrapped, TopAbs_FACE)
-        while exp.More():
-            sewing.Add(exp.Current())
-            exp.Next()
-
-    interior_tris = tris[interior_idx]
-    used_vertices = np.unique(interior_tris)
-    pnt_cache = {
-        int(i): gp_Pnt(float(pts[i, 0]), float(pts[i, 1]), float(pts[i, 2]))
-        for i in used_vertices
-    }
-    for a, b, c in interior_tris:
-        ga, gb, gc = pnt_cache[int(a)], pnt_cache[int(b)], pnt_cache[int(c)]
-        e1 = BRepBuilderAPI_MakeEdge(ga, gb).Edge()
-        e2 = BRepBuilderAPI_MakeEdge(gb, gc).Edge()
-        e3 = BRepBuilderAPI_MakeEdge(gc, ga).Edge()
-        wire = BRepBuilderAPI_MakeWire(e1, e2, e3).Wire()
-        face = BRepBuilderAPI_MakeFace(wire).Face()
-        sewing.Add(face)
-
-    sewing.Perform()
-    return _CadShape(sewing.SewedShape())
 
 
 def _try_make_solid(shape: CadShape) -> CadShape:

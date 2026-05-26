@@ -8,7 +8,6 @@ Basic Geometry (:mod:`microgen.shape.shape`)
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,17 +16,11 @@ import pyvista as pv
 from scipy.spatial.transform import Rotation
 
 from . import implicit_ops as _ops
+from ._types import BoundsType, Field, PeriodType
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
-
-Field = Callable[
-    [npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]],
-    npt.NDArray[np.float64],
-]
-
-BoundsType = tuple[float, float, float, float, float, float]
 
 # Scalar-field name on the StructuredGrid used by the default mesh generators.
 _IMPLICIT_SCALAR = "implicit"
@@ -91,6 +84,9 @@ class Shape:
     :param orientation: orientation of the shape
     :param func: implicit scalar field ``(x, y, z) -> array``, or ``None``
     :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)`` or ``None``
+    :param period: ``(Lx, Ly, Lz)`` if the field is intrinsically periodic
+        (``func(p + L) == func(p)`` along each axis), or ``None``.
+        Set by ``Tpms`` and ``Spinodoid`` from ``cell_size * repeat_cell``.
     """
 
     def __init__(
@@ -99,6 +95,7 @@ class Shape:
         orientation: Vector3DType | Rotation = (0, 0, 0),
         func: Field | None = None,
         bounds: BoundsType | None = None,
+        period: PeriodType | None = None,
     ) -> None:
         """Initialize the shape."""
         self._center = center
@@ -109,6 +106,7 @@ class Shape:
         )
         self._func = func
         self._bounds = bounds
+        self._period: PeriodType | None = period
         # Cache of sampled structured grids keyed on (bounds, resolution).
         # Shared between generate_surface_mesh and generate_volume_mesh so
         # users calling both on the same instance only pay one N^3 field
@@ -151,6 +149,17 @@ class Shape:
     def bounds(self: Shape) -> BoundsType | None:
         """The bounding box ``(xmin, xmax, ymin, ymax, zmin, zmax)``, or ``None``."""
         return self._bounds
+
+    @property
+    def period(self: Shape) -> PeriodType | None:
+        """The intrinsic period ``(Lx, Ly, Lz)`` if the field is periodic, else ``None``.
+
+        When non-``None``, ``self.evaluate(x + Lx, y, z) == self.evaluate(x, y, z)``
+        (and analogously for y, z) — i.e. periodicity is a data-structure
+        invariant of the field, not a runtime flag.  ``Tpms`` and
+        ``Spinodoid`` set this from ``cell_size * repeat_cell``.
+        """
+        return self._period
 
     def require_func(self: Shape) -> Field:
         """Return ``_func`` or raise if not set."""
@@ -297,10 +306,12 @@ class Shape:
     ) -> CadShape:
         """Generate a CAD shape.
 
-        The default implementation builds an OCCT tessellated BREP from the
-        implicit-field VTK mesh, via :func:`microgen.cad.mesh_to_shape`
-        (single ``TopoDS_Face`` carrying a ``Poly_Triangulation``).  Subclasses
-        override this with native primitive construction.
+        The default implementation delegates to
+        :func:`microgen.cad.shape_to_cad`, which builds a tessellated OCCT BREP
+        from the implicit-field marching-cubes mesh.  Concrete subclasses
+        with native primitive paths (``Box``, ``Sphere``, ``Cylinder``,
+        ``Capsule``, ``Ellipsoid``, ``Tpms``, ``Spinodoid`` …) override
+        this method with native OCCT construction.
 
         Requires the optional ``[cad]`` install extra (``cadquery-ocp-novtk``).
 
@@ -308,32 +319,9 @@ class Shape:
         :param resolution: number of grid points per axis
         :return: :class:`microgen.cad.CadShape` wrapping an OCCT ``TopoDS_Shell``
         """
-        if self._func is None:
-            err_msg = (
-                "No implicit field defined — subclasses must override generate_cad()"
-            )
-            raise NotImplementedError(err_msg)
+        from microgen.cad import shape_to_cad  # noqa: PLC0415
 
-        from microgen.cad import mesh_to_shape  # noqa: PLC0415
-
-        mesh = self.generate_surface_mesh(bounds=bounds, resolution=resolution)
-        if mesh.n_cells == 0:
-            err_msg = "Generated mesh is empty — check bounds and field function"
-            raise ValueError(err_msg)
-
-        if not mesh.is_all_triangles:
-            mesh.triangulate(inplace=True)
-        triangles = mesh.faces.reshape(-1, 4)[:, 1:]
-        points = np.asarray(mesh.points, dtype=np.float64)
-
-        try:
-            return mesh_to_shape(points, triangles)
-        except Exception as err:
-            err_msg = (
-                "Failed to build the OCCT shell from the mesh; "
-                "try to increase the resolution or adjust bounds."
-            )
-            raise ShellCreationError(err_msg) from err
+        return shape_to_cad(self, bounds=bounds, resolution=resolution)
 
     # ------------------------------------------------------------------
     # Boolean operators (on implicit field)

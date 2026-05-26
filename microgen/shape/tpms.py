@@ -26,7 +26,8 @@ from scipy.optimize import root_scalar
 
 from microgen.operations import fuse_shapes, rotate
 
-from .shape import BoundsType, Shape, ShellCreationError
+from ._types import BoundsType, Field
+from .shape import Shape, ShellCreationError
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
@@ -36,10 +37,6 @@ import contextlib
 from .tpms_grading import OffsetGrading
 
 logging.basicConfig(level=logging.INFO)
-Field = Callable[
-    [npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]],
-    npt.NDArray[np.float64],
-]
 
 _DIM = 3
 
@@ -480,13 +477,18 @@ class Tpms(Shape):
         raw_field: Field,
         bounds: tuple[float, float, float, float, float, float],
     ) -> None:
-        """Normalize a raw field to SDF and set ``_func`` / ``_bounds``."""
+        """Normalize a raw field to SDF and set ``_func`` / ``_bounds`` / ``_period``."""
         from .implicit_ops import from_field, normalize_to_sdf
 
         self._raw_field_func = raw_field
         sdf_shape = normalize_to_sdf(from_field(raw_field))
         self._func = sdf_shape.func
         self._bounds = bounds
+        # The TPMS field is intrinsically periodic on ``cell_size`` along each
+        # axis (the 2π/cell_size wavenumbers in ``_setup_frep_field`` make
+        # this a data-structure invariant, not a flag).
+        cs = np.asarray(self.cell_size, dtype=float)
+        self._period = (float(cs[0]), float(cs[1]), float(cs[2]))
 
     def _setup_frep_field(self: Tpms) -> None:
         """Build the F-rep implicit field (SDF-normalized) for this TPMS."""
@@ -691,107 +693,17 @@ class Tpms(Shape):
     def _mesh_to_periodic_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
         """Build a closed, sewn OCCT shell with planar BREP faces on cell sides.
 
-        Splits the triangle mesh into seven groups: one per unit-cell
-        boundary plane (x=±half, y=±half, z=±half) plus the TPMS interior.
-        Each cell-side group goes through :func:`mesh_to_planar_face`,
-        producing one or more :class:`TopoDS_Face` whose underlying surface
-        is a ``Geom_Plane`` and whose wires trace the actual cell-side
-        outline (so STEP shows the gyroid cuts, not a bounding cube; gmsh
-        ``setPeriodic`` matches opposite cell sides by their plane equation).
-        The TPMS interior contributes one planar face per triangle.
-
-        All faces — caps + interior — are sewn together via
-        :class:`BRepBuilderAPI_Sewing` so the cap/interior seam shares edges
-        and face orientations are reconciled. The result is a closed shell
-        whose ``BRepGProp::VolumeProperties`` matches the underlying VTK
-        volume, and which is a valid input to boolean ops.
+        Delegates to :func:`microgen.shape.periodic_shell.mesh_to_periodic_shell`,
+        which sews TPMS-interior triangles with per-face cap planes into a
+        single closed shell (see that function's docstring for details).
         """
-        from OCP.BRepBuilderAPI import (
-            BRepBuilderAPI_MakeEdge,
-            BRepBuilderAPI_MakeFace,
-            BRepBuilderAPI_MakeWire,
-            BRepBuilderAPI_Sewing,
-        )
-        from OCP.gp import gp_Pnt
-        from OCP.TopAbs import TopAbs_FACE
-        from OCP.TopExp import TopExp_Explorer
-
-        from microgen.cad import (
-            CadShape as _CadShape,
-        )
-        from microgen.cad import (
-            mesh_to_planar_face,
-        )
+        from .periodic_shell import mesh_to_periodic_shell  # noqa: PLC0415
 
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
         pts = np.asarray(mesh.points, dtype=np.float64)
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
-
-        half = 0.5 * np.asarray(self.cell_size) * np.asarray(self.repeat_cell)
-        # A vertex is "on" a cell-side plane iff its coordinate on that axis
-        # equals the mesh's exact extremum on that axis. Marching cubes on
-        # the periodic-aligned grid places cap vertices on in-plane grid
-        # edges, so they share the linspace endpoint exactly — no tolerance
-        # ball, just exact equality on the actual data. Slanted surface
-        # triangles near the boundary land on perpendicular grid edges and
-        # never produce that exact value.
-        # Sanity-check the extremum is the expected ±half (skip otherwise so
-        # we never misclassify a surface-only mesh whose extremum is not on
-        # a cube face).
-        drift_tol = 1e-9 * float(np.max(np.abs(half)) or 1.0)
-
-        consumed = np.zeros(tris.shape[0], dtype=bool)
-        on_plane: list[tuple[int, int, npt.NDArray[np.int64]]] = []
-        for axis in range(3):
-            for sign in (-1, +1):
-                extremum = (
-                    float(pts[:, axis].max()) if sign > 0 else float(pts[:, axis].min())
-                )
-                if abs(extremum - sign * float(half[axis])) > drift_tol:
-                    continue
-                vert_on = pts[:, axis] == extremum
-                tri_on = np.all(vert_on[tris], axis=1) & ~consumed
-                if tri_on.any():
-                    on_plane.append((axis, sign, np.where(tri_on)[0]))
-                    consumed |= tri_on
-        interior_idx = np.where(~consumed)[0]
-
-        # Sewing tolerance: a small fraction of the bbox diagonal absorbs
-        # numerical drift between cap-wire vertices and interior-triangle
-        # vertices that should match exactly along the cell-side seam.
-        bbox_diag = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
-        sew_tol = max(1e-9, 1e-6 * bbox_diag)
-        sewing = BRepBuilderAPI_Sewing(sew_tol)
-
-        for axis, sign, tri_idx in on_plane:
-            origin = [0.0, 0.0, 0.0]
-            origin[axis] = sign * float(half[axis])
-            normal = [0.0, 0.0, 0.0]
-            normal[axis] = float(sign)
-            planar = mesh_to_planar_face(pts, tris[tri_idx], origin, normal)
-            exp = TopExp_Explorer(planar.wrapped, TopAbs_FACE)
-            while exp.More():
-                sewing.Add(exp.Current())
-                exp.Next()
-
-        # Interior TPMS triangles: contribute as raw per-triangle faces so
-        # sewing can stitch them to the cap wires (a pre-sewn interior would
-        # have shared edges already, blocking the seam stitch).
-        for a, b, c in tris[interior_idx]:
-            pa, pb, pc = pts[int(a)], pts[int(b)], pts[int(c)]
-            ga = gp_Pnt(float(pa[0]), float(pa[1]), float(pa[2]))
-            gb = gp_Pnt(float(pb[0]), float(pb[1]), float(pb[2]))
-            gc = gp_Pnt(float(pc[0]), float(pc[1]), float(pc[2]))
-            e1 = BRepBuilderAPI_MakeEdge(ga, gb).Edge()
-            e2 = BRepBuilderAPI_MakeEdge(gb, gc).Edge()
-            e3 = BRepBuilderAPI_MakeEdge(gc, ga).Edge()
-            wire = BRepBuilderAPI_MakeWire(e1, e2, e3).Wire()
-            face = BRepBuilderAPI_MakeFace(wire).Face()
-            sewing.Add(face)
-
-        sewing.Perform()
-        return _CadShape(sewing.SewedShape())
+        return mesh_to_periodic_shell(pts, tris, self._bounds)
 
     def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
         """Convert a triangulated PyVista mesh to an OCCT ``CadShape``.
