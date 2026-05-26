@@ -36,6 +36,9 @@ if TYPE_CHECKING:
 
     from OCP.TopoDS import TopoDS_Shape
 
+    from .shape.shape import Shape
+    from .shape._types import BoundsType
+
 
 _INSTALL_HINT = (
     "microgen's CAD backend requires the OCP (OCCT) Python bindings. "
@@ -491,6 +494,59 @@ def mesh_to_shape(
     builder.MakeShell(shell)
     builder.Add(shell, face)
     return CadShape(shell)
+
+
+def shape_to_cad(
+    shape: Shape,
+    bounds: BoundsType | None = None,
+    resolution: int = 50,
+) -> CadShape:
+    """Bridge an implicit :class:`~microgen.shape.shape.Shape` to a CAD BREP.
+
+    Runs the shape's :meth:`generate_surface_mesh` (marching cubes on the
+    SDF for free Shapes; native renderer for concrete subclasses) then
+    wraps the resulting triangle mesh into a single tessellated BREP face
+    via :func:`mesh_to_shape`.
+
+    Concrete subclasses with native primitive paths (``Box``, ``Sphere``,
+    ``Tpms``, ``Spinodoid`` …) usually skip this bridge and call their
+    own ``generate_cad``.  This function is the generic fallback for
+    bare ``Shape`` instances built via :func:`microgen.shape.implicit_ops.from_field`
+    or boolean composition (``a | b``, ``a - b``, ...).
+
+    Requires the optional ``[cad]`` install extra.
+
+    :param shape: the implicit shape to materialise
+    :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``; defaults to
+        ``shape.bounds`` if set, else raises ``ValueError``
+    :param resolution: marching-cubes grid resolution per axis
+    :return: :class:`CadShape` wrapping the tessellated ``TopoDS_Shell``
+    """
+    require_cad()
+    if shape.func is None:
+        err_msg = "No implicit field defined — cannot build BREP from an empty Shape"
+        raise NotImplementedError(err_msg)
+
+    mesh = shape.generate_surface_mesh(bounds=bounds, resolution=resolution)
+    if mesh.n_cells == 0:
+        err_msg = "Generated mesh is empty — check bounds and field function"
+        raise ValueError(err_msg)
+
+    if not mesh.is_all_triangles:
+        mesh.triangulate(inplace=True)
+    triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+    points = np.asarray(mesh.points, dtype=np.float64)
+
+    from .shape.shape import ShellCreationError  # noqa: PLC0415
+
+    try:
+        return mesh_to_shape(points, triangles)
+    except Exception as err:
+        err_msg = (
+            "Failed to build the OCCT shell from the mesh; "
+            "try to increase the resolution or adjust bounds."
+        )
+        raise ShellCreationError(err_msg) from err
 
 
 def _triangle_components(
