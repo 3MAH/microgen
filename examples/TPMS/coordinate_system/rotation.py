@@ -19,13 +19,14 @@ def rotated_gyroid(
 
 grid_rotation = Rotation.from_euler("z", 45, degrees=True)
 
-geometry = CylindricalTpms(
-    surface_function=partial(rotated_gyroid, grid_rotation=grid_rotation),
-    offset=0.5,
-    cell_size=(1, 1, 1),
-    repeat_cell=(1, 0, 1),
-    radius=1,
-    resolution=20,
+geometry = (
+    CylindricalTpms(
+        surface_function=partial(rotated_gyroid, grid_rotation=grid_rotation), radius=1
+    )
+    .with_offset(0.5)
+    .with_cell_size((1, 1, 1))
+    .with_repeat_cell((1, 0, 1))
+    .with_resolution(20)
 )
 sheet = geometry.sheet
 

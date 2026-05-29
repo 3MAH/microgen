@@ -8,12 +8,11 @@ from microgen.shape.surface_functions import gyroid
 
 bunny = examples.download_bunny()
 
-infill = Infill(
-    obj=bunny,
-    surface_function=gyroid,
-    cell_size=0.015,
-    offset=0.5,
-    resolution=10,
+infill = (
+    Infill(obj=bunny, surface_function=gyroid)
+    .with_cell_size(0.015)
+    .with_offset(0.5)
+    .with_resolution(10)
 )
 
 pl = pv.Plotter()

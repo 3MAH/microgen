@@ -6,12 +6,11 @@ def swapped_gyroid(x, y, z):
     return gyroid(x=z, y=y, z=x)
 
 
-geometry = SphericalTpms(
-    surface_function=swapped_gyroid,
-    offset=0.5,
-    repeat_cell=(1, 10, 20),
-    radius=3,
-    resolution=50,
+geometry = (
+    SphericalTpms(surface_function=swapped_gyroid, radius=3)
+    .with_offset(0.5)
+    .with_repeat_cell((1, 10, 20))
+    .with_resolution(50)
 )
 surface = geometry.surface
 

@@ -13,12 +13,11 @@ offset = NormedDistance(
     boundary_weight=1.0,
 )
 
-infill = Infill(
-    obj=mesh,
-    surface_function=gyroid,
-    cell_size=0.015,
-    offset=offset,
-    resolution=5,
+infill = (
+    Infill(obj=mesh, surface_function=gyroid)
+    .with_cell_size(0.015)
+    .with_offset(offset)
+    .with_resolution(5)
 )
 
 pl = pv.Plotter()

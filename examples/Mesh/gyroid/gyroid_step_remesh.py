@@ -27,11 +27,7 @@ from microgen.shape.surface_functions import gyroid
 import pyvista as pv
 
 # 1. Generate a TPMS geometry using the gyroid surface function.
-geometry = Tpms(
-    surface_function=gyroid,
-    density=0.30,
-    resolution=30,
-)
+geometry = Tpms(surface_function=gyroid).with_density(0.30).with_resolution(30)
 
 # 2. Wrap the geometry into a microgen Phase object.
 phases = []

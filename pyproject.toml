@@ -32,6 +32,7 @@ dependencies = [
     "meshio",
     "scipy",
     "autograd",
+    "typing_extensions>=4.0; python_version<'3.11'",
 ]
 
 [project.optional-dependencies]
@@ -89,6 +90,18 @@ ignore_missing_imports = true
 target-version = "py310"
 
 [tool.ruff.lint]
+extend-select = [
+    # Boolean traps — booleans in public APIs must be keyword-only.  The
+    # fluent ``with_*`` setters express boolean state explicitly, so any
+    # remaining positional booleans here would be accidents.
+    "FBT001",
+    "FBT002",
+    # Function names must be lowercase (CapCase methods were renamed in #134).
+    "N802",
+    # Constructors with many parameters are pushed through chained ``with_*``
+    # setters (fluent API) rather than positional arg lists.
+    "PLR0913",
+]
 exclude = [
     "docs/*",
     "tests/*",

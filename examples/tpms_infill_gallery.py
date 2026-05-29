@@ -58,12 +58,11 @@ def report(label: str, mesh: pv.DataSet) -> None:
 # 1. SphericalTpms — gyroid wrapping a sphere (auto-fill θ + φ via repeat=0)
 # -----------------------------------------------------------------------------
 
-sph = SphericalTpms(
-    radius=SPHERE_RADIUS,
-    surface_function=gyroid,
-    offset=OFFSET,
-    cell_size=CELL_SIZE,
-    repeat_cell=(2, 0, 0),
+sph = (
+    SphericalTpms(radius=SPHERE_RADIUS, surface_function=gyroid)
+    .with_offset(OFFSET)
+    .with_cell_size(CELL_SIZE)
+    .with_repeat_cell((2, 0, 0))
 )
 m_sph = sph.generate_surface_mesh(type_part="sheet")
 clip_y(m_sph).save(OUT / "sphere_g4_tpms.vtk")
@@ -73,12 +72,11 @@ report("1. SphericalTpms (R=3)", m_sph)
 # 2. CylindricalTpms — gyroid wrapping a cylinder (auto-fill θ via repeat=0)
 # -----------------------------------------------------------------------------
 
-cyl = CylindricalTpms(
-    radius=CYLINDER_RADIUS,
-    surface_function=gyroid,
-    offset=OFFSET,
-    cell_size=CELL_SIZE,
-    repeat_cell=(2, 0, int(CYLINDER_HEIGHT / CELL_SIZE)),
+cyl = (
+    CylindricalTpms(radius=CYLINDER_RADIUS, surface_function=gyroid)
+    .with_offset(OFFSET)
+    .with_cell_size(CELL_SIZE)
+    .with_repeat_cell((2, 0, int(CYLINDER_HEIGHT / CELL_SIZE)))
 )
 m_cyl = cyl.generate_surface_mesh(type_part="sheet")
 clip_y(m_cyl).save(OUT / "cylinder_g5_tpms.vtk")
@@ -95,14 +93,12 @@ def helix(t: float) -> np.ndarray:
     return np.array([2.0 * np.cos(theta), 2.0 * np.sin(theta), 6.0 * (t - 0.5)])
 
 
-sw = Sweep(
-    curve_points=helix,
-    surface_function=gyroid,
-    radial_max=0.6,
-    offset=OFFSET,
-    cell_size=CELL_SIZE,
-    repeat_cell=(8, 1, 6),
-    n_curve_samples=200,
+sw = (
+    Sweep(curve_points=helix, surface_function=gyroid, radial_max=0.6)
+    .with_n_curve_samples(200)
+    .with_offset(OFFSET)
+    .with_cell_size(CELL_SIZE)
+    .with_repeat_cell((8, 1, 6))
 )
 m_sw = sw.generate_surface_mesh(type_part="sheet")
 clip_y(m_sw).save(OUT / "sweep_g7_helix.vtk")

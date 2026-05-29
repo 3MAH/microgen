@@ -171,12 +171,12 @@ Schwarz P:
 
 .. jupyter-execute::
 
-   schwarz_p = microgen.Tpms(
-       surface_function=microgen.surface_functions.schwarz_p,
-       offset=0.3,
-       cell_size=1.0,
-       repeat_cell=2,
-       resolution=20
+   schwarz_p = (
+       microgen.Tpms(surface_function=microgen.surface_functions.schwarz_p)
+       .with_offset(0.3)
+       .with_cell_size(1.0)
+       .with_repeat_cell(2)
+       .with_resolution(20)
    )
    schwarz_p.sheet.plot(color='white')
 
@@ -184,12 +184,12 @@ Schwarz D:
 
 .. jupyter-execute::
 
-   schwarz_d = microgen.Tpms(
-       surface_function=microgen.surface_functions.schwarz_d,
-       offset=0.3,
-       cell_size=1.0,
-       repeat_cell=2,
-       resolution=20
+   schwarz_d = (
+       microgen.Tpms(surface_function=microgen.surface_functions.schwarz_d)
+       .with_offset(0.3)
+       .with_cell_size(1.0)
+       .with_repeat_cell(2)
+       .with_resolution(20)
    )
    schwarz_d.sheet.plot(color='white')
 
@@ -197,12 +197,12 @@ Neovius:
 
 .. jupyter-execute::
 
-   neovius = microgen.Tpms(
-       surface_function=microgen.surface_functions.neovius,
-       offset=0.3,
-       cell_size=1.0,
-       repeat_cell=2,
-       resolution=20
+   neovius = (
+       microgen.Tpms(surface_function=microgen.surface_functions.neovius)
+       .with_offset(0.3)
+       .with_cell_size(1.0)
+       .with_repeat_cell(2)
+       .with_resolution(20)
    )
    neovius.sheet.plot(color='white')
 
@@ -214,12 +214,12 @@ You can specify a target density instead of an offset value:
 
 .. jupyter-execute::
 
-   gyroid_50 = microgen.Tpms(
-       surface_function=microgen.surface_functions.gyroid,
-       density=0.5,  # 50% density
-       cell_size=1.0,
-       repeat_cell=2,
-       resolution=20
+   gyroid_50 = (
+       microgen.Tpms(surface_function=microgen.surface_functions.gyroid)
+       .with_density(0.5)  # 50% density
+       .with_cell_size(1.0)
+       .with_repeat_cell(2)
+       .with_resolution(20)
    )
    gyroid_50.sheet.plot(color='white')
 
@@ -231,13 +231,15 @@ Create TPMS on a spherical coordinate system:
 
 .. jupyter-execute::
 
-   spherical_gyroid = microgen.SphericalTpms(
-       radius=2.0,
-       surface_function=microgen.surface_functions.gyroid,
-       offset=0.3,
-       cell_size=0.5,
-       repeat_cell=(3, 0, 0),  # 0 = auto-fill to complete sphere
-       resolution=20
+   spherical_gyroid = (
+       microgen.SphericalTpms(
+           radius=2.0,
+           surface_function=microgen.surface_functions.gyroid,
+       )
+       .with_offset(0.3)
+       .with_cell_size(0.5)
+       .with_repeat_cell((3, 0, 0))  # 0 = auto-fill to complete sphere
+       .with_resolution(20)
    )
    spherical_gyroid.sheet.plot(color='white')
 
@@ -249,13 +251,15 @@ Create TPMS on a cylindrical coordinate system:
 
 .. jupyter-execute::
 
-   cylindrical_gyroid = microgen.CylindricalTpms(
-       radius=1.5,
-       surface_function=microgen.surface_functions.gyroid,
-       offset=0.3,
-       cell_size=0.5,
-       repeat_cell=(2, 0, 3),  # 0 = auto-fill circumference
-       resolution=20
+   cylindrical_gyroid = (
+       microgen.CylindricalTpms(
+           radius=1.5,
+           surface_function=microgen.surface_functions.gyroid,
+       )
+       .with_offset(0.3)
+       .with_cell_size(0.5)
+       .with_repeat_cell((2, 0, 3))  # 0 = auto-fill circumference
+       .with_resolution(20)
    )
    cylindrical_gyroid.sheet.plot(color='white')
 
@@ -348,10 +352,10 @@ Generate a tetrahedral mesh using Gmsh:
    import microgen
 
    # Create a TPMS geometry
-   gyroid = microgen.Tpms(
-       surface_function=microgen.surface_functions.gyroid,
-       offset=0.3,
-       resolution=20
+   gyroid = (
+       microgen.Tpms(surface_function=microgen.surface_functions.gyroid)
+       .with_offset(0.3)
+       .with_resolution(20)
    )
    shape = gyroid.generate_cad(type_part='sheet')
 
@@ -375,11 +379,11 @@ Generate a periodic mesh suitable for homogenization:
 .. code-block:: python
 
    # Create geometry
-   gyroid = microgen.Tpms(
-       surface_function=microgen.surface_functions.gyroid,
-       offset=0.3,
-       cell_size=1.0,
-       resolution=20
+   gyroid = (
+       microgen.Tpms(surface_function=microgen.surface_functions.gyroid)
+       .with_offset(0.3)
+       .with_cell_size(1.0)
+       .with_resolution(20)
    )
    shape = gyroid.generate_cad(type_part='sheet')
 

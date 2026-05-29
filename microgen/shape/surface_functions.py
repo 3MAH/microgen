@@ -15,10 +15,10 @@ def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.gyroid,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.gyroid)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -38,10 +38,10 @@ def schwarz_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schwarz_p,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.schwarz_p)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -62,10 +62,10 @@ def schwarz_d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schwarz_d,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.schwarz_d)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -90,10 +90,10 @@ def neovius(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.neovius,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.neovius)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -114,10 +114,10 @@ def schoen_iwp(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schoen_iwp,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.schoen_iwp)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -140,10 +140,10 @@ def schoen_frd(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.schoen_frd,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.schoen_frd)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -165,10 +165,10 @@ def fischer_koch_s(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.fischer_koch_s,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.fischer_koch_s)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -192,10 +192,10 @@ def pmy(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.pmy,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.pmy)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -220,10 +220,10 @@ def honeycomb(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.honeycomb)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -248,10 +248,10 @@ def lidinoid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.lidinoid,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.lidinoid)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -287,10 +287,10 @@ def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.split_p,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.split_p)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -320,10 +320,10 @@ def honeycomb_gyroid(x: float, y: float, _: float) -> float:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_gyroid,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.honeycomb_gyroid)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -343,10 +343,10 @@ def honeycomb_schwarz_p(x: float, y: float, _: float) -> float:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_schwarz_p,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.honeycomb_schwarz_p)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -366,10 +366,10 @@ def honeycomb_schwarz_d(x: float, y: float, _: float) -> float:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_schwarz_d,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.honeycomb_schwarz_d)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -389,10 +389,10 @@ def honeycomb_schoen_iwp(x: float, y: float, _: float) -> float:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_schoen_iwp,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.honeycomb_schoen_iwp)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
@@ -413,10 +413,10 @@ def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
 
        import microgen
 
-       geometry = microgen.Tpms(
-           surface_function=microgen.surface_functions.honeycomb_lidinoid,
-           offset=0.3,
-           resolution=30,
+       geometry = (
+           microgen.Tpms(surface_function=microgen.surface_functions.honeycomb_lidinoid)
+           .with_offset(0.3)
+           .with_resolution(30)
        )
        shape = geometry.sheet
 
