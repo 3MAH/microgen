@@ -73,7 +73,7 @@ Documentation = 'https://3mah.github.io/microgen-docs/'
 "Source Code" = 'https://github.com/3MAH/microgen'
 
 [tool.setuptools]
-packages = ["microgen", "microgen.shape", "microgen.shape.strut_lattice"]
+packages = ["microgen", "microgen.cad", "microgen.shape", "microgen.shape.strut_lattice"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
