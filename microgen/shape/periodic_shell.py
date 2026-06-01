@@ -121,4 +121,68 @@ def mesh_to_periodic_shell(
     return _CadShape(sewing.SewedShape())
 
 
-__all__ = ["mesh_to_periodic_shell"]
+def try_make_solid(shape: CadShape) -> CadShape:
+    """Best-effort upgrade of a sewn shell (or compound of shells) to a Solid.
+
+    For each closed shell, builds a ``TopoDS_Solid`` via
+    :class:`OCP.BRepBuilderAPI.BRepBuilderAPI_MakeSolid` and reorients via
+    :func:`OCP.BRepLib.BRepLib.OrientClosedSolid_s` so the volume encloses
+    the right region (without this, sewing-from-mesh can produce an
+    inside-out solid whose ``VolumeProperties`` reads
+    ``cube_volume - actual_volume``).
+
+    The input is the output of :func:`mesh_to_periodic_shell`; it may be:
+
+    - a single ``TopoDS_Shell`` — upgraded directly to a Solid (or returned
+      unchanged if OCCT refuses the conversion).
+    - a Compound of disjoint shells (one per closed component of the
+      periodic mesh) — each shell becomes its own Solid; multiple solids
+      are fused into one ``TopoDS_Compound``.
+
+    Shared by :class:`microgen.shape.tpms.Tpms` and
+    :class:`microgen.shape.spinodoid.Spinodoid`.
+
+    Requires the optional ``[cad]`` install extra.
+    """
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid  # noqa: PLC0415
+    from OCP.BRepLib import BRepLib  # noqa: PLC0415
+    from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
+    from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
+
+    from microgen.cad import CadShape as _CadShape  # noqa: PLC0415
+    from microgen.cad.shape import _topods_cast  # noqa: PLC0415
+    from microgen.operations import fuse_shapes  # noqa: PLC0415
+
+    cast_shell = _topods_cast("Shell")
+    cast_solid = _topods_cast("Solid")
+
+    def _make_solid(shell_shape) -> CadShape | None:
+        try:
+            solid = BRepBuilderAPI_MakeSolid(shell_shape).Solid()
+        except (ValueError, RuntimeError):
+            return None
+        BRepLib.OrientClosedSolid_s(cast_solid(solid))
+        return _CadShape(solid)
+
+    wrapped = shape.wrapped
+    if wrapped.ShapeType() == TopAbs_SHELL:
+        built = _make_solid(cast_shell(wrapped))
+        return built if built is not None else shape
+
+    # Compound: extract shells, build one Solid per closed shell, fuse.
+    exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
+    solids: list[CadShape] = []
+    while exp.More():
+        built = _make_solid(cast_shell(exp.Current()))
+        if built is not None:
+            solids.append(built)
+        exp.Next()
+
+    if not solids:
+        return shape
+    if len(solids) == 1:
+        return solids[0]
+    return fuse_shapes(solids, retain_edges=False)
+
+
+__all__ = ["mesh_to_periodic_shell", "try_make_solid"]
