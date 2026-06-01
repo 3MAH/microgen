@@ -37,6 +37,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -137,6 +138,10 @@ class Phase:
         # ``_surface_mesh`` at construction.
         self._cad: Any | None = None
         self._surface_mesh: pv.PolyData | None = None
+        # Set by ``from_grid`` to short-circuit lazy field-sampling in
+        # :meth:`grid`; ``None`` for shapes where the field is the source of
+        # truth and the grid is regenerated per (bounds, resolution) call.
+        self._cached_grid: pv.StructuredGrid | None = None
 
         self.name: str = (
             name if name is not None else f"Phase_{next(_PHASE_AUTONAME_COUNTER)}"
@@ -168,7 +173,7 @@ class Phase:
         :param name: phase name (auto-generated if omitted).
         :param resolution: default sampling resolution.
         """
-        if shape.func is None:
+        if shape.field is None:
             err_msg = "Cannot build Phase from a Shape without an implicit field"
             raise ValueError(err_msg)
         actual_bounds = bounds if bounds is not None else shape.bounds
@@ -179,7 +184,7 @@ class Phase:
             )
             raise ValueError(err_msg)
         return cls(
-            field=shape.func,
+            field=shape.field,
             bounds=actual_bounds,
             iso=iso,
             period=shape.period,
@@ -227,6 +232,125 @@ class Phase:
         """
         instance = cls(name=name)
         instance._surface_mesh = mesh  # noqa: SLF001
+        return instance
+
+    @classmethod
+    def from_implicit(
+        cls: type[Phase],
+        func: Field,
+        rve: Rve,
+        *,
+        iso: float = 0.0,
+        period: PeriodType | None = None,
+        name: str | None = None,
+        resolution: int = 50,
+    ) -> Phase:
+        """Construct a field-backed :class:`Phase` from a callable + :class:`Rve`.
+
+        Sugar over the field-first constructor that derives ``bounds``
+        from the RVE bounding box.
+
+        :param func: implicit scalar field ``(x, y, z) -> array``
+            (negative inside).
+        :param rve: domain whose AABB becomes the Phase ``bounds``.
+        :param iso: iso-value (default ``0.0``).
+        :param period: ``(Lx, Ly, Lz)`` if ``func`` is intrinsically periodic.
+        :param name: phase name (auto-generated if omitted).
+        :param resolution: default sampling resolution.
+        """
+        bounds = (
+            float(rve.min_point[0]),
+            float(rve.max_point[0]),
+            float(rve.min_point[1]),
+            float(rve.max_point[1]),
+            float(rve.min_point[2]),
+            float(rve.max_point[2]),
+        )
+        return cls(
+            field=func,
+            bounds=bounds,
+            iso=iso,
+            period=period,
+            name=name,
+            resolution=resolution,
+        )
+
+    @classmethod
+    def from_grid(
+        cls: type[Phase],
+        grid: pv.StructuredGrid,
+        *,
+        scalars: str = "implicit",
+        iso: float = 0.0,
+        name: str | None = None,
+    ) -> Phase:
+        """Construct a field-backed :class:`Phase` from a pre-sampled grid.
+
+        Useful when the implicit field is expensive to evaluate (GRF,
+        FFT-based fields) and the caller already has a
+        :class:`pyvista.StructuredGrid` whose points carry the scalar
+        sample. The Phase wraps the grid as its native representation;
+        :attr:`grid` returns it untouched, and downstream operations
+        (``pieces``, ``surface_mesh``, ``volume_mesh``,
+        ``center_of_mass``) read from it directly.
+
+        The Phase's ``field`` is a nearest-neighbour lookup against the
+        grid samples — usable for ``Phase.from_shape``-style composition,
+        but inexact between sample points.
+
+        :param grid: structured grid whose point data contains the scalar
+            field samples.
+        :param scalars: name of the scalar array on the grid.
+        :param iso: iso-value (default ``0.0``).
+        :param name: phase name (auto-generated if omitted).
+        """
+        if scalars not in grid.point_data:
+            err_msg = (
+                f"Grid has no point scalar named {scalars!r}. "
+                f"Available: {list(grid.point_data.keys())}"
+            )
+            raise ValueError(err_msg)
+
+        nx, ny, nz = grid.dimensions
+        pts = np.asarray(grid.points).reshape((nx, ny, nz, 3), order="F")
+        xmin, ymin, zmin = pts[0, 0, 0]
+        xmax, ymax, zmax = pts[-1, -1, -1]
+        bounds = (
+            float(xmin),
+            float(xmax),
+            float(ymin),
+            float(ymax),
+            float(zmin),
+            float(zmax),
+        )
+        scalar = np.asarray(grid[scalars]).reshape((nx, ny, nz), order="F")
+        dx = (xmax - xmin) / (nx - 1) if nx > 1 else 1.0
+        dy = (ymax - ymin) / (ny - 1) if ny > 1 else 1.0
+        dz = (zmax - zmin) / (nz - 1) if nz > 1 else 1.0
+
+        def _nearest_field(
+            x: np.ndarray,
+            y: np.ndarray,
+            z: np.ndarray,
+        ) -> np.ndarray:
+            xa = np.asarray(x)
+            ya = np.asarray(y)
+            za = np.asarray(z)
+            ix = np.clip(np.round((xa - xmin) / dx).astype(int), 0, nx - 1)
+            iy = np.clip(np.round((ya - ymin) / dy).astype(int), 0, ny - 1)
+            iz = np.clip(np.round((za - zmin) / dz).astype(int), 0, nz - 1)
+            return scalar[ix, iy, iz]
+
+        instance = cls(
+            field=_nearest_field,
+            bounds=bounds,
+            iso=iso,
+            name=name,
+            resolution=max(nx, ny, nz),
+        )
+        # Seed the grid cache so subsequent .grid() returns the original
+        # (avoids resampling the field via nearest-neighbour).
+        instance._cached_grid = grid  # noqa: SLF001
         return instance
 
     # ------------------------------------------------------------------
@@ -300,7 +424,7 @@ class Phase:
             from .cad import shape_to_cad  # noqa: PLC0415
             from .shape.shape import Shape  # noqa: PLC0415
 
-            transient = Shape(func=self._field, bounds=self._bounds)
+            transient = Shape(field=self._field, bounds=self._bounds)
             return shape_to_cad(
                 transient, bounds=self._bounds, resolution=self._resolution
             )
@@ -338,8 +462,12 @@ class Phase:
     def grid(self: Phase, resolution: int | None = None) -> pv.StructuredGrid:
         """Return a structured grid sampling of the field.
 
-        Only meaningful for field-backed phases.
+        Only meaningful for field-backed phases. When the Phase was built
+        via :meth:`from_grid`, the cached input grid is returned untouched
+        (regardless of the ``resolution`` argument).
         """
+        if self._cached_grid is not None:
+            return self._cached_grid
         if self._field is None or self._bounds is None:
             err_msg = "grid() requires a field-backed Phase"
             raise ValueError(err_msg)
@@ -697,6 +825,91 @@ class Phase:
             )
         err_msg = "Cannot scale an empty Phase"
         raise ValueError(err_msg)
+
+    def rotated(
+        self: Phase,
+        angles: tuple[float, float, float],
+        convention: str = "ZXZ",
+    ) -> Phase:
+        """Return a new :class:`Phase` rotated by Euler ``angles`` (degrees).
+
+        Rotation is applied about the world origin.
+
+        - CAD-backed: delegates to ``CadShape.rotate`` with axis-angle form.
+        - Field-backed: composes the field as
+          ``f'(p) = f(R^{-1} p)`` so the iso-surface rotates with the rest;
+          ``bounds`` is the AABB of the rotated original AABB.
+
+        :param angles: Euler angles in degrees.
+        :param convention: rotation order (default ``"ZXZ"``); accepted by
+            ``scipy.spatial.transform.Rotation.from_euler``.
+        """
+        rot = Rotation.from_euler(convention, angles, degrees=True)
+
+        if self._cad is not None:
+            rotvec = rot.as_rotvec(degrees=True)
+            angle = float(np.linalg.norm(rotvec))
+            if angle == 0.0:
+                return Phase(name=self.name, resolution=self._resolution)._with_cad(
+                    self._cad
+                )
+            axis = rotvec / angle
+            new = Phase(name=self.name, resolution=self._resolution)
+            new._cad = self._cad.rotate((0.0, 0.0, 0.0), tuple(axis), angle)  # noqa: SLF001
+            return new
+
+        if self._field is not None and self._bounds is not None:
+            inv = rot.inv().as_matrix()
+            rot_matrix = rot.as_matrix()
+            f = self._field
+            # World-frame AABB of the rotated bbox: take all 8 corners,
+            # apply the rotation, and re-AABB.
+            b = self._bounds
+            corners = np.array(
+                [
+                    [x, y, z]
+                    for x in (b[0], b[1])
+                    for y in (b[2], b[3])
+                    for z in (b[4], b[5])
+                ]
+            )
+            rotated_corners = corners @ rot_matrix.T
+            new_bounds = (
+                float(rotated_corners[:, 0].min()),
+                float(rotated_corners[:, 0].max()),
+                float(rotated_corners[:, 1].min()),
+                float(rotated_corners[:, 1].max()),
+                float(rotated_corners[:, 2].min()),
+                float(rotated_corners[:, 2].max()),
+            )
+
+            def _rotated_field(
+                x: np.ndarray,
+                y: np.ndarray,
+                z: np.ndarray,
+                _f: Field = f,
+                _m: np.ndarray = inv,
+            ) -> np.ndarray:
+                lx = _m[0, 0] * x + _m[0, 1] * y + _m[0, 2] * z
+                ly = _m[1, 0] * x + _m[1, 1] * y + _m[1, 2] * z
+                lz = _m[2, 0] * x + _m[2, 1] * y + _m[2, 2] * z
+                return _f(lx, ly, lz)
+
+            return Phase(
+                field=_rotated_field,
+                bounds=new_bounds,
+                iso=self._iso,
+                period=None,  # rotation breaks axis-aligned periodicity
+                name=self.name,
+                resolution=self._resolution,
+            )
+        err_msg = "Cannot rotate an empty Phase"
+        raise ValueError(err_msg)
+
+    def _with_cad(self: Phase, cad: Any) -> Phase:
+        """Internal: return self with ``_cad`` set (used by transforms)."""
+        self._cad = cad
+        return self
 
     def tiled(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
         """Return a new :class:`Phase` periodically tiled on the RVE.

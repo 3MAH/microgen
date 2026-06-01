@@ -180,7 +180,7 @@ class Spinodoid(Shape):
         ) -> npt.NDArray[np.float64]:
             return -frep.evaluate(x, y, z)
 
-        self._func = _signed_field
+        self._field = _signed_field
         lx, ly, lz = (self.cell_size * self.repeat_cell).tolist()
         self._bounds = (0.0, float(lx), 0.0, float(ly), 0.0, float(lz))
         # Spinodoid's field is *bit-exact* periodic on ``cell_size`` along each

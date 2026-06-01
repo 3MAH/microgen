@@ -61,7 +61,7 @@ class Sphere(Shape):
         ) -> npt.NDArray[np.float64]:
             return np.sqrt((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2) - r
 
-        self._func = _field
+        self._field = _field
         self._bounds = (
             cx - margin,
             cx + margin,
