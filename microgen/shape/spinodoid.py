@@ -29,7 +29,7 @@ import pyvista as pv
 
 from ..operations import rotate
 from ._frep_grf import _FrepGRF, _normalize_cell_size, compute_threshold_for_porosity
-from .periodic_shell import mesh_to_periodic_shell
+from .periodic_shell import mesh_to_periodic_shell, try_make_solid
 from .shape import Shape
 
 if TYPE_CHECKING:
@@ -263,57 +263,10 @@ class Spinodoid(Shape):
         pts = np.asarray(mesh.points, dtype=np.float64)
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
 
-        shape = _try_make_solid(mesh_to_periodic_shell(pts, tris, self._bounds))
+        shape = try_make_solid(mesh_to_periodic_shell(pts, tris, self._bounds))
         shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
         shape = shape.translate(self.center)
         # Fallback for OCCT Volume() on solids it flags invalid (rigid transforms preserve volume).
         with contextlib.suppress(AttributeError, ValueError):
             shape._mesh_volume = float(abs(self.grid_solid.volume))
         return shape
-
-
-def _try_make_solid(shape: CadShape) -> CadShape:
-    """Best-effort upgrade of a sewn shell (or compound of shells) to a Solid.
-
-    Mirrors :meth:`microgen.Tpms._try_make_solid` (tpms.py:1006). For each
-    closed shell, builds a ``TopoDS_Solid`` via ``BRepBuilderAPI_MakeSolid``
-    and reorients via ``BRepLib.OrientClosedSolid_s`` so the volume encloses
-    the right region. Multiple disjoint shells fuse into a Compound.
-    """
-    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid
-    from OCP.BRepLib import BRepLib
-    from OCP.TopAbs import TopAbs_SHELL
-    from OCP.TopExp import TopExp_Explorer
-
-    from microgen.cad import CadShape as _CadShape
-    from microgen.cad.shape import _topods_cast
-    from microgen.operations import fuse_shapes
-
-    cast_shell = _topods_cast("Shell")
-    cast_solid = _topods_cast("Solid")
-
-    def _make_solid(shell) -> CadShape | None:
-        try:
-            solid = BRepBuilderAPI_MakeSolid(shell).Solid()
-        except (ValueError, RuntimeError):
-            return None
-        BRepLib.OrientClosedSolid_s(cast_solid(solid))
-        return _CadShape(solid)
-
-    wrapped = shape.wrapped
-    if wrapped.ShapeType() == TopAbs_SHELL:
-        built = _make_solid(cast_shell(wrapped))
-        return built if built is not None else shape
-
-    exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
-    solids: list[CadShape] = []
-    while exp.More():
-        built = _make_solid(cast_shell(exp.Current()))
-        if built is not None:
-            solids.append(built)
-        exp.Next()
-    if not solids:
-        return shape
-    if len(solids) == 1:
-        return solids[0]
-    return fuse_shapes(solids, retain_edges=False)
