@@ -230,6 +230,44 @@ class AbstractLattice(Shape):
 
     cad_shape = property(generate_cad)
 
+    def generate_implicit(self: AbstractLattice) -> Shape:
+        """Return the lattice as a single composed implicit :class:`Shape`.
+
+        Builds ``(∪ struts ∪ joints) ∩ box`` by F-rep composition — every
+        primitive stays as a :class:`Cylinder` / :class:`Sphere` SDF;
+        nothing materialises BREP geometry.  Pair with :meth:`Phase.from_shape`
+        for an implicit-first pipeline (marching cubes mesh, ``pieces``
+        connectivity, grid-quadrature moments — no OCCT required).
+
+        For periodic boundary conditions, the existing CAD path
+        (:meth:`generate_cad`) does explicit ``periodic_split_and_translate``;
+        an implicit periodic-wrap is not produced here (struts that cross
+        the cell boundary are simply clipped by the bounding box).
+        """
+        from functools import reduce  # noqa: PLC0415
+        from operator import or_  # noqa: PLC0415
+
+        primitives: list[Shape] = [
+            Cylinder(
+                center=tuple(self.strut_centers[i]),
+                orientation=self.strut_rotations[i],
+                height=self.strut_heights[i],
+                radius=self.strut_radius,
+            )
+            for i in range(self.strut_number)
+        ]
+        if self.strut_joints:
+            primitives.extend(
+                Sphere(center=tuple(v), radius=self.strut_radius) for v in self.vertices
+            )
+
+        union = reduce(or_, primitives)
+        bounding_box = Box(
+            center=self.center,
+            dim=(self.cell_size, self.cell_size, self.cell_size),
+        )
+        return union & bounding_box
+
     def _generate_cad(self, **_: KwargsGenerateType) -> CadShape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
         list_phases: list[Phase] = []
