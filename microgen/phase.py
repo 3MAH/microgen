@@ -37,6 +37,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -843,8 +844,6 @@ class Phase:
         :param convention: rotation order (default ``"ZXZ"``); accepted by
             ``scipy.spatial.transform.Rotation.from_euler``.
         """
-        from scipy.spatial.transform import Rotation  # noqa: PLC0415
-
         rot = Rotation.from_euler(convention, angles, degrees=True)
 
         if self._cad is not None:
