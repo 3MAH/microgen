@@ -35,12 +35,12 @@ geometry = Tpms(
 
 # 2. Wrap the geometry into a microgen Phase object.
 phases = []
-phases.append(Phase(shape=geometry.generate_cad()))
+phases.append(Phase.from_cad(geometry.generate_cad()))
 rve = Rve(dim=1)
 
 # 3. Export the geometry as a STEP file.
 step_file = str(Path(__file__).parent / "gyroid.step")
-phases[0].shape.export_step(step_file)
+phases[0].cad.export_step(step_file)
 
 # 4. Import the STEP file and create a mesh with periodic constraints and export as VTK.
 

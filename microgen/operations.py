@@ -127,10 +127,31 @@ def rotate_euler(
 
 
 def rescale(shape: CadShape, scale: float | tuple[float, float, float]) -> CadShape:
-    """Rescale given object according to scale parameters [dim_x, dim_y, dim_z]."""
-    from .phase import Phase  # noqa: PLC0415
+    """Rescale ``shape`` by ``scale = (sx, sy, sz)`` (or a scalar) about its centroid.
 
-    return Phase.rescale_shape(shape, scale)
+    Preserves the shape's center of mass — scaling is performed about it.
+    """
+    require_cad()
+    from .cad import transform_geometry  # noqa: PLC0415
+
+    if isinstance(scale, (int, float)):
+        sx = sy = sz = float(scale)
+    else:
+        sx, sy, sz = (float(s) for s in scale)
+
+    center = shape.center()
+    cx, cy, cz = center.x, center.y, center.z
+
+    # translate(-c) → scale about origin → translate(+c), as a single 3x4 affine
+    matrix = np.array(
+        [
+            [sx, 0.0, 0.0, cx - sx * cx],
+            [0.0, sy, 0.0, cy - sy * cy],
+            [0.0, 0.0, sz, cz - sz * cz],
+        ],
+        dtype=np.float64,
+    )
+    return transform_geometry(shape, matrix)
 
 
 def _unify_solids(shape: TopoDS_Shape) -> CadShape:
@@ -177,7 +198,7 @@ def fuse_shapes(shapes: list[CadShape], *, retain_edges: bool) -> CadShape:
 def cut_phases_by_shape(phases: list[Phase], cut_obj: CadShape) -> list[Phase]:
     """Cut list of phases by a given shape.
 
-    :param phases: list of phases to cut
+    :param phases: list of phases (must be CAD-backed)
     :param cut_obj: cutting object
 
     :return phase_cut: final result
@@ -190,18 +211,18 @@ def cut_phases_by_shape(phases: list[Phase], cut_obj: CadShape) -> list[Phase]:
     phase_cut: list[Phase] = []
 
     for phase in phases:
-        if phase.shape is None:
+        if phase.is_empty:
             continue
-        cut = CadShape(BRepAlgoAPI_Cut(phase.shape.wrapped, cut_obj.wrapped).Shape())
+        cut = CadShape(BRepAlgoAPI_Cut(phase.cad.wrapped, cut_obj.wrapped).Shape())
         if len(cut.solids()) > 0:
-            phase_cut.append(Phase(shape=cut))
+            phase_cut.append(Phase.from_cad(cut))
     return phase_cut
 
 
 def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[CadShape]) -> Phase:
     """Cut a phase by a list of shapes.
 
-    :param phase_to_cut: phase to cut
+    :param phase_to_cut: phase to cut (must be CAD-backed)
     :param shapes: list of cutting shapes
 
     :return resultCut: cut phase
@@ -211,13 +232,13 @@ def cut_phase_by_shape_list(phase_to_cut: Phase, shapes: list[CadShape]) -> Phas
 
     from .phase import Phase  # noqa: PLC0415
 
-    result = phase_to_cut.shape
-    if result is None:
-        err_msg = "phase_to_cut has no shape to cut"
+    if phase_to_cut.is_empty:
+        err_msg = "phase_to_cut is empty"
         raise ValueError(err_msg)
+    result = phase_to_cut.cad
     for shape in shapes:
         result = CadShape(BRepAlgoAPI_Cut(result.wrapped, shape.wrapped).Shape())
-    return Phase(shape=result)
+    return Phase.from_cad(result)
 
 
 def cut_shapes(shapes: list[CadShape], *, reverse_order: bool = True) -> list[CadShape]:
@@ -253,20 +274,48 @@ def cut_shapes(shapes: list[CadShape], *, reverse_order: bool = True) -> list[Ca
 
 
 def cut_phases(phases: list[Phase], *, reverse_order: bool = True) -> list[Phase]:
-    """Cut list of shapes in the given order (or reverse) and fuse them.
+    """Cut list of phases in the given order (or reverse) and fuse them.
 
-    :param phases: list of phases to cut
-    :param reverse_order: bool, order for cutting shapes, \
-        when True: the last shape of the list is not cut
+    :param phases: list of phases to cut (each must be CAD-backed)
+    :param reverse_order: order for cutting shapes;
+        when ``True``, the last shape of the list is not cut
 
-    :return list of phases
+    :return: list of phases
     """
     from .phase import Phase  # noqa: PLC0415
 
-    shapes = [phase.shape for phase in phases]
+    shapes = [phase.cad for phase in phases]
     cutted_shapes = cut_shapes(shapes, reverse_order=reverse_order)
 
-    return [Phase(shape=shape) for shape in cutted_shapes]
+    return [Phase.from_cad(shape) for shape in cutted_shapes]
+
+
+def _split_cad_in_grid(
+    cad: CadShape,
+    rve: Rve,
+    grid: list[int],
+) -> list[TopoDS_Shape]:
+    """Split a CAD shape into solids per (grid-1)^3 interior cell planes."""
+    require_cad()
+    from .cad import enumerate_solids, make_plane_face, split_shape  # noqa: PLC0415
+
+    result: list[TopoDS_Shape] = []
+    for solid in enumerate_solids(cad):
+        current = CadShape(solid)
+        for axis in range(3):
+            direction = tuple(int(axis == i) for i in range(3))
+            coords = np.linspace(
+                start=rve.min_point[axis],
+                stop=rve.max_point[axis],
+                num=grid[axis],
+                endpoint=False,
+            )[1:]
+            for pos in coords:
+                base_pnt = tuple(float(pos) * direction[k] for k in range(3))
+                plane = make_plane_face(base_pnt, direction)
+                current = split_shape(current, plane)
+        result.extend(enumerate_solids(current))
+    return result
 
 
 def raster_phase(
@@ -276,22 +325,51 @@ def raster_phase(
     *,
     phase_per_raster: bool = True,
 ) -> Phase | list[Phase]:
-    """Raster solids from phase according to the rve divided by the given grid.
+    """Raster a phase according to the RVE divided by the given grid.
 
-    :param phase: phase to raster
+    Each solid in the phase is split by the (grid-1) interior planes per
+    axis (CAD-backed phases only).  When ``phase_per_raster`` is true,
+    each non-empty grid cell becomes one :class:`Phase`; otherwise the
+    split sub-solids are fused into one new :class:`Phase`.
+
+    :param phase: CAD-backed phase to raster
     :param rve: RVE divided by the given grid
-    :param grid: number of divisions in each direction [x, y, z]
+    :param grid: number of divisions in each direction ``[x, y, z]``
     :param phase_per_raster: if True, returns list of phases
 
     :return: Phase or list of Phases
     """
+    require_cad()
+    from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
+    from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
+    from .cad import make_compound_from_solids  # noqa: PLC0415
     from .phase import Phase  # noqa: PLC0415
 
-    solids = phase.split_solids(rve, grid)
+    if phase.is_empty:
+        err_msg = "Cannot raster an empty phase"
+        raise ValueError(err_msg)
 
-    if phase_per_raster:
-        return Phase.generate_phase_per_raster(solids, rve, grid)
-    return Phase(solids=solids)
+    solids = _split_cad_in_grid(phase.cad, rve, grid)
+
+    if not phase_per_raster:
+        return Phase.from_cad(make_compound_from_solids(solids))
+
+    grid_arr = np.array(grid)
+    buckets: list[list[TopoDS_Shape]] = [[] for _ in range(int(np.prod(grid_arr)))]
+    for solid in solids:
+        props = GProp_GProps()
+        BRepGProp.VolumeProperties_s(solid, props)
+        com = props.CentreOfMass()
+        center = np.array([com.X(), com.Y(), com.Z()])
+        i, j, k = np.floor(
+            grid_arr * (center - rve.min_point) / rve.dim,
+        ).astype(int)
+        ind = i + grid_arr[0] * j + grid_arr[0] * grid_arr[1] * k
+        buckets[int(ind)].append(solid)
+    return [
+        Phase.from_cad(make_compound_from_solids(group)) for group in buckets if group
+    ]
 
 
 def repeat_shape(unit_geom: CadShape, rve: Rve, grid: tuple[int, int, int]) -> CadShape:
@@ -301,11 +379,17 @@ def repeat_shape(unit_geom: CadShape, rve: Rve, grid: tuple[int, int, int]) -> C
     :param rve: RVE of the geometry to repeat
     :param grid: list of number of geometry repetitions in each direction
 
-    :return: cq shape of the repeated geometry
+    :return: CadShape of the repeated geometry
     """
-    from .phase import Phase  # noqa: PLC0415
+    require_cad()
+    from .cad import make_compound_from_solids, translate_solid  # noqa: PLC0415
 
-    return Phase.repeat_shape(unit_geom, rve, grid)
+    center = np.array(unit_geom.center().to_tuple())
+    copies = []
+    for idx in np.ndindex(*grid):
+        pos = center - rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
+        copies.append(translate_solid(unit_geom.wrapped, pos))
+    return make_compound_from_solids(copies)
 
 
 def repeat_polydata(

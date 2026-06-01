@@ -38,14 +38,14 @@ for seed in seedList:
     )
     shapeList.append(poly.generate_cad())
 
-boxPhase = Phase(shape=box.generate_cad())
+boxPhase = Phase.from_cad(box.generate_cad())
 
 honeycomb = cut_phase_by_shape_list(phase_to_cut=boxPhase, shapes=shapeList)
 
 step_file = str(Path(__file__).parent / "honeycomb.step")
 stl_file = str(Path(__file__).parent / "honeycomb.stl")
-honeycomb.shape.export_step(step_file)
-honeycomb.shape.export_stl(stl_file)
+honeycomb.cad.export_step(step_file)
+honeycomb.cad.export_stl(stl_file)
 vtk_file = str(Path(__file__).parent / "honeycomb.vtk")
 mesh(
     mesh_file=step_file,

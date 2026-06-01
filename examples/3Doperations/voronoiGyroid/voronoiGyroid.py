@@ -18,9 +18,9 @@ gyroid = gyroid.generate_cad(type_part="sheet").translate((0.5, 0.5, 0.5))
 phases = []
 for polyhedron in polyhedra:
     shape = polyhedron.generate_cad()
-    phases.append(Phase(shape=shape.intersect(gyroid)))
+    phases.append(Phase.from_cad(shape.intersect(gyroid)))
 
-compound = make_compound([phase.shape for phase in phases])
+compound = make_compound([phase.cad for phase in phases])
 step_file = str(Path(__file__).parent / "compound.step")
 compound.export_step(step_file)
 

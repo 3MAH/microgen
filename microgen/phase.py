@@ -1,351 +1,749 @@
-"""Phase class: a collection of OCCT solids belonging to the same phase.
+"""Phase 2.0 — implicit-first, CAD-optional, ``Piece``-aware container.
 
-The CAD path goes through OCCT directly via ``OCP`` (installed as the
-``[cad]`` extra — ``cadquery-ocp-novtk``); no ``cadquery`` anywhere.  Shapes are
-stored as :class:`microgen.cad.CadShape` and solids as raw OCCT
-``TopoDS_Solid``.
+A :class:`Phase` is a region of space identified by an implicit scalar
+field (the canonical representation), with derived materialisations on
+demand:
+
+- :meth:`grid` / :meth:`surface_mesh` / :meth:`volume_mesh` — PyVista views
+- :attr:`cad` — OCCT BREP via :func:`microgen.cad.shape_to_cad`
+- :attr:`pieces` — connected components of ``{field < iso}`` (the
+  "Phase = collection of cut/split sub-solids" invariant)
+- :attr:`center_of_mass` / :attr:`inertia_matrix` — moments via grid
+  quadrature (field-backed) or BRepGProp (CAD-backed)
+
+Three construction paths:
+
+- :class:`Phase` ``(field=..., bounds=..., iso=..., period=...)`` —
+  field-first (no CAD required).
+- :meth:`Phase.from_shape` — sugar over the field-first path; bridges
+  from a :class:`~microgen.shape.shape.Shape`.
+- :meth:`Phase.from_cad` — CAD-backed; required when loading a STEP file
+  or wrapping a pre-built BREP.
+
+The CAD seam is isolated in :meth:`_materialise_cad`. Switching from
+``microgen.cad`` to ``pyvista-cad`` later means swapping that one method;
+no other code in microgen needs to change.
+
+A :class:`Phase` is **immutable**: transforms (:meth:`translated`,
+:meth:`scaled`, :meth:`rotated`, :meth:`tiled`) return a new instance.
+This makes cache invalidation impossible by construction.
 """
 
 from __future__ import annotations
 
-import warnings
-from typing import TYPE_CHECKING
+import itertools
+from dataclasses import dataclass
+from functools import cached_property
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import numpy.typing as npt
-
-from .cad import (
-    CadShape,
-    enumerate_solids,
-    make_compound_from_solids,
-    make_plane_face,
-    split_shape,
-    transform_geometry,
-    translate_solid,
-)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from OCP.TopoDS import TopoDS_Shape, TopoDS_Solid
+    import numpy.typing as npt
+    import pyvista as pv
 
     from .rve import Rve
-
-    ShapeLike = CadShape | TopoDS_Shape
-
-
-def _require_ocp() -> None:
-    """Raise :class:`ImportError` with an install hint if OCP isn't available."""
-    try:
-        import OCP  # noqa: F401, PLC0415
-    except ImportError as err:
-        err_msg = (
-            "This Phase operation requires the CAD extra: pip install 'microgen[cad]'"
-        )
-        raise ImportError(err_msg) from err
+    from .shape._types import BoundsType, Field, PeriodType
+    from .shape.shape import Shape
 
 
-def _to_cad_shape(obj: ShapeLike) -> CadShape:
-    """Coerce a ``CadShape`` or raw ``TopoDS_Shape`` into a :class:`CadShape`."""
-    if isinstance(obj, CadShape):
-        return obj
-    return CadShape(obj.wrapped if hasattr(obj, "wrapped") else obj)
+# Module-level counter for auto-naming (replaces the old mutable
+# ``Phase.num_instances`` class attribute, which contaminated test runs).
+_PHASE_AUTONAME_COUNTER = itertools.count()
+
+
+_IMPLICIT_SCALAR = "implicit"
+
+
+@dataclass(frozen=True)
+class Piece:
+    """One connected sub-region of a :class:`Phase`.
+
+    Pieces are what survives "split this phase under periodicity" or
+    "raster this phase into a per-cell grid" — they expose the per-piece
+    geometric moments without forcing every Phase to be a list of solids.
+
+    Payload fields are populated lazily and may be ``None`` depending on
+    how the parent :class:`Phase` was constructed: a CAD-backed phase
+    populates ``cad``; a field-backed phase populates ``voxel_mask``;
+    a mesh-backed phase populates ``mesh``.
+    """
+
+    com: tuple[float, float, float]
+    volume: float
+    bounds: BoundsType
+    cad: Any | None = None
+    mesh: pv.PolyData | None = None
+    voxel_mask: npt.NDArray[np.bool_] | None = None
 
 
 class Phase:
-    """Phase class: a collection of solids with shared material properties.
+    """Microstructure phase (implicit-first, CAD-optional).
 
-    Exposes:
+    A phase is **one** of the three:
 
-    - :attr:`center_of_mass`
-    - :attr:`inertia_matrix`
-    - :attr:`shape` (a :class:`~microgen.cad.CadShape`)
-    - :attr:`solids` (a list of raw OCCT ``TopoDS_Solid``)
+    - field-backed: a callable ``field(x,y,z) -> array`` with negative
+      values inside, plus an AABB ``bounds`` and an ``iso`` value (the
+      solid is ``{p : field(p) < iso}``).
+    - mesh-backed: a triangulated surface ``pv.PolyData``.
+    - CAD-backed: a CAD shape (``microgen.cad.CadShape`` today, any
+      duck-typed CAD object — including future ``pyvista-cad`` shapes —
+      tomorrow).
 
-    :param shape: a :class:`~microgen.cad.CadShape` or raw ``TopoDS_Shape``
-    :param solids: list of raw OCCT solids
-    :param center: center
-    :param orientation: orientation
+    The other two materialisations are derived on demand.
+
+    :param field: SDF / level-set ``(x, y, z) -> array``; negative inside.
+        Required for field-backed construction.
+    :param bounds: axis-aligned bbox ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+        spanning the field.  Required if ``field`` is set.
+    :param iso: iso-value; the solid is ``{p : field(p) < iso}``.
+        Defaults to ``0.0``.
+    :param period: ``(Lx, Ly, Lz)`` if the field is intrinsically
+        periodic.  Optional.
+    :param name: phase name (defaults to auto-generated ``Phase_N``).
+    :param resolution: default sampling resolution used by lazy
+        :meth:`grid` / :meth:`surface_mesh` / :meth:`pieces`.
+
+    Use :meth:`from_shape`, :meth:`from_cad` or :meth:`from_mesh` to
+    build from a :class:`~microgen.shape.shape.Shape`, a pre-built CAD
+    object, or a triangulated mesh, respectively.
     """
-
-    num_instances = 0
 
     def __init__(
         self: Phase,
-        shape: ShapeLike | None = None,
-        solids: list[TopoDS_Solid] | None = None,
-        center: tuple[float, float, float] | None = None,
-        orientation: tuple[float, float, float] | None = None,
+        *,
+        field: Field | None = None,
+        bounds: BoundsType | None = None,
+        iso: float = 0.0,
+        period: PeriodType | None = None,
+        name: str | None = None,
+        resolution: int = 50,
     ) -> None:
-        """Initialize the phase object."""
-        self._shape: CadShape | None = (
-            _to_cad_shape(shape) if shape is not None else None
-        )
-        self._solids: list[TopoDS_Solid] = solids if solids is not None else []
-        self.center = center
-        self.orientation = orientation
-
-        if shape is None and solids == []:
-            warnings.warn("Empty phase", stacklevel=2)
-
-        self.name = f"Phase_{self.num_instances}"
-
-        self._center_of_mass = None
-        self._inertia_matrix = None
-
-        Phase.num_instances += 1
-
-    def get_center_of_mass(
-        self: Phase,
-        *,
-        compute: bool = True,
-    ) -> npt.NDArray[np.float64]:
-        """Return the center of 'mass' of the phase.
-
-        :param compute: if False and center_of_mass already exists, \
-            does not compute it (use carefully)
-        """
-        if isinstance(self._center_of_mass, np.ndarray) and not compute:
-            return self._center_of_mass
-        self._center_of_mass = self._compute_center_of_mass()
-        return self._center_of_mass
-
-    center_of_mass = property(get_center_of_mass)
-
-    def _compute_center_of_mass(self: Phase) -> npt.NDArray[np.float64]:
-        """Calculate the center of 'mass' of the phase."""
-        _require_ocp()
-        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-        from OCP.GProp import GProp_GProps  # noqa: PLC0415
-
-        if self.shape is None:
-            err_msg = "Cannot compute center of mass on an empty phase"
+        """Initialize the phase (keyword-only; positional args rejected)."""
+        if field is not None and bounds is None:
+            err_msg = "bounds must be provided when field is set"
             raise ValueError(err_msg)
 
-        properties = GProp_GProps()
-        BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
+        self._field: Field | None = field
+        self._bounds: BoundsType | None = bounds
+        self._iso: float = float(iso)
+        self._period: PeriodType | None = period
+        self._resolution: int = int(resolution)
+        # Internal caches for non-field-backed payloads. Materialisation
+        # rules: CAD-backed phases set ``_cad`` at construction; field-backed
+        # phases populate it lazily in :attr:`cad`; mesh-backed phases set
+        # ``_surface_mesh`` at construction.
+        self._cad: Any | None = None
+        self._surface_mesh: pv.PolyData | None = None
 
-        com = properties.CentreOfMass()
-        return np.array([com.X(), com.Y(), com.Z()])
-
-    def get_inertia_matrix(
-        self: Phase,
-        *,
-        compute: bool = True,
-    ) -> npt.NDArray[np.float64]:
-        """Calculate the inertia matrix of the phase.
-
-        :param compute: if False and inertia_matrix already exists, \
-            does not compute it (use carefully)
-        """
-        if isinstance(self._inertia_matrix, np.ndarray) and not compute:
-            return self._inertia_matrix
-        self._inertia_matrix = self._compute_inertia_matrix()
-        return self._inertia_matrix
-
-    inertia_matrix = property(get_inertia_matrix)
-
-    def _compute_inertia_matrix(self: Phase) -> npt.NDArray[np.float64]:
-        """Calculate the inertia matrix of the phase."""
-        _require_ocp()
-        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-        from OCP.GProp import GProp_GProps  # noqa: PLC0415
-
-        if self.shape is None:
-            err_msg = "Cannot compute inertia matrix on an empty phase"
-            raise ValueError(err_msg)
-
-        properties = GProp_GProps()
-        BRepGProp.VolumeProperties_s(self.shape.wrapped, properties)
-
-        inm = properties.MatrixOfInertia()
-        return np.array(
-            [
-                [inm.Value(1, 1), inm.Value(1, 2), inm.Value(1, 3)],
-                [inm.Value(2, 1), inm.Value(2, 2), inm.Value(2, 3)],
-                [inm.Value(3, 1), inm.Value(3, 2), inm.Value(3, 3)],
-            ],
+        self.name: str = (
+            name if name is not None else f"Phase_{next(_PHASE_AUTONAME_COUNTER)}"
         )
 
-    @property
-    def shape(self: Phase) -> CadShape | None:
-        """Return the shape of the phase as a :class:`~microgen.cad.CadShape`."""
-        if self._shape is not None:
-            return self._shape
-        if len(self._solids) > 0:
-            self._shape = make_compound_from_solids(self._solids)
-            return self._shape
-
-        warnings.warn("No shape or solids", stacklevel=2)
-        return None
-
-    @property
-    def solids(self: Phase) -> list[TopoDS_Solid]:
-        """Return the list of OCCT ``TopoDS_Solid`` in the phase."""
-        if len(self._solids) > 0:
-            return self._solids
-        if self._shape is not None:
-            self._solids = enumerate_solids(self._shape)
-            return self._solids
-
-        warnings.warn("No solids or shape", stacklevel=2)
-        return []
-
-    def translate(self: Phase, vec: Sequence[float]) -> None:
-        """Translate phase by a given vector (in place)."""
-        if self._shape is None:
-            err_msg = "Cannot translate a phase with no shape"
-            raise ValueError(err_msg)
-        self._shape = self._shape.translate(vec)
-        self._center_of_mass = self._compute_center_of_mass()
-
-    @staticmethod
-    def rescale_shape(
-        shape: ShapeLike,
-        scale: float | tuple[float, float, float],
-    ) -> CadShape:
-        """Rescale ``shape`` by ``scale`` = ``(sx, sy, sz)`` (or a scalar).
-
-        Preserves the shape's center of mass — scaling is performed about it.
-        """
-        shape = _to_cad_shape(shape)
-        if isinstance(scale, float):
-            scale = (scale, scale, scale)
-
-        center = shape.center()
-        cx, cy, cz = center.x, center.y, center.z
-        sx, sy, sz = (float(s) for s in scale)
-
-        # Equivalent to: translate(-c) → scale about origin → translate(+c)
-        # Expressed as a single 3x4 affine matrix for BRepBuilderAPI_GTransform.
-        matrix = np.array(
-            [
-                [sx, 0.0, 0.0, cx - sx * cx],
-                [0.0, sy, 0.0, cy - sy * cy],
-                [0.0, 0.0, sz, cz - sz * cz],
-            ],
-            dtype=np.float64,
-        )
-        return transform_geometry(shape, matrix)
-
-    def rescale(self: Phase, scale: float | tuple[float, float, float]) -> None:
-        """Rescale phase (in place) by ``scale = (sx, sy, sz)`` or a scalar."""
-        if self._shape is None:
-            err_msg = "Cannot rescale a phase with no shape"
-            raise ValueError(err_msg)
-        self._shape = self.rescale_shape(self._shape, scale)
-
-    @staticmethod
-    def repeat_shape(
-        unit_geom: ShapeLike,
-        rve: Rve,
-        grid: tuple[int, int, int],
-    ) -> CadShape:
-        """Repeat ``unit_geom`` on a ``grid`` within the ``rve`` periodicity cell.
-
-        Returns a :class:`~microgen.cad.CadShape` wrapping an OCCT compound
-        of translated copies of ``unit_geom``.
-        """
-        unit_geom = _to_cad_shape(unit_geom)
-        center = np.array(unit_geom.center().to_tuple())
-
-        copies: list[TopoDS_Solid] = []
-        for idx in np.ndindex(*grid):
-            pos = center - rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
-            copies.append(translate_solid(unit_geom.wrapped, pos))
-        return make_compound_from_solids(copies)
-
-    def repeat(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> None:
-        """Repeat phase in place on a ``grid`` within the ``rve`` periodicity cell."""
-        if self.shape is None:
-            err_msg = "Cannot repeat a phase with no shape"
-            raise ValueError(err_msg)
-        self._shape = self.repeat_shape(self.shape, rve, grid)
-
-    def split_solids(self: Phase, rve: Rve, grid: list[int]) -> list[TopoDS_Solid]:
-        """Split solids from phase according to the rve divided by the given grid.
-
-        Each solid is split by the (grid-1) interior planes along each axis;
-        planes are constructed with :func:`microgen.cad.make_plane_face` and
-        applied through OCCT's ``BRepAlgoAPI_Splitter``.
-
-        :param rve: RVE divided by the given grid
-        :param grid: number of divisions in each direction ``[x, y, z]``
-
-        :return: list of raw OCCT ``TopoDS_Solid``
-        """
-        result: list[TopoDS_Solid] = []
-        for solid in self.solids:
-            current = CadShape(solid)
-            for dim in range(3):
-                direction = tuple(int(dim == i) for i in range(3))
-                coords = np.linspace(
-                    start=rve.min_point[dim],
-                    stop=rve.max_point[dim],
-                    num=grid[dim],
-                    endpoint=False,
-                )[1:]
-                for pos in coords:
-                    base_pnt = tuple(float(pos) * direction[k] for k in range(3))
-                    plane = make_plane_face(base_pnt, direction)
-                    current = split_shape(current, plane)
-            result.extend(enumerate_solids(current))
-        return result
-
-    def rasterize(
-        self: Phase,
-        rve: Rve,
-        grid: list[int],
-        *,
-        phase_per_raster: bool = True,
-    ) -> list[Phase] | None:
-        """Raster solids from phase according to the rve divided by the given grid.
-
-        :param rve: RVE divided by the given grid
-        :param grid: number of divisions in each direction [x, y, z]
-        :param phase_per_raster: if True, returns list of phases
-
-        :return: list of Phases if required
-        """
-        solids = self.split_solids(rve, grid)
-
-        if phase_per_raster:
-            return self.generate_phase_per_raster(solids, rve, grid)
-        self._solids = solids
-        self._shape = make_compound_from_solids(self._solids)
-        return None
+    # ------------------------------------------------------------------
+    # Constructors
+    # ------------------------------------------------------------------
 
     @classmethod
-    def generate_phase_per_raster(
+    def from_shape(
         cls: type[Phase],
-        solids: list[TopoDS_Solid],
-        rve: Rve,
-        grid: list[int],
-    ) -> list[Phase]:
-        """Raster solids into per-grid-cell Phases.
+        shape: Shape,
+        *,
+        bounds: BoundsType | None = None,
+        iso: float = 0.0,
+        name: str | None = None,
+        resolution: int = 50,
+    ) -> Phase:
+        """Construct a field-backed :class:`Phase` from an implicit :class:`Shape`.
 
-        :param solids: list of OCCT solids
-        :param rve: RVE divided by the given grid
-        :param grid: number of divisions in each direction ``[x, y, z]``
+        Inherits ``field``, ``bounds``, and ``period`` from the shape.
+        ``bounds`` may be overridden (e.g., to clip a periodic field to a
+        sub-region).
 
-        :return: list of :class:`Phase`
+        :param shape: source implicit shape; must have ``func is not None``.
+        :param bounds: override the shape's bounds; defaults to ``shape.bounds``.
+        :param iso: iso-value (default ``0.0``).
+        :param name: phase name (auto-generated if omitted).
+        :param resolution: default sampling resolution.
         """
-        _require_ocp()
-        from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-        from OCP.GProp import GProp_GProps  # noqa: PLC0415
+        if shape.func is None:
+            err_msg = "Cannot build Phase from a Shape without an implicit field"
+            raise ValueError(err_msg)
+        actual_bounds = bounds if bounds is not None else shape.bounds
+        if actual_bounds is None:
+            err_msg = (
+                "Source Shape has no bounds — pass `bounds=` "
+                "explicitly to Phase.from_shape()"
+            )
+            raise ValueError(err_msg)
+        return cls(
+            field=shape.func,
+            bounds=actual_bounds,
+            iso=iso,
+            period=shape.period,
+            name=name,
+            resolution=resolution,
+        )
 
-        grid_arr = np.array(grid)
-        solids_phases: list[list[TopoDS_Solid]] = [
-            [] for _ in range(int(np.prod(grid_arr)))
-        ]
-        for solid in solids:
+    @classmethod
+    def from_cad(
+        cls: type[Phase],
+        cad: Any,
+        *,
+        name: str | None = None,
+    ) -> Phase:
+        """Construct a CAD-backed :class:`Phase`.
+
+        ``cad`` may be a :class:`microgen.cad.CadShape` or any duck-typed
+        object with ``.solids()``, ``.center()``, ``.volume()``,
+        ``.bounding_box()`` methods (this is the seam that lets a future
+        ``pyvista-cad`` backend drop in without touching :class:`Phase`).
+
+        :param cad: a CAD shape (``CadShape`` today)
+        :param name: phase name (auto-generated if omitted)
+        """
+        from .cad import CadShape  # noqa: PLC0415
+
+        if not isinstance(cad, CadShape) and hasattr(cad, "wrapped"):
+            cad = CadShape(cad.wrapped)
+
+        instance = cls(name=name)
+        instance._cad = cad  # noqa: SLF001
+        return instance
+
+    @classmethod
+    def from_mesh(
+        cls: type[Phase],
+        mesh: pv.PolyData,
+        *,
+        name: str | None = None,
+    ) -> Phase:
+        """Construct a mesh-backed :class:`Phase` from a closed surface mesh.
+
+        :param mesh: closed triangulated surface
+        :param name: phase name (auto-generated if omitted)
+        """
+        instance = cls(name=name)
+        instance._surface_mesh = mesh  # noqa: SLF001
+        return instance
+
+    # ------------------------------------------------------------------
+    # Read-only accessors
+    # ------------------------------------------------------------------
+
+    @property
+    def field(self: Phase) -> Field | None:
+        """The implicit scalar field, or ``None`` for non-field-backed phases."""
+        return self._field
+
+    @property
+    def bounds(self: Phase) -> BoundsType | None:
+        """AABB ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+
+        For field-backed phases this is set at construction.  For CAD- or
+        mesh-backed phases it's derived from the underlying representation.
+        """
+        if self._bounds is not None:
+            return self._bounds
+        if self._cad is not None:
+            bb = self._cad.bounding_box()
+            return (bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax)
+        if self._surface_mesh is not None:
+            xmin, xmax, ymin, ymax, zmin, zmax = self._surface_mesh.bounds
+            return (
+                float(xmin),
+                float(xmax),
+                float(ymin),
+                float(ymax),
+                float(zmin),
+                float(zmax),
+            )
+        return None
+
+    @property
+    def iso(self: Phase) -> float:
+        """Iso-value for the implicit field (the solid is ``{field < iso}``)."""
+        return self._iso
+
+    @property
+    def period(self: Phase) -> PeriodType | None:
+        """Intrinsic period ``(Lx, Ly, Lz)`` if the field is periodic."""
+        return self._period
+
+    @property
+    def resolution(self: Phase) -> int:
+        """Default sampling resolution for lazy grid/mesh/pieces materialisation."""
+        return self._resolution
+
+    @property
+    def is_empty(self: Phase) -> bool:
+        """True if the phase has no backing representation."""
+        return self._field is None and self._cad is None and self._surface_mesh is None
+
+    # ------------------------------------------------------------------
+    # CAD materialisation (the pyvista-cad seam lives here)
+    # ------------------------------------------------------------------
+
+    def _materialise_cad(self: Phase) -> Any:
+        """Build a CAD representation from the field (or surface mesh).
+
+        This is the **single seam** where :class:`Phase` talks to a CAD
+        backend.  Swapping ``microgen.cad`` for ``pyvista-cad`` later
+        means rewriting this method only.
+
+        Requires the optional ``[cad]`` extra today.
+        """
+        if self._field is not None and self._bounds is not None:
+            # Wrap field+bounds in a transient Shape and call shape_to_cad.
+            from .cad import shape_to_cad  # noqa: PLC0415
+            from .shape.shape import Shape  # noqa: PLC0415
+
+            transient = Shape(func=self._field, bounds=self._bounds)
+            return shape_to_cad(
+                transient, bounds=self._bounds, resolution=self._resolution
+            )
+        if self._surface_mesh is not None:
+            from .cad import mesh_to_shape  # noqa: PLC0415
+
+            mesh = self._surface_mesh
+            if not mesh.is_all_triangles:
+                mesh = mesh.triangulate()
+            triangles = mesh.faces.reshape(-1, 4)[:, 1:]
+            points = np.asarray(mesh.points, dtype=np.float64)
+            return mesh_to_shape(points, triangles)
+        err_msg = "Cannot materialise CAD: phase has no field or mesh"
+        raise ValueError(err_msg)
+
+    @cached_property
+    def cad(self: Phase) -> Any:
+        """The CAD representation (``microgen.cad.CadShape`` today, lazy).
+
+        For CAD-backed phases this returns the stored shape.  For
+        field-backed or mesh-backed phases it's lazily materialised via
+        :meth:`_materialise_cad`.
+
+        Requires the ``[cad]`` extra (raises ``ImportError`` otherwise).
+        """
+        if self._cad is not None:
+            return self._cad
+        return self._materialise_cad()
+
+    # ------------------------------------------------------------------
+    # PyVista views (lazy, per-resolution caches via @cached_property are
+    # not used here because the resolution kwarg differs per call)
+    # ------------------------------------------------------------------
+
+    def grid(self: Phase, resolution: int | None = None) -> pv.StructuredGrid:
+        """Return a structured grid sampling of the field.
+
+        Only meaningful for field-backed phases.
+        """
+        if self._field is None or self._bounds is None:
+            err_msg = "grid() requires a field-backed Phase"
+            raise ValueError(err_msg)
+        import pyvista as pv  # noqa: PLC0415
+
+        res = int(resolution) if resolution is not None else self._resolution
+        xmin, xmax, ymin, ymax, zmin, zmax = self._bounds
+        xi = np.linspace(xmin, xmax, res)
+        yi = np.linspace(ymin, ymax, res)
+        zi = np.linspace(zmin, zmax, res)
+        x, y, z = np.meshgrid(xi, yi, zi, indexing="ij")
+        sg = pv.StructuredGrid(x, y, z)
+        sg[_IMPLICIT_SCALAR] = self._field(
+            x.ravel(order="F"), y.ravel(order="F"), z.ravel(order="F")
+        )
+        return sg
+
+    def surface_mesh(self: Phase, resolution: int | None = None) -> pv.PolyData:
+        """Return a triangulated surface mesh of the solid boundary.
+
+        - Mesh-backed phase: returns the stored mesh.
+        - Field-backed phase: marching cubes on the sampled grid.
+        - CAD-backed phase: tessellates via OCCT incremental mesh.
+        """
+        import pyvista as pv  # noqa: PLC0415
+
+        if self._surface_mesh is not None:
+            return self._surface_mesh
+        if self._field is not None:
+            sg = self.grid(resolution)
+            iso = pv.PolyData(
+                sg.contour(isosurfaces=[self._iso], scalars=_IMPLICIT_SCALAR)
+            )
+            return iso.clean().triangulate() if iso.n_cells > 0 else pv.PolyData()
+        if self._cad is not None:
+            err_msg = (
+                "surface_mesh() on a CAD-backed Phase is not implemented yet "
+                "(would need OCCT BRepMesh_IncrementalMesh tessellation)."
+            )
+            raise NotImplementedError(err_msg)
+        err_msg = "Cannot build surface_mesh on an empty Phase"
+        raise ValueError(err_msg)
+
+    def volume_mesh(self: Phase, resolution: int | None = None) -> pv.UnstructuredGrid:
+        """Return the volumetric cells where ``field < iso``.
+
+        Only meaningful for field-backed phases.
+        """
+        if self._field is None:
+            err_msg = "volume_mesh() requires a field-backed Phase"
+            raise ValueError(err_msg)
+        sg = self.grid(resolution)
+        return sg.clip_scalar(scalars=_IMPLICIT_SCALAR, value=self._iso, invert=True)
+
+    # ------------------------------------------------------------------
+    # Pieces — the "Phase = collection of cut/split sub-solids" invariant
+    # ------------------------------------------------------------------
+
+    @cached_property
+    def pieces(self: Phase) -> list[Piece]:
+        """Connected components of the phase (the "sub-pieces" invariant).
+
+        - CAD-backed phase: one :class:`Piece` per ``TopoDS_Solid``.
+        - Field-backed phase: ``scipy.ndimage.label`` on
+          ``grid_field < iso``; one piece per connected component.
+        - Mesh-backed phase: ``polydata.connectivity().split_bodies()``.
+        """
+        if self._cad is not None:
+            return self._pieces_from_cad()
+        if self._field is not None:
+            return self._pieces_from_field()
+        if self._surface_mesh is not None:
+            return self._pieces_from_mesh()
+        return []
+
+    def _pieces_from_cad(self: Phase) -> list[Piece]:
+        from .cad import CadShape  # noqa: PLC0415
+
+        out: list[Piece] = []
+        for solid in self._cad.solids():
+            wrapped = solid if isinstance(solid, CadShape) else CadShape(solid)
+            c = wrapped.center()
+            bb = wrapped.bounding_box()
+            out.append(
+                Piece(
+                    com=(float(c.x), float(c.y), float(c.z)),
+                    volume=float(wrapped.volume()),
+                    bounds=(bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax),
+                    cad=wrapped,
+                )
+            )
+        return out
+
+    def _pieces_from_field(self: Phase) -> list[Piece]:
+        from scipy.ndimage import center_of_mass, find_objects, label  # noqa: PLC0415
+
+        sg = self.grid()
+        res = self._resolution
+        scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape((res, res, res), order="F")
+        inside = scalar < self._iso
+        labels, n_labels = label(inside)
+        if n_labels == 0:
+            return []
+
+        xmin, xmax, ymin, ymax, zmin, zmax = self._bounds  # type: ignore[misc]
+        dx = (xmax - xmin) / (res - 1)
+        dy = (ymax - ymin) / (res - 1)
+        dz = (zmax - zmin) / (res - 1)
+        cell_volume = dx * dy * dz
+
+        coms = center_of_mass(inside, labels=labels, index=range(1, n_labels + 1))
+        slices = find_objects(labels)
+
+        out: list[Piece] = []
+        for label_id in range(1, n_labels + 1):
+            mask = labels == label_id
+            voxel_count = int(mask.sum())
+            com_voxel = coms[label_id - 1]
+            com_world = (
+                xmin + com_voxel[0] * dx,
+                ymin + com_voxel[1] * dy,
+                zmin + com_voxel[2] * dz,
+            )
+            sl = slices[label_id - 1]
+            piece_bounds = (
+                xmin + sl[0].start * dx,
+                xmin + (sl[0].stop - 1) * dx,
+                ymin + sl[1].start * dy,
+                ymin + (sl[1].stop - 1) * dy,
+                zmin + sl[2].start * dz,
+                zmin + (sl[2].stop - 1) * dz,
+            )
+            out.append(
+                Piece(
+                    com=com_world,
+                    volume=voxel_count * cell_volume,
+                    bounds=piece_bounds,
+                    voxel_mask=mask,
+                )
+            )
+        return out
+
+    def _pieces_from_mesh(self: Phase) -> list[Piece]:
+        out: list[Piece] = []
+        for body in self._surface_mesh.split_bodies():  # type: ignore[union-attr]
+            poly = body.extract_surface()
+            com = poly.center_of_mass()
+            xmin, xmax, ymin, ymax, zmin, zmax = poly.bounds
+            out.append(
+                Piece(
+                    com=(float(com[0]), float(com[1]), float(com[2])),
+                    volume=float(poly.volume),
+                    bounds=(
+                        float(xmin),
+                        float(xmax),
+                        float(ymin),
+                        float(ymax),
+                        float(zmin),
+                        float(zmax),
+                    ),
+                    mesh=poly,
+                )
+            )
+        return out
+
+    # ------------------------------------------------------------------
+    # Moments
+    # ------------------------------------------------------------------
+
+    @cached_property
+    def center_of_mass(self: Phase) -> npt.NDArray[np.float64]:
+        """Volumetric center of mass.
+
+        For field-backed phases this is computed by quadrature on the
+        sampled grid (no OCCT needed).  For CAD-backed phases this uses
+        ``BRepGProp.VolumeProperties_s``.
+        """
+        if self._cad is not None:
+            from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
+            from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
             props = GProp_GProps()
-            BRepGProp.VolumeProperties_s(solid, props)
+            BRepGProp.VolumeProperties_s(self._cad.wrapped, props)
             com = props.CentreOfMass()
-            center = np.array([com.X(), com.Y(), com.Z()])
-            i, j, k = np.floor(
-                grid_arr * (center - rve.min_point) / rve.dim,
-            ).astype(int)
-            ind = i + grid_arr[0] * j + grid_arr[0] * grid_arr[1] * k
-            solids_phases[int(ind)].append(solid)
-        return [Phase(solids=solids) for solids in solids_phases if len(solids) > 0]
+            return np.array([com.X(), com.Y(), com.Z()])
+        if self._field is not None:
+            sg = self.grid()
+            res = self._resolution
+            scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape(
+                (res, res, res), order="F"
+            )
+            inside = scalar < self._iso
+            if not inside.any():
+                err_msg = "center_of_mass: field is positive everywhere on the grid"
+                raise ValueError(err_msg)
+            pts = np.asarray(sg.points).reshape((res, res, res, 3), order="F")
+            mask = inside.astype(np.float64)
+            denom = float(mask.sum())
+            com = (
+                float((mask * pts[..., 0]).sum() / denom),
+                float((mask * pts[..., 1]).sum() / denom),
+                float((mask * pts[..., 2]).sum() / denom),
+            )
+            return np.array(com)
+        err_msg = "Cannot compute center_of_mass on an empty Phase"
+        raise ValueError(err_msg)
+
+    @cached_property
+    def inertia_matrix(self: Phase) -> npt.NDArray[np.float64]:
+        """Inertia tensor (about the origin) of the phase.
+
+        Field-backed: grid quadrature.  CAD-backed: ``BRepGProp``.
+        """
+        if self._cad is not None:
+            from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
+            from OCP.GProp import GProp_GProps  # noqa: PLC0415
+
+            props = GProp_GProps()
+            BRepGProp.VolumeProperties_s(self._cad.wrapped, props)
+            inm = props.MatrixOfInertia()
+            return np.array(
+                [
+                    [inm.Value(1, 1), inm.Value(1, 2), inm.Value(1, 3)],
+                    [inm.Value(2, 1), inm.Value(2, 2), inm.Value(2, 3)],
+                    [inm.Value(3, 1), inm.Value(3, 2), inm.Value(3, 3)],
+                ]
+            )
+        if self._field is not None:
+            sg = self.grid()
+            res = self._resolution
+            scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape(
+                (res, res, res), order="F"
+            )
+            inside = scalar < self._iso
+            if not inside.any():
+                err_msg = "inertia_matrix: field is positive everywhere on the grid"
+                raise ValueError(err_msg)
+            pts = np.asarray(sg.points).reshape((res, res, res, 3), order="F")
+            x = pts[..., 0][inside]
+            y = pts[..., 1][inside]
+            z = pts[..., 2][inside]
+            xmin, xmax, ymin, ymax, zmin, zmax = self._bounds  # type: ignore[misc]
+            dx = (xmax - xmin) / (res - 1)
+            dy = (ymax - ymin) / (res - 1)
+            dz = (zmax - zmin) / (res - 1)
+            cell_volume = dx * dy * dz
+            ixx = float(((y * y + z * z) * cell_volume).sum())
+            iyy = float(((x * x + z * z) * cell_volume).sum())
+            izz = float(((x * x + y * y) * cell_volume).sum())
+            ixy = -float((x * y * cell_volume).sum())
+            ixz = -float((x * z * cell_volume).sum())
+            iyz = -float((y * z * cell_volume).sum())
+            return np.array(
+                [[ixx, ixy, ixz], [ixy, iyy, iyz], [ixz, iyz, izz]],
+                dtype=np.float64,
+            )
+        err_msg = "Cannot compute inertia_matrix on an empty Phase"
+        raise ValueError(err_msg)
+
+    # ------------------------------------------------------------------
+    # Immutable transforms
+    # ------------------------------------------------------------------
+
+    def translated(self: Phase, offset: Sequence[float]) -> Phase:
+        """Return a new :class:`Phase` translated by ``offset``."""
+        dx, dy, dz = float(offset[0]), float(offset[1]), float(offset[2])
+
+        if self._field is not None and self._bounds is not None:
+            f = self._field
+            new_bounds = (
+                self._bounds[0] + dx,
+                self._bounds[1] + dx,
+                self._bounds[2] + dy,
+                self._bounds[3] + dy,
+                self._bounds[4] + dz,
+                self._bounds[5] + dz,
+            )
+            return Phase(
+                field=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
+                    x - _dx, y - _dy, z - _dz
+                ),
+                bounds=new_bounds,
+                iso=self._iso,
+                period=self._period,
+                name=self.name,
+                resolution=self._resolution,
+            )
+        if self._cad is not None:
+            new = Phase(name=self.name, resolution=self._resolution)
+            new._cad = self._cad.translate((dx, dy, dz))  # noqa: SLF001
+            return new
+        err_msg = "Cannot translate an empty Phase"
+        raise ValueError(err_msg)
+
+    def scaled(self: Phase, factor: float | tuple[float, float, float]) -> Phase:
+        """Return a new :class:`Phase` scaled by ``factor`` about its center of mass.
+
+        CAD-backed phases use OCCT ``BRepBuilderAPI_GTransform`` about
+        the BRep center.  Field-backed phases compose the field via
+        ``f'(p) = f((p - c) / s + c) * s_min`` (uniform scale only; a
+        per-axis scale is not exact for an SDF, so non-uniform factors
+        rescale the bbox only and leave the field's iso-distance
+        approximate — caller's responsibility).
+        """
+        if self._cad is not None:
+            from .cad import transform_geometry  # noqa: PLC0415
+
+            if isinstance(factor, (int, float)):
+                sx = sy = sz = float(factor)
+            else:
+                sx, sy, sz = (float(s) for s in factor)
+            c = self._cad.center()
+            cx, cy, cz = c.x, c.y, c.z
+            matrix = np.array(
+                [
+                    [sx, 0.0, 0.0, cx - sx * cx],
+                    [0.0, sy, 0.0, cy - sy * cy],
+                    [0.0, 0.0, sz, cz - sz * cz],
+                ],
+                dtype=np.float64,
+            )
+            new = Phase(name=self.name, resolution=self._resolution)
+            new._cad = transform_geometry(self._cad, matrix)  # noqa: SLF001
+            return new
+        if self._field is not None and self._bounds is not None:
+            if isinstance(factor, (int, float)):
+                sx = sy = sz = float(factor)
+            else:
+                sx, sy, sz = (float(s) for s in factor)
+            cx, cy, cz = self.center_of_mass.tolist()
+            f = self._field
+            new_bounds = (
+                cx + (self._bounds[0] - cx) * sx,
+                cx + (self._bounds[1] - cx) * sx,
+                cy + (self._bounds[2] - cy) * sy,
+                cy + (self._bounds[3] - cy) * sy,
+                cz + (self._bounds[4] - cz) * sz,
+                cz + (self._bounds[5] - cz) * sz,
+            )
+            s_min = min(sx, sy, sz)
+            return Phase(
+                field=lambda x, y, z, _f=f, _sx=sx, _sy=sy, _sz=sz, _cx=cx, _cy=cy, _cz=cz, _sm=s_min: (
+                    _f(
+                        (x - _cx) / _sx + _cx,
+                        (y - _cy) / _sy + _cy,
+                        (z - _cz) / _sz + _cz,
+                    )
+                    * _sm
+                ),
+                bounds=new_bounds,
+                iso=self._iso,
+                period=self._period,
+                name=self.name,
+                resolution=self._resolution,
+            )
+        err_msg = "Cannot scale an empty Phase"
+        raise ValueError(err_msg)
+
+    def tiled(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
+        """Return a new :class:`Phase` periodically tiled on the RVE.
+
+        Builds ``∏ grid`` translated copies of the current phase and
+        fuses them.  Only implemented for CAD-backed phases today (the
+        field-backed equivalent — domain folding via ``mod`` — lands in
+        a follow-up; the periodic-shape work in
+        :mod:`microgen.shape.implicit_ops` already covers it for
+        :class:`Shape` directly).
+        """
+        if self._cad is None:
+            err_msg = (
+                "Phase.tiled is implemented for CAD-backed phases today; "
+                "field-backed tiling lives on the source Shape (use "
+                "microgen.shape.implicit_ops.repeat there)."
+            )
+            raise NotImplementedError(err_msg)
+        from .cad import (  # noqa: PLC0415
+            make_compound_from_solids,
+            translate_solid,
+        )
+
+        center = np.array(self._cad.center().to_tuple())
+        copies = []
+        for idx in np.ndindex(*grid):
+            pos = center - rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
+            copies.append(translate_solid(self._cad.wrapped, pos))
+        new = Phase(name=self.name, resolution=self._resolution)
+        new._cad = make_compound_from_solids(copies)  # noqa: SLF001
+        return new
+
+    # ------------------------------------------------------------------
+    # Misc
+    # ------------------------------------------------------------------
+
+    def __repr__(self: Phase) -> str:
+        kind = (
+            "field"
+            if self._field is not None
+            else "cad"
+            if self._cad is not None
+            else "mesh"
+            if self._surface_mesh is not None
+            else "empty"
+        )
+        return f"Phase(name={self.name!r}, kind={kind!r}, bounds={self.bounds})"
+
+
+__all__ = ["Phase", "Piece"]

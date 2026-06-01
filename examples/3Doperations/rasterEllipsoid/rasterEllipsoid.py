@@ -8,10 +8,10 @@ rve = Rve(dim=1)
 elem = Ellipsoid(radii=(0.15, 0.31, 0.4))
 elli = elem.generate_cad()
 
-raster = raster_phase(phase=Phase(shape=elli), rve=rve, grid=[5, 5, 5])
+raster = raster_phase(phase=Phase.from_cad(elli), rve=rve, grid=[5, 5, 5])
 
 compound = make_compound_from_solids(
-    [solid for phase in raster for solid in phase.solids]
+    [solid.wrapped for phase in raster for solid in phase.cad.solids()]
 )
 step_file = str(Path(__file__).parent / "compound.step")
 compound.export_step(step_file)

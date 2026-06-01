@@ -219,18 +219,27 @@ def is_periodic(
     return True
 
 
+def _phase_solid_count(phase: Phase) -> int:
+    """Number of TopoDS_Solid in a phase's CAD representation.
+
+    Always materialises (and caches) the CAD view — required because
+    gmsh allocates entity tags per OCCT solid.
+    """
+    return len(phase.cad.solids())
+
+
 def _generate_list_tags(list_phases: list[Phase]) -> list[list[int]]:
     list_tags: list[list[int]] = []
     start: int = 1
     for phase in list_phases:
-        stop = start + len(phase.solids)
+        stop = start + _phase_solid_count(phase)
         list_tags.append(list(range(start, stop)))
         start = stop
     return list_tags
 
 
 def _generate_list_dim_tags(list_phases: list[Phase]) -> list[tuple[int, int]]:
-    nb_tags = sum(len(phase.solids) for phase in list_phases)
+    nb_tags = sum(_phase_solid_count(phase) for phase in list_phases)
     return [(_DIM_COUNT, tag) for tag in range(1, nb_tags + 1)]
 
 

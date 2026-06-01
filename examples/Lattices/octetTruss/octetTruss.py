@@ -71,14 +71,14 @@ for i in range(0, n):
         height=height[i],
         radius=radius[i],
     )
-    list_phases.append(Phase(shape=elem.generate_cad()))
+    list_phases.append(Phase.from_cad(elem.generate_cad()))
 
 for phase_elem in list_phases:
     periodicPhase = periodic_split_and_translate(phase=phase_elem, rve=rve)
     listPeriodicPhases.append(periodicPhase)
 
 phases_cut = cut_phases(phases=listPeriodicPhases, reverse_order=False)
-compound = make_compound([phase.shape for phase in phases_cut])
+compound = make_compound([phase.cad for phase in phases_cut])
 
 step_file = str(Path(__file__).parent / "octettruss.step")
 stl_file = str(Path(__file__).parent / "octettruss.stl")
