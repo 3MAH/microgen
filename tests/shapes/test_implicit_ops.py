@@ -67,12 +67,12 @@ def _box_field(cx=0.0, cy=0.0, cz=0.0, hx=0.5, hy=0.5, hz=0.5):
 
 def _make_sphere(cx=0.0, cy=0.0, cz=0.0, r=1.0):
     func, bounds = _sphere_field(cx, cy, cz, r)
-    return Shape(func=func, bounds=bounds)
+    return Shape(field=func, bounds=bounds)
 
 
 def _make_box(cx=0.0, cy=0.0, cz=0.0, hx=0.5, hy=0.5, hz=0.5):
     func, bounds = _box_field(cx, cy, cz, hx, hy, hz)
-    return Shape(func=func, bounds=bounds)
+    return Shape(field=func, bounds=bounds)
 
 
 # ---------------------------------------------------------------------------
@@ -220,20 +220,20 @@ class TestSmoothBooleans:
 class TestTransforms:
     """Test implicit field transform operations."""
 
-    def test_translate(self):
+    def test_translated(self):
         s = _make_sphere()
-        st = s.translate((2, 0, 0))
+        st = s.translated((2, 0, 0))
         x, y, z = np.array([2.0]), np.array([0.0]), np.array([0.0])
         assert st.evaluate(x, y, z)[0] < 0
 
         x0 = np.array([0.0])
         assert st.evaluate(x0, y, z)[0] > 0
 
-    def test_rotate_90(self):
-        # Elongated box along x, rotate 90 around z -> elongated along y
+    def test_rotated_90(self):
+        # Elongated box along x, rotated 90° around z -> elongated along y
         func, bounds = _box_field(hx=1.0, hy=0.1, hz=0.1)
-        box = Shape(func=func, bounds=bounds)
-        rotated = box.rotate((0, 0, 90), convention="xyz")
+        box = Shape(field=func, bounds=bounds)
+        rotated = box.rotated((0, 0, 90), convention="xyz")
         # Point along y axis should be inside
         assert (
             rotated.evaluate(np.array([0.0]), np.array([0.5]), np.array([0.0]))[0] < 0
@@ -243,22 +243,22 @@ class TestTransforms:
             rotated.evaluate(np.array([0.5]), np.array([0.0]), np.array([0.0]))[0] > 0
         )
 
-    def test_scale(self):
+    def test_scaled(self):
         s = _make_sphere()
-        ss = s.scale(2.0)
+        ss = s.scaled(2.0)
         x, y, z = np.array([1.5]), np.array([0.0]), np.array([0.0])
         assert s.evaluate(x, y, z)[0] > 0
         assert ss.evaluate(x, y, z)[0] < 0
 
-    def test_translate_bounds(self):
+    def test_translated_bounds(self):
         s = _make_sphere()
-        st = s.translate((5, 0, 0))
+        st = s.translated((5, 0, 0))
         assert st.bounds is not None
         assert st.bounds[0] > 3.0
 
-    def test_scale_bounds(self):
+    def test_scaled_bounds(self):
         s = _make_sphere()
-        ss = s.scale(3.0)
+        ss = s.scaled(3.0)
         assert ss.bounds is not None
         assert ss.bounds[1] > 3.0
 
@@ -297,7 +297,7 @@ class TestGenerateVtk:
             s.generate_surface_mesh()
 
     def test_no_bounds_raises(self):
-        s = Shape(func=lambda x, y, z: x**2 + y**2 + z**2 - 1)
+        s = Shape(field=lambda x, y, z: x**2 + y**2 + z**2 - 1)
         with pytest.raises(ValueError, match="Bounds must be provided"):
             s.generate_surface_mesh()
 
@@ -331,7 +331,7 @@ class TestBoundsPropagation:
 
     def test_none_bounds(self):
         f = lambda x, y, z: x  # noqa: E731
-        p = Shape(func=f, bounds=None)
+        p = Shape(field=f, bounds=None)
         s = _make_sphere()
         u = p | s
         assert u.bounds == s.bounds
@@ -370,7 +370,7 @@ class TestUtilities:
 
     def test_from_field(self):
         shape = from_field(
-            func=lambda x, y, z: x**2 + y**2 + z**2 - 1,
+            field=lambda x, y, z: x**2 + y**2 + z**2 - 1,
             bounds=(-2, 2, -2, 2, -2, 2),
         )
         assert shape.evaluate(np.array([0.0]), np.array([0.0]), np.array([0.0]))[0] < 0
@@ -404,11 +404,11 @@ class TestErrorHandling:
     def test_transform_without_func_raises(self):
         s = Shape()
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.translate((1, 0, 0))
+            s.translated((1, 0, 0))
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.rotate((0, 0, 45))
+            s.rotated((0, 0, 45))
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.scale(2.0)
+            s.scaled(2.0)
 
     def test_boolean_without_func_raises(self):
         s = Shape()

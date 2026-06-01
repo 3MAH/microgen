@@ -82,10 +82,10 @@ class Shape:
 
     :param center: center of the shape
     :param orientation: orientation of the shape
-    :param func: implicit scalar field ``(x, y, z) -> array``, or ``None``
+    :param field: implicit scalar field ``(x, y, z) -> array``, or ``None``
     :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)`` or ``None``
     :param period: ``(Lx, Ly, Lz)`` if the field is intrinsically periodic
-        (``func(p + L) == func(p)`` along each axis), or ``None``.
+        (``field(p + L) == field(p)`` along each axis), or ``None``.
         Set by ``Tpms`` and ``Spinodoid`` from ``cell_size * repeat_cell``.
     """
 
@@ -93,7 +93,7 @@ class Shape:
         self: Shape,
         center: Vector3DType = (0, 0, 0),
         orientation: Vector3DType | Rotation = (0, 0, 0),
-        func: Field | None = None,
+        field: Field | None = None,
         bounds: BoundsType | None = None,
         period: PeriodType | None = None,
     ) -> None:
@@ -104,7 +104,7 @@ class Shape:
             if isinstance(orientation, Rotation)
             else Rotation.from_euler("ZXZ", orientation, degrees=True)
         )
-        self._func = func
+        self._field = field
         self._bounds = bounds
         self._period: PeriodType | None = period
         # Cache of sampled structured grids keyed on (bounds, resolution).
@@ -141,9 +141,9 @@ class Shape:
         return self._orientation
 
     @property
-    def func(self: Shape) -> Field | None:
+    def field(self: Shape) -> Field | None:
         """The implicit scalar field, or ``None``."""
-        return self._func
+        return self._field
 
     @property
     def bounds(self: Shape) -> BoundsType | None:
@@ -161,12 +161,12 @@ class Shape:
         """
         return self._period
 
-    def require_func(self: Shape) -> Field:
+    def require_field(self: Shape) -> Field:
         """Return ``_func`` or raise if not set."""
-        if self._func is None:
+        if self._field is None:
             err_msg = "No implicit scalar field defined on this shape"
             raise ValueError(err_msg)
-        return self._func
+        return self._field
 
     # ------------------------------------------------------------------
     # Implicit field evaluation
@@ -190,7 +190,7 @@ class Shape:
         :param z: z coordinates
         :return: scalar field values (negative = inside)
         """
-        return self.require_func()(x, y, z)
+        return self.require_field()(x, y, z)
 
     # ------------------------------------------------------------------
     # Mesh generation (defaults use the implicit field)
@@ -210,7 +210,7 @@ class Shape:
         ``NotImplementedError`` (with a caller-specific message) when ``_func``
         is unset, and ``ValueError`` when bounds can't be resolved.
         """
-        if self._func is None:
+        if self._field is None:
             err_msg = f"No implicit field defined — subclasses must override {caller}()"
             raise NotImplementedError(err_msg)
 
@@ -363,14 +363,14 @@ class Shape:
     # Implicit field transforms
     # ------------------------------------------------------------------
 
-    def translate(self: Shape, offset: tuple[float, float, float]) -> Shape:
+    def translated(self: Shape, offset: tuple[float, float, float]) -> Shape:
         """Return a new shape translated by *offset*.
 
         The returned :class:`Shape` has its ``center`` shifted by *offset*
         and its ``bounds`` updated; ``orientation`` is preserved. The
         implicit field is composed so ``evaluate(p) == old.evaluate(p - offset)``.
         """
-        f = self.require_func()
+        f = self.require_field()
         dx, dy, dz = offset
         new_bounds = None
         if self._bounds is not None:
@@ -385,7 +385,7 @@ class Shape:
             )
         cx, cy, cz = self._center
         return Shape(
-            func=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
+            field=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
                 x - _dx,
                 y - _dy,
                 z - _dz,
@@ -395,7 +395,7 @@ class Shape:
             orientation=self._orientation,
         )
 
-    def rotate(
+    def rotated(
         self: Shape,
         angles: tuple[float, float, float],
         convention: str = "ZXZ",
@@ -407,7 +407,7 @@ class Shape:
         composes left with the rotation, and ``bounds`` is the AABB of
         the rotated original AABB.
         """
-        f = self.require_func()
+        f = self.require_field()
         rot = Rotation.from_euler(convention, angles, degrees=True)
         rot_matrix = rot.as_matrix()
         inv_matrix = rot.inv().as_matrix()
@@ -428,7 +428,7 @@ class Shape:
             )
         rotated_center = rot_matrix @ np.asarray(self._center, dtype=np.float64)
         return Shape(
-            func=lambda x, y, z, _f=f, _m=inv_matrix: _f(
+            field=lambda x, y, z, _f=f, _m=inv_matrix: _f(
                 *(_m @ np.array([x, y, z])),
             ),
             bounds=new_bounds,
@@ -436,14 +436,14 @@ class Shape:
             orientation=rot * self._orientation,
         )
 
-    def scale(self: Shape, factor: float) -> Shape:
+    def scaled(self: Shape, factor: float) -> Shape:
         """Return a new shape uniformly scaled by *factor* about the world origin.
 
         ``center`` is scaled by the same factor; ``orientation`` is
         preserved; ``bounds`` is scaled (with axis-pair swap for
         negative factors).
         """
-        f = self.require_func()
+        f = self.require_field()
         new_bounds = None
         if self._bounds is not None:
             b = self._bounds
@@ -466,7 +466,7 @@ class Shape:
                 )
         cx, cy, cz = self._center
         return Shape(
-            func=lambda x, y, z, _f=f, _s=factor: _f(x / _s, y / _s, z / _s) * _s,
+            field=lambda x, y, z, _f=f, _s=factor: _f(x / _s, y / _s, z / _s) * _s,
             bounds=new_bounds,
             center=(cx * factor, cy * factor, cz * factor),
             orientation=self._orientation,

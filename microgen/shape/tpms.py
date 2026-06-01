@@ -482,7 +482,7 @@ class Tpms(Shape):
 
         self._raw_field_func = raw_field
         sdf_shape = normalize_to_sdf(from_field(raw_field))
-        self._func = sdf_shape.func
+        self._field = sdf_shape.field
         self._bounds = bounds
         # The TPMS field is intrinsically periodic on ``cell_size`` along each
         # axis (the 2π/cell_size wavenumbers in ``_setup_frep_field`` make
@@ -535,7 +535,7 @@ class Tpms(Shape):
             t = self._offset_func
         else:
             t = self._offset
-        return shell(Shape(func=self._func, bounds=self._bounds), t)
+        return shell(Shape(field=self._field, bounds=self._bounds), t)
 
     def _half_offset_field(self: Tpms) -> Field | float:
         """
@@ -569,7 +569,7 @@ class Tpms(Shape):
         """
         from .implicit_ops import from_field
 
-        f = self._func
+        f = self._field
         h = self._half_offset_field()
         if callable(h):
 
@@ -581,13 +581,13 @@ class Tpms(Shape):
             def _upper(x, y, z, _f=f, _h=h):
                 return -_f(x, y, z) + _h
 
-        return from_field(func=_upper, bounds=self._bounds)
+        return from_field(field=_upper, bounds=self._bounds)
 
     def as_lower_skeletal(self: Tpms) -> Shape:
         """F-rep Shape for the *lower* skeletal: ``{p : f(p) < -offset/2}``."""
         from .implicit_ops import from_field
 
-        f = self._func
+        f = self._field
         h = self._half_offset_field()
         if callable(h):
 
@@ -599,7 +599,7 @@ class Tpms(Shape):
             def _lower(x, y, z, _f=f, _h=h):
                 return _f(x, y, z) + _h
 
-        return from_field(func=_lower, bounds=self._bounds)
+        return from_field(field=_lower, bounds=self._bounds)
 
     def as_surface(self: Tpms) -> Shape:
         """
@@ -610,7 +610,7 @@ class Tpms(Shape):
         """
         from .implicit_ops import from_field
 
-        return from_field(func=self._func, bounds=self._bounds)
+        return from_field(field=self._field, bounds=self._bounds)
 
     def _cell_box(self: Tpms) -> Shape:
         """SDF Shape of this TPMS' cell (cell_size × repeat_cell, centered origin)."""
@@ -1821,7 +1821,7 @@ class Sweep(Tpms):
         # Like Conformal, the field is built around discrete data — skip
         # autograd SDF normalisation (it would FD-fall-back and be slow).
         self._raw_field_func = _raw_field
-        self._func = _raw_field
+        self._field = _raw_field
         self._bounds = bounds
 
     # -- Cell-box (tube SDF) -----------------------------------------------
