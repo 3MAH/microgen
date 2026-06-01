@@ -39,7 +39,7 @@ compound = make_compound(shapes)
 step_file = str(Path(__file__).parent / "compound.step")
 compound.export_step(step_file)
 
-phases = [Phase(shape=shape) for shape in shapes]
+phases = [Phase.from_cad(shape) for shape in shapes]
 
 vtk_file = str(Path(__file__).parent / "Voronoi.vtk")
 mesh(

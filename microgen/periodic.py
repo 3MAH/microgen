@@ -289,10 +289,10 @@ def periodic_split_and_translate(phase: Phase, rve: Rve) -> Phase:
 
     :return: resulting Phase
     """
-    shape = phase.shape
-    if shape is None:
+    if phase.is_empty:
         err_msg = "Cannot apply periodic_split_and_translate to an empty phase"
         raise ValueError(err_msg)
+    shape = phase.cad
 
     intersected_faces, rve_planes, partitions = _detect_intersected_faces(shape, rve)
 
@@ -341,8 +341,8 @@ def periodic_split_and_translate(phase: Phase, rve: Rve) -> Phase:
             "periodic_split_and_translate produced no solids",
             stacklevel=2,
         )
-        return Phase(shape=shape)
+        return Phase.from_cad(shape, name=phase.name)
 
     to_fuse = [CadShape(s) for s in all_solids]
     fused = fuse_shapes(to_fuse, retain_edges=False)
-    return Phase(shape=fused)
+    return Phase.from_cad(fused, name=phase.name)

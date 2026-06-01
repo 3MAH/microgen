@@ -94,7 +94,7 @@ def _generate_cqcompound_octettruss(rve: Rve) -> list[Phase]:
             height=height[i],
             radius=radius[i],
         )
-        phase = Phase(shape=elem.generate_cad())
+        phase = Phase.from_cad(elem.generate_cad())
         phases.append(phase)
 
     return [
@@ -110,7 +110,7 @@ def box_homogeneous_unit(rve_unit: Rve) -> tuple[CadShape, list[Phase], Rve]:
         orientation=(0.0, 0.0, 0.0),
         dim=(rve_unit.dim[0], rve_unit.dim[1], rve_unit.dim[2]),
     ).generate_cad()
-    listcqphases = [Phase(shape=shape)]
+    listcqphases = [Phase.from_cad(shape)]
     return (shape, listcqphases, rve_unit)
 
 
@@ -124,7 +124,7 @@ def box_homogeneous_double(
         orientation=(0.0, 0.0, 0.0),
         dim=tuple(rve_double.dim),
     ).generate_cad()
-    listcqphases = [Phase(shape=shape)]
+    listcqphases = [Phase.from_cad(shape)]
     return (shape, listcqphases, rve_double)
 
 
@@ -138,7 +138,7 @@ def box_homogeneous_double_centered(
         orientation=(0.0, 0.0, 0.0),
         dim=tuple(rve_double_centered.dim),
     ).generate_cad()
-    listcqphases = [Phase(shape=shape)]
+    listcqphases = [Phase.from_cad(shape)]
     return (shape, listcqphases, rve_double_centered)
 
 
@@ -149,10 +149,10 @@ def octet_truss_homogeneous_unit(
     """Return a homogeneous unit octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
     merged = fuse_shapes(
-        [phase.shape for phase in list_periodic_phases],
+        [phase.cad for phase in list_periodic_phases],
         retain_edges=False,
     )
-    listcqphases = [Phase(shape=merged)]
+    listcqphases = [Phase.from_cad(merged)]
     return (merged, listcqphases, rve_unit)
 
 
@@ -163,10 +163,10 @@ def octet_truss_homogeneous_double_centered(
     """Return a homogeneous double centered octet truss."""
     list_periodic_phases = _generate_cqcompound_octettruss(rve_double_centered)
     merged = fuse_shapes(
-        [phase.shape for phase in list_periodic_phases],
+        [phase.cad for phase in list_periodic_phases],
         retain_edges=False,
     )
-    listcqphases = [Phase(shape=merged)]
+    listcqphases = [Phase.from_cad(merged)]
     return (merged, listcqphases, rve_double_centered)
 
 
@@ -178,7 +178,7 @@ def octet_truss_heterogeneous(
     list_periodic_phases = _generate_cqcompound_octettruss(rve_unit)
     listcqphases = cut_phases(phases=list_periodic_phases, reverse_order=False)
     return (
-        make_compound_from_solids([phase.shape.wrapped for phase in listcqphases]),
+        make_compound_from_solids([phase.cad.wrapped for phase in listcqphases]),
         listcqphases,
         rve_unit,
     )

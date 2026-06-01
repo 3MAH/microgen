@@ -243,7 +243,7 @@ class AbstractLattice(Shape):
                 radius=self.strut_radius,
             )
             shape = strut.generate_cad()
-            list_phases.append(Phase(shape))
+            list_phases.append(Phase.from_cad(shape))
         if self.strut_joints:
             for vertex in self.vertices:
                 joint = Sphere(
@@ -251,14 +251,14 @@ class AbstractLattice(Shape):
                     radius=self.strut_radius,
                 )
                 shape = joint.generate_cad()
-                list_phases.append(Phase(shape))
+                list_phases.append(Phase.from_cad(shape))
 
         for phase in list_phases:
             periodic_phase = periodic_split_and_translate(phase=phase, rve=self.rve)
             list_periodic_phases.append(periodic_phase)
 
         lattice = fuse_shapes(
-            [phase.shape for phase in list_periodic_phases],
+            [phase.cad for phase in list_periodic_phases],
             retain_edges=False,
         )
 
@@ -325,7 +325,7 @@ class AbstractLattice(Shape):
                 return cached_mesh
 
         cad_lattice = self.cad_shape
-        list_phases = [Phase(cad_lattice)]
+        list_phases = [Phase.from_cad(cad_lattice)]
 
         with (
             NamedTemporaryFile(suffix=".step", delete=False) as cad_step_file,

@@ -22,12 +22,12 @@ def test_mesh_rastered_sphere_must_have_correct_number_of_cells() -> None:
 
     grid = [3 for _ in range(3)]
     phases = raster_phase(
-        phase=Phase(shape=Sphere(radius=0.5).generate_cad()),
+        phase=Phase.from_cad(Sphere(radius=0.5).generate_cad()),
         rve=Rve(),
         grid=grid,
     )
     compound = make_compound_from_solids(
-        [solid for phase in phases for solid in phase.solids],
+        [solid.wrapped for phase in phases for solid in phase.cad.solids()],
     )
     compound.export_step("tests/data/compound.step")
 

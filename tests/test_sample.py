@@ -29,7 +29,7 @@ def test_operations() -> None:
     """Test operations on shapes."""
     elem = microgen.Box(center=(0.5, 0.5, 0.5), dim=(1, 1, 1))
     shape1 = elem.generate_cad()
-    phase1 = microgen.Phase(shape=shape1)
+    phase1 = microgen.Phase.from_cad(shape1)
 
     elem = microgen.Box(center=(0, 0, 0), dim=(0.5, 0.5, 0.5))
     shape2 = elem.generate_cad()
