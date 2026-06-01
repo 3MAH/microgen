@@ -106,7 +106,7 @@ To create CAD-compatible solids (for 3D printing or CAD software):
 
 .. code-block:: python
 
-   # Generate the CadQuery shape
+   # Generate the OCCT CAD shape (requires the [cad] extra)
    cad_shape = gyroid.generate_cad(type_part='sheet')
 
 

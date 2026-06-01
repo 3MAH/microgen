@@ -3,33 +3,8 @@ from pathlib import Path
 from microgen import Neper, Phase, mesh
 from microgen.cad import make_compound
 
-# We import the Polyhedra from Neper tessellation file
-
-# Revel = Rve(dim=1)
-# phases = []
-
-# for polyhedron in listPolyhedra:
-#     elem = Polyhedron(
-#         center=(
-#             polyhedron["original"][0],
-#             polyhedron["original"][1],
-#             polyhedron["original"][2],
-#         ),
-#         dic=polyhedron,
-#     )
-#     phases.append(Phase(shape=elem.generate_cad()))
-
-# compound = cq.Compound.makeCompound([phase.shape for phase in phases])
-# cq.exporters.export(compound, "compound.step")
-
-# mesh(
-#     mesh_file="compound.step",
-#     list_phases=phases,
-#     size=0.05,
-#     order=1,
-#     output_file="Voronoi.vtk",
-# )
-
+# Import the Polyhedra from a Neper tessellation file, build a CAD compound,
+# export STEP, and tetrahedralise via gmsh.
 tess_file = str(Path(__file__).parent / "test1.tess")
 polyhedra = Neper.voronoi_from_tess_file(tess_file)
 

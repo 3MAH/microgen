@@ -3,6 +3,7 @@
 import importlib.metadata
 
 from .box_mesh import BoxMesh, NonBoxMeshError
+from .cad import CadShape, shape_to_cad
 from .external import Mmg, Neper
 from .mesh import is_periodic, mesh, mesh_periodic
 from .operations import (
@@ -19,7 +20,7 @@ from .operations import (
     rotate_euler,
 )
 from .periodic import periodic_split_and_translate
-from .phase import Phase
+from .phase import Phase, Piece
 from .report import Report
 from .rve import Rve
 from .shape import (
@@ -68,47 +69,51 @@ __all__ = [
     "BodyCenteredCubic",
     "Box",
     "BoxMesh",
+    "CadShape",
     "Capsule",
     "Cubic",
     "Cuboctahedron",
     "CustomLattice",
     "Cylinder",
+    "CylindricalTpms",
     "Diamond",
     "Ellipsoid",
     "ExtrudedPolygon",
     "FaceCenteredCubic",
     "GradedInfill",
     "Infill",
-    "NonBoxMeshError",
-    "NormedDistance",
     "Mmg",
     "Neper",
+    "NonBoxMeshError",
+    "NormedDistance",
     "Octahedron",
     "OctetTruss",
     "Phase",
+    "Piece",
     "Polyhedron",
+    "Report",
     "RhombicCuboctahedron",
     "RhombicDodecahedron",
     "Rve",
     "Shape",
+    "SingleMesh",
     "Sphere",
+    "SphericalTpms",
     "Spinodoid",
     "Sweep",
     "Tpms",
     "TruncatedCube",
     "TruncatedCuboctahedron",
     "TruncatedOctahedron",
-    "CylindricalTpms",
-    "SphericalTpms",
     "batch_smooth_union",
-    "from_field",
-    "implicit_ops",
     "check_if_only_linear_tetrahedral",
     "cut_phase_by_shape_list",
     "cut_phases",
     "cut_phases_by_shape",
     "cut_shapes",
+    "from_field",
     "fuse_shapes",
+    "implicit_ops",
     "is_periodic",
     "mesh",
     "mesh_periodic",
@@ -120,7 +125,6 @@ __all__ = [
     "rescale",
     "rotate",
     "rotate_euler",
-    "Report",
-    "SingleMesh",
+    "shape_to_cad",
     "surface_functions",
 ]

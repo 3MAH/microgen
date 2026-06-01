@@ -19,6 +19,23 @@ The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic spli
     <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
 </p>
 
+## Hello, gyroid (implicit-first, no CAD needed)
+
+```python
+from microgen import Phase, Tpms, surface_functions
+
+gyroid = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+phase  = Phase.from_shape(gyroid, resolution=80)
+
+phase.surface_mesh().save("gyroid.stl")  # marching cubes from the SDF
+print(f"COM = {phase.center_of_mass}, pieces = {len(phase.pieces)}")
+```
+
+A `Phase` built via `Phase.from_shape` carries the implicit field directly —
+marching cubes, connected components (`phase.pieces`), and grid-quadrature
+moments all run from the SDF, no OCCT required. CAD (`phase.cad`, STEP export,
+gmsh `setPeriodic`) is materialised lazily and only needs the `[cad]` extra.
+
 |        |            |
 | -------------- | ---------------- |
 | PyPI package   | [![PyPI](https://badge.fury.io/py/microgen.svg)](https://pypi.org/project/microgen/) |
@@ -28,7 +45,6 @@ The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic spli
 | Citation       | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6793573.svg)](https://doi.org/10.5281/zenodo.6793573) |
 | License        | [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) |
 | Website        | [![Website](https://img.shields.io/badge/website-3MAH-blue)](https://3mah.github.io/) |
-| Binder         | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/3MAH/microgen/HEAD?urlpath=lab%2Ftree%2Fexamples%2Fjupyter_notebooks) |
 
 ## Installation
 

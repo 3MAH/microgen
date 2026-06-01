@@ -6,9 +6,10 @@ Overview
 Microgen is a simple python library that helps to generate and mesh microstructures.
 
 Here are the main features:
-- Entirely written in Python 3 and based on `CadQuery <https://cadquery.readthedocs.io/en/latest/>`_ and `PyVista <https://docs.pyvista.org/index.html>`_ libraries.
+- Entirely written in Python 3, built on `PyVista <https://docs.pyvista.org/index.html>`_ for implicit (F-rep) shapes and mesh I/O, with optional Open CASCADE via `cadquery-ocp-novtk <https://github.com/CadQuery/ocp-build-system>`_ for BREP CAD output (``pip install 'microgen[cad]'``).
+- Implicit-first: every shape carries a scalar field, and :class:`microgen.Phase` is field-first — :meth:`Phase.from_shape` lets you mesh, sample, and partition without ever touching CAD.
 - It allows to generate simple reinforcement geometries (spheres, cylinder, ellipsoids, …) to generate virtual composites microstructures.
-- Three-dimensional Voronoi tessellation rallons to simulate the response granular materials and polycrystalline metals.
+- Three-dimensional Voronoi tessellation allows to simulate the response of granular materials and polycrystalline metals.
 - Regular mesh and periodic mesh are implemented using `Gmsh <https://gmsh.info/>`_, remeshing using `Mmg <https://www.mmgtools.org/>`_ is also implemented.
 
 

@@ -286,7 +286,7 @@ def _try_make_solid(shape: CadShape) -> CadShape:
     from OCP.TopExp import TopExp_Explorer
 
     from microgen.cad import CadShape as _CadShape
-    from microgen.cad import _topods_cast
+    from microgen.cad.shape import _topods_cast
     from microgen.operations import fuse_shapes
 
     cast_shell = _topods_cast("Shell")

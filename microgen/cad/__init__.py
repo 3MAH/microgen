@@ -46,11 +46,9 @@ All public symbols are re-exported here so existing
 
 from __future__ import annotations
 
-from ._install import _INSTALL_HINT, require_cad
+from ._install import require_cad
 from .io import import_step
 from .meshbridge import (
-    _triangle_components,
-    _walk_boundary_loops,
     mesh_to_planar_face,
     mesh_to_sewn_shell,
     mesh_to_shape,
@@ -66,14 +64,7 @@ from .primitives import (
     make_polyhedron,
     make_sphere,
 )
-from .shape import (
-    CadShape,
-    ShellCreationError,
-    _BBox,
-    _Centre,
-    _run_boolean,
-    _topods_cast,
-)
+from .shape import CadShape, ShellCreationError
 from .topo import (
     enumerate_solids,
     intersect_solids_with_box,
@@ -90,13 +81,6 @@ from .topo import (
 __all__ = [
     "CadShape",
     "ShellCreationError",
-    "_BBox",
-    "_Centre",
-    "_INSTALL_HINT",
-    "_run_boolean",
-    "_topods_cast",
-    "_triangle_components",
-    "_walk_boundary_loops",
     "enumerate_solids",
     "import_step",
     "intersect_solids_with_box",
