@@ -311,7 +311,7 @@ Raster a phase to create a periodic pattern:
        radii=(0.15, 0.1, 0.08)
    )
    ellipsoid_cad = ellipsoid.generate_cad()
-   phase = microgen.Phase(shape=ellipsoid_cad)
+   phase = microgen.Phase.from_cad(ellipsoid_cad)
 
    # Define RVE
    rve = microgen.Rve(dim=(0.5, 0.5, 0.5))
@@ -325,7 +325,7 @@ Raster a phase to create a periodic pattern:
 
    # Compose a compound from all rastered solids and export to STL
    compound = make_compound_from_solids(
-       solid for p in rastered for solid in p.solids
+       solid.wrapped for p in rastered for solid in p.cad.solids()
    )
    compound.export_stl("rastered.stl")
 
@@ -384,7 +384,7 @@ Generate a periodic mesh suitable for homogenization:
    shape = gyroid.generate_cad(type_part='sheet')
 
    # Create a phase from the shape
-   phase = microgen.Phase(shape=shape)
+   phase = microgen.Phase.from_cad(shape)
 
    # Export to STEP file first
    shape.export_step('gyroid.step')
