@@ -26,6 +26,7 @@ from scipy.optimize import root_scalar
 
 
 from ._types import BoundsType, Field
+from .periodic_shell import mesh_to_periodic_shell, try_make_solid
 from .shape import Shape, ShellCreationError
 
 if TYPE_CHECKING:
@@ -792,8 +793,6 @@ class Tpms(Shape):
         which sews TPMS-interior triangles with per-face cap planes into a
         single closed shell (see that function's docstring for details).
         """
-        from .periodic_shell import mesh_to_periodic_shell  # noqa: PLC0415
-
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
         pts = np.asarray(mesh.points, dtype=np.float64)
@@ -1009,8 +1008,6 @@ class Tpms(Shape):
         # a fallback when OCCT flags the solid invalid (self-intersecting or
         # non-manifold from raw marching-cubes — happens for skeletals at
         # offset=0 where the iso-surface coincides with the cell boundary).
-        from .periodic_shell import try_make_solid  # noqa: PLC0415
-
         shape = try_make_solid(self._mesh_to_periodic_shell(mesh))
         shape = self._to_world(shape)
         with contextlib.suppress(AttributeError, ValueError):
