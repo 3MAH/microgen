@@ -9,9 +9,10 @@
 """
 
 import numpy as np
+import pytest
 import pyvista as pv
 
-from microgen import Box, Phase, Rve, Sphere
+from microgen import Box, Phase, Rve, Sphere, Tpms, surface_functions
 
 # ruff: noqa: S101
 
@@ -59,8 +60,6 @@ def test_from_grid_returns_input_grid_untouched() -> None:
 
 def test_from_grid_rejects_missing_scalar() -> None:
     """Asking for a scalar name that isn't on the grid raises ``ValueError``."""
-    import pytest
-
     sg = pv.StructuredGrid(
         *np.meshgrid([-1, 0, 1], [-1, 0, 1], [-1, 0, 1], indexing="ij")
     )
@@ -85,8 +84,6 @@ def test_phase_rotated_field_backed_swaps_axes() -> None:
 
 def test_phase_rotated_field_backed_invalidates_period() -> None:
     """Rotation breaks axis-aligned periodicity; ``period`` resets to ``None``."""
-    from microgen import Tpms, surface_functions
-
     tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3, cell_size=1.0)
     phase = Phase.from_shape(tpms)
     assert phase.period == (1.0, 1.0, 1.0)
@@ -104,7 +101,5 @@ def test_phase_rotated_cad_backed_preserves_volume() -> None:
 
 def test_phase_rotated_empty_raises() -> None:
     """An empty Phase cannot be rotated."""
-    import pytest
-
     with pytest.raises(ValueError, match="Cannot rotate an empty Phase"):
         Phase().rotated((10, 0, 0))
