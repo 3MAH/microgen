@@ -74,7 +74,7 @@ def test_phase_translated_preserves_period_and_invalidates_cache() -> None:
     b = Sphere(center=(0.6, 0.0, 0.0), radius=0.2)
     merged = union(a, b)
     phase = Phase.from_shape(merged, bounds=(-1.0, 1.0, -0.4, 0.4, -0.4, 0.4))
-    moved = phase.translated((1.0, 0.0, 0.0))
+    moved = phase.translate((1.0, 0.0, 0.0))
     # New Phase => caches independent; both still report 2 pieces.
     assert len(moved.pieces) == 2
     shifts = sorted(p.com[0] for p in moved.pieces)

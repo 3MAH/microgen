@@ -24,9 +24,12 @@ The CAD seam is isolated in :meth:`_materialise_cad`. Switching from
 ``microgen.cad`` to ``pyvista-cad`` later means swapping that one method;
 no other code in microgen needs to change.
 
-A :class:`Phase` is **immutable**: transforms (:meth:`translated`,
-:meth:`scaled`, :meth:`rotated`, :meth:`tiled`) return a new instance.
-This makes cache invalidation impossible by construction.
+Transforms follow the PyVista convention — :meth:`translate`,
+:meth:`rotate` and :meth:`scale` take ``inplace=False`` (default; returns
+a new :class:`Phase`) or ``inplace=True`` (mutates ``self``).  :meth:`tile`
+is a producer (always a new instance).  Every live representation (field,
+CAD, surface mesh, cached grid) is transformed together so the result
+stays coherent; derived caches are invalidated.
 """
 
 from __future__ import annotations
@@ -728,142 +731,243 @@ class Phase:
         raise ValueError(err_msg)
 
     # ------------------------------------------------------------------
-    # Immutable transforms
+    # Copy
     # ------------------------------------------------------------------
 
-    def translated(self: Phase, offset: Sequence[float]) -> Phase:
-        """Return a new :class:`Phase` translated by ``offset``."""
-        dx, dy, dz = float(offset[0]), float(offset[1]), float(offset[2])
+    def copy(self: Phase) -> Phase:
+        """Return an independent copy with every live representation duplicated.
 
+        The field callable and (immutable) bounds tuple are shared; the CAD
+        (:meth:`CadShape.copy` → ``BRepBuilderAPI_Copy``), the surface mesh
+        and any cached grid are deep-copied, so an ``inplace=False``
+        transform on the copy never touches the original.
+        """
+        new = Phase(
+            field=self._field,
+            bounds=self._bounds,
+            iso=self._iso,
+            period=self._period,
+            name=self.name,
+            resolution=self._resolution,
+        )
+        if self._cad is not None:
+            new._cad = self._cad.copy()  # noqa: SLF001
+        if self._surface_mesh is not None:
+            new._surface_mesh = self._surface_mesh.copy()  # noqa: SLF001
+        if self._cached_grid is not None:
+            new._cached_grid = self._cached_grid.copy()  # noqa: SLF001
+        return new
+
+    def _invalidate_derived(self: Phase) -> None:
+        """Drop cached ``@cached_property`` results after a mutation."""
+        for key in ("cad", "pieces", "center_of_mass", "inertia_matrix"):
+            self.__dict__.pop(key, None)
+
+    # ------------------------------------------------------------------
+    # Transforms — PyVista convention: imperative verb + ``inplace=False``.
+    #
+    # ``inplace=False`` (default) returns a new Phase (operating on a
+    # :meth:`copy`); ``inplace=True`` mutates ``self``.  Both return a
+    # Phase.  The ``_apply_*`` workers mutate every live representation
+    # (field, CAD, surface mesh, cached grid) via ``self`` so the result
+    # stays coherent regardless of which mode the caller picked.
+    # ------------------------------------------------------------------
+
+    def translate(
+        self: Phase, offset: Sequence[float], *, inplace: bool = False
+    ) -> Phase:
+        """Translate the phase by ``offset``.
+
+        :param offset: ``(dx, dy, dz)`` world-space shift.
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new translated :class:`Phase`.
+        """
+        if self.is_empty:
+            err_msg = "Cannot translate an empty Phase"
+            raise ValueError(err_msg)
+        dx, dy, dz = float(offset[0]), float(offset[1]), float(offset[2])
+        target = self if inplace else self.copy()
+        target._apply_translate(dx, dy, dz)  # noqa: SLF001
+        return target
+
+    def _apply_translate(self: Phase, dx: float, dy: float, dz: float) -> None:
         if self._field is not None and self._bounds is not None:
             f = self._field
-            new_bounds = (
-                self._bounds[0] + dx,
-                self._bounds[1] + dx,
-                self._bounds[2] + dy,
-                self._bounds[3] + dy,
-                self._bounds[4] + dz,
-                self._bounds[5] + dz,
-            )
-            return Phase(
-                field=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
-                    x - _dx, y - _dy, z - _dz
-                ),
-                bounds=new_bounds,
-                iso=self._iso,
-                period=self._period,
-                name=self.name,
-                resolution=self._resolution,
+
+            def _translated_field(x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz):  # noqa: ANN001, ANN202
+                return _f(x - _dx, y - _dy, z - _dz)
+
+            b = self._bounds
+            self._field = _translated_field
+            self._bounds = (
+                b[0] + dx,
+                b[1] + dx,
+                b[2] + dy,
+                b[3] + dy,
+                b[4] + dz,
+                b[5] + dz,
             )
         if self._cad is not None:
-            new = Phase(name=self.name, resolution=self._resolution)
-            new._cad = self._cad.translate((dx, dy, dz))  # noqa: SLF001
-            return new
-        err_msg = "Cannot translate an empty Phase"
-        raise ValueError(err_msg)
+            self._cad = self._cad.translate((dx, dy, dz))
+        if self._surface_mesh is not None:
+            self._surface_mesh = self._surface_mesh.translate(
+                (dx, dy, dz), inplace=False
+            )
+        if self._cached_grid is not None:
+            self._cached_grid = self._cached_grid.translate((dx, dy, dz), inplace=False)
+        self._invalidate_derived()
 
-    def scaled(self: Phase, factor: float | tuple[float, float, float]) -> Phase:
-        """Return a new :class:`Phase` scaled by ``factor`` about its center of mass.
+    def scale(
+        self: Phase,
+        factor: float | tuple[float, float, float],
+        *,
+        inplace: bool = False,
+    ) -> Phase:
+        """Scale the phase about its center.
 
-        CAD-backed phases use OCCT ``BRepBuilderAPI_GTransform`` about
-        the BRep center.  Field-backed phases compose the field via
-        ``f'(p) = f((p - c) / s + c) * s_min`` (uniform scale only; a
-        per-axis scale is not exact for an SDF, so non-uniform factors
-        rescale the bbox only and leave the field's iso-distance
-        approximate — caller's responsibility).
+        Field-backed phases scale about their volumetric
+        :attr:`center_of_mass`; CAD/mesh-backed phases about the BRep/mesh
+        center.  Uniform ``factor`` is exact; a per-axis tuple rescales the
+        bbox and (for an SDF) leaves the iso-distance approximate.
+
+        :param factor: uniform scalar or ``(sx, sy, sz)``.
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new scaled :class:`Phase`.
         """
+        if self.is_empty:
+            err_msg = "Cannot scale an empty Phase"
+            raise ValueError(err_msg)
+        if isinstance(factor, (int, float)):
+            sx = sy = sz = float(factor)
+        else:
+            sx, sy, sz = (float(s) for s in factor)
+        # One pivot shared by every representation so they stay coherent.
+        pivot = self._scale_pivot()
+        target = self if inplace else self.copy()
+        target._apply_scale(sx, sy, sz, pivot)  # noqa: SLF001
+        return target
+
+    def _scale_pivot(self: Phase) -> tuple[float, float, float]:
+        if self._field is not None:
+            return tuple(float(v) for v in self.center_of_mass)  # type: ignore[return-value]
+        if self._cad is not None:
+            c = self._cad.center()
+            return (float(c.x), float(c.y), float(c.z))
+        c = self._surface_mesh.center  # type: ignore[union-attr]
+        return (float(c[0]), float(c[1]), float(c[2]))
+
+    def _apply_scale(
+        self: Phase,
+        sx: float,
+        sy: float,
+        sz: float,
+        pivot: tuple[float, float, float],
+    ) -> None:
+        px, py, pz = pivot
+        if self._field is not None and self._bounds is not None:
+            f = self._field
+            s_min = min(sx, sy, sz)
+
+            def _scaled_field(  # noqa: ANN001, ANN202, PLR0913
+                x, y, z, _f=f, _sx=sx, _sy=sy, _sz=sz, _px=px, _py=py, _pz=pz, _sm=s_min
+            ):
+                return (
+                    _f(
+                        (x - _px) / _sx + _px,
+                        (y - _py) / _sy + _py,
+                        (z - _pz) / _sz + _pz,
+                    )
+                    * _sm
+                )
+
+            b = self._bounds
+            self._field = _scaled_field
+            self._bounds = (
+                px + (b[0] - px) * sx,
+                px + (b[1] - px) * sx,
+                py + (b[2] - py) * sy,
+                py + (b[3] - py) * sy,
+                pz + (b[4] - pz) * sz,
+                pz + (b[5] - pz) * sz,
+            )
         if self._cad is not None:
             from .cad import transform_geometry  # noqa: PLC0415
 
-            if isinstance(factor, (int, float)):
-                sx = sy = sz = float(factor)
-            else:
-                sx, sy, sz = (float(s) for s in factor)
-            c = self._cad.center()
-            cx, cy, cz = c.x, c.y, c.z
             matrix = np.array(
                 [
-                    [sx, 0.0, 0.0, cx - sx * cx],
-                    [0.0, sy, 0.0, cy - sy * cy],
-                    [0.0, 0.0, sz, cz - sz * cz],
+                    [sx, 0.0, 0.0, px - sx * px],
+                    [0.0, sy, 0.0, py - sy * py],
+                    [0.0, 0.0, sz, pz - sz * pz],
                 ],
                 dtype=np.float64,
             )
-            new = Phase(name=self.name, resolution=self._resolution)
-            new._cad = transform_geometry(self._cad, matrix)  # noqa: SLF001
-            return new
-        if self._field is not None and self._bounds is not None:
-            if isinstance(factor, (int, float)):
-                sx = sy = sz = float(factor)
-            else:
-                sx, sy, sz = (float(s) for s in factor)
-            cx, cy, cz = self.center_of_mass.tolist()
-            f = self._field
-            new_bounds = (
-                cx + (self._bounds[0] - cx) * sx,
-                cx + (self._bounds[1] - cx) * sx,
-                cy + (self._bounds[2] - cy) * sy,
-                cy + (self._bounds[3] - cy) * sy,
-                cz + (self._bounds[4] - cz) * sz,
-                cz + (self._bounds[5] - cz) * sz,
+            self._cad = transform_geometry(self._cad, matrix)
+        if self._surface_mesh is not None:
+            self._surface_mesh = self._surface_mesh.scale(
+                (sx, sy, sz), point=(px, py, pz), inplace=False
             )
-            s_min = min(sx, sy, sz)
-            return Phase(
-                field=lambda x, y, z, _f=f, _sx=sx, _sy=sy, _sz=sz, _cx=cx, _cy=cy, _cz=cz, _sm=s_min: (
-                    _f(
-                        (x - _cx) / _sx + _cx,
-                        (y - _cy) / _sy + _cy,
-                        (z - _cz) / _sz + _cz,
-                    )
-                    * _sm
-                ),
-                bounds=new_bounds,
-                iso=self._iso,
-                period=self._period,
-                name=self.name,
-                resolution=self._resolution,
-            )
-        err_msg = "Cannot scale an empty Phase"
-        raise ValueError(err_msg)
+        # A cached input grid can't be rescaled in lockstep with the SDF
+        # pivot; drop it so .grid() re-samples the scaled field.
+        self._cached_grid = None
+        self._invalidate_derived()
 
-    def rotated(
+    def rotate(
         self: Phase,
-        angles: tuple[float, float, float],
-        convention: str = "ZXZ",
+        rotation: Rotation | np.ndarray,
+        point: Sequence[float] | None = None,
+        *,
+        inplace: bool = False,
     ) -> Phase:
-        """Return a new :class:`Phase` rotated by Euler ``angles`` (degrees).
+        """Rotate the phase by a SciPy :class:`~scipy.spatial.transform.Rotation`.
 
-        Rotation is applied about the world origin.
+        - CAD-backed: delegates to ``CadShape.rotate`` (axis-angle form).
+        - Field-backed: composes ``f'(p) = f(R^{-1}(p - point) + point)`` so
+          the iso-surface rotates with the rest; ``bounds`` becomes the AABB
+          of the rotated original AABB and ``period`` resets to ``None``.
 
-        - CAD-backed: delegates to ``CadShape.rotate`` with axis-angle form.
-        - Field-backed: composes the field as
-          ``f'(p) = f(R^{-1} p)`` so the iso-surface rotates with the rest;
-          ``bounds`` is the AABB of the rotated original AABB.
-
-        :param angles: Euler angles in degrees.
-        :param convention: rotation order (default ``"ZXZ"``); accepted by
-            ``scipy.spatial.transform.Rotation.from_euler``.
+        :param rotation: a ``Rotation`` object (or a 3x3 matrix), following
+            PyVista's ``RotationLike``.  Build it with ``Rotation.from_euler``
+            / ``from_matrix`` / ``from_quat`` / ``from_rotvec``.
+        :param point: pivot point; defaults to the world origin.
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new rotated :class:`Phase`.
         """
-        rot = Rotation.from_euler(convention, angles, degrees=True)
+        if self.is_empty:
+            err_msg = "Cannot rotate an empty Phase"
+            raise ValueError(err_msg)
+        rot = (
+            rotation
+            if isinstance(rotation, Rotation)
+            else Rotation.from_matrix(np.asarray(rotation, dtype=np.float64))
+        )
+        pivot = (
+            (0.0, 0.0, 0.0)
+            if point is None
+            else (float(point[0]), float(point[1]), float(point[2]))
+        )
+        target = self if inplace else self.copy()
+        target._apply_rotate(rot, pivot)  # noqa: SLF001
+        return target
 
-        if self._cad is not None:
-            rotvec = rot.as_rotvec(degrees=True)
-            angle = float(np.linalg.norm(rotvec))
-            if angle == 0.0:
-                return Phase(name=self.name, resolution=self._resolution)._with_cad(
-                    self._cad
-                )
-            axis = rotvec / angle
-            new = Phase(name=self.name, resolution=self._resolution)
-            new._cad = self._cad.rotate((0.0, 0.0, 0.0), tuple(axis), angle)  # noqa: SLF001
-            return new
-
+    def _apply_rotate(
+        self: Phase, rot: Rotation, pivot: tuple[float, float, float]
+    ) -> None:
+        px, py, pz = pivot
+        p = np.array([px, py, pz], dtype=np.float64)
         if self._field is not None and self._bounds is not None:
             inv = rot.inv().as_matrix()
             rot_matrix = rot.as_matrix()
             f = self._field
-            # World-frame AABB of the rotated bbox: take all 8 corners,
-            # apply the rotation, and re-AABB.
+
+            def _rotated_field(x, y, z, _f=f, _m=inv, _px=px, _py=py, _pz=pz):  # noqa: ANN001, ANN202
+                xx = x - _px
+                yy = y - _py
+                zz = z - _pz
+                lx = _m[0, 0] * xx + _m[0, 1] * yy + _m[0, 2] * zz + _px
+                ly = _m[1, 0] * xx + _m[1, 1] * yy + _m[1, 2] * zz + _py
+                lz = _m[2, 0] * xx + _m[2, 1] * yy + _m[2, 2] * zz + _pz
+                return _f(lx, ly, lz)
+
             b = self._bounds
             corners = np.array(
                 [
@@ -873,47 +977,37 @@ class Phase:
                     for z in (b[4], b[5])
                 ]
             )
-            rotated_corners = corners @ rot_matrix.T
-            new_bounds = (
-                float(rotated_corners[:, 0].min()),
-                float(rotated_corners[:, 0].max()),
-                float(rotated_corners[:, 1].min()),
-                float(rotated_corners[:, 1].max()),
-                float(rotated_corners[:, 2].min()),
-                float(rotated_corners[:, 2].max()),
+            rc = (corners - p) @ rot_matrix.T + p
+            self._field = _rotated_field
+            self._bounds = (
+                float(rc[:, 0].min()),
+                float(rc[:, 0].max()),
+                float(rc[:, 1].min()),
+                float(rc[:, 1].max()),
+                float(rc[:, 2].min()),
+                float(rc[:, 2].max()),
             )
-
-            def _rotated_field(
-                x: np.ndarray,
-                y: np.ndarray,
-                z: np.ndarray,
-                _f: Field = f,
-                _m: np.ndarray = inv,
-            ) -> np.ndarray:
-                lx = _m[0, 0] * x + _m[0, 1] * y + _m[0, 2] * z
-                ly = _m[1, 0] * x + _m[1, 1] * y + _m[1, 2] * z
-                lz = _m[2, 0] * x + _m[2, 1] * y + _m[2, 2] * z
-                return _f(lx, ly, lz)
-
-            return Phase(
-                field=_rotated_field,
-                bounds=new_bounds,
-                iso=self._iso,
-                period=None,  # rotation breaks axis-aligned periodicity
-                name=self.name,
-                resolution=self._resolution,
+            self._period = None  # rotation breaks axis-aligned periodicity
+        if self._cad is not None:
+            rotvec = rot.as_rotvec(degrees=True)
+            angle = float(np.linalg.norm(rotvec))
+            if angle != 0.0:
+                axis = rotvec / angle
+                self._cad = self._cad.rotate((px, py, pz), tuple(axis), angle)
+        if self._surface_mesh is not None:
+            self._surface_mesh = self._surface_mesh.rotate(
+                rot, point=(px, py, pz), inplace=False
             )
-        err_msg = "Cannot rotate an empty Phase"
-        raise ValueError(err_msg)
+        if self._cached_grid is not None:
+            self._cached_grid = self._cached_grid.rotate(
+                rot, point=(px, py, pz), inplace=False
+            )
+        self._invalidate_derived()
 
-    def _with_cad(self: Phase, cad: Any) -> Phase:
-        """Internal: return self with ``_cad`` set (used by transforms)."""
-        self._cad = cad
-        return self
+    def tile(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
+        """Periodically tile the phase on the RVE over ``grid`` copies.
 
-    def tiled(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
-        """Return a new :class:`Phase` periodically tiled on the RVE.
-
+        A **producer**: always returns a new :class:`Phase` (no ``inplace``).
         Builds ``∏ grid`` translated copies of the current phase and
         fuses them.  Only implemented for CAD-backed phases today (the
         field-backed equivalent — domain folding via ``mod`` — lands in
@@ -923,7 +1017,7 @@ class Phase:
         """
         if self._cad is None:
             err_msg = (
-                "Phase.tiled is implemented for CAD-backed phases today; "
+                "Phase.tile is implemented for CAD-backed phases today; "
                 "field-backed tiling lives on the source Shape (use "
                 "microgen.shape.implicit_ops.repeat there)."
             )
