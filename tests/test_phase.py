@@ -53,7 +53,7 @@ def test_phase_tiled_should_repeat_the_shape_in_the_rve() -> None:
     phase = Phase.from_cad(box)
 
     repeat = (1, 2, 1)
-    tiled = phase.tiled(rve, grid=repeat)
+    tiled = phase.tile(rve, grid=repeat)
     assert len(tiled.cad.solids()) == np.prod(repeat)
     assert np.isclose(tiled.cad.volume(), 2.0 * volume_before)
 
@@ -64,7 +64,7 @@ def test_phase_scaled_should_change_the_size_of_the_shape() -> None:
     scale = 1.5
     phase = Phase.from_cad(Sphere(radius=radius).generate_cad())
     volume_before = phase.cad.volume()
-    scaled = phase.scaled(scale)
+    scaled = phase.scale(scale)
     assert np.isclose(scaled.cad.volume(), volume_before * scale**3, rtol=1e-2)
 
 
@@ -74,9 +74,9 @@ def test_phase_translated_should_shift_centers() -> None:
     phase = Phase.from_cad(
         Ellipsoid(center=center, radii=(0.15, 0.31, 0.4)).generate_cad()
     )
-    moved = phase.translated((1, 0, 0))
+    moved = phase.translate((1, 0, 0))
     assert np.allclose(moved.center_of_mass, (2.0, 0.5, -0.5), rtol=1e-4)
-    moved2 = moved.translated(np.array([0, 1, 1]))
+    moved2 = moved.translate(np.array([0, 1, 1]))
     assert np.allclose(moved2.center_of_mass, (2.0, 1.5, 0.5), rtol=1e-4)
 
 

@@ -4,13 +4,14 @@
   derives ``bounds`` from a :class:`Rve`.
 - :meth:`Phase.from_grid` — wraps a pre-sampled
   :class:`pyvista.StructuredGrid` (useful for expensive-to-evaluate fields).
-- :meth:`Phase.rotated` — the missing immutable transform paired with
-  ``translated`` / ``scaled`` / ``tiled``.
+- :meth:`Phase.rotate` — the rotation transform paired with
+  ``translate`` / ``scale`` / ``tile``.
 """
 
 import numpy as np
 import pytest
 import pyvista as pv
+from scipy.spatial.transform import Rotation
 
 from microgen import Box, Phase, Rve, Sphere, Tpms, surface_functions
 
@@ -74,7 +75,7 @@ def test_phase_rotated_field_backed_swaps_axes() -> None:
     phase = Phase.from_shape(box, resolution=40)
     # f(0.5, 0, 0) < 0 before, > 0 after; f(0, 0.5, 0) < 0 after.
     f_before = phase.field(np.array([0.5]), np.array([0.0]), np.array([0.0]))[0]
-    rotated = phase.rotated((0, 0, 90), convention="xyz")
+    rotated = phase.rotate(Rotation.from_euler("xyz", (0, 0, 90), degrees=True))
     f_after = rotated.field(np.array([0.5]), np.array([0.0]), np.array([0.0]))[0]
     f_y = rotated.field(np.array([0.0]), np.array([0.5]), np.array([0.0]))[0]
     assert f_before < 0
@@ -87,14 +88,14 @@ def test_phase_rotated_field_backed_invalidates_period() -> None:
     tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3, cell_size=1.0)
     phase = Phase.from_shape(tpms)
     assert phase.period == (1.0, 1.0, 1.0)
-    rotated = phase.rotated((30, 0, 0))
+    rotated = phase.rotate(Rotation.from_euler("ZXZ", (30, 0, 0), degrees=True))
     assert rotated.period is None
 
 
 def test_phase_rotated_cad_backed_preserves_volume() -> None:
     """CAD-backed rotation produces a Phase with the same volume."""
     sph = Phase.from_cad(Sphere(radius=0.5).generate_cad())
-    rotated = sph.rotated((0, 0, 45))
+    rotated = sph.rotate(Rotation.from_euler("ZXZ", (0, 0, 45), degrees=True))
     # CAD-backed: same volume (rigid transform).
     assert np.isclose(rotated.cad.volume(), sph.cad.volume(), rtol=1e-6)
 
@@ -102,4 +103,4 @@ def test_phase_rotated_cad_backed_preserves_volume() -> None:
 def test_phase_rotated_empty_raises() -> None:
     """An empty Phase cannot be rotated."""
     with pytest.raises(ValueError, match="Cannot rotate an empty Phase"):
-        Phase().rotated((10, 0, 0))
+        Phase().rotate(Rotation.from_euler("ZXZ", (10, 0, 0), degrees=True))

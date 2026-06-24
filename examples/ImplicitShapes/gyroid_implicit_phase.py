@@ -54,10 +54,10 @@ for i, piece in enumerate(pieces[:3]):
     print(f"  piece[{i}]: volume={piece.volume:.4f}, com={piece.com}")
 
 # %% Immutable transforms return new Phase objects.
-moved = phase.translated((1.0, 0.0, 0.0))
+moved = phase.translate((1.0, 0.0, 0.0))
 print(f"\nTranslated phase COM: {moved.center_of_mass}  (shifted by +1 in x)")
 
-scaled = phase.scaled(2.0)
+scaled = phase.scale(2.0)
 print(f"Scaled phase bounds:  {scaled.bounds}  (cell doubled)")
 
 # %% Compose with another implicit Shape via F-rep boolean ops.

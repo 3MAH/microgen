@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pyvista as pv
+from scipy.spatial.transform import Rotation
 
 from microgen.shape.implicit_ops import (
     batch_smooth_union,
@@ -222,7 +223,7 @@ class TestTransforms:
 
     def test_translated(self):
         s = _make_sphere()
-        st = s.translated((2, 0, 0))
+        st = s.translate((2, 0, 0))
         x, y, z = np.array([2.0]), np.array([0.0]), np.array([0.0])
         assert st.evaluate(x, y, z)[0] < 0
 
@@ -233,7 +234,7 @@ class TestTransforms:
         # Elongated box along x, rotated 90° around z -> elongated along y
         func, bounds = _box_field(hx=1.0, hy=0.1, hz=0.1)
         box = Shape(field=func, bounds=bounds)
-        rotated = box.rotated((0, 0, 90), convention="xyz")
+        rotated = box.rotate(Rotation.from_euler("xyz", (0, 0, 90), degrees=True))
         # Point along y axis should be inside
         assert (
             rotated.evaluate(np.array([0.0]), np.array([0.5]), np.array([0.0]))[0] < 0
@@ -245,20 +246,20 @@ class TestTransforms:
 
     def test_scaled(self):
         s = _make_sphere()
-        ss = s.scaled(2.0)
+        ss = s.scale(2.0)
         x, y, z = np.array([1.5]), np.array([0.0]), np.array([0.0])
         assert s.evaluate(x, y, z)[0] > 0
         assert ss.evaluate(x, y, z)[0] < 0
 
     def test_translated_bounds(self):
         s = _make_sphere()
-        st = s.translated((5, 0, 0))
+        st = s.translate((5, 0, 0))
         assert st.bounds is not None
         assert st.bounds[0] > 3.0
 
     def test_scaled_bounds(self):
         s = _make_sphere()
-        ss = s.scaled(3.0)
+        ss = s.scale(3.0)
         assert ss.bounds is not None
         assert ss.bounds[1] > 3.0
 
@@ -404,11 +405,11 @@ class TestErrorHandling:
     def test_transform_without_func_raises(self):
         s = Shape()
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.translated((1, 0, 0))
+            s.translate((1, 0, 0))
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.rotated((0, 0, 45))
+            s.rotate(Rotation.from_euler("ZXZ", (0, 0, 45), degrees=True))
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.scaled(2.0)
+            s.scale(2.0)
 
     def test_boolean_without_func_raises(self):
         s = Shape()
