@@ -86,7 +86,7 @@ class Capsule(Shape):
         )
         rotated = corners @ rot.T
         margin = (half_h + r) * 0.1
-        self._func = _field
+        self._field = _field
         self._bounds = (
             cx + float(rotated[:, 0].min()) - margin,
             cx + float(rotated[:, 0].max()) + margin,

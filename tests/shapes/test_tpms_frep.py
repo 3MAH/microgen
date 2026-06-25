@@ -23,7 +23,7 @@ class TestSdfNormalization:
         """After normalization, |grad(sdf)| should be approximately 1."""
         raw = from_field(surface_functions.gyroid)
         sdf_shape = normalize_to_sdf(raw)
-        sdf = sdf_shape.func
+        sdf = sdf_shape.field
 
         rng = np.random.default_rng(42)
         x = rng.uniform(-2, 2, 500)
@@ -64,7 +64,7 @@ class TestSdfNormalization:
 
         shape = from_field(non_autograd_field, bounds=(-2, 2, -2, 2, -2, 2))
         sdf_shape = normalize_to_sdf(shape)
-        vals = sdf_shape.func(np.array([0.0]), np.array([0.0]), np.array([0.0]))
+        vals = sdf_shape.field(np.array([0.0]), np.array([0.0]), np.array([0.0]))
         assert np.isfinite(vals[0])
 
 
@@ -78,7 +78,7 @@ class TestTpmsFrepField:
 
     def test_tpms_has_func(self):
         tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
-        assert tpms.func is not None
+        assert tpms.field is not None
 
     def test_tpms_has_bounds(self):
         tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
@@ -113,7 +113,7 @@ class TestTpmsFrepMethods:
         tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
         sheet = tpms.as_sheet(thickness=0.15)
         assert isinstance(sheet, Shape)
-        assert sheet.func is not None
+        assert sheet.field is not None
 
     def test_as_sheet_mesh(self):
         tpms = Tpms(
@@ -130,13 +130,13 @@ class TestTpmsFrepMethods:
         tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
         skel = tpms.as_upper_skeletal()
         assert isinstance(skel, Shape)
-        assert skel.func is not None
+        assert skel.field is not None
 
     def test_as_lower_skeletal(self):
         tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
         skel = tpms.as_lower_skeletal()
         assert isinstance(skel, Shape)
-        assert skel.func is not None
+        assert skel.field is not None
 
 
 # ---------------------------------------------------------------------------
@@ -235,7 +235,7 @@ class TestCurvilinearTpms:
             offset=0.3,
             resolution=10,
         )
-        assert tpms.func is not None
+        assert tpms.field is not None
         assert tpms.bounds is not None
 
     def test_cylindrical_evaluate(self):
@@ -262,7 +262,7 @@ class TestCurvilinearTpms:
             offset=0.3,
             resolution=10,
         )
-        assert tpms.func is not None
+        assert tpms.field is not None
         assert tpms.bounds is not None
 
     def test_spherical_evaluate(self):

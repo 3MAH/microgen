@@ -27,9 +27,9 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _make_shape(func: Field, bounds: BoundsType | None) -> Shape:
+def _make_shape(field: Field, bounds: BoundsType | None) -> Shape:
     """Create a bare Shape with only an implicit scalar field."""
-    return _shape.Shape(func=func, bounds=bounds)
+    return _shape.Shape(field=field, bounds=bounds)
 
 
 def _smooth_min(
@@ -92,9 +92,9 @@ def _merge_bounds(
 
 def complement(a: Shape) -> Shape:
     """Complement (negate the field): inside becomes outside and vice versa."""
-    f = a.require_func()
+    f = a.require_field()
     return _make_shape(
-        func=lambda x, y, z, _f=f: -_f(x, y, z),
+        field=lambda x, y, z, _f=f: -_f(x, y, z),
         bounds=a.bounds,
     )
 
@@ -106,27 +106,27 @@ def complement(a: Shape) -> Shape:
 
 def union(a: Shape, b: Shape) -> Shape:
     """Union of two shapes (hard boolean)."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb: np.minimum(_fa(x, y, z), _fb(x, y, z)),
+        field=lambda x, y, z, _fa=fa, _fb=fb: np.minimum(_fa(x, y, z), _fb(x, y, z)),
         bounds=_merge_bounds(a.bounds, b.bounds, "union"),
     )
 
 
 def intersection(a: Shape, b: Shape) -> Shape:
     """Intersection of two shapes (hard boolean)."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb: np.maximum(_fa(x, y, z), _fb(x, y, z)),
+        field=lambda x, y, z, _fa=fa, _fb=fb: np.maximum(_fa(x, y, z), _fb(x, y, z)),
         bounds=_merge_bounds(a.bounds, b.bounds, "intersection"),
     )
 
 
 def difference(a: Shape, b: Shape) -> Shape:
     """Difference of two shapes (a minus b)."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb: np.maximum(
+        field=lambda x, y, z, _fa=fa, _fb=fb: np.maximum(
             _fa(x, y, z),
             -_fb(x, y, z),
         ),
@@ -141,9 +141,9 @@ def difference(a: Shape, b: Shape) -> Shape:
 
 def smooth_union(a: Shape, b: Shape, k: float) -> Shape:
     """Smooth union with blending radius *k*."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb, _k=k: _smooth_min(
+        field=lambda x, y, z, _fa=fa, _fb=fb, _k=k: _smooth_min(
             _fa(x, y, z),
             _fb(x, y, z),
             _k,
@@ -154,9 +154,9 @@ def smooth_union(a: Shape, b: Shape, k: float) -> Shape:
 
 def smooth_intersection(a: Shape, b: Shape, k: float) -> Shape:
     """Smooth intersection with blending radius *k*."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb, _k=k: _smooth_max(
+        field=lambda x, y, z, _fa=fa, _fb=fb, _k=k: _smooth_max(
             _fa(x, y, z),
             _fb(x, y, z),
             _k,
@@ -167,9 +167,9 @@ def smooth_intersection(a: Shape, b: Shape, k: float) -> Shape:
 
 def smooth_difference(a: Shape, b: Shape, k: float) -> Shape:
     """Smooth difference (a minus b) with blending radius *k*."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb, _k=k: _smooth_max(
+        field=lambda x, y, z, _fa=fa, _fb=fb, _k=k: _smooth_max(
             _fa(x, y, z),
             -_fb(x, y, z),
             _k,
@@ -196,7 +196,7 @@ def batch_smooth_union(
         msg = "batch_smooth_union requires at least one shape"
         raise ValueError(msg)
 
-    funcs = [s.require_func() for s in shapes]
+    funcs = [s.require_field() for s in shapes]
 
     merged = shapes[0].bounds
     for s in shapes[1:]:
@@ -216,7 +216,7 @@ def batch_smooth_union(
         all_fields = np.stack([fn(x, y, z) for fn in funcs], axis=0)
         return np.min(all_fields, axis=0)
 
-    return _make_shape(func=_batched, bounds=merged)
+    return _make_shape(field=_batched, bounds=merged)
 
 
 # ---------------------------------------------------------------------------
@@ -231,18 +231,18 @@ def shell(shape: Shape, thickness: float | Field) -> Shape:
     ``thickness(x, y, z) -> array`` for spatially-varying shells.  Negative or
     zero thickness at a point yields no inclusion in the shell at that point.
     """
-    f = shape.require_func()
+    f = shape.require_field()
     if callable(thickness):
         t_func = thickness
 
         def _shell_field(x, y, z, _f=f, _t=t_func):
             return np.abs(_f(x, y, z)) - _t(x, y, z) / 2.0
 
-        return _make_shape(func=_shell_field, bounds=shape.bounds)
+        return _make_shape(field=_shell_field, bounds=shape.bounds)
 
     half_t = float(thickness) / 2.0
     return _make_shape(
-        func=lambda x, y, z, _f=f, _ht=half_t: np.abs(_f(x, y, z)) - _ht,
+        field=lambda x, y, z, _f=f, _ht=half_t: np.abs(_f(x, y, z)) - _ht,
         bounds=shape.bounds,
     )
 
@@ -264,7 +264,7 @@ def repeat(
         coordinate-modulo repetition is used (hard tiling).
     """
     sx, sy, sz = spacing
-    f = shape.require_func()
+    f = shape.require_field()
 
     if k <= 0:
 
@@ -299,7 +299,7 @@ def repeat(
                 result = _smooth_min(result, f(cx + ox, cy + oy, cz + oz), k)
             return result
 
-    return _make_shape(func=_repeated, bounds=None)
+    return _make_shape(field=_repeated, bounds=None)
 
 
 def blend(
@@ -308,10 +308,10 @@ def blend(
     factor: float = 0.5,
 ) -> Shape:
     """Linear interpolation between two fields: ``(1-t)*a + t*b``."""
-    fa, fb = a.require_func(), b.require_func()
+    fa, fb = a.require_field(), b.require_field()
     t = factor
     return _make_shape(
-        func=lambda x, y, z, _fa=fa, _fb=fb, _t=t: (
+        field=lambda x, y, z, _fa=fa, _fb=fb, _t=t: (
             (1.0 - _t) * _fa(x, y, z) + _t * _fb(x, y, z)
         ),
         bounds=_merge_bounds(a.bounds, b.bounds, "union"),
@@ -319,11 +319,11 @@ def blend(
 
 
 def from_field(
-    func: Field,
+    field: Field,
     bounds: BoundsType | None = None,
 ) -> Shape:
     """Wrap any callable ``f(x, y, z) -> scalar`` as a Shape with an implicit field."""
-    return _make_shape(func=func, bounds=bounds)
+    return _make_shape(field=field, bounds=bounds)
 
 
 def box(
@@ -354,7 +354,7 @@ def box(
         )
 
     bounds: BoundsType = (cx - hx, cx + hx, cy - hy, cy + hy, cz - hz, cz + hz)
-    return _make_shape(func=_box_sdf, bounds=bounds)
+    return _make_shape(field=_box_sdf, bounds=bounds)
 
 
 def _fd_sdf(
@@ -394,7 +394,7 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
     :param epsilon: floor for gradient magnitude (avoids division by zero
         at saddle points)
     """
-    f = shape.require_func()
+    f = shape.require_field()
 
     # Try autograd first; fall back to FD if it fails at construction
     # OR at first evaluation (autograd may succeed at construction but
@@ -435,4 +435,4 @@ def normalize_to_sdf(shape: Shape, epsilon: float = 1e-10) -> Shape:
     except Exception:  # noqa: BLE001
         sdf = _fd_sdf(f, epsilon)
 
-    return _make_shape(func=sdf, bounds=shape.bounds)
+    return _make_shape(field=sdf, bounds=shape.bounds)

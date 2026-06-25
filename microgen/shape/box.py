@@ -87,7 +87,7 @@ class Box(Shape):
         corners = np.array(list(itertools.product([-hx, hx], [-hy, hy], [-hz, hz])))
         rotated = corners @ rot.T
         margin = max(hx, hy, hz) * 0.1
-        self._func = _field
+        self._field = _field
         self._bounds = (
             cx + float(rotated[:, 0].min()) - margin,
             cx + float(rotated[:, 0].max()) + margin,

@@ -56,11 +56,11 @@ def test_spinodoid_offset_used_directly() -> None:
 
 
 def test_spinodoid_func_evaluable_and_sign_matches_solid() -> None:
-    """`_func` is evaluable; sign convention matches grid_solid membership."""
+    """`_field` is evaluable; sign convention matches grid_solid membership."""
     sp = Spinodoid(k0=15.0, bandwidth=3.0, resolution=16, density=0.5, seed=0)
     rng = np.random.default_rng(0)
     pts = rng.uniform(0.0, sp.cell_size[0], size=(100, 3))
-    values = sp._func(pts[:, 0], pts[:, 1], pts[:, 2])
+    values = sp._field(pts[:, 0], pts[:, 1], pts[:, 2])
     assert values.shape == (100,)
     # Negative ↔ inside the solid (Shape F-rep convention)
     inside_count = int((values < 0).sum())
@@ -76,10 +76,10 @@ def test_spinodoid_field_is_bit_exact_periodic() -> None:
     x = rng.uniform(0.0, Lx, size=10)
     y = rng.uniform(0.0, Ly, size=10)
     z = rng.uniform(0.0, Lz, size=10)
-    v0 = sp._func(x, y, z)
-    vx = sp._func(x + Lx, y, z)
-    vy = sp._func(x, y + Ly, z)
-    vz = sp._func(x, y, z + Lz)
+    v0 = sp._field(x, y, z)
+    vx = sp._field(x + Lx, y, z)
+    vy = sp._field(x, y + Ly, z)
+    vz = sp._field(x, y, z + Lz)
     assert np.max(np.abs(vx - v0)) < 1e-10
     assert np.max(np.abs(vy - v0)) < 1e-10
     assert np.max(np.abs(vz - v0)) < 1e-10
@@ -200,5 +200,5 @@ def test_spinodoid_frep_boolean_op_with_implicit_sphere() -> None:
     assert isinstance(intersected, Shape)
     # Smoke test: callable evaluable on arbitrary points.
     pts = np.array([[0.5, 0.5, 0.5]])
-    val = intersected._func(pts[:, 0], pts[:, 1], pts[:, 2])
+    val = intersected._field(pts[:, 0], pts[:, 1], pts[:, 2])
     assert val.shape == (1,)
