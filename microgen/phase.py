@@ -434,13 +434,27 @@ class Phase:
         return out
 
     def _pieces_from_field(self: Phase) -> list[Piece]:
-        from scipy.ndimage import center_of_mass, find_objects, label  # noqa: PLC0415
+        from scipy.ndimage import (  # noqa: PLC0415
+            center_of_mass,
+            find_objects,
+            generate_binary_structure,
+            label,
+        )
 
         sg = self.grid()
         res = self._resolution
         scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape((res, res, res), order="F")
         inside = scalar < self._iso
-        labels, n_labels = label(inside)
+        # 26-connectivity (faces + edges + corners) — the physically correct
+        # notion of "connected solid region" for a sampled continuous field.
+        # scipy's default is 6-connectivity (faces only), which fragments
+        # convex polyhedra at sharp vertices: a corner voxel and its diagonal
+        # neighbors all sample slightly inside but only touch corner-to-corner,
+        # so 6-connectivity reports them as separate components.  Genuinely
+        # disjoint regions (e.g. periodic-split fragments) are separated by
+        # many voxels and remain distinct under any connectivity.
+        structure = generate_binary_structure(3, 3)
+        labels, n_labels = label(inside, structure=structure)
         if n_labels == 0:
             return []
 
