@@ -61,7 +61,7 @@ ray = [
     "embreex",
 ]
 jupyter = [
-    "jupyterlab>=3.6.8,<4.6",
+    "jupyterlab>=3.6.8,<4.7",
     "sidecar>=0.5.2",
     "jupyterview>=0.7.0",
 ]
