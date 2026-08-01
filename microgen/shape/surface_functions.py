@@ -3,6 +3,8 @@
 import autograd.numpy as np
 from autograd.numpy import cos, sin
 
+from ._types import Field
+
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """Gyroid.
@@ -309,7 +311,7 @@ def split_p(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     )
 
 
-def honeycomb_gyroid(x: float, y: float, _: float) -> float:
+def honeycomb_gyroid(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarray:
     """Honeycomb Gyroid.
 
     .. math::
@@ -332,7 +334,7 @@ def honeycomb_gyroid(x: float, y: float, _: float) -> float:
     return sin(x) * cos(y) + sin(y) + cos(x)
 
 
-def honeycomb_schwarz_p(x: float, y: float, _: float) -> float:
+def honeycomb_schwarz_p(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarray:
     """Honeycomb Schwarz P.
 
     .. math::
@@ -355,7 +357,7 @@ def honeycomb_schwarz_p(x: float, y: float, _: float) -> float:
     return cos(x) + cos(y)
 
 
-def honeycomb_schwarz_d(x: float, y: float, _: float) -> float:
+def honeycomb_schwarz_d(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarray:
     """Honneycomb Schwarz D.
 
     .. math::
@@ -378,7 +380,7 @@ def honeycomb_schwarz_d(x: float, y: float, _: float) -> float:
     return cos(x) * cos(y) + sin(x) * sin(y) + sin(x) * cos(y) + cos(x) * sin(y)
 
 
-def honeycomb_schoen_iwp(x: float, y: float, _: float) -> float:
+def honeycomb_schoen_iwp(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarray:
     """Honneycomb Schoen IWP.
 
     .. math::
@@ -401,7 +403,7 @@ def honeycomb_schoen_iwp(x: float, y: float, _: float) -> float:
     return cos(x) * cos(y) + cos(y) + cos(x)
 
 
-def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
+def honeycomb_lidinoid(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarray:
     """Honeycomb Lidinoid.
 
     .. math::
@@ -425,3 +427,23 @@ def honeycomb_lidinoid(x: float, y: float, _: float) -> float:
     return 1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y)) - (
         cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
+
+
+BUILTIN_SURFACES: tuple[Field, ...] = (
+    gyroid,
+    schwarz_p,
+    schwarz_d,
+    neovius,
+    schoen_iwp,
+    schoen_frd,
+    fischer_koch_s,
+    pmy,
+    honeycomb,
+    lidinoid,
+    split_p,
+    honeycomb_gyroid,
+    honeycomb_schwarz_p,
+    honeycomb_schwarz_d,
+    honeycomb_schoen_iwp,
+    honeycomb_lidinoid,
+)
