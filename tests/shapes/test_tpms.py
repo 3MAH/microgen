@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import re
-from inspect import getmembers, isfunction, signature
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -12,25 +11,15 @@ import pytest
 
 import microgen
 
+if TYPE_CHECKING:
+    from microgen.shape._types import Field
+
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
 
 
 TEST_DEFAULT_OFFSET = 0.5
 TEST_DEFAULT_SURFACE_FUNCTION = microgen.surface_functions.gyroid
-
-
-def _get_microgen_surface_functions() -> list[str]:
-    """List the actual TPMS surface functions in microgen.surface_functions.
-
-    Filters out non-TPMS callables exposed via re-import (autograd ``cos``/``sin``)
-    that take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
-    """
-    return [
-        name
-        for name, fn in getmembers(microgen.surface_functions, isfunction)
-        if len(signature(fn).parameters) == 3
-    ]
 
 
 @pytest.mark.parametrize("type_part", ["lower skeletal", "upper skeletal", "sheet"])
@@ -89,19 +78,20 @@ def test_tpms_given_non_default_cell_size_and_repeat_cell_must_have_same_volume_
 
 @pytest.mark.parametrize(
     "surface",
-    _get_microgen_surface_functions(),
+    microgen.surface_functions.BUILTIN_SURFACES,
+    ids=lambda function: function.__name__,
 )
 @pytest.mark.parametrize("repeat_cell", [2, (2, 1, 3)])
 @pytest.mark.parametrize("cell_size", [3.0, (0.5, 1.5, 1.0)])
 def test_tpms_given_sum_volume_must_be_cube_volume(
-    surface: str,
+    surface: Field,
     repeat_cell: int | tuple[int, int, int],
     cell_size: float | tuple[float, float, float],
 ) -> None:
     """Test for the volume of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=getattr(microgen.surface_functions, surface),
+        surface_function=surface,
         offset=TEST_DEFAULT_OFFSET,
         repeat_cell=repeat_cell,
         cell_size=cell_size,
@@ -117,16 +107,20 @@ def test_tpms_given_sum_volume_must_be_cube_volume(
     assert np.isclose(volume, cube_volume, rtol=1e-2)
 
 
-@pytest.mark.parametrize("surface", _get_microgen_surface_functions())
+@pytest.mark.parametrize(
+    "surface",
+    microgen.surface_functions.BUILTIN_SURFACES,
+    ids=lambda function: function.__name__,
+)
 @pytest.mark.parametrize("density", [0.05, 0.5, 0.99, 1.0])
 def test_tpms_given_density_must_match_computed_density(
-    surface: str,
+    surface: Field,
     density: float,
 ) -> None:
     """Test for the density of the TPMS shapes generated with CadQuery and VTK."""
     # Arrange
     tpms = microgen.Tpms(
-        surface_function=getattr(microgen.surface_functions, surface),
+        surface_function=surface,
         density=density,
     )
 
