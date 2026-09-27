@@ -1,108 +1,108 @@
-# Meshers 0.1.0 experiment
+# Direct periodic TPMS meshing with meshers 0.1.0
 
-This branch replaces microgen's solid-meshing implementations with the published
-`meshers==0.1.0` wheel. It is an experiment based on microgen commit `38e1912`.
-It does not depend on unreleased meshers changes.
-
-## What changed
-
-| Microgen path | Experimental implementation |
-| --- | --- |
-| Bounded `Shape`, boolean combinations, implicit Voronoi phases | Meshers tetrahedra and their closed boundary |
-| Box, sphere, capsule, cylinder, ellipsoid, convex polyhedron surfaces | Meshers applied to the existing implicit field |
-| Cartesian TPMS sheets | Two-sided bands, preserving raw-field offset units |
-| TPMS skeletals | Negative sublevel fields |
-| Callable and nodal TPMS grading | Separate upper/lower constraints; nodal offsets are interpolated |
-| Cylindrical and spherical sectors | Named constraints in parameter coordinates with a physical coordinate map |
-| Infill and graded infill | TPMS constraints intersected with the object envelope |
-| Spinodoid surfaces and volumes | Meshers applied to the existing Fourier field |
-| Field-backed Phase surfaces and volumes | Meshers with the phase iso-value subtracted |
-| First-order lattice FEM meshing | Periodic implicit strut union, with neighboring struts included |
-
-The PyVista return types remain `PolyData` for surfaces and `UnstructuredGrid`
-for volumes. Replaced volume paths return only linear tetrahedra. Surface and
-volume calls use the same solid definition. Generic shapes cache native results;
-the PyVista views copy their arrays so editing a view does not change the cache.
-
-`generate_meshers()` exposes the native result, diagnostics, periodic pairs, and
-VTKHDF export. Treat a generic shape's native cached result as read-only. PyVista
-meshes retain periodic pairs in field data. Boundary surfaces also retain face
-tags and the native node IDs.
-
-## Deliberately retained
-
-Meshers 0.1.0 does not replace CAD construction, STEP input/output, CAD booleans,
-arbitrary existing-mesh remeshing, or higher-order Gmsh elements. ExtrudedPolygon
-has no implicit representation in microgen and retains its polygon renderer.
-Open TPMS zero-level surfaces retain contouring; a closed solid boundary is not
-the same object.
-
-Full angular wraps, collapsed radial axes, spherical poles, and arbitrary Sweep
-charts retain the existing parametric grid mesher. These need seam identification,
-singularity handling, or a separately validated sweep map. Partial cylindrical
-and spherical charts use meshers. Requesting a native meshers result for a retained
-chart raises `NotImplementedError`; passing meshers options to its legacy generator
-raises `TypeError`. There is no retry with VTK after a meshers failure.
-
-Structured grids remain available for sampling, open contours, offset calibration,
-and legacy parametric charts. Geometry definitions, grading, density searches,
-CAD-dependent lattice radius calibration, and phase quadrature remain in microgen.
-
-## Behavior to review before a PR
-
-- Primitive surfaces are triangulated solid boundaries. Angular tessellation
-  arguments such as `theta_resolution`, `phi_resolution`, and box `level` are
-  replaced by grid-point `resolution`. This is an intentional API change.
-- Resolution counts grid points, so meshers receives `resolution - 1` cells.
-  TPMS and spinodoids retain their per-cell resolution and repeat counts.
-- The default sampled geometry tolerance is half the largest background-cell
-  spacing. Pass `geometry_tolerance` explicitly for a stricter acceptance gate.
-  This is not a guaranteed Hausdorff bound or automatic refinement.
-- Callbacks default to `compile=False` because microgen fields can call VTK,
-  interpolation, and autograd. `compile=True` is available for supported fields.
-  This branch makes no speedup claim, and periodic lattice callbacks are costly.
-- Thin features still need a resolution study. Geometry failures and budget limits
-  propagate. Primitive and TPMS surface meshes can cost substantially more than
-  their former visualization-only renderers.
-- Use `periodic=(True, True, True)` explicitly for generic shapes, TPMS and
-  spinodoids. Lattice volume meshing defaults to periodic. Matching is validated
-  by meshers. Angular periodic maps additionally require rigid transforms through
-  the meshers `periodic_transforms` option.
-- Imported infill envelopes and curved sectors need broader application-level
-  validation. No performance or full upstream-suite certification is claimed.
-
-## Try it
+This branch now changes TPMS volume generation only. `generate_volume_mesh()`
+uses meshers for supported TPMS geometries, with no backend selector. Existing
+surface meshes, CAD generation, other shapes, phases, lattices, and MMG remeshing
+retain their original implementations.
 
 ```python
-import microgen
+from microgen import Tpms
 from microgen.shape.surface_functions import gyroid
 
-shape = microgen.Tpms(gyroid, offset=0.5, resolution=20)
-mesh = shape.generate_volume_mesh(periodic=(True, True, True))
-mesh.save("gyroid.vtu")
-native = shape.generate_meshers(periodic=(True, True, True))
-print(native.diagnostics)
+shape = Tpms(gyroid, offset=0.5, resolution=16)
+mesh = shape.generate_volume_mesh(
+    periodic=(True, True, True),
+    minimum_quality=0.1,
+    geometry_tolerance=0.01,
+)
+print(mesh.cell_data['MMGQuality'].min())
+mesh.save('gyroid.vtu')
 ```
+
+Quality uses the MMG tetrahedron measure, with 1 for a regular tetrahedron.
+The defaults reject nonempty meshes below 0.1 quality or above 0.01 sampled
+geometry error in physical coordinate units. These are acceptance gates, not
+adaptive refinement, a certified Hausdorff bound, or a guarantee of FEM accuracy.
+A quality failure raises `meshers.MeshingError`; it never triggers MMG or a silent
+return of the legacy grid. Callers can request stricter limits.
+
+`periodic` explicitly selects matching axes; it defaults to disabled. The field
+and grading must match across each requested pair of faces. The generated mesh
+has linear tetrahedra, per-cell `Volume` and `MMGQuality`, diagnostic JSON in
+`field_data['meshers_diagnostics']`, and node pairs in `periodic_pairs_x/y/z`.
+Mapped meshes also retain rigid periodic transformations. `generate_meshers()`
+returns the native meshers result, including boundary tags and diagnostics.
+
+Scalar TPMS offsets keep their historical raw-field units. Constant sheets use
+meshers bands; variable sheets use separate upper/lower constraints. Density
+fitting measures the generated tetrahedra and leaves the caller unchanged if
+meshing fails. Distance-based grading is sampled once and interpolated because
+its normalization can depend on the whole grid, not an arbitrary callback batch.
+
+Supported fields compile in the meshers wheel. Imported envelopes and sampled
+nodal offsets use callbacks. `compile=False` remains available. Construction
+`resolution` retains its per-cell meaning. A meshing-call `resolution=(nx,ny,nz)`
+overrides total grid-point counts for the whole domain, including repeats.
+
+## Measured support and remaining gaps
+
+The reproducible script is `experiments/verify_tpms_meshers.py`. The final-default
+measurements are in `experiments/tpms_meshers_results.json`; earlier callback-path
+measurements are preserved separately. The script records failures as well as
+successes, independently checks signed element volumes and quality, and compares
+opposite boundary triangle connectivity after applying the periodic node map.
+It also verifies physical periodic transformations and boundary closure.
+
+The tested Cartesian sheet cases use offset 0.5 and all three periodic axes.
+Fifteen of the sixteen built-in functions passed the 0.1 quality and 0.01 error
+limits at a tested resolution. Successful representative cases also cover gyroid
+skeletals, thin sheets, density fitting, full density, repeated cells, callable
+periodic grading, nodal offsets, infill, and cylindrical/spherical sectors.
+A cylindrical sector passed with angular rotation and axial translation pairing.
+These examples establish coverage of particular inputs, not every parameter set.
+
+| Feature or case | Evidence and current behavior |
+| --- | --- |
+| `split_p` at offset 0.5 | Failed minimum quality 0.1 at tested resolutions and optimization counts. The API rejects the mesh. This is a quality limitation for these inputs, not missing field support. |
+| Anisotropic repeated gyroid | The tested `(0.5, 1.5, 1)` cell with repeats `(2, 1, 1)` and a phase shift failed the quality gate. Increasing optimization and adjusting grid spacing were also tested; see the recorded attempts. Do not claim all anisotropic configurations fail. |
+| Grading incompatible with requested periodic axes | Correctly rejected. The nonperiodic linear-grading case passed with periodicity disabled. Distance grading based on a triangulated envelope also failed periodic matching in the tested case and passed without periodic constraints. |
+| Full cylindrical wrap | The direct mapped probe produced acceptable tetrahedra but retained coincident, unjoined seam points. Seam welding or an explicit solver equivalence treatment is unfinished. This is an integration gap, not proof that meshers cannot mesh cylinders. |
+| Spherical poles or collapsed radial axes | The direct full-sphere map failed with an inverted background tetrahedron. Regular sectors avoid the singularity and passed. A different chart or singularity treatment is needed. |
+| Arbitrary `Sweep` | No validated meshers mapping is implemented here. The existing parametric grid is retained. |
+| Graded infill | A tested case failed the 0.01 sampled geometry limit at resolution 16; a finer callback run exceeded the 90-second probe limit. Broader quality/performance support remains unverified. |
+| Large background grids | Meshers 0.1.0 accepts 4-128 cells per axis, so this integration requires 5-129 grid points per axis after repeats. The default tetrahedron budget is also finite and configurable. |
+| Open zero-thickness TPMS surfaces | Kept as the existing surface API. A solid tetrahedral mesh is a different object. |
+
+For full wraps, poles/collapsed axes, and sweeps, `generate_volume_mesh()` retains
+the legacy clipped grid and emits an explicit warning that meshers quality and
+periodicity guarantees do not apply. Passing meshers controls to such a chart
+raises `NotImplementedError`, as does requesting its native `generate_meshers()`
+result. There is no user-selectable backend.
+
+MMG remains available for remeshing existing meshes. This branch neither removes
+that dependency nor replaces its boundary-preserving adaptation API.
+
+## Verification and release status
+
+Verified on Windows with Python 3.12.13 and the published meshers 0.1.0 wheel:
+
+- 119 selected regression tests passed with the final compiled defaults.
+- Five existing TPMS compatibility checks passed.
+- Eleven TPMS integration checks cover periodic triangles, rigid placement,
+  positive volume, quality/error acceptance, diagnostic export, failure behavior,
+  density fitting, and preservation of legacy surface output.
+- Two Spinodoid CAD tests were excluded from the final regression run only after
+  reproducing their identical failures on untouched microgen commit `38e1912`.
+- Ruff 0.15.12 and `git diff --check` pass.
+
+The full upstream suite, other platforms, FEM solution comparisons, and a
+convergence study remain release work. The quality threshold alone does not
+establish solution accuracy. Conda packaging has not been updated in this experiment.
 
 ```sh
 python -m pip install -e '.[dev,cad]' 'cadquery-ocp-novtk<8' 'ruff==0.15.12'
-python -m pytest tests/test_meshers_backend.py tests/shapes/test_default_mesh_methods.py tests/test_phase.py tests/test_phase_pieces.py tests/test_spinodoid.py tests/test_implicit_voronoi_lattice.py -q -n 4
+python -m pytest tests/test_meshers_backend.py -q
+python experiments/verify_tpms_meshers.py
 ```
 
-OCCT 8 bindings raised `Bnd_Box::Limits` conversion errors in existing CAD tests
-on this Windows machine. OCCT 7.9.3.1.1 passed those tests. The compatibility pin
-above is for reproducing this experiment, not a dependency change to microgen.
-
-## Validation on Windows, Python 3.12
-
-The selected regression run covered 126 tests: 125 passed on the first final run.
-The remaining lattice-quadrature check passed after restoring the original bounds
-for nonperiodic implicit lattices. All 16 new backend checks passed across the
-integration runs, covering element orientation, volume, closure, periodic pairing,
-rigid placement, variable offsets, density fitting, curved sectors, infill, empty
-solids, and retained angular charts. Ruff 0.15.12 and `git diff --check` passed.
-
-The full upstream test suite was not completed. The larger exploratory TPMS run
-was stopped; it is not counted as passing. Existing autograd warnings at angular
-coordinate singularities remain during TPMS construction, including for charts
-whose final mesh is generated in regular parameter coordinates.
+The OCCT pin reproduces the tested environment; it is not a dependency change.

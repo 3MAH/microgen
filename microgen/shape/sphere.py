@@ -11,12 +11,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
+import pyvista as pv
 
 from .shape import Shape
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.shape import BoundsType
 
 
 class Sphere(Shape):
@@ -75,6 +77,30 @@ class Sphere(Shape):
 
         return make_sphere(self.radius, self.center)
 
-    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
-        """Return the meshers boundary of the primitive implicit solid."""
-        return super().generate_surface_mesh(bounds, resolution, **options)
+    def generate_surface_mesh(
+        self: Sphere,
+        bounds: BoundsType | None = None,
+        resolution: int | None = None,
+        theta_resolution: int = 50,
+        phi_resolution: int = 50,
+        **_: KwargsGenerateType,
+    ) -> pv.PolyData:
+        """Generate a sphere VTK shape using the given parameters.
+
+        When ``bounds`` or ``resolution`` is explicitly provided, fall back to
+        the implicit (marching-cubes-on-SDF) base implementation so polymorphic
+        callers that ask for a specific sampling get what they asked for.
+        Otherwise the native :class:`pyvista.Sphere` (parametric, controlled
+        by ``theta_resolution``/``phi_resolution``) is used.
+        """
+        if bounds is not None or resolution is not None:
+            return super().generate_surface_mesh(
+                bounds=bounds,
+                resolution=resolution if resolution is not None else 50,
+            )
+        return pv.Sphere(
+            radius=self.radius,
+            center=tuple(self.center),
+            theta_resolution=theta_resolution,
+            phi_resolution=phi_resolution,
+        )

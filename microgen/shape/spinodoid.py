@@ -27,8 +27,6 @@ import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 
-from microgen import _meshers
-
 from ..operations import rotate
 from ._frep_grf import _FrepGRF, _normalize_cell_size, compute_threshold_for_porosity
 from .periodic_shell import mesh_to_periodic_shell
@@ -205,37 +203,23 @@ class Spinodoid(Shape):
     @cached_property
     def grid_solid(self: Spinodoid) -> pv.UnstructuredGrid:
         """Return the volumetric solid grid (cells where ``f >= 0``)."""
-        return _meshers.volume(
-            _meshers.generate(
-                self.require_func(),
-                self._bounds,
-                self.resolution * self.repeat_cell,
-            )
-        )
+        return self.grid.clip_scalar(scalars="surface", value=0.0, invert=False)
 
     @cached_property
     def surface(self: Spinodoid) -> pv.PolyData:
         """Return the iso-surface mesh of the spinodoid."""
-        return self.grid_solid.extract_surface(algorithm=None).clean().triangulate()
+        return self.grid_solid.extract_surface().clean().triangulate()
 
     # ---- public generators -------------------------------------------------
-
-    def generate_meshers(self, bounds=None, resolution=None, **options):
-        """Mesh the spinodoid field and apply its placement once."""
-        result = _meshers.generate(
-            self.require_func(),
-            self._bounds if bounds is None else bounds,
-            self.resolution * self.repeat_cell if resolution is None else resolution,
-            **options,
-        )
-        return _meshers.transform(result, self.orientation, self.center)
 
     def generate_volume_mesh(
         self: Spinodoid,
         **_: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
         """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
-        return _meshers.volume(self.generate_meshers(**_))
+        grid_vol = self.grid_solid.copy()
+        grid_vol = rotate(grid_vol, center=(0, 0, 0), rotation=self.orientation)
+        return grid_vol.translate(xyz=self.center)
 
     def generate_surface_mesh(
         self: Spinodoid,
@@ -245,11 +229,20 @@ class Spinodoid(Shape):
     ) -> pv.PolyData:
         """Generate the iso-surface as a PolyData with center+rotation applied.
 
-        Uses the construction resolution unless explicitly overridden.
-        Bounds refer to the field's local coordinates; the rigid placement
-        is applied to the resulting mesh once.
+        The native path uses the cached structured-grid surface whose resolution
+        is fixed at construction time (``Spinodoid(resolution=…)``). When
+        ``bounds`` or ``resolution`` is explicitly provided here, fall back to
+        the implicit (marching-cubes-on-SDF) base implementation so polymorphic
+        callers can re-sample the field at an arbitrary resolution / bbox.
         """
-        return _meshers.surface(self.generate_meshers(bounds, resolution, **_))
+        if bounds is not None or resolution is not None:
+            return super().generate_surface_mesh(
+                bounds=bounds,
+                resolution=resolution if resolution is not None else 50,
+            )
+        polydata = self.surface.copy()
+        polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
+        return polydata.translate(xyz=self.center)
 
     def generate_cad(
         self: Spinodoid,

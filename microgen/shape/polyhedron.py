@@ -7,10 +7,12 @@ Polyhedron (:mod:`microgen.shape.polyhedron`)
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pyvista as pv
 
 from microgen.operations import rotate
 
@@ -172,9 +174,17 @@ class Polyhedron(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
-        """Return the meshers boundary of the primitive implicit solid."""
-        return super().generate_surface_mesh(bounds, resolution, **options)
+    def generate_surface_mesh(self: Polyhedron, **_: KwargsGenerateType) -> pv.PolyData:
+        """Generate a polyhedron VTK shape using the given parameters."""
+        faces_pv = copy.deepcopy(self.faces_ixs)
+        for vertices_in_face in faces_pv:
+            del vertices_in_face[-1]
+            vertices_in_face.insert(0, len(vertices_in_face))
+
+        vertices = np.array(self.dic["vertices"])
+        faces = np.hstack(faces_pv)
+
+        return pv.PolyData(vertices, faces).compute_normals()
 
 
 def read_obj(filename: str) -> dict[str, list[Vertex | Face]]:

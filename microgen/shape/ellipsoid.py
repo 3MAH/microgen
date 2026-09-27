@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
+import pyvista as pv
 
 from microgen.operations import rotate
 
@@ -92,6 +93,16 @@ class Ellipsoid(Shape):
         shape = make_ellipsoid(radii=self.radii, center=self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
-        """Return the meshers boundary of the primitive implicit solid."""
-        return super().generate_surface_mesh(bounds, resolution, **options)
+    def generate_surface_mesh(self: Ellipsoid, **_: KwargsGenerateType) -> pv.PolyData:
+        """Generate an ellipsoid VTK polydta using the given parameters."""
+        transform_matrix = np.array(
+            [
+                [self.radii[0], 0, 0, self.center[0]],
+                [0, self.radii[1], 0, self.center[1]],
+                [0, 0, self.radii[2], self.center[2]],
+                [0, 0, 0, 1],
+            ],
+        )
+        sphere = pv.Sphere(radius=1)
+        ellipsoid = sphere.transform(transform_matrix, inplace=False)
+        return rotate(ellipsoid, self.center, self.orientation)

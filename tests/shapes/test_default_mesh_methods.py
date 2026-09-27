@@ -93,7 +93,7 @@ def test_composed_shape_volume_mesh():
 # ---------------------------------------------------------------------------
 
 
-def test_mesh_cache_avoids_resampling():
+def test_grid_cache_avoids_resampling():
     """Two calls on the same instance hit the cache the second time."""
     s = from_field(
         func=lambda x, y, z: x**2 + y**2 + z**2 - 1.0,
@@ -101,14 +101,14 @@ def test_mesh_cache_avoids_resampling():
     )
     s.generate_surface_mesh(resolution=20)
     # Internal cache populated with the (bounds, resolution) key.
-    assert s._mesh_cache  # noqa: SLF001
-    cached = next(iter(s._mesh_cache.values()))  # noqa: SLF001
+    assert s._grid_cache  # noqa: SLF001
+    cached = next(iter(s._grid_cache.values()))  # noqa: SLF001
     # Volume call must reuse the same grid object.
     s.generate_volume_mesh(resolution=20)
-    assert next(iter(s._mesh_cache.values())) is cached  # noqa: SLF001
+    assert next(iter(s._grid_cache.values())) is cached  # noqa: SLF001
 
 
-def test_mesh_cache_keyed_on_resolution():
+def test_grid_cache_keyed_on_resolution():
     """A different ``resolution`` produces a fresh cache entry."""
     s = from_field(
         func=lambda x, y, z: x**2 + y**2 + z**2 - 1.0,
@@ -116,7 +116,7 @@ def test_mesh_cache_keyed_on_resolution():
     )
     s.generate_surface_mesh(resolution=20)
     s.generate_surface_mesh(resolution=40)
-    assert len(s._mesh_cache) == 2  # noqa: SLF001
+    assert len(s._grid_cache) == 2  # noqa: SLF001
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,831 @@
+{
+  "meshers": "0.1.0",
+  "python": "3.12.13 (main, Aug  7 2026, 02:26:41) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "win32",
+  "cases": [
+    {
+      "case": "anisotropic_repeated",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 4.479167163227528e-2 is below required 1e-1; mesh rejected (7 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 7.221978510267066e-2 is below required 1e-1; mesh rejected (3 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 7.221227457744961e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 32,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 6.981415039669979e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        }
+      ]
+    },
+    {
+      "case": "cylindrical_periodic_sector",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 1.508,
+          "tetrahedra": 42941,
+          "minimum_quality": 0.14921536337958793,
+          "quality_p01": 0.216478106793445,
+          "volume": 0.686840719783581,
+          "sampled_error": 0.005263303062435847,
+          "periodic_face_counts": [
+            201,
+            414
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "cylindrical_sector",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 1.445,
+          "tetrahedra": 42958,
+          "minimum_quality": 0.15021509141167003,
+          "quality_p01": 0.21417070568194124,
+          "volume": 0.6868566693883794,
+          "sampled_error": 0.005263303062435847,
+          "periodic_face_counts": [],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "density",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 10.364,
+          "tetrahedra": 19678,
+          "minimum_quality": 0.16663171827203377,
+          "quality_p01": 0.43674632438903144,
+          "volume": 0.29999986693617653,
+          "sampled_error": 0.0035865312567860625,
+          "periodic_face_counts": [
+            183,
+            183,
+            183
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "distance_grading",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "constraint is nonfinite or incompatible with periodic axis"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "constraint is nonfinite or incompatible with periodic axis"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "constraint is nonfinite or incompatible with periodic axis"
+        },
+        {
+          "resolution": 32,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "constraint is nonfinite or incompatible with periodic axis"
+        }
+      ]
+    },
+    {
+      "case": "field:fischer_koch_s",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled geometry error 1.0057028065542983e-2 exceeds tolerance 1e-2; increase resolution or budget"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 12.163,
+          "tetrahedra": 66606,
+          "minimum_quality": 0.20239409195840918,
+          "quality_p01": 0.46304411616339336,
+          "volume": 0.2476713793223552,
+          "sampled_error": 0.003932223397458102,
+          "periodic_face_counts": [
+            375,
+            371,
+            375
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:gyroid",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 2.514,
+          "tetrahedra": 14409,
+          "minimum_quality": 0.17589142655775997,
+          "quality_p01": 0.3889258103101391,
+          "volume": 0.16201599474181191,
+          "sampled_error": 0.0033620560291440314,
+          "periodic_face_counts": [
+            141,
+            143,
+            141
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:honeycomb",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled geometry error 1.0112799847596901e-2 exceeds tolerance 1e-2; increase resolution or budget"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 3.873,
+          "tetrahedra": 41704,
+          "minimum_quality": 0.15937175795809966,
+          "quality_p01": 0.4474858586859025,
+          "volume": 0.1826871341251265,
+          "sampled_error": 0.006523677527757667,
+          "periodic_face_counts": [
+            355,
+            347,
+            330
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:honeycomb_gyroid",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 1.503,
+          "tetrahedra": 14093,
+          "minimum_quality": 0.25865425242679574,
+          "quality_p01": 0.3979913120855878,
+          "volume": 0.18667696585841678,
+          "sampled_error": 0.006045663717853716,
+          "periodic_face_counts": [
+            135,
+            135,
+            165
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:honeycomb_lidinoid",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled geometry error 1.3732189157140546e-2 exceeds tolerance 1e-2; increase resolution or budget"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 12.615,
+          "tetrahedra": 55761,
+          "minimum_quality": 0.3112724104226269,
+          "quality_p01": 0.43302375656398234,
+          "volume": 0.18778967941331048,
+          "sampled_error": 0.009498855855864801,
+          "periodic_face_counts": [
+            276,
+            276,
+            440
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:honeycomb_schoen_iwp",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 0.833,
+          "tetrahedra": 7866,
+          "minimum_quality": 0.40274629925941435,
+          "quality_p01": 0.49549669655494266,
+          "volume": 0.11066187160059233,
+          "sampled_error": 0.004793145511261333,
+          "periodic_face_counts": [
+            0,
+            0,
+            102
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:honeycomb_schwarz_d",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 2.572,
+          "tetrahedra": 16348,
+          "minimum_quality": 0.35859173943536143,
+          "quality_p01": 0.4353720564394812,
+          "volume": 0.22992669750983188,
+          "sampled_error": 0.009124637543302342,
+          "periodic_face_counts": [
+            135,
+            135,
+            210
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:honeycomb_schwarz_p",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 0.838,
+          "tetrahedra": 12078,
+          "minimum_quality": 0.40183189347414233,
+          "quality_p01": 0.504192416470233,
+          "volume": 0.22831082847453324,
+          "sampled_error": 0.008044778487725564,
+          "periodic_face_counts": [
+            180,
+            180,
+            155
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:lidinoid",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled geometry error 1.7700038400434007e-2 exceeds tolerance 1e-2; increase resolution or budget"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 18.312,
+          "tetrahedra": 75770,
+          "minimum_quality": 0.3008193726600625,
+          "quality_p01": 0.4540106908892524,
+          "volume": 0.3172230512136435,
+          "sampled_error": 0.007797170702808602,
+          "periodic_face_counts": [
+            397,
+            413,
+            397
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:neovius",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled geometry error 1.3927591432847978e-2 exceeds tolerance 1e-2; increase resolution or budget"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 4.677,
+          "tetrahedra": 33112,
+          "minimum_quality": 0.37657513280437466,
+          "quality_p01": 0.43997709769799853,
+          "volume": 0.12792038088868365,
+          "sampled_error": 0.00872071308124287,
+          "periodic_face_counts": [
+            118,
+            293,
+            293
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:pmy",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled geometry error 2.404823957212643e-2 exceeds tolerance 1e-2; increase resolution or budget"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 12.08,
+          "tetrahedra": 61074,
+          "minimum_quality": 0.21699771403417384,
+          "quality_p01": 0.3995309098719552,
+          "volume": 0.21052828947187896,
+          "sampled_error": 0.005342663516539083,
+          "periodic_face_counts": [
+            380,
+            375,
+            380
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:schoen_frd",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 5.052,
+          "tetrahedra": 16784,
+          "minimum_quality": 0.26020006126319695,
+          "quality_p01": 0.3191624654574139,
+          "volume": 0.10947060992620593,
+          "sampled_error": 0.009803977706786926,
+          "periodic_face_counts": [
+            136,
+            138,
+            138
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:schoen_iwp",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 3.784,
+          "tetrahedra": 14128,
+          "minimum_quality": 0.22609721705992877,
+          "quality_p01": 0.3153597599631415,
+          "volume": 0.06589624652159609,
+          "sampled_error": 0.00509612456345397,
+          "periodic_face_counts": [
+            132,
+            132,
+            132
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:schwarz_d",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 4.388,
+          "tetrahedra": 18020,
+          "minimum_quality": 0.19307201531976942,
+          "quality_p01": 0.36806788370956883,
+          "volume": 0.20655885806064575,
+          "sampled_error": 0.003925854373190053,
+          "periodic_face_counts": [
+            189,
+            189,
+            189
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:schwarz_p",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 1.286,
+          "tetrahedra": 10944,
+          "minimum_quality": 0.4583358331879405,
+          "quality_p01": 0.4845669233896856,
+          "volume": 0.14339230130158478,
+          "sampled_error": 0.004948459915640669,
+          "periodic_face_counts": [
+            110,
+            110,
+            110
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "field:split_p",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 6.818752744335091e-2 is below required 1e-1; mesh rejected (24 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 8.432719490900664e-2 is below required 1e-1; mesh rejected (9 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 8.402691351921589e-2 is below required 1e-1; mesh rejected (9 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 32,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 7.64595754286909e-2 is below required 1e-1; mesh rejected (11 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        }
+      ]
+    },
+    {
+      "case": "full_cylinder",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "NotImplementedError",
+          "error": "Full angular seams, collapsed axes/poles, and Sweep are not supported by this meshers integration"
+        }
+      ]
+    },
+    {
+      "case": "full_density",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 0.134,
+          "tetrahedra": 40500,
+          "minimum_quality": 0.7000382667568764,
+          "quality_p01": 0.7385447173602393,
+          "volume": 0.9999999999999996,
+          "sampled_error": 0.0,
+          "periodic_face_counts": [
+            450,
+            450,
+            450
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "full_sphere",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "NotImplementedError",
+          "error": "Full angular seams, collapsed axes/poles, and Sweep are not supported by this meshers integration"
+        }
+      ]
+    },
+    {
+      "case": "graded_infill",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled surface error 0.0193227 exceeds 0.01"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 4,
+          "status": "timeout",
+          "error": "exceeded 90 seconds"
+        }
+      ]
+    },
+    {
+      "case": "graded_nonperiodic",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "constraint is nonfinite or incompatible with periodic axis"
+        }
+      ]
+    },
+    {
+      "case": "graded_periodic",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 0.742,
+          "tetrahedra": 15750,
+          "minimum_quality": 0.11341768056455521,
+          "quality_p01": 0.2090725010016126,
+          "volume": 0.1961513105990179,
+          "sampled_error": 0.003346239624021237,
+          "periodic_face_counts": [
+            145,
+            161,
+            147
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "graded_without_periodicity",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 0.595,
+          "tetrahedra": 15543,
+          "minimum_quality": 0.1452423853922005,
+          "quality_p01": 0.20302360030349587,
+          "volume": 0.19615956990247638,
+          "sampled_error": 0.0049774877598844055,
+          "periodic_face_counts": [],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "infill",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "sampled surface error 0.0193227 exceeds 0.01"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 38.996,
+          "tetrahedra": 33294,
+          "minimum_quality": 0.14538942148248132,
+          "quality_p01": 0.1813619227401316,
+          "volume": 0.5638463193271198,
+          "sampled_error": 0.00826423064092747,
+          "periodic_face_counts": [],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "lower",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 1.386,
+          "tetrahedra": 20823,
+          "minimum_quality": 0.18383406461424465,
+          "quality_p01": 0.505933411852305,
+          "volume": 0.41908937057009393,
+          "sampled_error": 0.003356211878616117,
+          "periodic_face_counts": [
+            241,
+            242,
+            241
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "nodal_offset",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 3.034,
+          "tetrahedra": 15702,
+          "minimum_quality": 0.11281243231695737,
+          "quality_p01": 0.20936353450723572,
+          "volume": 0.1961435709923779,
+          "sampled_error": 0.003356378505928474,
+          "periodic_face_counts": [
+            145,
+            161,
+            147
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "raw_full_cylinder",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 5.286155016417136e-2 is below required 1e-1; constraints were preserved"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 4,
+          "status": "passed",
+          "seconds": 16.037,
+          "tetrahedra": 373807,
+          "minimum_quality": 0.11414312951952513,
+          "quality_p01": 0.1701291837996387,
+          "volume": 0.8176160076678501,
+          "sampled_error": 0.0025841388114206487,
+          "periodic_face_counts": [],
+          "coincident_points": 277
+        }
+      ]
+    },
+    {
+      "case": "raw_full_sphere",
+      "attempts": [
+        {
+          "resolution": 16,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "coordinate map inverted a background tetrahedron"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 4,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "coordinate map inverted a background tetrahedron"
+        },
+        {
+          "resolution": 24,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "coordinate map inverted a background tetrahedron"
+        },
+        {
+          "resolution": 32,
+          "optimize_passes": 12,
+          "status": "rejected",
+          "exception": "ValueError",
+          "error": "meshers requires 5 to 129 grid points per axis, including repeats"
+        }
+      ]
+    },
+    {
+      "case": "spherical_sector",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 3.266,
+          "tetrahedra": 87110,
+          "minimum_quality": 0.15007445576267117,
+          "quality_p01": 0.210798160547531,
+          "volume": 1.401283337476232,
+          "sampled_error": 0.0052817060500490835,
+          "periodic_face_counts": [],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "sweep",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "NotImplementedError",
+          "error": "Full angular seams, collapsed axes/poles, and Sweep are not supported by this meshers integration"
+        }
+      ]
+    },
+    {
+      "case": "thin",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "rejected",
+          "exception": "MeshingFailure",
+          "error": "minimum MMG quality 7.447429621706186e-2 is below required 1e-1; mesh rejected (30 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+        },
+        {
+          "resolution": 24,
+          "status": "passed",
+          "seconds": 6.745,
+          "tetrahedra": 30789,
+          "minimum_quality": 0.12278984224348484,
+          "quality_p01": 0.2917719763590313,
+          "volume": 0.03231037801838091,
+          "sampled_error": 0.0018674286721763196,
+          "periodic_face_counts": [
+            171,
+            186,
+            171
+          ],
+          "coincident_points": 0
+        }
+      ]
+    },
+    {
+      "case": "upper",
+      "attempts": [
+        {
+          "resolution": 16,
+          "status": "passed",
+          "seconds": 1.551,
+          "tetrahedra": 20805,
+          "minimum_quality": 0.18672439342666577,
+          "quality_p01": 0.5056442267417102,
+          "volume": 0.4190627021738713,
+          "sampled_error": 0.0032480333245147918,
+          "periodic_face_counts": [
+            238,
+            241,
+            238
+          ],
+          "coincident_points": 0
+        }
+      ]
+    }
+  ],
+  "note": "Earlier callback-path measurements; final default compiles supported fields."
+}

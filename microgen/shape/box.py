@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
+import pyvista as pv
 
 from microgen.operations import rotate
 
@@ -20,6 +21,7 @@ from .shape import Shape
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
+    from microgen.shape.shape import BoundsType
 
 
 class Box(Shape):
@@ -102,6 +104,36 @@ class Box(Shape):
         shape = make_box(self.dim, self.center)
         return rotate(shape, self.center, self.orientation)
 
-    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
-        """Return the meshers boundary of the primitive implicit solid."""
-        return super().generate_surface_mesh(bounds, resolution, **options)
+    def generate_surface_mesh(
+        self: Box,
+        bounds: BoundsType | None = None,
+        resolution: int | None = None,
+        level: int = 0,
+        **_: KwargsGenerateType,
+    ) -> pv.PolyData:
+        """Generate a box VTK shape using the given parameters.
+
+        When ``bounds`` or ``resolution`` is explicitly provided, fall back to
+        the implicit (marching-cubes-on-SDF) base implementation so polymorphic
+        callers that ask for a specific sampling get what they asked for.
+        Otherwise the native :class:`pyvista.Box` (fixed 6-face quad mesh
+        controlled by ``level``) is used.
+        """
+        if bounds is not None or resolution is not None:
+            return super().generate_surface_mesh(
+                bounds=bounds,
+                resolution=resolution if resolution is not None else 50,
+            )
+        box = pv.Box(
+            bounds=(
+                self.center[0] - 0.5 * self.dim[0],
+                self.center[0] + 0.5 * self.dim[0],
+                self.center[1] - 0.5 * self.dim[1],
+                self.center[1] + 0.5 * self.dim[1],
+                self.center[2] - 0.5 * self.dim[2],
+                self.center[2] + 0.5 * self.dim[2],
+            ),
+            level=level,
+            quads=True,
+        )
+        return rotate(box, self.center, self.orientation)
