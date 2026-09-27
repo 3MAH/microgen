@@ -71,7 +71,7 @@ These examples establish coverage of particular inputs, not every parameter set.
 | Arbitrary `Sweep` | No validated meshers mapping is implemented here. The existing parametric grid is retained. |
 | Graded infill | A tested case failed the 0.01 sampled geometry limit at resolution 16; a finer callback run exceeded the 90-second probe limit. Broader quality/performance support remains unverified. |
 | Large background grids | Meshers 0.1.0 accepts 4-128 cells per axis, so this integration requires 5-129 grid points per axis after repeats. The default tetrahedron budget is also finite and configurable. |
-| Open zero-thickness TPMS surfaces | Kept as the existing surface API. Meshers 0.1.0 returns the boundary of a volume mesh, but has no surface-only Python generator. Experimental native triangle extraction exists in the meshers checkout; periodic optimization and a release API still need work. |
+| Direct TPMS surface meshes | Kept as the existing surface API. Meshers 0.1.0 returns the boundary of a volume mesh, but has no surface-only Python generator. The [experimental meshers branch](https://github.com/kmarchais/meshers/tree/codex/direct-tpms-surface-experiment) adds native triangle extraction and a feature-gated Python API. Its optimizer does not yet preserve periodic face pairing, so this branch does not use it for periodic microgen surfaces. An open zero-thickness isosurface also needs separate support. |
 
 For full wraps, poles/collapsed axes, and sweeps, `generate_volume_mesh()` retains
 the legacy clipped grid and emits an explicit warning that meshers quality and
