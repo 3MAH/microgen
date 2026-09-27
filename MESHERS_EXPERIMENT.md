@@ -54,7 +54,7 @@ opposite boundary triangle connectivity after applying the periodic node map.
 It also verifies physical periodic transformations and boundary closure.
 
 The tested Cartesian sheet cases use offset 0.5 and all three periodic axes.
-Fifteen of the sixteen built-in functions passed the 0.1 quality and 0.01 error
+All sixteen built-in functions passed the 0.1 quality and 0.01 error
 limits at a tested resolution. Successful representative cases also cover gyroid
 skeletals, thin sheets, density fitting, full density, repeated cells, callable
 periodic grading, nodal offsets, infill, and cylindrical/spherical sectors.
@@ -63,15 +63,15 @@ These examples establish coverage of particular inputs, not every parameter set.
 
 | Feature or case | Evidence and current behavior |
 | --- | --- |
-| `split_p` at offset 0.5 | Failed minimum quality 0.1 at tested resolutions and optimization counts. The API rejects the mesh. This is a quality limitation for these inputs, not missing field support. |
-| Anisotropic repeated gyroid | The tested `(0.5, 1.5, 1)` cell with repeats `(2, 1, 1)` and a phase shift failed the quality gate. Increasing optimization and adjusting grid spacing were also tested; see the recorded attempts. Do not claim all anisotropic configurations fail. |
+| `split_p` at offset 0.5 | The initial 15-cell band has minimum quality 0.068. When that quality check fails, the integration retries the same implicit solid with meshers' intersection repair on a 32-cell background, snap 0.1, and 12 passes. The measured minimum quality is 0.111 and sampled error 0.0035; all three periodic face pairs match. This uses 175,836 tetrahedra rather than 20,673. The retry applies to any constant Cartesian sheet rejected by the quality gate, within meshers' grid limit. |
+| Anisotropic repeated gyroid | The tested `(0.5, 1.5, 1)` cell with repeats `(2, 1, 1)` and a phase shift failed the quality gate, including the larger-background retry. A finer balanced-grid attempt exceeded the 90-second probe limit. These results do not establish that all anisotropic configurations fail. |
 | Grading incompatible with requested periodic axes | Correctly rejected. The nonperiodic linear-grading case passed with periodicity disabled. Distance grading based on a triangulated envelope also failed periodic matching in the tested case and passed without periodic constraints. |
 | Full cylindrical wrap | The direct mapped probe produced acceptable tetrahedra but retained coincident, unjoined seam points. Seam welding or an explicit solver equivalence treatment is unfinished. This is an integration gap, not proof that meshers cannot mesh cylinders. |
 | Spherical poles or collapsed radial axes | The direct full-sphere map failed with an inverted background tetrahedron. Regular sectors avoid the singularity and passed. A different chart or singularity treatment is needed. |
 | Arbitrary `Sweep` | No validated meshers mapping is implemented here. The existing parametric grid is retained. |
 | Graded infill | A tested case failed the 0.01 sampled geometry limit at resolution 16; a finer callback run exceeded the 90-second probe limit. Broader quality/performance support remains unverified. |
 | Large background grids | Meshers 0.1.0 accepts 4-128 cells per axis, so this integration requires 5-129 grid points per axis after repeats. The default tetrahedron budget is also finite and configurable. |
-| Open zero-thickness TPMS surfaces | Kept as the existing surface API. A solid tetrahedral mesh is a different object. |
+| Open zero-thickness TPMS surfaces | Kept as the existing surface API. Meshers 0.1.0 returns the boundary of a volume mesh, but has no surface-only Python generator. Experimental native triangle extraction exists in the meshers checkout; periodic optimization and a release API still need work. |
 
 For full wraps, poles/collapsed axes, and sweeps, `generate_volume_mesh()` retains
 the legacy clipped grid and emits an explicit warning that meshers quality and
@@ -86,9 +86,9 @@ that dependency nor replaces its boundary-preserving adaptation API.
 
 Verified on Windows with Python 3.12.13 and the published meshers 0.1.0 wheel:
 
-- 119 selected regression tests passed with the final compiled defaults.
+- 120 selected regression tests passed with the final compiled defaults.
 - Five existing TPMS compatibility checks passed.
-- Eleven TPMS integration checks cover periodic triangles, rigid placement,
+- Twelve TPMS integration checks cover periodic triangles, rigid placement,
   positive volume, quality/error acceptance, diagnostic export, failure behavior,
   density fitting, and preservation of legacy surface output.
 - Two Spinodoid CAD tests were excluded from the final regression run only after

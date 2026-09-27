@@ -80,16 +80,19 @@ def generate(
         ).copy()
 
     if isinstance(field, dict):
-        return meshers.generate_intersection(
+        result = meshers.generate_intersection(
             field, bounds=bounds, cells=cells, periodic=periodic, **options
         )
-    return meshers.generate(
-        field if options["compile"] else callback,
-        bounds=bounds,
-        cells=cells,
-        periodic=periodic,
-        **options,
-    )
+    else:
+        result = meshers.generate(
+            field if options["compile"] else callback,
+            bounds=bounds,
+            cells=cells,
+            periodic=periodic,
+            **options,
+        )
+    result.diagnostics["background_cells"] = cells.tolist()
+    return result
 
 
 def volume(result):

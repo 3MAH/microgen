@@ -8,7 +8,7 @@ import pytest
 import pyvista as pv
 from scipy.spatial.transform import Rotation
 from microgen import CylindricalTpms, Tpms
-from microgen.shape.surface_functions import gyroid
+from microgen.shape.surface_functions import gyroid, split_p
 
 
 @pytest.mark.parametrize("part", ["sheet", "upper skeletal", "lower skeletal"])
@@ -53,6 +53,21 @@ def test_volume_quality_metadata_and_legacy_surface_preserved():
     )
     assert grid.extract_surface(algorithm=None).n_open_edges == 0
     np.testing.assert_array_equal(shape.generate_surface_mesh().points, old_points)
+
+
+def test_split_p_recovers_with_quality_checked_background_refinement():
+    shape = Tpms(split_p, offset=0.5, resolution=16)
+    native = shape.generate_meshers(periodic=(True,) * 3)
+    assert native.diagnostics["background_cells"] == [32, 32, 32]
+    assert native.diagnostics["minimum_mmg_quality"] >= 0.1
+    assert native.diagnostics["sampled_surface_error"] <= 0.01
+    for axis, pairs in enumerate(native.periodic_pairs):
+        lookup = dict(pairs.tolist())
+        low = native.surface[native.boundary_tags == 2 * axis + 1]
+        high = native.surface[native.boundary_tags == 2 * axis + 2]
+        assert {tuple(sorted(lookup[int(i)] for i in f)) for f in low} == {
+            tuple(sorted(f)) for f in high
+        }
 
 
 def test_rejection_does_not_fall_back_to_legacy(monkeypatch):

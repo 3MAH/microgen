@@ -201,6 +201,7 @@ def check(name, resolution, optimize_passes=4):
         quality_p01=float(np.quantile(quality, 0.01)),
         volume=float(determinants.sum() / 6),
         sampled_error=result.diagnostics.get("sampled_surface_error"),
+        background_cells=result.diagnostics.get("background_cells"),
         periodic_face_counts=verified_faces,
         coincident_points=len(result.points)
         - len(np.unique(np.round(result.points, 10), axis=0)),

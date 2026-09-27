@@ -19,6 +19,7 @@ import logging
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Literal
 
+import meshers
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
@@ -1165,9 +1166,42 @@ class Tpms(Shape):
             }
             if type(self) is not Tpms:
                 field["envelope"] = envelope.require_func()
-        return _meshers.generate(
-            field, self._bounds, resolution, periodic=periodic, **options
-        )
+        try:
+            return _meshers.generate(
+                field, self._bounds, resolution, periodic=periodic, **options
+            )
+        except meshers.MeshingError as error:
+            if (
+                "band" not in options
+                or "minimum MMG quality" not in str(error)
+                or options.get("minimum_quality", 0) == 0
+            ):
+                raise
+            # A different background can remove boundary slivers without
+            # changing the implicit solid or relaxing the acceptance gate.
+            cells = np.asarray(resolution) - 1
+            next_cells = np.array([1 << int(n).bit_length() for n in cells])
+            next_cells = np.where(next_cells < 1.25 * cells, 2 * next_cells, next_cells)
+            if np.any(next_cells > 128):
+                raise error
+            lower, upper = options["band"]
+            constraints = {
+                "upper": lambda x, y, z: raw(x, y, z) - upper,
+                "lower": lambda x, y, z: lower - raw(x, y, z),
+            }
+            retry_options = dict(options)
+            retry_options.pop("band")
+            retry_options["optimize_passes"] = max(
+                12, retry_options.get("optimize_passes", 4)
+            )
+            retry_options["snap"] = 0.1
+            return _meshers.generate(
+                constraints,
+                self._bounds,
+                next_cells + 1,
+                periodic=periodic,
+                **retry_options,
+            )
 
     def _mesh_curved_part(self, type_part, *, resolution=None, **options):
         """Mesh regular angular sectors in their original parameter coordinates."""

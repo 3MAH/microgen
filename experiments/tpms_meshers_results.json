@@ -11,28 +11,20 @@
           "optimize_passes": 4,
           "status": "rejected",
           "exception": "MeshingFailure",
-          "error": "minimum MMG quality 6.101473020792511e-2 is below required 1e-1; mesh rejected (5 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "error": "minimum MMG quality 6.468336227517422e-2 is below required 1e-1; constraints were preserved"
         },
         {
           "resolution": 24,
           "optimize_passes": 4,
           "status": "rejected",
           "exception": "MeshingFailure",
-          "error": "minimum MMG quality 6.687261011252606e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "error": "minimum MMG quality 6.793731072046964e-2 is below required 1e-1; constraints were preserved"
         },
         {
           "resolution": 24,
           "optimize_passes": 12,
-          "status": "rejected",
-          "exception": "MeshingFailure",
-          "error": "minimum MMG quality 6.703060701840986e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
-        },
-        {
-          "resolution": 32,
-          "optimize_passes": 12,
-          "status": "rejected",
-          "exception": "MeshingFailure",
-          "error": "minimum MMG quality 6.83262729561512e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "status": "timeout",
+          "error": "exceeded 90 seconds"
         }
       ]
     },
@@ -44,28 +36,28 @@
           "optimize_passes": 4,
           "status": "rejected",
           "exception": "MeshingFailure",
-          "error": "minimum MMG quality 4.479167156164139e-2 is below required 1e-1; mesh rejected (7 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "error": "minimum MMG quality 4.59863216004772e-2 is below required 1e-1; constraints were preserved"
         },
         {
           "resolution": 24,
           "optimize_passes": 4,
           "status": "rejected",
           "exception": "MeshingFailure",
-          "error": "minimum MMG quality 7.22197851028461e-2 is below required 1e-1; mesh rejected (3 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "error": "minimum MMG quality 4.59863216004772e-2 is below required 1e-1; constraints were preserved"
         },
         {
           "resolution": 24,
           "optimize_passes": 12,
           "status": "rejected",
           "exception": "MeshingFailure",
-          "error": "minimum MMG quality 7.221227457688537e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "error": "minimum MMG quality 4.59863216004772e-2 is below required 1e-1; constraints were preserved"
         },
         {
           "resolution": 32,
           "optimize_passes": 12,
           "status": "rejected",
           "exception": "MeshingFailure",
-          "error": "minimum MMG quality 6.981415039648656e-2 is below required 1e-1; mesh rejected (2 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "error": "minimum MMG quality 6.47696372838073e-2 is below required 1e-1; constraints were preserved"
         }
       ]
     },
@@ -578,30 +570,25 @@
         {
           "resolution": 16,
           "optimize_passes": 4,
-          "status": "rejected",
-          "exception": "MeshingFailure",
-          "error": "minimum MMG quality 6.818752744279154e-2 is below required 1e-1; mesh rejected (24 elements below 0.1). Improve resolution/optimization or use a quality remesher"
-        },
-        {
-          "resolution": 24,
-          "optimize_passes": 4,
-          "status": "rejected",
-          "exception": "MeshingFailure",
-          "error": "minimum MMG quality 8.43271949063005e-2 is below required 1e-1; mesh rejected (9 elements below 0.1). Improve resolution/optimization or use a quality remesher"
-        },
-        {
-          "resolution": 24,
-          "optimize_passes": 12,
-          "status": "rejected",
-          "exception": "MeshingFailure",
-          "error": "minimum MMG quality 8.402691354596538e-2 is below required 1e-1; mesh rejected (9 elements below 0.1). Improve resolution/optimization or use a quality remesher"
-        },
-        {
-          "resolution": 32,
-          "optimize_passes": 12,
-          "status": "rejected",
-          "exception": "MeshingFailure",
-          "error": "minimum MMG quality 7.645957539198733e-2 is below required 1e-1; mesh rejected (11 elements below 0.1). Improve resolution/optimization or use a quality remesher"
+          "status": "passed",
+          "evaluator": "compiled",
+          "seconds": 8.74,
+          "tetrahedra": 175836,
+          "minimum_quality": 0.110774471463357,
+          "quality_p01": 0.16461360613129036,
+          "volume": 0.18283353447356446,
+          "sampled_error": 0.0034823886980624524,
+          "background_cells": [
+            32,
+            32,
+            32
+          ],
+          "periodic_face_counts": [
+            743,
+            746,
+            730
+          ],
+          "coincident_points": 0
         }
       ]
     },
