@@ -361,19 +361,16 @@ class Phase:
         """Return a triangulated surface mesh of the solid boundary.
 
         - Mesh-backed phase: returns the stored mesh.
-        - Field-backed phase: marching cubes on the sampled grid.
+        - Field-backed phase: closed meshers solid boundary.
         - CAD-backed phase: tessellates via OCCT incremental mesh.
         """
-        import pyvista as pv  # noqa: PLC0415
 
         if self._surface_mesh is not None:
             return self._surface_mesh
         if self._field is not None:
-            sg = self.grid(resolution)
-            iso = pv.PolyData(
-                sg.contour(isosurfaces=[self._iso], scalars=_IMPLICIT_SCALAR)
-            )
-            return iso.clean().triangulate() if iso.n_cells > 0 else pv.PolyData()
+            from . import _meshers
+
+            return _meshers.surface(self.generate_meshers(resolution))
         if self._cad is not None:
             err_msg = (
                 "surface_mesh() on a CAD-backed Phase is not implemented yet "
@@ -391,8 +388,22 @@ class Phase:
         if self._field is None:
             err_msg = "volume_mesh() requires a field-backed Phase"
             raise ValueError(err_msg)
-        sg = self.grid(resolution)
-        return sg.clip_scalar(scalars=_IMPLICIT_SCALAR, value=self._iso, invert=True)
+        from . import _meshers
+
+        return _meshers.volume(self.generate_meshers(resolution))
+
+    def generate_meshers(self, resolution=None, **options):
+        """Mesh a field-backed phase, respecting its iso-value."""
+        from . import _meshers
+
+        if self._field is None or self._bounds is None:
+            raise ValueError("generate_meshers() requires a bounded field-backed Phase")
+        return _meshers.generate(
+            lambda x, y, z: self._field(x, y, z) - self._iso,
+            self._bounds,
+            self._resolution if resolution is None else resolution,
+            **options,
+        )
 
     # ------------------------------------------------------------------
     # Pieces — the "Phase = collection of cut/split sub-solids" invariant

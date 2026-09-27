@@ -27,6 +27,7 @@ classifiers = [
 # (``.generate()`` → OCCT ``TopoDS_Shape``) requires the ``[cad]`` extra.
 dependencies = [
     "numpy",
+    "meshers==0.1.0",
     "pyvista>=0.46",
     "gmsh",
     "meshio",

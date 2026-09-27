@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
-import pyvista as pv
 
 from microgen.operations import rotate
 
@@ -111,18 +110,6 @@ class Cylinder(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_surface_mesh(
-        self: Cylinder,
-        resolution: int = 100,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Generate a cylinder VTK shape using the given parameters."""
-        cylinder = pv.Cylinder(
-            center=tuple(self.center),
-            direction=(1.0, 0.0, 0.0),
-            radius=self.radius,
-            height=self.height,
-            resolution=resolution,
-            capping=True,
-        )
-        return rotate(cylinder, self.center, self.orientation)
+    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
+        """Return the meshers boundary of the primitive implicit solid."""
+        return super().generate_surface_mesh(bounds, resolution, **options)

@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
-import pyvista as pv
 from scipy.spatial.transform import Rotation
+
+from microgen import _meshers
 
 from . import implicit_ops as _ops
 from ._types import BoundsType, Field, PeriodType
@@ -21,47 +22,6 @@ from ._types import BoundsType, Field, PeriodType
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
-
-# Scalar-field name on the StructuredGrid used by the default mesh generators.
-_IMPLICIT_SCALAR = "implicit"
-
-
-def _pad_grid_with_outside_halo(
-    grid: pv.StructuredGrid,
-    scalar: str,
-) -> pv.StructuredGrid:
-    """Wrap ``grid`` in a single-cell halo with a large positive scalar value.
-
-    Used by :meth:`Shape.generate_surface_mesh` so that ``contour(0.0)`` closes
-    the iso-surface at the original bbox: marching cubes finds zeros between
-    interior negative nodes and the halo's "outside" nodes, producing cap
-    triangles AT the original bounds rather than leaving them open.
-    """
-    nx, ny, nz = grid.dimensions
-    pts = np.asarray(grid.points).reshape((nx, ny, nz, 3), order="F")
-    dx = float(pts[1, 0, 0, 0] - pts[0, 0, 0, 0])
-    dy = float(pts[0, 1, 0, 1] - pts[0, 0, 0, 1])
-    dz = float(pts[0, 0, 1, 2] - pts[0, 0, 0, 2])
-    xi = np.concatenate(
-        [[pts[0, 0, 0, 0] - dx], pts[:, 0, 0, 0], [pts[-1, 0, 0, 0] + dx]]
-    )
-    yi = np.concatenate(
-        [[pts[0, 0, 0, 1] - dy], pts[0, :, 0, 1], [pts[0, -1, 0, 1] + dy]]
-    )
-    zi = np.concatenate(
-        [[pts[0, 0, 0, 2] - dz], pts[0, 0, :, 2], [pts[0, 0, -1, 2] + dz]]
-    )
-    x, y, z = np.meshgrid(xi, yi, zi, indexing="ij")
-
-    field = np.asarray(grid[scalar]).reshape((nx, ny, nz), order="F")
-    pad_val = max(float(np.nanmax(field)) + 1.0, 1e6)
-    padded = np.full((nx + 2, ny + 2, nz + 2), pad_val, dtype=field.dtype)
-    padded[1:-1, 1:-1, 1:-1] = field
-
-    out = pv.StructuredGrid(x, y, z)
-    out[scalar] = padded.ravel(order="F")
-    return out
-
 
 class ShellCreationError(Exception):
     """Raised when an OCCT shell cannot be created from a mesh."""
@@ -73,7 +33,7 @@ class Shape:
     Every shape has a ``center`` and ``orientation``.  It may also carry an
     implicit scalar field (``_func``) where ``f(x, y, z) < 0`` means *inside*.
     When the implicit field is present, the default :meth:`generate_surface_mesh` and
-    :meth:`generate_cad` produce geometry via marching cubes.  Subclasses
+    :meth:`generate_cad` produce geometry via meshers.  Subclasses
     (e.g. ``Sphere``, ``Tpms``) override these methods with their own
     implementations.
 
@@ -107,12 +67,7 @@ class Shape:
         self._func = func
         self._bounds = bounds
         self._period: PeriodType | None = period
-        # Cache of sampled structured grids keyed on (bounds, resolution).
-        # Shared between generate_surface_mesh and generate_volume_mesh so
-        # users calling both on the same instance only pay one N^3 field
-        # evaluation. Cleared lazily — Shape is immutable post-construction
-        # (center/orientation are read-only properties, _func is fixed).
-        self._grid_cache: dict[tuple[BoundsType, int], pv.StructuredGrid] = {}
+        self._mesh_cache = {}
 
     # ------------------------------------------------------------------
     # Public read-only accessors
@@ -196,107 +151,43 @@ class Shape:
     # Mesh generation (defaults use the implicit field)
     # ------------------------------------------------------------------
 
-    def _sample_implicit_grid(
-        self: Shape,
-        bounds: BoundsType | None,
-        resolution: int,
-        caller: str,
-    ) -> pv.StructuredGrid:
-        """Build a structured grid over ``bounds`` and sample ``_func`` onto it.
+    def generate_meshers(
+        self,
+        bounds=None,
+        resolution=50,
+        *,
+        periodic=(False, False, False),
+        **options,
+    ):
+        """Return a native meshers mesh, including diagnostics and periodic pairs.
 
-        Shared by :meth:`generate_surface_mesh` and :meth:`generate_volume_mesh`,
-        with a per-instance ``(bounds, resolution)`` cache so consecutive calls
-        on the same shape only pay one N^3 field evaluation. Raises
-        ``NotImplementedError`` (with a caller-specific message) when ``_func``
-        is unset, and ``ValueError`` when bounds can't be resolved.
+        Resolution counts grid points per axis. Fields and bounds use world
+        coordinates. Meshers failures propagate without a fallback mesh.
         """
         if self._func is None:
-            err_msg = f"No implicit field defined — subclasses must override {caller}()"
-            raise NotImplementedError(err_msg)
-
-        bounds = bounds or self._bounds
+            raise NotImplementedError("No implicit field defined on this shape")
+        bounds = self._bounds if bounds is None else bounds
         if bounds is None:
-            err_msg = f"Bounds must be provided either at construction or in {caller}()"
-            raise ValueError(err_msg)
-
-        cache_key = (tuple(bounds), resolution)
-        cached = self._grid_cache.get(cache_key)
-        if cached is not None:
-            return cached
-
-        xmin, xmax, ymin, ymax, zmin, zmax = bounds
-        xi = np.linspace(xmin, xmax, resolution)
-        yi = np.linspace(ymin, ymax, resolution)
-        zi = np.linspace(zmin, zmax, resolution)
-        x, y, z = np.meshgrid(xi, yi, zi, indexing="ij")
-
-        grid = pv.StructuredGrid(x, y, z)
-        grid[_IMPLICIT_SCALAR] = self.evaluate(
-            x.ravel(order="F"),
-            y.ravel(order="F"),
-            z.ravel(order="F"),
+            raise ValueError("Bounds must be provided at construction or meshing")
+        # Cache only default backend options. Cancellation and custom evaluators
+        # must execute on every call. PyVista conversions copy these arrays.
+        key = (tuple(bounds), tuple(np.broadcast_to(resolution, (3,))), tuple(periodic))
+        if not options and key in self._mesh_cache:
+            return self._mesh_cache[key]
+        result = _meshers.generate(
+            self._func, bounds, resolution, periodic=periodic, **options
         )
-        self._grid_cache[cache_key] = grid
-        return grid
+        if not options:
+            self._mesh_cache[key] = result
+        return result
 
-    def generate_surface_mesh(
-        self: Shape,
-        bounds: BoundsType | None = None,
-        resolution: int = 50,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Generate a surface VTK mesh of the shape.
+    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
+        """Return the closed meshers solid boundary as PyVista triangles."""
+        return _meshers.surface(self.generate_meshers(bounds, resolution, **options))
 
-        The default implementation runs marching cubes (``f < 0``) on the
-        cached implicit grid wrapped in a single-cell halo of "outside"
-        values, so the iso-surface naturally closes at the bbox: where the
-        volume reaches the bounds, cap faces are produced AT the bbox.
-        Subclasses with a native renderer (``Sphere``, ``Box``, ``Tpms``, …)
-        override this.
-
-        The implicit field is expected to be in world coordinates (subclasses
-        with non-zero ``center`` / ``orientation`` should bake those into
-        ``_func`` during construction).
-
-        The sampled structured grid is cached per ``(bounds, resolution)``
-        on the instance, shared with :meth:`generate_volume_mesh`. The cache
-        is unbounded — calling this method with many distinct ``resolution``
-        values on the same instance retains every sampled grid until the
-        instance is GC'd.
-
-        :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
-        :param resolution: number of grid points per axis
-        :return: triangulated surface mesh
-        """
-        grid = self._sample_implicit_grid(bounds, resolution, "generate_surface_mesh")
-        padded = _pad_grid_with_outside_halo(grid, _IMPLICIT_SCALAR)
-        polydata = padded.contour(isosurfaces=[0.0], scalars=_IMPLICIT_SCALAR)
-        if polydata.n_cells == 0:
-            return pv.PolyData()
-        return polydata.clean().triangulate()
-
-    def generate_volume_mesh(
-        self: Shape,
-        bounds: BoundsType | None = None,
-        resolution: int = 50,
-        **_: KwargsGenerateType,
-    ) -> pv.UnstructuredGrid:
-        """Generate a volumetric VTK mesh of the shape's interior.
-
-        Default implementation samples the implicit field on a structured
-        grid over ``bounds`` and keeps cells where ``f < 0``. Subclasses
-        with a native volumetric representation (``Tpms``, ``Spinodoid``)
-        override this with their cached-grid path.
-
-        The implicit field is expected to be in world coordinates (same
-        contract as :meth:`generate_surface_mesh`).
-
-        :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
-        :param resolution: number of grid points per axis
-        :return: clipped ``pv.UnstructuredGrid`` covering the shape's interior
-        """
-        grid = self._sample_implicit_grid(bounds, resolution, "generate_volume_mesh")
-        return grid.clip_scalar(scalars=_IMPLICIT_SCALAR, value=0.0, invert=True)
+    def generate_volume_mesh(self, bounds=None, resolution=50, **options):
+        """Return a meshers tetrahedral mesh as a PyVista UnstructuredGrid."""
+        return _meshers.volume(self.generate_meshers(bounds, resolution, **options))
 
     def generate_cad(
         self: Shape,
@@ -308,7 +199,7 @@ class Shape:
 
         The default implementation delegates to
         :func:`microgen.cad.shape_to_cad`, which builds a tessellated OCCT BREP
-        from the implicit-field marching-cubes mesh.  Concrete subclasses
+        from the meshers solid boundary. Concrete subclasses
         with native primitive paths (``Box``, ``Sphere``, ``Cylinder``,
         ``Capsule``, ``Ellipsoid``, ``Tpms``, ``Spinodoid`` …) override
         this method with native OCCT construction.

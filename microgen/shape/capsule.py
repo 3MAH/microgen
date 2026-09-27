@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
-import pyvista as pv
 
 from microgen.operations import rotate
 
@@ -107,32 +106,6 @@ class Capsule(Shape):
         )
         return rotate(shape, self.center, self.orientation)
 
-    def generate_surface_mesh(
-        self: Capsule,
-        resolution: int = 100,
-        theta_resolution: int = 50,
-        phi_resolution: int = 50,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """Generate a capsule VTK shape using the given parameters."""
-        cylinder = pv.Cylinder(
-            center=self.center,
-            radius=self.radius,
-            height=self.height,
-            resolution=resolution,
-            capping=True,
-        ).triangulate()
-        sphere_left = pv.Sphere(
-            radius=self.radius,
-            center=(self.center[0] - self.height / 2, self.center[1], self.center[2]),
-            theta_resolution=theta_resolution,
-            phi_resolution=phi_resolution,
-        ).triangulate()
-        sphere_right = pv.Sphere(
-            radius=self.radius,
-            center=(self.center[0] + self.height / 2, self.center[1], self.center[2]),
-            theta_resolution=theta_resolution,
-            phi_resolution=phi_resolution,
-        ).triangulate()
-        capsule = cylinder.boolean_union(sphere_left).boolean_union(sphere_right)
-        return rotate(capsule, self.center, self.orientation)
+    def generate_surface_mesh(self, bounds=None, resolution=50, **options):
+        """Return the meshers boundary of the primitive implicit solid."""
+        return super().generate_surface_mesh(bounds, resolution, **options)

@@ -230,7 +230,7 @@ class AbstractLattice(Shape):
 
     cad_shape = property(generate_cad)
 
-    def generate_implicit(self: AbstractLattice) -> Shape:
+    def generate_implicit(self: AbstractLattice, *, periodic: bool = False) -> Shape:
         """Return the lattice as a single composed implicit :class:`Shape`.
 
         Builds ``(∪ struts ∪ joints) ∩ box`` by F-rep composition — every
@@ -241,8 +241,8 @@ class AbstractLattice(Shape):
 
         For periodic boundary conditions, the existing CAD path
         (:meth:`generate_cad`) does explicit ``periodic_split_and_translate``;
-        an implicit periodic-wrap is not produced here (struts that cross
-        the cell boundary are simply clipped by the bounding box).
+        pass ``periodic=True`` to include translated neighboring struts
+        before clipping to the bounding box.
         """
         from functools import reduce  # noqa: PLC0415
         from operator import or_  # noqa: PLC0415
@@ -266,7 +266,37 @@ class AbstractLattice(Shape):
             center=self.center,
             dim=(self.cell_size, self.cell_size, self.cell_size),
         )
-        return union & bounding_box
+        if periodic:
+            from itertools import product
+
+            field = union.require_func()
+            b = np.asarray(union.bounds).reshape(3, 2)
+            target = np.asarray(bounding_box.bounds).reshape(3, 2)
+            ranges = [
+                range(
+                    int(np.ceil((target[a, 0] - b[a, 1]) / self.cell_size)),
+                    int(np.floor((target[a, 1] - b[a, 0]) / self.cell_size)) + 1,
+                )
+                for a in range(3)
+            ]
+            shifts = np.asarray(list(product(*ranges))) * self.cell_size
+
+            def wrapped(x, y, z):
+                values = np.full_like(x, np.inf)
+                for dx, dy, dz in shifts:
+                    values = np.minimum(values, field(x - dx, y - dy, z - dz))
+                return values
+
+            union = Shape(func=wrapped, bounds=bounding_box.bounds)
+        clipped = union & bounding_box
+        if not periodic:
+            return clipped
+        bounds = tuple(
+            v
+            for c in self.center
+            for v in (c - self.cell_size / 2, c + self.cell_size / 2)
+        )
+        return Shape(func=clipped.require_func(), bounds=bounds)
 
     def _generate_cad(self, **_: KwargsGenerateType) -> CadShape:
         """Generate a strut-based lattice CAD shape using the given parameters."""
@@ -319,19 +349,26 @@ class AbstractLattice(Shape):
         self,
         **_: KwargsGenerateType,
     ) -> pv.PolyData:
-        """Return a surface mesh of the lattice (for visualisation).
+        """Mesh the periodic implicit lattice directly with meshers."""
+        return self.generate_implicit(periodic=True).generate_surface_mesh(
+            periodic=(True,) * 3, **_
+        )
 
-        Today this delegates to :meth:`mesh_for_fem` with default parameters
-        (``size=0.02, order=1, periodic=True``), which runs CAD → STEP →
-        gmsh → pyvista. When the F-rep implicit-lattice work lands, this
-        method will switch to F-rep marching cubes (no CAD/gmsh required)
-        and :meth:`mesh_for_fem` will remain as the explicit FEM-meshing
-        path.
+    def generate_volume_mesh(self, resolution=50, *, periodic=True, **options):
+        """Mesh the lattice directly as first-order tetrahedra."""
+        return self.generate_implicit(periodic=periodic).generate_volume_mesh(
+            resolution=resolution,
+            periodic=(periodic,) * 3,
+            **options,
+        )
 
-        Users who need to control mesh size / element order / periodicity
-        should call :meth:`mesh_for_fem` directly.
-        """
-        return self.mesh_for_fem()
+    def generate_meshers(self, resolution=50, *, periodic=True, **options):
+        """Return native lattice tetrahedra, diagnostics, and periodic pairs."""
+        return self.generate_implicit(periodic=periodic).generate_meshers(
+            resolution=resolution,
+            periodic=(periodic,) * 3,
+            **options,
+        )
 
     vtk_shape = property(generate_surface_mesh)
 
@@ -344,19 +381,25 @@ class AbstractLattice(Shape):
     ) -> pv.PolyData:
         """Build a periodic / non-periodic FEM tet mesh and return its surface.
 
-        Path: ``cad_shape`` → STEP → gmsh (:func:`microgen.mesh_periodic` or
-        :func:`microgen.mesh`) → ``pv.read`` → :meth:`extract_surface`.
-        Requires the ``[cad]`` extra and gmsh.
+        First-order elements use meshers directly. Higher orders retain the
+        CAD to STEP to Gmsh path and require the ``[cad]`` extra.
 
-        Cached per ``(size, order, periodic)`` tuple on the instance, so
-        repeated calls with the same parameters are O(1).
+        Higher-order results are cached per ``(size, order, periodic)``.
 
-        :param size: target element size (gmsh)
+        :param size: maximum background spacing, or target Gmsh element size
         :param order: element order (gmsh)
         :param periodic: enforce periodicity via :func:`mesh_periodic`
         :return: surface ``pv.PolyData`` extracted from the tet mesh
         """
         params = (size, order, periodic)
+        if order == 1:
+            if not np.isfinite(size) or size <= 0:
+                raise ValueError("size must be finite and positive")
+            resolution = int(np.ceil(self.cell_size / size)) + 1
+            return self.generate_volume_mesh(
+                resolution=resolution,
+                periodic=periodic,
+            ).extract_surface(algorithm=None)
         if self._vtk_shape is not None:
             cached_params, cached_mesh = self._vtk_shape
             if cached_params == params:

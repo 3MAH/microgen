@@ -24,6 +24,7 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
+from microgen import _meshers
 from microgen.operations import fuse_shapes, rotate
 
 from ._types import BoundsType, Field
@@ -269,6 +270,16 @@ class Tpms(Shape):
             err_msg = f"density must be between 0 and 1. Given: {self.density}"
             raise ValueError(err_msg)
 
+        fit_key = (
+            self.density,
+            part_type,
+            self.resolution,
+            tuple(self.cell_size),
+            tuple(self.repeat_cell),
+        )
+        if getattr(self, "_density_fit_key", None) == fit_key:
+            return self.offset
+
         part = "skeletal" if "skeletal" in part_type else part_type
         if self.density == 1.0:
             self.offset = (
@@ -303,6 +314,8 @@ class Tpms(Shape):
             computed_offset = root_scalar(
                 lambda offset: density(offset) - target_density,
                 bracket=bracket,
+                xtol=1e-5,
+                rtol=1e-5,
             ).root
         except ValueError:
             # Bracket sign mismatch — usually because target density exceeds
@@ -315,6 +328,7 @@ class Tpms(Shape):
             self.density = target_density
 
         self.offset = computed_offset
+        self._density_fit_key = fit_key
         return computed_offset
 
     def _init_cell_parameters(
@@ -342,51 +356,196 @@ class Tpms(Shape):
             raise ValueError(err_msg)
 
     @property
-    def grid_sheet(self: Tpms) -> pv.UnstructuredGrid:
-        """Return sheet part."""
-        if self._grid_sheet is not None and not self.offset_updated:
-            return self._grid_sheet
-        self.offset_updated = False
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="sheet")
-
-        self._grid_sheet = self.grid.clip_scalar(
-            scalars="lower_surface",
-            invert=False,
-        ).clip_scalar(
-            scalars="upper_surface",
-        )
-        return self._grid_sheet
+    def grid_sheet(self):
+        """Return the sheet tetrahedra in local coordinates."""
+        if self._needs_parametric_clip():
+            return self._parametric_clip("sheet")
+        return _meshers.volume(self._mesh_part("sheet"))
 
     @property
-    def grid_upper_skeletal(self: Tpms) -> pv.UnstructuredGrid:
-        """Return upper skeletal part."""
-        if self._grid_upper_skeletal is not None and not self.offset_updated:
-            return self._grid_upper_skeletal
-        self.offset_updated = False
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="upper skeletal")
-
-        self._grid_upper_skeletal = self.grid.clip_scalar(
-            scalars="upper_surface",
-            invert=False,
-        )
-        return self._grid_upper_skeletal
+    def grid_upper_skeletal(self):
+        """Return the upper skeletal tetrahedra in local coordinates."""
+        if self._needs_parametric_clip():
+            return self._parametric_clip("upper skeletal")
+        return _meshers.volume(self._mesh_part("upper skeletal"))
 
     @property
-    def grid_lower_skeletal(self: Tpms) -> pv.UnstructuredGrid:
-        """Return lower skeletal part."""
-        if self._grid_lower_skeletal is not None and not self.offset_updated:
-            return self._grid_lower_skeletal
-        self.offset_updated = False
+    def grid_lower_skeletal(self):
+        """Return the lower skeletal tetrahedra in local coordinates."""
+        if self._needs_parametric_clip():
+            return self._parametric_clip("lower skeletal")
+        return _meshers.volume(self._mesh_part("lower skeletal"))
 
+    def _needs_parametric_clip(self):
+        """Identify charts that collapse at poles/axes or overlap at a full seam."""
+        half = self.cell_size * self.repeat_cell / 2
+        if isinstance(self, CylindricalTpms):
+            return (
+                half[0] >= self.cylinder_radius
+                or half[1] >= np.pi * self.cylinder_radius - 1e-8
+            )
+        if isinstance(self, SphericalTpms):
+            return (
+                half[0] >= self.sphere_radius
+                or half[1] >= np.pi * self.sphere_radius / 2 - 1e-8
+                or half[2] >= np.pi * self.sphere_radius - 1e-8
+            )
+        return isinstance(self, Sweep)
+
+    def _parametric_clip(self, type_part):
+        """Retain VTK for singular/overlapping charts unsupported by meshers maps."""
         if self.density is not None:
-            self._compute_offset_to_fit_density(part_type="lower skeletal")
+            self._compute_offset_to_fit_density(part_type=type_part)
+        if type_part == "sheet":
+            return self.grid.clip_scalar(
+                scalars="lower_surface", invert=False
+            ).clip_scalar(scalars="upper_surface")
+        if type_part == "upper skeletal":
+            return self.grid.clip_scalar(scalars="upper_surface", invert=False)
+        if type_part == "lower skeletal":
+            return self.grid.clip_scalar(scalars="lower_surface")
+        raise ValueError(f"Invalid solid type_part: {type_part!r}")
 
-        self._grid_lower_skeletal = self.grid.clip_scalar(scalars="lower_surface")
-        return self._grid_lower_skeletal
+    def _mesh_part(self, type_part, *, periodic=(False, False, False), **options):
+        """Mesh raw TPMS levels, preserving the historical offset units."""
+        if type_part not in ("sheet", "upper skeletal", "lower skeletal"):
+            raise ValueError(f"Invalid solid type_part: {type_part!r}")
+        if self.density is not None:
+            self._compute_offset_to_fit_density(part_type=type_part)
+        if isinstance(self, (CylindricalTpms, SphericalTpms)):
+            return self._mesh_curved_part(type_part, periodic=periodic, **options)
+        raw = self.raw_field
+        envelope = self._cell_box()
+        offset = self._offset_func
+        if offset is None and np.ndim(self.offset) > 0:
+            # Legacy nodal offsets have no callable. Interpolate in physical
+            # coordinates, extending with nearest values outside the grid hull.
+            from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
+
+            linear = LinearNDInterpolator(self.grid.points, self.offset)
+            nearest = NearestNDInterpolator(self.grid.points, self.offset)
+
+            def offset(x, y, z):
+                values = linear(x, y, z)
+                missing = np.isnan(values)
+                values[missing] = nearest(x[missing], y[missing], z[missing])
+                return values
+
+        scalar = self.offset if offset is None else None
+
+        def half_offset(x, y, z):
+            return 0.5 * (offset(x, y, z) if offset is not None else scalar)
+
+        def field(x, y, z):
+            value = raw(x, y, z)
+            half = 0.5 * (offset(x, y, z) if offset is not None else scalar)
+            if type_part == "sheet":
+                value = np.abs(value) - half
+            elif type_part == "upper skeletal":
+                value = half - value
+            else:
+                value = value + half
+            if type(self) is not Tpms:
+                value = np.maximum(value, envelope.evaluate(x, y, z))
+            return value
+
+        resolution = self.resolution * self.repeat_cell
+        if type(self) is not Tpms:
+            resolution = self._isotropic_resolution()
+        if self.density == 1.0:
+            field = envelope.require_func()
+        elif (
+            type_part == "sheet"
+            and type(self) is Tpms
+            and offset is None
+            and scalar > 0
+        ):
+            options["band"] = (-0.5 * scalar, 0.5 * scalar)
+            field = raw
+        elif type_part == "sheet" and (offset is not None or scalar > 0):
+            field = {
+                "upper": lambda x, y, z: raw(x, y, z) - half_offset(x, y, z),
+                "lower": lambda x, y, z: -raw(x, y, z) - half_offset(x, y, z),
+            }
+            if type(self) is not Tpms:
+                field["envelope"] = envelope.require_func()
+        return _meshers.generate(
+            field, self._bounds, resolution, periodic=periodic, **options
+        )
+
+    def _mesh_curved_part(self, type_part, **options):
+        """Mesh regular angular sectors in their original parameter coordinates."""
+        half = self.cell_size * self.repeat_cell / 2
+        bounds = tuple(v for h in half for v in (-h, h))
+        if isinstance(self, CylindricalTpms):
+            radius = self.cylinder_radius
+
+            def mapping(x, y, z):
+                return (
+                    (radius + x) * np.cos(y / radius),
+                    (radius + x) * np.sin(y / radius),
+                    z,
+                )
+        else:
+            radius = self.sphere_radius
+
+            def mapping(x, y, z):
+                theta, phi = y / radius + np.pi / 2, z / radius
+                return (
+                    (radius + x) * np.sin(theta) * np.cos(phi),
+                    (radius + x) * np.sin(theta) * np.sin(phi),
+                    (radius + x) * np.cos(theta),
+                )
+
+        k = 2 * np.pi / self.cell_size
+        ps = self.phase_shift
+
+        def raw(x, y, z):
+            return self.surface_function(
+                k[0] * (x + ps[0]), k[1] * (y + ps[1]), k[2] * (z + ps[2])
+            )
+
+        if self._offset_func is None and np.ndim(self.offset):
+            from scipy.interpolate import LinearNDInterpolator
+
+            offset = LinearNDInterpolator(
+                self.grid["coords"], self.offset, fill_value=float(np.mean(self.offset))
+            )
+        elif self._offset_func is not None:
+
+            def offset(x, y, z):
+                return self._offset_func(*mapping(x, y, z))
+        else:
+
+            def offset(x, y, z):
+                return self.offset
+
+        constraints = {}
+        if type_part in ("sheet", "lower skeletal"):
+            sign = -1 if type_part == "sheet" else 1
+            constraints["lower"] = lambda x, y, z: (
+                raw(x, y, z) + sign * offset(x, y, z) / 2
+            )
+        if type_part in ("sheet", "upper skeletal"):
+            constraints["upper"] = lambda x, y, z: (
+                -raw(x, y, z) - offset(x, y, z) / 2
+                if type_part == "sheet"
+                else -raw(x, y, z) + offset(x, y, z) / 2
+            )
+        if len(constraints) == 1:
+            constraints["domain"] = lambda x, y, z: -np.ones_like(x)
+        if self.density == 1:
+            constraints = {
+                "solid": lambda x, y, z: -np.ones_like(x),
+                "domain": lambda x, y, z: -np.ones_like(x),
+            }
+        return _meshers.generate(
+            constraints,
+            bounds,
+            self.resolution * self.repeat_cell,
+            coordinate_map=mapping,
+            **options,
+        )
 
     @property
     def sheet(self: Tpms) -> pv.PolyData:
@@ -659,6 +818,7 @@ class Tpms(Shape):
         offset: float | npt.NDArray[np.float64] | OffsetGrading | Field,
     ) -> None:
         # Reset cached callable form on every assignment.
+        self._density_fit_key = None
         self._offset_func = None
         if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
@@ -972,117 +1132,46 @@ class Tpms(Shape):
             return solids[0]
         return fuse_shapes(solids, retain_edges=False)
 
-    def generate_surface_mesh(
-        self: Tpms,
-        type_part: TpmsPartType = "sheet",
-        algo_resolution: int | None = None,
-        **_: KwargsGenerateType,
-    ) -> pv.PolyData:
-        """
-        Generate the PyVista mesh of the requested TPMS part.
+    def generate_meshers(self, type_part="sheet", **options):
+        """Return the native solid mesh with the instance's rigid transform."""
+        if self._needs_parametric_clip():
+            raise NotImplementedError(
+                "This angular seam, pole, or sweep needs the legacy parametric mesher"
+            )
+        result = self._mesh_part(type_part, **options)
+        return _meshers.transform(result, self.orientation, self.center)
 
-        Same F-rep pipeline as :meth:`generate_cad` (skeletals are clipped to the
-        cell box), so the two outputs share the exact same triangulation and
-        therefore the same volume.
-
-        :param type_part: ``"sheet"``, ``"lower skeletal"``, ``"upper skeletal"``
-            or ``"surface"``
-        :param algo_resolution: temporary-TPMS resolution for density→offset
-            search (only used when ``self.density`` is set)
-        """
+    def generate_surface_mesh(self, type_part="sheet", algo_resolution=None, **options):
+        """Return the closed meshers boundary, or the legacy open zero surface."""
         if type_part == "surface":
             return self.surface
-        if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
-            err_msg = (
-                f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
-                "'upper skeletal' or 'surface'"
-            )
-            raise ValueError(err_msg)
-
-        if self.density == 1.0:
-            envelope_mesh = self._envelope_mesh_at_full_density()
-            envelope_mesh = rotate(
-                envelope_mesh,
-                center=(0, 0, 0),
-                rotation=self.orientation,
-            )
-            return envelope_mesh.translate(xyz=self.center)
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(
-                part_type=type_part,
-                resolution=algo_resolution,
-            )
-        # Note: no `_check_offset` here — the F-rep VTK path handles negative
-        # / zero / variable offsets gracefully.  ``generate_cad()`` still applies
-        # the historical CAD-side restriction.
-
-        # Always use the structured-grid clip-scalar path (the same one
-        # exposed by the ``.sheet`` / ``.upper_skeletal`` / ``.lower_skeletal``
-        # properties).  ``self.grid`` is built on a Cartesian (or parametric)
-        # linspace so its boundary points are *exactly* periodic — opposite
-        # faces of the unit cell carry identical (y, z) point patterns and
-        # identical scalar values, hence ``clip_scalar`` produces matching
-        # boundary triangles within machine epsilon.  This is what gmsh's
-        # ``setPeriodic`` (and FEM-grade periodic meshing in general) needs.
-        #
-        # The F-rep marching-cubes path (still available via :meth:`as_sheet`,
-        # :meth:`_frep_part`, etc.) cannot guarantee that correspondence —
-        # boundary vertices on opposite faces drift by up to one voxel width
-        # because MC chooses isosurface-edge intersections per voxel without
-        # enforcing periodic alignment.
-        grid_attr = f"grid_{type_part.replace(' ', '_')}"
-        polydata = getattr(self, grid_attr).extract_surface(algorithm=None)
-
-        if getattr(self, "_uses_parametric_grid", False):
-            # CylindricalTpms / SphericalTpms / Sweep have an angular seam
-            # at φ=±π (or θ=±π) where the parametric grid's two boundary
-            # slabs coincide in Cartesian space up to ~1e-3 floating-point
-            # drift.  Merge those duplicates with an absolute tolerance
-            # small enough not to collapse legitimate cell edges.
+        if self._needs_parametric_clip():
+            if options:
+                raise TypeError(
+                    "meshers options are unavailable for this parametric chart"
+                )
+            polydata = self._parametric_clip(type_part).extract_surface(algorithm=None)
             seam_tol = min(
-                5e-3,
-                0.1 * float(np.min(self.cell_size)) / float(self.resolution),
+                5e-3, 0.1 * float(np.min(self.cell_size)) / float(self.resolution)
             )
-            polydata = polydata.clean(tolerance=seam_tol, absolute=True)
-        else:
-            # Plain Tpms / Infill: no angular seam.  A non-zero merge
-            # tolerance here would collapse boundary vertices asymmetrically
-            # between opposite faces and break strict periodicity.
-            polydata = polydata.clean()
-        polydata = polydata.triangulate()
+            polydata = polydata.clean(tolerance=seam_tol, absolute=True).triangulate()
+            return rotate(
+                polydata, center=(0, 0, 0), rotation=self.orientation
+            ).translate(self.center)
+        return _meshers.surface(self.generate_meshers(type_part, **options))
 
-        polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
-        return polydata.translate(xyz=self.center)
-
-    def generate_volume_mesh(
-        self: Tpms,
-        type_part: TpmsPartType = "sheet",
-        algo_resolution: int | None = None,
-        **_: KwargsGenerateType,
-    ) -> pv.UnstructuredGrid:
-        """Generate VTK UnstructuredGrid object of the required TPMS part.
-
-        Applies ``center`` and ``orientation`` to the cached grid so the
-        returned mesh lands at the declared world position — matching the
-        contract of :meth:`generate_surface_mesh`.
-        """
-        if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
-            err_msg = (
-                f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
-                "'upper skeletal'"
+    def generate_volume_mesh(self, type_part="sheet", algo_resolution=None, **options):
+        """Return tetrahedra with center and orientation applied once."""
+        if self._needs_parametric_clip():
+            if options:
+                raise TypeError(
+                    "meshers options are unavailable for this parametric chart"
+                )
+            grid = self._parametric_clip(type_part).copy()
+            return rotate(grid, center=(0, 0, 0), rotation=self.orientation).translate(
+                self.center
             )
-            raise ValueError(err_msg)
-
-        if self.density is not None:
-            self._compute_offset_to_fit_density(
-                part_type=type_part,
-                resolution=algo_resolution,
-            )
-
-        grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
-        grid = rotate(grid, center=(0, 0, 0), rotation=self.orientation)
-        return grid.translate(xyz=self.center)
+        return _meshers.volume(self.generate_meshers(type_part, **options))
 
 
 class CylindricalTpms(Tpms):
