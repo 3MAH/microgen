@@ -49,7 +49,8 @@ def generate(
 
     ``meshers`` options, including a stricter ``geometry_tolerance``, are passed
     through. Supported fields compile inside the meshers wheel; VTK and
-    interpolated fields use the callback path.
+    interpolated fields use the callback path. Native workers default to
+    automatic CPU selection; pass ``threads`` to limit them.
     """
     counts = np.asarray(resolution)
     if counts.ndim == 0:
@@ -73,6 +74,7 @@ def generate(
         raise ValueError("bounds must contain three finite increasing intervals")
     options.setdefault("geometry_tolerance", 0.01)
     options.setdefault("compile", True)
+    options.setdefault("threads", None)
 
     def callback(x, y, z):
         return np.broadcast_to(

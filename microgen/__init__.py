@@ -61,10 +61,12 @@ from .shape import (
     surface_functions,
 )
 from .single_mesh import SingleMesh, check_if_only_linear_tetrahedral
+from .parallel import generate_meshers_parallel
 
 __version__ = importlib.metadata.version(__package__ or __name__)
 
 __all__ = [
+    "generate_meshers_parallel",
     "AbstractLattice",
     "BodyCenteredCubic",
     "Box",

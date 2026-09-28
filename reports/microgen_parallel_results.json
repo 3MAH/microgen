@@ -1,0 +1,117 @@
+[
+  {
+    "case": "single_one_worker",
+    "seconds": 0.889857000001939,
+    "times": [
+      0.7509969000238925,
+      0.889857000001939,
+      0.9850766999879852
+    ],
+    "meshes": 1,
+    "diagnostics": {
+      "empty": false,
+      "volume": 0.19441987707291566,
+      "minimum_mmg_quality": 0.14403676173531071,
+      "sampled_surface_error": 0.0033993027719833855,
+      "elements_below_quality_01": 0,
+      "reverted_snap_vertices": 0,
+      "callback_calls": 0,
+      "seconds": 0.9841527,
+      "threads": 1,
+      "evaluator": "compiled",
+      "preparation_seconds": 0.0003876000118907541,
+      "background_cells": [
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  {
+    "case": "single_automatic",
+    "seconds": 1.5409169000049587,
+    "times": [
+      1.5268006999976933,
+      1.5409169000049587,
+      1.548380799998995
+    ],
+    "meshes": 1,
+    "diagnostics": {
+      "empty": false,
+      "volume": 0.19441987707291566,
+      "minimum_mmg_quality": 0.14403676173531071,
+      "sampled_surface_error": 0.0033993027719833855,
+      "elements_below_quality_01": 0,
+      "reverted_snap_vertices": 0,
+      "callback_calls": 0,
+      "seconds": 1.5476504,
+      "threads": 24,
+      "evaluator": "compiled",
+      "preparation_seconds": 0.00023700000019744039,
+      "background_cells": [
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  {
+    "case": "four_sequential",
+    "seconds": 3.6041385999997146,
+    "times": [
+      3.735049799986882,
+      3.6041385999997146,
+      3.4584548999846447
+    ],
+    "meshes": 4,
+    "diagnostics": {
+      "empty": false,
+      "volume": 0.19441987707291566,
+      "minimum_mmg_quality": 0.14403676173531071,
+      "sampled_surface_error": 0.0033993027719833855,
+      "elements_below_quality_01": 0,
+      "reverted_snap_vertices": 0,
+      "callback_calls": 0,
+      "seconds": 0.8415731,
+      "threads": 1,
+      "evaluator": "compiled",
+      "preparation_seconds": 0.00024610001128166914,
+      "background_cells": [
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  {
+    "case": "four_parallel",
+    "seconds": 0.8765484000032302,
+    "times": [
+      0.9143210999900475,
+      0.864143700018758,
+      0.8765484000032302
+    ],
+    "meshes": 4,
+    "diagnostics": {
+      "empty": false,
+      "volume": 0.19441987707291566,
+      "minimum_mmg_quality": 0.14403676173531071,
+      "sampled_surface_error": 0.0033993027719833855,
+      "elements_below_quality_01": 0,
+      "reverted_snap_vertices": 0,
+      "callback_calls": 0,
+      "seconds": 0.8745727,
+      "threads": 1,
+      "evaluator": "compiled",
+      "preparation_seconds": 0.0002330999996047467,
+      "background_cells": [
+        15,
+        15,
+        15
+      ],
+      "batch_workers": 4,
+      "batch_native_threads": 1,
+      "batch_cpu_budget": 24
+    }
+  }
+]

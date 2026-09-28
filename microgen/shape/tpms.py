@@ -1291,6 +1291,10 @@ class Tpms(Shape):
         MMG measure in [0, 1]; geometry tolerance is a sampled distance in physical
         units. Failed acceptance checks raise meshers.MeshingError, with no retry
         using another mesher. The native result includes diagnostic measurements.
+        Native CPU workers default to all available CPUs (threads=None).
+        Set threads explicitly to limit workers; more workers are not always
+        faster for small meshes. For independent jobs, use
+        microgen.generate_meshers_parallel to bound nested parallelism.
         """
         if self._needs_parametric_clip():
             raise NotImplementedError(
