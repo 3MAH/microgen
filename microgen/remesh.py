@@ -229,13 +229,17 @@ def _generate_mesh_with_required_triangles(
     input_mesh: BoxMesh,
     mesh_including_required_triangles: str = "merged_reqtri.mesh",
 ) -> None:
-    with NamedTemporaryFile(suffix=".mesh", delete=True) as mesh_file:
-        _generate_mesh_with_boundary_triangles(input_mesh, mesh_file.name)
+    with NamedTemporaryFile(suffix=".mesh", delete=False) as mesh_file:
+        mesh_path = mesh_file.name
+    try:
+        _generate_mesh_with_boundary_triangles(input_mesh, mesh_path)
         _add_required_triangles_to_mesh_file(
             input_mesh,
-            mesh_file.name,
+            mesh_path,
             mesh_including_required_triangles,
         )
+    finally:
+        Path(mesh_path).unlink(missing_ok=True)
 
 
 def _generate_mesh_with_boundary_triangles(

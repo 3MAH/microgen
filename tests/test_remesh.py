@@ -2,6 +2,8 @@
 
 import shutil
 import warnings
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 import pytest
@@ -11,6 +13,30 @@ from _pytest.fixtures import FixtureRequest
 from microgen import BoxMesh, Tpms, is_periodic
 from microgen.remesh import InputMeshNotPeriodicError, remesh_keeping_boundaries_for_fem
 from microgen.shape.surface_functions import gyroid
+
+
+def test_intermediate_mesh_file_can_be_reopened_on_windows(tmp_path, monkeypatch):
+    import importlib
+
+    remesh_module = importlib.import_module("microgen.remesh")
+    monkeypatch.setattr(
+        remesh_module,
+        "NamedTemporaryFile",
+        lambda **kwargs: NamedTemporaryFile(dir=tmp_path, **kwargs),
+    )
+
+    def write_mesh(_mesh, path):
+        Path(path).write_text("mesh")
+
+    def require_triangles(_mesh, source, destination):
+        Path(destination).write_text(Path(source).read_text())
+
+    monkeypatch.setattr(remesh_module, "_generate_mesh_with_boundary_triangles", write_mesh)
+    monkeypatch.setattr(remesh_module, "_add_required_triangles_to_mesh_file", require_triangles)
+    output = tmp_path / "required.mesh"
+    remesh_module._generate_mesh_with_required_triangles(None, str(output))
+    assert output.read_text() == "mesh"
+    assert list(tmp_path.glob("tmp*.mesh")) == []
 
 # ruff: noqa: S101 assert https://docs.astral.sh/ruff/rules/assert/
 # ruff: noqa: E501 line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
