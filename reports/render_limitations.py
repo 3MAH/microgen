@@ -8,6 +8,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DATA = json.loads((HERE / "limitations_data.json").read_text(encoding="utf-8"))
+CORE = json.loads((HERE / "curved_core_probe_data.json").read_text(encoding="utf-8"))
 RUNS = DATA["runs"]
 SURFACE_CASES = [
     ("gyroid_unit", "Gyroid · 1 cell"),
@@ -123,7 +124,7 @@ def comparison_table(group: str, cases: list[tuple[str, str]]) -> str:
 def curved_table() -> str:
     lines = [
         '<div class="table-wrap"><table><thead><tr><th>Geometry</th><th>VTK surface</th>'
-        "<th>VTK volume</th><th>meshers volume</th><th>Surface triangles</th>"
+        "<th>VTK volume</th><th>Current adapter</th><th>Surface triangles</th>"
         "<th>Open edges</th></tr></thead><tbody>"
     ]
     for case, name in CURVED_CASES:
@@ -133,8 +134,52 @@ def curved_table() -> str:
         count = surface_result["elements"]
         lines.append(
             f"<tr><th>{html.escape(name)}</th><td>{fmt(surface)} s</td>"
-            f'<td>{fmt(volume)} s</td><td><span class="tag">Unsupported</span></td>'
+            f'<td>{fmt(volume)} s</td><td><span class="tag">VTK fallback</span></td>'
             f"<td>{count:,}</td><td>{surface_result['open_edges']:,}</td></tr>"
+        )
+    lines.append("</tbody></table></div>")
+    return "".join(lines)
+
+
+def core_probe(case: str, kind: str) -> dict:
+    return next(
+        run for run in CORE["runs"] if run["case"] == case and run["kind"] == kind
+    )
+
+
+def core_table() -> str:
+    lines = [
+        '<div class="table-wrap"><table><thead><tr><th>Geometry</th><th>Meshers volume probe</th><th>Meshers surface probe</th></tr></thead><tbody>'
+    ]
+    for case, name in (
+        ("cylinder_sector", "Cylinder sector"),
+        ("sphere_sector", "Sphere sector"),
+        *CURVED_CASES,
+    ):
+        volume = core_probe(case, "volume")
+        surface = core_probe(case, "surface")
+        if volume["status"] == "mesh_returned":
+            volume_text = (
+                f"{volume['tetrahedra']:,} tets · {fmt(volume['seconds'])} s · "
+                f"qmin {volume['minimum_mmg_quality']:.3f} · "
+                f"error {volume['sampled_surface_error']:.3f}"
+            )
+            if case == "cylinder_full_wrap":
+                volume_text += (
+                    f" · welded open edges {volume['welded_volume_surface_open_edges']}"
+                )
+        else:
+            volume_text = f"Rejected: {volume['reason']}"
+        if surface["status"] == "mesh_returned":
+            surface_text = (
+                f"{surface['triangles']:,} triangles · {fmt(surface['seconds'])} s · "
+                f"post-map open edges {surface['open_edges_after_seam_cleanup']:,}"
+            )
+        else:
+            surface_text = f"Rejected: {surface['reason']}"
+        lines.append(
+            f"<tr><th>{html.escape(name)}</th><td>{html.escape(volume_text)}</td>"
+            f"<td>{html.escape(surface_text)}</td></tr>"
         )
     lines.append("</tbody></table></div>")
     return "".join(lines)
@@ -187,6 +232,7 @@ def build() -> str:
     surface_table = comparison_table("surface", SURFACE_CASES)
     volume_table = comparison_table("volume", VOLUME_CASES)
     coverage_table = curved_table()
+    capability_table = core_table()
     sample_rows = raw_times("surface", SURFACE_CASES) + raw_times(
         "volume", VOLUME_CASES
     )
@@ -226,14 +272,14 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 <header>
 <div class="eyebrow">Experimental benchmark report · {date}</div>
 <h1>Three limits to replacing microgen’s mesh paths with meshers</h1>
-<p class="lead">The decision depends on the output. For print-oriented surface meshes, microgen’s VTK path is substantially faster in every tested TPMS case. Meshers remains attractive for quality-checked tetrahedral volumes, but the raw VTK grid is faster and some curved geometries are still unsupported.</p>
+<p class="lead">The decision depends on the output. For print-oriented surface meshes, microgen’s VTK path is faster in every matched-resolution Cartesian TPMS test. Meshers can generate a closed, quality-checked full-wrap cylinder volume with explicit seam pairing, although microgen’s current adapter still falls back to VTK for that shape. Spherical poles and Sweep need more work.</p>
 <div class="meta"><span>Windows · Python {html.escape(DATA["python"])}</span><span>16 grid points per cell</span><span>3 fresh-process trials per timed path</span><span>Imports excluded</span></div>
 </header>
 <nav><a href="#surface">01 Surface speed</a><a href="#coverage">02 Curved coverage</a><a href="#volume">03 Raw volume speed</a><a href="#method">Methods</a></nav>
-<div class="takeaway"><strong>Practical call.</strong> Keep VTK for additive-manufacturing surface export when triangle shape is not a requirement. Use meshers for supported TPMS tetrahedral volumes when quality and periodic constraints matter. Keep the legacy path for full angular wraps and Sweep. The direct meshers surface generator is still experimental and is not present in the published 0.1.0 wheel.</div>
+<div class="takeaway"><strong>Practical call.</strong> Keep VTK for additive-manufacturing surface export when triangle shape is not a requirement. Use meshers for supported TPMS tetrahedral volumes when quality and periodic constraints matter. The full-cylinder volume path can be added after its periodic seam and welded output are handled in the adapter. Sphere and Sweep still need a nonsingular chart or another meshing strategy. The direct meshers surface generator is experimental and absent from the published 0.1.0 wheel.</div>
 <div class="cards">
 <div class="card"><div class="number">{three_b / three_a:.1f}×</div><div>Meshers surface time over VTK for the 3³ graded gyroid</div><small>{fmt(three_b)} s vs {fmt(three_a)} s</small></div>
-<div class="card"><div class="number">3 / 3</div><div>Tested full-wrap / Sweep classes unavailable in meshers</div><small>Legacy VTK returns a mesh in each case</small></div>
+<div class="card"><div class="number">1 / 3</div><div>Current curved adapter fallbacks with a verified closed meshers volume path</div><small>Full-wrap cylinder passes; sphere and Sweep fail at singular axes</small></div>
 <div class="card"><div class="number">{two_b / two_a:.0f}×</div><div>Meshers volume time over raw VTK for the 2³ graded gyroid</div><small>Different output cell types and quality checks</small></div>
 </div>
 
@@ -245,10 +291,14 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 <div class="flow"><div><h3>microgen VTK sheet</h3><div class="steps"><b>3D structured samples</b><span class="arrow">→</span><b>clip twice</b><span class="arrow">→</span><b>extract boundary triangles</b></div></div><div><h3>meshers experimental surface</h3><div class="steps"><b>3D sampled field</b><span class="arrow">→</span><b>surface triangles only</b><span class="arrow">→</span><b>improve / periodic polish</b></div></div></div>
 </section>
 
-<section id="coverage"><div class="section-tag">Limit 02 · geometry coverage</div><h2>Full wraps and Sweep still need microgen’s VTK path</h2>
-<p>The adapter rejects full cylindrical seams, spherical poles and Sweep for direct meshers volumes. The same shapes still generate through microgen’s existing parametric grid. The timings below measure that available VTK path at a deliberately small resolution of eight points per cell. “Unsupported” is a coverage result, not a slow meshers result.</p>
+<section id="coverage"><div class="section-tag">Limit 02 · geometry coverage</div><h2>The adapter fallback hides a working cylinder path</h2>
+<p>microgen’s current adapter routes full cylindrical seams, spherical poles and Sweep to VTK. That adapter decision does not establish what meshers can do. The first table measures microgen’s VTK path at a deliberately small eight points per cell. The second table calls meshers directly on coordinate charts for both volume and surface.</p>
 {coverage_table}
-<div class="note">Partial angular sectors without collapsed axes can use the meshers coordinate-map path; this panel tests the explicit full-wrap and Sweep exceptions. All three VTK sample surfaces have open edges at this coarse resolution. Successful generation here does not certify any of them for printing.</div>
+<div class="note">All three VTK sample surfaces have open edges at this coarse resolution. Successful generation does not certify them for printing.</div>
+<h3>Direct meshers capability probes</h3>
+{capability_table}
+<div class="note">The full-cylinder volume used 12 points per cell, an identity periodic transform across the angular seam, and a final point weld. It met the adapter’s 0.1 minimum MMG quality and 0.01 sampled-error gates; the welded volume boundary had zero open edges. Full sphere and Sweep volume maps inverted background tetrahedra at their collapsed axes. Both sector volumes passed at 12 points per cell. For surfaces, the mapped cylinder closes only after periodic seam pairing and cleanup. Sphere and Sweep still leave open edges near singular axes.</div>
+<p class="muted">These are single-run capability probes, not matched performance comparisons. Surface probes used 24, 48 or 72 uniform cells across each entire chart; VTK used eight points per unit cell. The surface API has no coordinate-map argument, so the probe mapped its generated vertices afterward. The timings omit that mapping and cleanup. The full cylinder needed 72 cells and returned more than 1.3 million triangles, so this is not yet an efficient print-surface replacement.</p>
 </section>
 
 <section id="volume"><div class="section-tag">Limit 03 · raw volume speed</div><h2>Raw VTK grids are faster, but serve a different job</h2>
@@ -260,8 +310,8 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 
 <section id="method"><div class="section-tag">Method and scope</div><h2>How to read the numbers</h2>
 <p>Each timed path ran in a fresh process, three times, with order alternated. Tables show medians of <code>runtime_seconds</code>, which includes geometry construction and generation but excludes module import and process startup. Both paths used 16 grid points per unit-cell axis. meshers may retry a nearby background resolution for periodic surface quality. Output element counts differ, so these are matched-input-resolution comparisons, not matched-mesh-size or matched-geometric-error comparisons.</p>
-<p>Curved examples used eight points per cell to keep the coverage check small. Their runtime includes shape construction. Meshers’ unsupported result was checked once per geometry; it has no generation time. The direct surface build was compiled with <code>experimental-surfaces</code>, and microgen’s branch still uses VTK for <code>generate_surface_mesh()</code>.</p>
-<p class="muted">Host: {platform_name}. microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Source: <a href="benchmark_limitations.py">benchmark runner</a>, <a href="limitations_data.json">raw JSON</a>. The raw samples are also listed below so this HTML remains readable on its own.</p>
+<p>Curved VTK examples used eight points per cell to keep the coverage check small. Their runtime includes shape construction. The adapter fallback was checked once per geometry; it has no meshers generation time. The direct surface build was compiled with <code>experimental-surfaces</code>, and microgen’s branch still uses VTK for <code>generate_surface_mesh()</code>.</p>
+<p class="muted">Host: {platform_name}. microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Source: <a href="benchmark_limitations.py">benchmark runner</a>, <a href="limitations_data.json">timing JSON</a>, <a href="probe_curved_meshers.py">direct probe</a>, <a href="curved_core_probe_data.json">probe JSON</a>. The raw timing samples are also listed below so this HTML remains readable on its own.</p>
 <details><summary>Show all surface and volume timing samples</summary><div class="table-wrap"><table><thead><tr><th>Case</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{sample_rows}</tbody></table></div></details>
 <details><summary>Show curved-geometry timing samples</summary><div class="table-wrap"><table><thead><tr><th>Geometry</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{raw_times("curved", CURVED_CASES)}</tbody></table></div></details>
 </section>

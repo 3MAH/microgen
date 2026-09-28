@@ -36,27 +36,27 @@ def revision(path: Path) -> str:
     ).strip()
 
 
-def curved_shape(case: str):
+def curved_shape(case: str, resolution: int = 8):
     import numpy as np
 
     from microgen import CylindricalTpms, SphericalTpms, Sweep
     from microgen.shape.surface_functions import gyroid
 
-    if case == "cylinder_full_wrap":
+    if case in ("cylinder_full_wrap", "cylinder_sector"):
         return CylindricalTpms(
             radius=1.5,
             surface_function=gyroid,
             offset=0.5,
-            resolution=8,
-            repeat_cell=(1, 0, 1),
+            resolution=resolution,
+            repeat_cell=(1, 0 if case == "cylinder_full_wrap" else 2, 1),
         )
-    if case == "sphere_full_wrap":
+    if case in ("sphere_full_wrap", "sphere_sector"):
         return SphericalTpms(
             radius=2.0,
             surface_function=gyroid,
             offset=0.5,
-            resolution=8,
-            repeat_cell=(1, 0, 0),
+            resolution=resolution,
+            repeat_cell=(1, 0, 0) if case == "sphere_full_wrap" else (1, 1, 1),
         )
     if case == "sweep":
         return Sweep(
@@ -64,7 +64,7 @@ def curved_shape(case: str):
             surface_function=gyroid,
             radial_max=1.0,
             offset=0.4,
-            resolution=8,
+            resolution=resolution,
             repeat_cell=(2, 1, 6),
         )
     raise ValueError(case)

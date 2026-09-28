@@ -1,0 +1,173 @@
+{
+  "measured_at_utc": "2026-09-28T13:49:41.108383+00:00",
+  "runs": [
+    {
+      "case": "cylinder_sector",
+      "kind": "volume",
+      "status": "mesh_returned",
+      "seconds": 1.82,
+      "points": 5154,
+      "tetrahedra": 13626,
+      "minimum_mmg_quality": 0.1501267366810537,
+      "sampled_surface_error": 0.007093496462626647,
+      "arguments": [
+        "--resolution",
+        "12",
+        "--geometry-tolerance",
+        "0.01",
+        "--minimum-quality",
+        "0.1"
+      ]
+    },
+    {
+      "case": "sphere_sector",
+      "kind": "volume",
+      "status": "mesh_returned",
+      "seconds": 0.978,
+      "points": 2684,
+      "tetrahedra": 7017,
+      "minimum_mmg_quality": 0.14338966741203543,
+      "sampled_surface_error": 0.007921133532464342,
+      "arguments": [
+        "--resolution",
+        "12",
+        "--geometry-tolerance",
+        "0.01",
+        "--minimum-quality",
+        "0.1"
+      ]
+    },
+    {
+      "case": "cylinder_sector",
+      "kind": "surface",
+      "status": "mesh_returned",
+      "seconds": 0.695,
+      "triangles": 41702,
+      "open_edges_after_map_before_seam_cleanup": 0,
+      "open_edges_after_seam_cleanup": 0,
+      "trimmed_triangles": 41702,
+      "arguments": [
+        "--cells",
+        "24"
+      ]
+    },
+    {
+      "case": "sphere_sector",
+      "kind": "surface",
+      "status": "mesh_returned",
+      "seconds": 0.454,
+      "triangles": 31132,
+      "open_edges_after_map_before_seam_cleanup": 0,
+      "open_edges_after_seam_cleanup": 0,
+      "trimmed_triangles": 31132,
+      "arguments": [
+        "--cells",
+        "24"
+      ]
+    },
+    {
+      "case": "cylinder_full_wrap",
+      "kind": "volume",
+      "status": "mesh_returned",
+      "seconds": 9.924,
+      "points": 23801,
+      "tetrahedra": 64410,
+      "minimum_mmg_quality": 0.14930731355147672,
+      "sampled_surface_error": 0.00726257244200678,
+      "coincident_physical_points": 96,
+      "seam_cap_triangles": [
+        92,
+        92
+      ],
+      "seam_caps_match": true,
+      "open_edges_after_seam_weld": 0,
+      "welded_volume_points": 23705,
+      "welded_volume_tetrahedra": 64410,
+      "welded_volume_surface_open_edges": 0,
+      "arguments": [
+        "--resolution",
+        "12",
+        "--geometry-tolerance",
+        "0.01",
+        "--minimum-quality",
+        "0.1",
+        "--periodic-seam"
+      ]
+    },
+    {
+      "case": "cylinder_full_wrap",
+      "kind": "surface",
+      "status": "mesh_returned",
+      "seconds": 8.52,
+      "triangles": 1358836,
+      "open_edges_after_map_before_seam_cleanup": 0,
+      "open_edges_after_seam_cleanup": 0,
+      "trimmed_triangles": 1354536,
+      "arguments": [
+        "--cells",
+        "72",
+        "--periodic-seam"
+      ]
+    },
+    {
+      "case": "sphere_full_wrap",
+      "kind": "volume",
+      "status": "rejected",
+      "error_type": "MeshingFailure",
+      "reason": "coordinate map inverted a background tetrahedron",
+      "arguments": [
+        "--resolution",
+        "8",
+        "--geometry-tolerance",
+        "0.01",
+        "--minimum-quality",
+        "0.1"
+      ]
+    },
+    {
+      "case": "sphere_full_wrap",
+      "kind": "surface",
+      "status": "mesh_returned",
+      "seconds": 2.305,
+      "triangles": 894912,
+      "open_edges_after_map_before_seam_cleanup": 0,
+      "open_edges_after_seam_cleanup": 416,
+      "trimmed_triangles": 882432,
+      "arguments": [
+        "--cells",
+        "48",
+        "--periodic-seam"
+      ]
+    },
+    {
+      "case": "sweep",
+      "kind": "volume",
+      "status": "rejected",
+      "error_type": "MeshingFailure",
+      "reason": "coordinate map inverted a background tetrahedron",
+      "arguments": [
+        "--resolution",
+        "8",
+        "--geometry-tolerance",
+        "0.01",
+        "--minimum-quality",
+        "0.1"
+      ]
+    },
+    {
+      "case": "sweep",
+      "kind": "surface",
+      "status": "mesh_returned",
+      "seconds": 2.257,
+      "triangles": 464908,
+      "open_edges_after_map_before_seam_cleanup": 0,
+      "open_edges_after_seam_cleanup": 3294,
+      "trimmed_triangles": 457876,
+      "arguments": [
+        "--cells",
+        "48",
+        "--periodic-seam"
+      ]
+    }
+  ]
+}
