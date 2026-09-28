@@ -1,0 +1,275 @@
+"""Render the self-contained HTML report from limitations_data.json."""
+
+import html
+import json
+import math
+import statistics
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+DATA = json.loads((HERE / "limitations_data.json").read_text(encoding="utf-8"))
+RUNS = DATA["runs"]
+SURFACE_CASES = [
+    ("gyroid_unit", "Gyroid · 1 cell"),
+    ("split_p_unit", "Split-P · 1 cell"),
+    ("graded_gyroid_2", "Graded gyroid · 2³"),
+    ("graded_gyroid_3", "Graded gyroid · 3³"),
+    ("graded_split_p_2", "Graded split-P · 2³"),
+    ("lateral_gyroid_2", "X-graded gyroid · 2³"),
+]
+VOLUME_CASES = [
+    ("gyroid_unit", "Gyroid · 1 cell"),
+    ("split_p_unit", "Split-P · 1 cell"),
+    ("graded_gyroid_2", "Graded gyroid · 2³"),
+    ("lateral_gyroid_2", "X-graded gyroid · 2³"),
+]
+CURVED_CASES = [
+    ("cylinder_full_wrap", "Full-wrap cylinder"),
+    ("sphere_full_wrap", "Full sphere"),
+    ("sweep", "Sweep"),
+]
+
+
+def samples(group: str, case: str, mode: str) -> list[dict]:
+    return [
+        run
+        for run in RUNS
+        if run["group"] == group
+        and run["case"] == case
+        and run["mode"] == mode
+        and run["status"] == "ok"
+    ]
+
+
+def median(group: str, case: str, mode: str, key: str = "runtime_seconds") -> float:
+    return statistics.median(run[key] for run in samples(group, case, mode))
+
+
+def representative(group: str, case: str, mode: str) -> dict:
+    return samples(group, case, mode)[0]
+
+
+def fmt(value: float) -> str:
+    return f"{value:.3f}" if value < 10 else f"{value:.2f}"
+
+
+def log_chart(group: str, cases: list[tuple[str, str]], label: str) -> str:
+    width, height = 1060, 100 + 60 * len(cases)
+    left, right = 250, 930
+    xlo, xhi = -2.0, 1.0
+
+    def x(value: float) -> float:
+        return left + (math.log10(value) - xlo) / (xhi - xlo) * (right - left)
+
+    parts = [
+        f'<svg class="plot" viewBox="0 0 {width} {height}" role="img" '
+        f'aria-label="{html.escape(label)}; time in seconds on a logarithmic scale">',
+        f'<text x="{left}" y="22" class="axis-title">Generation time · seconds · log scale</text>',
+    ]
+    for tick in (0.01, 0.1, 1, 10):
+        xx = x(tick)
+        parts.append(
+            f'<line x1="{xx:.1f}" x2="{xx:.1f}" y1="42" y2="{height - 32}" class="grid"/>'
+        )
+        parts.append(
+            f'<text x="{xx:.1f}" y="{height - 12}" text-anchor="middle" class="tick">{tick:g}</text>'
+        )
+    for i, (case, name) in enumerate(cases):
+        yy = 68 + 60 * i
+        a = median(group, case, f"microgen_{group}")
+        b = median(group, case, f"meshers_{group}")
+        ax, bx = x(a), x(b)
+        parts.append(
+            f'<text x="12" y="{yy + 4}" class="row-label">{html.escape(name)}</text>'
+        )
+        parts.append(
+            f'<line x1="{ax:.1f}" x2="{bx:.1f}" y1="{yy}" y2="{yy}" class="pair-line"/>'
+        )
+        parts.append(
+            f'<circle cx="{ax:.1f}" cy="{yy}" r="8" class="vtk-dot"><title>microgen VTK: {fmt(a)} s</title></circle>'
+        )
+        parts.append(
+            f'<circle cx="{bx:.1f}" cy="{yy}" r="8" class="meshers-dot"><title>meshers: {fmt(b)} s</title></circle>'
+        )
+        parts.append(
+            f'<text x="{right + 18}" y="{yy + 5}" class="ratio">{b / a:.1f}×</text>'
+        )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def comparison_table(group: str, cases: list[tuple[str, str]]) -> str:
+    lines = [
+        '<div class="table-wrap"><table><thead><tr><th>Case</th><th>microgen VTK</th>'
+        "<th>meshers</th><th>meshers / VTK</th><th>Output</th></tr></thead><tbody>"
+    ]
+    for case, name in cases:
+        a = median(group, case, f"microgen_{group}")
+        b = median(group, case, f"meshers_{group}")
+        va = representative(group, case, f"microgen_{group}")
+        vb = representative(group, case, f"meshers_{group}")
+        if group == "surface":
+            output = f"{va['elements']:,} vs {vb['elements']:,} triangles"
+        else:
+            output = f"{va['elements']:,} mixed cells vs {vb['elements']:,} tets"
+        lines.append(
+            f"<tr><th>{html.escape(name)}</th><td>{fmt(a)} s</td><td>{fmt(b)} s</td>"
+            f"<td>{b / a:.1f}×</td><td>{output}</td></tr>"
+        )
+    lines.append("</tbody></table></div>")
+    return "".join(lines)
+
+
+def curved_table() -> str:
+    lines = [
+        '<div class="table-wrap"><table><thead><tr><th>Geometry</th><th>VTK surface</th>'
+        "<th>VTK volume</th><th>meshers volume</th><th>Surface triangles</th>"
+        "<th>Open edges</th></tr></thead><tbody>"
+    ]
+    for case, name in CURVED_CASES:
+        surface = median("curved", case, "microgen_surface")
+        volume = median("curved", case, "microgen_volume")
+        surface_result = representative("curved", case, "microgen_surface")
+        count = surface_result["elements"]
+        lines.append(
+            f"<tr><th>{html.escape(name)}</th><td>{fmt(surface)} s</td>"
+            f'<td>{fmt(volume)} s</td><td><span class="tag">Unsupported</span></td>'
+            f"<td>{count:,}</td><td>{surface_result['open_edges']:,}</td></tr>"
+        )
+    lines.append("</tbody></table></div>")
+    return "".join(lines)
+
+
+def raw_times(group: str, cases: list[tuple[str, str]]) -> str:
+    lines = []
+    for case, name in cases:
+        modes = (
+            ("microgen_surface", "microgen_volume")
+            if group == "curved"
+            else (f"microgen_{group}", f"meshers_{group}")
+        )
+        for mode in modes:
+            values = ", ".join(
+                fmt(run["runtime_seconds"]) for run in samples(group, case, mode)
+            )
+            lines.append(
+                f"<tr><th>{html.escape(name)}</th><td>{mode}</td><td>{values}</td></tr>"
+            )
+    return "".join(lines)
+
+
+def validate_data() -> None:
+    for group, cases in (("surface", SURFACE_CASES), ("volume", VOLUME_CASES)):
+        for case, _ in cases:
+            for mode in (f"microgen_{group}", f"meshers_{group}"):
+                assert len(samples(group, case, mode)) == 3, (group, case, mode)
+    for case, _ in CURVED_CASES:
+        for mode in ("microgen_surface", "microgen_volume"):
+            assert len(samples("curved", case, mode)) == 3, (case, mode)
+        unsupported = [
+            run
+            for run in RUNS
+            if run["group"] == "curved"
+            and run["case"] == case
+            and run["mode"] == "meshers_volume"
+        ]
+        assert len(unsupported) == 1 and unsupported[0]["status"] == "unsupported"
+
+
+def build() -> str:
+    validate_data()
+    three_a = median("surface", "graded_gyroid_3", "microgen_surface")
+    three_b = median("surface", "graded_gyroid_3", "meshers_surface")
+    two_a = median("volume", "graded_gyroid_2", "microgen_volume")
+    two_b = median("volume", "graded_gyroid_2", "meshers_volume")
+    surface_chart = log_chart("surface", SURFACE_CASES, "Surface generation comparison")
+    volume_chart = log_chart("volume", VOLUME_CASES, "Raw volume generation comparison")
+    surface_table = comparison_table("surface", SURFACE_CASES)
+    volume_table = comparison_table("volume", VOLUME_CASES)
+    coverage_table = curved_table()
+    sample_rows = raw_times("surface", SURFACE_CASES) + raw_times(
+        "volume", VOLUME_CASES
+    )
+    date = html.escape(DATA["measured_at_utc"][:10])
+    microgen_rev = html.escape(DATA["microgen_commit"][:10])
+    meshers_rev = html.escape(DATA["meshers_commit"][:10])
+    platform_name = html.escape(DATA["platform"])
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>microgen × meshers | Three limits to a full switch</title>
+<style>
+:root {{ --bg:#0c1420; --panel:#152333; --panel2:#1b2d40; --ink:#eaf3f3; --muted:#a7bac5; --line:#365064; --vtk:#65d6c4; --mesh:#ffae79; --blue:#80aaff; }}
+* {{ box-sizing:border-box }} html {{ scroll-behavior:smooth }} body {{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.58 system-ui,-apple-system,Segoe UI,sans-serif }}
+a {{ color:#9cd7ff }} a:hover {{ color:white }} .shell {{ max-width:1160px; margin:auto; padding:0 30px 90px }}
+header {{ padding:75px 0 40px; border-bottom:1px solid var(--line) }} .eyebrow {{ text-transform:uppercase; letter-spacing:.18em; color:var(--vtk); font-size:.78rem; font-weight:800 }}
+h1 {{ font-size:clamp(2.4rem,5vw,4.5rem); line-height:1.07; letter-spacing:-.045em; max-width:880px; margin:16px 0 22px }} h2 {{ font-size:clamp(1.7rem,3vw,2.5rem); letter-spacing:-.03em; line-height:1.15; margin:0 0 20px }} h3 {{ font-size:1.15rem; margin:0 0 8px }}
+.lead {{ font-size:1.23rem; color:#c7d9dc; max-width:850px; margin:0 0 28px }} .meta {{ display:flex; flex-wrap:wrap; gap:14px; color:var(--muted); font-size:.9rem }} .meta span {{ border:1px solid var(--line); border-radius:40px; padding:5px 13px }}
+nav {{ display:flex; gap:12px; flex-wrap:wrap; padding:20px 0 }} nav a {{ text-decoration:none; padding:7px 12px; border-radius:8px; background:var(--panel) }}
+.takeaway {{ margin:18px 0 62px; padding:25px 29px; background:linear-gradient(115deg,#173e45,#183149 62%,#2a3040); border:1px solid #3f6770; border-radius:18px }} .takeaway strong {{ color:#a7fff1 }}
+.cards {{ display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin:22px 0 8px }} .card {{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px }} .card .number {{ font-size:2.2rem; font-weight:800; letter-spacing:-.04em; color:var(--vtk); line-height:1.1 }} .card small {{ color:var(--muted); display:block; margin-top:8px }}
+section {{ margin:75px 0 0 }} .section-tag {{ font-size:.8rem; text-transform:uppercase; color:var(--vtk); letter-spacing:.16em; font-weight:800; margin-bottom:12px }} p {{ max-width:900px }} .muted {{ color:var(--muted) }}
+.chart-card {{ background:var(--panel); border:1px solid var(--line); border-radius:17px; margin:26px 0 18px; padding:18px 17px 12px }} .plot {{ width:100%; height:auto; display:block }} .grid {{ stroke:#334a59; stroke-width:1 }} .axis-title,.tick {{ fill:var(--muted); font:13px system-ui,sans-serif }} .row-label {{ fill:var(--ink); font:15px system-ui,sans-serif }} .ratio {{ fill:var(--ink); font:700 16px system-ui,sans-serif }} .pair-line {{ stroke:#6b8192; stroke-width:3 }} .vtk-dot {{ fill:var(--vtk); stroke:#0e2630; stroke-width:2 }} .meshers-dot {{ fill:var(--mesh); stroke:#30251f; stroke-width:2 }}
+.legend {{ display:flex; flex-wrap:wrap; gap:22px; color:var(--muted); font-size:.9rem; margin:0 8px 8px }} .swatch {{ display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:7px }}
+.table-wrap {{ overflow-x:auto; border:1px solid var(--line); border-radius:12px }} table {{ border-collapse:collapse; width:100%; min-width:680px }} th,td {{ padding:11px 14px; text-align:left; border-bottom:1px solid #30465a; white-space:nowrap }} thead {{ color:var(--muted); font-size:.79rem; text-transform:uppercase; letter-spacing:.05em; background:#203144 }} tbody tr:last-child th,tbody tr:last-child td {{ border-bottom:0 }} tbody th {{ font-weight:600 }} tbody tr:nth-child(even) {{ background:#172838 }}
+.tag {{ display:inline-block; background:#543a35; color:#ffd0aa; padding:3px 9px; border-radius:20px; font-size:.84rem; font-weight:700 }}
+.note {{ border-left:3px solid var(--blue); background:#172738; padding:14px 18px; margin:20px 0; border-radius:0 9px 9px 0 }}
+.flow {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px }} .flow > div {{ border:1px solid var(--line); border-radius:12px; padding:18px; background:var(--panel) }} .steps {{ color:var(--muted); font-size:.92rem }} .steps b {{ color:var(--ink) }} .arrow {{ color:var(--vtk); padding:0 9px }}
+details {{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:24px 0 }} summary {{ cursor:pointer; font-weight:700 }} details table {{ margin-top:15px }} code {{ font-family:ui-monospace,Consolas,monospace; font-size:.89em; color:#a8dcff }}
+footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); color:var(--muted) }}
+@media(max-width:720px) {{ .shell {{ padding:0 16px 60px }} header {{ padding-top:42px }} .cards,.flow {{ grid-template-columns:1fr }} .chart-card {{ overflow-x:auto }} .plot {{ min-width:720px }} }}
+</style>
+</head>
+<body><div class="shell">
+<header>
+<div class="eyebrow">Experimental benchmark report · {date}</div>
+<h1>Three limits to replacing microgen’s mesh paths with meshers</h1>
+<p class="lead">The decision depends on the output. For print-oriented surface meshes, microgen’s VTK path is substantially faster in every tested TPMS case. Meshers remains attractive for quality-checked tetrahedral volumes, but the raw VTK grid is faster and some curved geometries are still unsupported.</p>
+<div class="meta"><span>Windows · Python {html.escape(DATA["python"])}</span><span>16 grid points per cell</span><span>3 fresh-process trials per timed path</span><span>Imports excluded</span></div>
+</header>
+<nav><a href="#surface">01 Surface speed</a><a href="#coverage">02 Curved coverage</a><a href="#volume">03 Raw volume speed</a><a href="#method">Methods</a></nav>
+<div class="takeaway"><strong>Practical call.</strong> Keep VTK for additive-manufacturing surface export when triangle shape is not a requirement. Use meshers for supported TPMS tetrahedral volumes when quality and periodic constraints matter. Keep the legacy path for full angular wraps and Sweep. The direct meshers surface generator is still experimental and is not present in the published 0.1.0 wheel.</div>
+<div class="cards">
+<div class="card"><div class="number">{three_b / three_a:.1f}×</div><div>Meshers surface time over VTK for the 3³ graded gyroid</div><small>{fmt(three_b)} s vs {fmt(three_a)} s</small></div>
+<div class="card"><div class="number">3 / 3</div><div>Tested full-wrap / Sweep classes unavailable in meshers</div><small>Legacy VTK returns a mesh in each case</small></div>
+<div class="card"><div class="number">{two_b / two_a:.0f}×</div><div>Meshers volume time over raw VTK for the 2³ graded gyroid</div><small>Different output cell types and quality checks</small></div>
+</div>
+
+<section id="surface"><div class="section-tag">Limit 01 · surface generation</div><h2>For print surfaces, VTK wins on speed</h2>
+<p>microgen clips a 3D VTK grid and extracts its boundary. The meshers experiment extracts and improves triangles directly from a sampled 3D field. At matched grid-point counts, VTK generated fewer triangles and finished first in all six cases. The x-graded case retained matching y/z cap triangles in both outputs.</p>
+<div class="chart-card">{surface_chart}<div class="legend"><span><i class="swatch" style="background:var(--vtk)"></i>microgen VTK</span><span><i class="swatch" style="background:var(--mesh)"></i>meshers direct surface</span><span>Right-hand number = meshers / VTK time</span></div></div>
+{surface_table}
+<div class="note">The VTK surfaces had zero open edges in these six tests. This checks closure, not printability: self-intersections, wall thickness, slicer behavior and dimensional error were not validated. Meshers’ higher minimum triangle angles are useful for numerical work, but this report does not treat angle as an additive-manufacturing acceptance criterion.</div>
+<div class="flow"><div><h3>microgen VTK sheet</h3><div class="steps"><b>3D structured samples</b><span class="arrow">→</span><b>clip twice</b><span class="arrow">→</span><b>extract boundary triangles</b></div></div><div><h3>meshers experimental surface</h3><div class="steps"><b>3D sampled field</b><span class="arrow">→</span><b>surface triangles only</b><span class="arrow">→</span><b>improve / periodic polish</b></div></div></div>
+</section>
+
+<section id="coverage"><div class="section-tag">Limit 02 · geometry coverage</div><h2>Full wraps and Sweep still need microgen’s VTK path</h2>
+<p>The adapter rejects full cylindrical seams, spherical poles and Sweep for direct meshers volumes. The same shapes still generate through microgen’s existing parametric grid. The timings below measure that available VTK path at a deliberately small resolution of eight points per cell. “Unsupported” is a coverage result, not a slow meshers result.</p>
+{coverage_table}
+<div class="note">Partial angular sectors without collapsed axes can use the meshers coordinate-map path; this panel tests the explicit full-wrap and Sweep exceptions. All three VTK sample surfaces have open edges at this coarse resolution. Successful generation here does not certify any of them for printing.</div>
+</section>
+
+<section id="volume"><div class="section-tag">Limit 03 · raw volume speed</div><h2>Raw VTK grids are faster, but serve a different job</h2>
+<p>microgen’s legacy volume method returns clipped mixed cells. Meshers returns tetrahedra and measures MMG shape quality and sampled surface error. Raw VTK wins every timing below; these rows should not be read as a matched FEM-ready workflow comparison.</p>
+<div class="chart-card">{volume_chart}<div class="legend"><span><i class="swatch" style="background:var(--vtk)"></i>microgen raw VTK</span><span><i class="swatch" style="background:var(--mesh)"></i>meshers tetrahedra</span><span>Right-hand number = meshers / VTK time</span></div></div>
+{volume_table}
+<div class="note">At 16 grid points, direct split-P meshers volume reached minimum MMG quality {representative("volume", "split_p_unit", "meshers_volume")["minimum_mmg_quality"]:.3f}, below the 0.1 gate used in the microgen adapter. The adapter refines that case. Earlier full microgen + MMG tests favored meshers for the tested FEM cases, but element counts and surface accuracy were not matched, and MMG failed on some larger cases.</div>
+</section>
+
+<section id="method"><div class="section-tag">Method and scope</div><h2>How to read the numbers</h2>
+<p>Each timed path ran in a fresh process, three times, with order alternated. Tables show medians of <code>runtime_seconds</code>, which includes geometry construction and generation but excludes module import and process startup. Both paths used 16 grid points per unit-cell axis. meshers may retry a nearby background resolution for periodic surface quality. Output element counts differ, so these are matched-input-resolution comparisons, not matched-mesh-size or matched-geometric-error comparisons.</p>
+<p>Curved examples used eight points per cell to keep the coverage check small. Their runtime includes shape construction. Meshers’ unsupported result was checked once per geometry; it has no generation time. The direct surface build was compiled with <code>experimental-surfaces</code>, and microgen’s branch still uses VTK for <code>generate_surface_mesh()</code>.</p>
+<p class="muted">Host: {platform_name}. microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Source: <a href="benchmark_limitations.py">benchmark runner</a>, <a href="limitations_data.json">raw JSON</a>. The raw samples are also listed below so this HTML remains readable on its own.</p>
+<details><summary>Show all surface and volume timing samples</summary><div class="table-wrap"><table><thead><tr><th>Case</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{sample_rows}</tbody></table></div></details>
+<details><summary>Show curved-geometry timing samples</summary><div class="table-wrap"><table><thead><tr><th>Geometry</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{raw_times("curved", CURVED_CASES)}</tbody></table></div></details>
+</section>
+<footer>Benchmarked on experimental branches. No meshers 0.1.0 surface release or microgen pull request is implied by this report.</footer>
+</div></body></html>"""
+
+
+if __name__ == "__main__":
+    output = HERE / "meshers_limitations_report.html"
+    output.write_text(build(), encoding="utf-8")
+    print(output)
