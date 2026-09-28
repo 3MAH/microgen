@@ -1,0 +1,992 @@
+{
+  "baseline_commit": "345e872",
+  "method": "One warm-up and three measured runs per case; medians. Node WASM includes generation, validation and JSON conversion. Sequential variants, not interleaved; timings vary with machine load. Native measurements use serial execution and release builds.",
+  "before": {
+    "runtime": "v24.19.0",
+    "records": [
+      {
+        "name": "gyroid-fea",
+        "seconds": 2.1195739000000002,
+        "times": [
+          1.9521686,
+          2.1195739000000002,
+          2.2244064000000003
+        ],
+        "triangles": 9160,
+        "tetrahedra": 15909,
+        "metrics": {
+          "angle_min": 16.027749841737883,
+          "angle_p01": 21.13430686516925,
+          "area_cv": 0.511325819136176,
+          "area_median": 0.0006490336672262933,
+          "area_p01": 0.0002489009022675461,
+          "area_p99": 0.0018695514832159062,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0010195365717171128,
+          "histogram": [
+            0,
+            0,
+            0,
+            61,
+            390,
+            1260,
+            1970,
+            1693,
+            1043,
+            1039,
+            1228,
+            476
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.1435340224754544,
+            "sampled_error": 0.0033738549843969766,
+            "target_met": true,
+            "volume": 0.19441992680198197
+          }
+        }
+      },
+      {
+        "name": "split-p-fea",
+        "seconds": 5.213081899999999,
+        "times": [
+          5.1564205,
+          5.213081899999999,
+          5.273646499999999
+        ],
+        "triangles": 14840,
+        "tetrahedra": 21526,
+        "metrics": {
+          "angle_min": 10.854207008099136,
+          "angle_p01": 19.78015406535298,
+          "area_cv": 0.5186580285202981,
+          "area_median": 0.0006789565745216219,
+          "area_p01": 0.00015420574970237928,
+          "area_p99": 0.0019700609050018253,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.002233505635508849,
+          "histogram": [
+            0,
+            0,
+            42,
+            119,
+            1012,
+            2388,
+            2888,
+            2661,
+            2104,
+            1743,
+            1311,
+            572
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.11199925652860848,
+            "sampled_error": 0.00850742983823091,
+            "target_met": true,
+            "volume": 0.2213963187190356
+          }
+        }
+      },
+      {
+        "name": "graded-gyroid-fea",
+        "seconds": 10.6837169,
+        "times": [
+          10.1561489,
+          10.6837169,
+          10.929723299999997
+        ],
+        "triangles": 40272,
+        "tetrahedra": 63682,
+        "metrics": {
+          "angle_min": 10.278610408697963,
+          "angle_p01": 21.146823293600896,
+          "area_cv": 0.5161434813737263,
+          "area_median": 0.001115195025756049,
+          "area_p01": 0.00035783122123242254,
+          "area_p99": 0.0032416273788857153,
+          "bad_edges": 0,
+          "cells": 23,
+          "centroid_distance_p95": 0.001851623432203323,
+          "histogram": [
+            0,
+            0,
+            20,
+            225,
+            2040,
+            5891,
+            7423,
+            7253,
+            5725,
+            4985,
+            4814,
+            1896
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.14156957705258186,
+            "sampled_error": 0.007203504251614871,
+            "target_met": true,
+            "volume": 1.5619057908032108
+          }
+        }
+      },
+      {
+        "name": "gyroid-fast",
+        "seconds": 0.017670900000011897,
+        "times": [
+          0.01754290000000037,
+          0.017670900000011897,
+          0.01775800000000163
+        ],
+        "triangles": 13524,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.16645829497615403,
+          "angle_p01": 1.2206803872057783,
+          "area_cv": 0.8272971542699773,
+          "area_median": 0.0004574969562072979,
+          "area_p01": 5.670414572169906e-7,
+          "area_p99": 0.0018746393426330038,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0035408024015421255,
+          "histogram": [
+            570,
+            864,
+            930,
+            864,
+            1140,
+            1770,
+            2118,
+            1704,
+            1837,
+            1121,
+            480,
+            126
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "split-p-fast",
+        "seconds": 0.03605429999998887,
+        "times": [
+          0.03382140000000072,
+          0.03605429999998887,
+          0.03651369999999588
+        ],
+        "triangles": 22200,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.065809508013525,
+          "angle_p01": 0.9773672072129,
+          "area_cv": 0.817979301391953,
+          "area_median": 0.0004441392895096738,
+          "area_p01": 6.065338202109829e-7,
+          "area_p99": 0.0018680443646510757,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.007185288065869642,
+          "histogram": [
+            1140,
+            1348,
+            1412,
+            1848,
+            1838,
+            2268,
+            2634,
+            3040,
+            3533,
+            2207,
+            736,
+            196
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "graded-gyroid-fast",
+        "seconds": 0.9141654999999882,
+        "times": [
+          0.9080394000000087,
+          0.9141654999999882,
+          0.9435915999999998
+        ],
+        "triangles": 585024,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.0003775523757715731,
+          "angle_p01": 1.0607121096190695,
+          "area_cv": 0.8499864130432798,
+          "area_median": 0.00025288360899317205,
+          "area_p01": 2.1720471448108386e-7,
+          "area_p99": 0.0010944914134832862,
+          "bad_edges": 0,
+          "cells": 59,
+          "centroid_distance_p95": 0.0020136259548172784,
+          "histogram": [
+            28506,
+            31658,
+            36131,
+            41977,
+            52027,
+            76820,
+            91672,
+            79937,
+            77067,
+            44628,
+            18872,
+            5729
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "graded-split-p-fast",
+        "seconds": 1.970395900000003,
+        "times": [
+          1.9413179999999992,
+          1.970395900000003,
+          2.0553608999999997
+        ],
+        "triangles": 957404,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.00015646901632221472,
+          "angle_p01": 1.1270579574008066,
+          "area_cv": 0.8338824380392315,
+          "area_median": 0.00025486117192526173,
+          "area_p01": 2.821709433901859e-7,
+          "area_p99": 0.0010661895466671108,
+          "bad_edges": 0,
+          "cells": 59,
+          "centroid_distance_p95": 0.004062771455705691,
+          "histogram": [
+            46811,
+            55181,
+            62962,
+            73240,
+            86405,
+            107768,
+            126555,
+            124742,
+            145971,
+            87034,
+            31801,
+            8934
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      }
+    ]
+  },
+  "analytic": {
+    "runtime": "v24.19.0",
+    "records": [
+      {
+        "name": "gyroid-fea",
+        "seconds": 1.6380643,
+        "times": [
+          1.3653703000000004,
+          1.6380643,
+          1.6450793
+        ],
+        "triangles": 9160,
+        "tetrahedra": 15909,
+        "metrics": {
+          "angle_min": 16.027749841732238,
+          "angle_p01": 21.13430686407354,
+          "area_cv": 0.5113258191487405,
+          "area_median": 0.0006490336671613695,
+          "area_p01": 0.000248900902265211,
+          "area_p99": 0.001869551483204634,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0010195365711945514,
+          "histogram": [
+            0,
+            0,
+            0,
+            61,
+            390,
+            1260,
+            1970,
+            1693,
+            1043,
+            1039,
+            1228,
+            476
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.14353402247545258,
+            "sampled_error": 0.003373854982176342,
+            "target_met": true,
+            "volume": 0.19441992680203107
+          }
+        }
+      },
+      {
+        "name": "split-p-fea",
+        "seconds": 3.3727919,
+        "times": [
+          3.3641970999999993,
+          3.3727919,
+          3.4139496999999994
+        ],
+        "triangles": 14840,
+        "tetrahedra": 21526,
+        "metrics": {
+          "angle_min": 10.85420700808988,
+          "angle_p01": 19.780154065443075,
+          "area_cv": 0.5186580285418271,
+          "area_median": 0.0006789565747850084,
+          "area_p01": 0.0001542057496979506,
+          "area_p99": 0.0019700609051557503,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0022335056302117645,
+          "histogram": [
+            0,
+            0,
+            42,
+            119,
+            1012,
+            2388,
+            2888,
+            2661,
+            2104,
+            1743,
+            1311,
+            572
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.11199925652868316,
+            "sampled_error": 0.008507429823643602,
+            "target_met": true,
+            "volume": 0.2213963187195288
+          }
+        }
+      },
+      {
+        "name": "graded-gyroid-fea",
+        "seconds": 8.094774399999999,
+        "times": [
+          8.051710900000005,
+          8.094774399999999,
+          8.1733076
+        ],
+        "triangles": 40272,
+        "tetrahedra": 63682,
+        "metrics": {
+          "angle_min": 10.278610408676217,
+          "angle_p01": 21.14682329327873,
+          "area_cv": 0.5161434813833101,
+          "area_median": 0.0011151950257545745,
+          "area_p01": 0.0003578312212223058,
+          "area_p99": 0.003241627379167985,
+          "bad_edges": 0,
+          "cells": 23,
+          "centroid_distance_p95": 0.0018516234312682235,
+          "histogram": [
+            0,
+            0,
+            20,
+            225,
+            2040,
+            5891,
+            7423,
+            7253,
+            5725,
+            4985,
+            4814,
+            1896
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.141569577052343,
+            "sampled_error": 0.00720350424706082,
+            "target_met": true,
+            "volume": 1.5619057908039051
+          }
+        }
+      },
+      {
+        "name": "gyroid-fast",
+        "seconds": 0.015313699999998789,
+        "times": [
+          0.013280299999998533,
+          0.015313699999998789,
+          0.017158400000000257
+        ],
+        "triangles": 13524,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.16645829497615403,
+          "angle_p01": 1.2206803872057783,
+          "area_cv": 0.8272971542699773,
+          "area_median": 0.0004574969562072979,
+          "area_p01": 5.670414572169906e-7,
+          "area_p99": 0.0018746393426330038,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0035408023992128637,
+          "histogram": [
+            570,
+            864,
+            930,
+            864,
+            1140,
+            1770,
+            2118,
+            1704,
+            1837,
+            1121,
+            480,
+            126
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "split-p-fast",
+        "seconds": 0.02827140000000509,
+        "times": [
+          0.0279320000000007,
+          0.02827140000000509,
+          0.028321700000000418
+        ],
+        "triangles": 22200,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.065809508013525,
+          "angle_p01": 0.9773672072129,
+          "area_cv": 0.817979301391953,
+          "area_median": 0.0004441392895096738,
+          "area_p01": 6.065338202109829e-7,
+          "area_p99": 0.0018680443646510757,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.007185288051418202,
+          "histogram": [
+            1140,
+            1348,
+            1412,
+            1848,
+            1838,
+            2268,
+            2634,
+            3040,
+            3533,
+            2207,
+            736,
+            196
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "graded-gyroid-fast",
+        "seconds": 0.7721912999999986,
+        "times": [
+          0.7570381999999954,
+          0.7721912999999986,
+          0.8512391999999963
+        ],
+        "triangles": 585024,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.0003775523757715731,
+          "angle_p01": 1.0607121096190695,
+          "area_cv": 0.8499864130432798,
+          "area_median": 0.00025288360899317205,
+          "area_p01": 2.1720471448108386e-7,
+          "area_p99": 0.0010944914134832862,
+          "bad_edges": 0,
+          "cells": 59,
+          "centroid_distance_p95": 0.002013625953515988,
+          "histogram": [
+            28506,
+            31658,
+            36131,
+            41977,
+            52027,
+            76820,
+            91672,
+            79937,
+            77067,
+            44628,
+            18872,
+            5729
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "graded-split-p-fast",
+        "seconds": 1.5336814000000012,
+        "times": [
+          1.5045783999999984,
+          1.5336814000000012,
+          1.5747019999999976
+        ],
+        "triangles": 957404,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.00015646901632221472,
+          "angle_p01": 1.1270579574008066,
+          "area_cv": 0.8338824380392315,
+          "area_median": 0.00025486117192526173,
+          "area_p01": 2.821709433901859e-7,
+          "area_p99": 0.0010661895466671108,
+          "bad_edges": 0,
+          "cells": 59,
+          "centroid_distance_p95": 0.004062771446695715,
+          "histogram": [
+            46811,
+            55181,
+            62962,
+            73240,
+            86405,
+            107768,
+            126555,
+            124742,
+            145971,
+            87034,
+            31801,
+            8934
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      }
+    ]
+  },
+  "after": {
+    "runtime": "v24.19.0",
+    "records": [
+      {
+        "name": "gyroid-fea",
+        "seconds": 1.370583,
+        "times": [
+          1.3530172000000003,
+          1.370583,
+          1.4514712
+        ],
+        "triangles": 9160,
+        "tetrahedra": 15909,
+        "metrics": {
+          "angle_min": 16.027749841732238,
+          "angle_p01": 21.13430686407354,
+          "area_cv": 0.5113258191487405,
+          "area_median": 0.0006490336671613695,
+          "area_p01": 0.000248900902265211,
+          "area_p99": 0.001869551483204634,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0010195365711945514,
+          "histogram": [
+            0,
+            0,
+            0,
+            61,
+            390,
+            1260,
+            1970,
+            1693,
+            1043,
+            1039,
+            1228,
+            476
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.14353402247545258,
+            "sampled_error": 0.003373854982176342,
+            "target_met": true,
+            "volume": 0.19441992680203107
+          }
+        }
+      },
+      {
+        "name": "split-p-fea",
+        "seconds": 2.6161955999999993,
+        "times": [
+          2.5912206000000007,
+          2.6161955999999993,
+          2.6911404
+        ],
+        "triangles": 14840,
+        "tetrahedra": 21526,
+        "metrics": {
+          "angle_min": 10.85420700808988,
+          "angle_p01": 19.780154065443075,
+          "area_cv": 0.5186580285418271,
+          "area_median": 0.0006789565747850084,
+          "area_p01": 0.0001542057496979506,
+          "area_p99": 0.0019700609051557503,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.0022335056302117645,
+          "histogram": [
+            0,
+            0,
+            42,
+            119,
+            1012,
+            2388,
+            2888,
+            2661,
+            2104,
+            1743,
+            1311,
+            572
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.11199925652868316,
+            "sampled_error": 0.008507429823643602,
+            "target_met": true,
+            "volume": 0.2213963187195288
+          }
+        }
+      },
+      {
+        "name": "graded-gyroid-fea",
+        "seconds": 6.606220099999999,
+        "times": [
+          6.591965399999998,
+          6.606220099999999,
+          6.777508499999996
+        ],
+        "triangles": 40272,
+        "tetrahedra": 63682,
+        "metrics": {
+          "angle_min": 10.278610408676217,
+          "angle_p01": 21.14682329327873,
+          "area_cv": 0.5161434813833101,
+          "area_median": 0.0011151950257545745,
+          "area_p01": 0.0003578312212223058,
+          "area_p99": 0.003241627379167985,
+          "bad_edges": 0,
+          "cells": 23,
+          "centroid_distance_p95": 0.0018516234312682235,
+          "histogram": [
+            0,
+            0,
+            20,
+            225,
+            2040,
+            5891,
+            7423,
+            7253,
+            5725,
+            4985,
+            4814,
+            1896
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": {
+            "below_01": 0,
+            "minimum_quality": 0.141569577052343,
+            "sampled_error": 0.00720350424706082,
+            "target_met": true,
+            "volume": 1.5619057908039051
+          }
+        }
+      },
+      {
+        "name": "gyroid-fast",
+        "seconds": 0.016773600000000444,
+        "times": [
+          0.015870699999999488,
+          0.016773600000000444,
+          0.029369299999998474
+        ],
+        "triangles": 13524,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.16645829497615403,
+          "angle_p01": 1.2206803872057783,
+          "area_cv": 0.8288096015623693,
+          "area_median": 0.0004509825795213374,
+          "area_p01": 5.670414572169906e-7,
+          "area_p99": 0.0018746393426330038,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.003539061627144742,
+          "histogram": [
+            570,
+            864,
+            930,
+            864,
+            1140,
+            1734,
+            2076,
+            1710,
+            1831,
+            1127,
+            480,
+            198
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "split-p-fast",
+        "seconds": 0.02677490000000398,
+        "times": [
+          0.02672799999999552,
+          0.02677490000000398,
+          0.02786760000000504
+        ],
+        "triangles": 22200,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.065809508013525,
+          "angle_p01": 0.9773672072129,
+          "area_cv": 0.8192852923774658,
+          "area_median": 0.000443626569740132,
+          "area_p01": 6.065338202109829e-7,
+          "area_p99": 0.0018680443646510757,
+          "bad_edges": 0,
+          "cells": 15,
+          "centroid_distance_p95": 0.007185288051418202,
+          "histogram": [
+            1140,
+            1348,
+            1412,
+            1836,
+            1820,
+            2280,
+            2598,
+            2986,
+            3521,
+            2225,
+            808,
+            226
+          ],
+          "periodic_matches": [
+            true,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "graded-gyroid-fast",
+        "seconds": 0.8080604000000021,
+        "times": [
+          0.7637364000000016,
+          0.8080604000000021,
+          0.8417776000000012
+        ],
+        "triangles": 585024,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.0003775523757715731,
+          "angle_p01": 1.0607121096190695,
+          "area_cv": 0.8525558417272311,
+          "area_median": 0.0002503502772644072,
+          "area_p01": 2.1720471448108386e-7,
+          "area_p99": 0.0010961630098038524,
+          "bad_edges": 0,
+          "cells": 59,
+          "centroid_distance_p95": 0.002009420842428467,
+          "histogram": [
+            28506,
+            31647,
+            36105,
+            41782,
+            51761,
+            76170,
+            90599,
+            78719,
+            76520,
+            45643,
+            20351,
+            7221
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      },
+      {
+        "name": "graded-split-p-fast",
+        "seconds": 1.604777399999999,
+        "times": [
+          1.5738917000000001,
+          1.604777399999999,
+          1.6156380999999964
+        ],
+        "triangles": 957404,
+        "tetrahedra": 0,
+        "metrics": {
+          "angle_min": 0.00015646901632221472,
+          "angle_p01": 1.1270579574008066,
+          "area_cv": 0.8362127135874727,
+          "area_median": 0.0002530999147260037,
+          "area_p01": 2.821709433901859e-7,
+          "area_p99": 0.0010676979172108976,
+          "bad_edges": 0,
+          "cells": 59,
+          "centroid_distance_p95": 0.004058967922756892,
+          "histogram": [
+            46811,
+            55176,
+            62896,
+            73030,
+            85833,
+            106995,
+            125333,
+            123516,
+            145734,
+            88145,
+            33321,
+            10614
+          ],
+          "periodic_matches": [
+            null,
+            true,
+            true
+          ],
+          "volume": null
+        }
+      }
+    ]
+  },
+  "native_fea": {
+    "before": [
+      0.901788,
+      3.359545
+    ],
+    "after": [
+      0.64896,
+      1.660305
+    ]
+  },
+  "native_graded_surface": {
+    "cells_per_axis": [
+      1,
+      3,
+      7
+    ],
+    "gyroid_before": [
+      0.002291,
+      0.066187,
+      1.164067
+    ],
+    "gyroid_after": [
+      0.002142,
+      0.049691,
+      1.006763
+    ],
+    "split_p_before": [
+      0.004973,
+      0.131443,
+      2.425853
+    ],
+    "split_p_after": [
+      0.004181,
+      0.103078,
+      1.805405
+    ]
+  }
+}
