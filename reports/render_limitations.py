@@ -10,6 +10,10 @@ HERE = Path(__file__).resolve().parent
 DATA = json.loads((HERE / "limitations_data.json").read_text(encoding="utf-8"))
 CORE = json.loads((HERE / "curved_core_probe_data.json").read_text(encoding="utf-8"))
 MATCHED = json.loads((HERE / "matched_surface_data.json").read_text(encoding="utf-8"))
+FAST = json.loads((HERE / "fast_surface_data.json").read_text(encoding="utf-8"))
+LINEAR = json.loads((HERE / "linear_surface_data.json").read_text(encoding="utf-8"))
+TOPOLOGY = json.loads((HERE / "fast_surface_topology.json").read_text(encoding="utf-8"))
+FAST_VOLUME = json.loads((HERE / "fast_volume_data.json").read_text(encoding="utf-8"))
 RUNS = DATA["runs"]
 SURFACE_CASES = [
     ("gyroid_unit", "Gyroid · 1 cell"),
@@ -55,6 +59,10 @@ def fmt(value: float) -> str:
     return f"{value:.3f}" if value < 10 else f"{value:.2f}"
 
 
+def residual_fmt(value: float) -> str:
+    return f"{value:.1e}" if value < 0.001 else f"{value:.3f}"
+
+
 def matched_samples(case: str, mode: str) -> list[dict]:
     return [
         run
@@ -76,6 +84,140 @@ def matched_time(case: str, mode: str) -> float:
     return statistics.median(
         run["generation_seconds"] for run in matched_samples(case, mode)
     )
+
+
+def speed_runs(data: dict, case: str, mode: str) -> list[dict]:
+    runs = [
+        run
+        for run in data["runs"]
+        if run["phase"] == "timed"
+        and run["case"] == case
+        and run["mode"] == mode
+        and run["status"] == "ok"
+    ]
+    assert len(runs) == 3, (case, mode)
+    return runs
+
+
+def speed_time(data: dict, case: str, mode: str) -> float:
+    return statistics.median(
+        run["generation_seconds"] for run in speed_runs(data, case, mode)
+    )
+
+
+def fast_surface_table() -> str:
+    lines = [
+        '<div class="table-wrap"><table><thead><tr><th>Case</th>'
+        "<th>Triangles VTK / fast meshers</th><th>VTK / fast exact / linear time</th>"
+        "<th>Fast exact / VTK</th><th>Linear / VTK</th>"
+        "<th>1st percentile min angle VTK / fast / linear</th>"
+        "<th>Area CV VTK / fast / linear</th>"
+        "<th>95th percentile field residual VTK / fast / linear</th></tr></thead><tbody>"
+    ]
+    for case, name in SURFACE_CASES:
+        vtk = speed_runs(LINEAR, case, "vtk")[0]
+        fast = speed_runs(FAST, case, "meshers_fast")[0]
+        linear = speed_runs(LINEAR, case, "meshers_linear")[0]
+        vtk_time = statistics.median(
+            run["generation_seconds"]
+            for data in (FAST, LINEAR)
+            for run in speed_runs(data, case, "vtk")
+        )
+        fast_time = speed_time(FAST, case, "meshers_fast")
+        linear_time = speed_time(LINEAR, case, "meshers_linear")
+        lines.append(
+            f"<tr><th>{html.escape(name)}</th>"
+            f"<td>{vtk['triangle_count']:,} / {fast['triangle_count']:,}</td>"
+            f"<td>{fmt(vtk_time)} / {fmt(fast_time)} / {fmt(linear_time)} s</td>"
+            f"<td>{fast_time / vtk_time:.2f}×</td>"
+            f"<td>{linear_time / vtk_time:.2f}×</td>"
+            f"<td>{vtk['angle_p01_degrees']:.1f}° / {fast['angle_p01_degrees']:.1f}° / {linear['angle_p01_degrees']:.1f}°</td>"
+            f"<td>{vtk['area_cv']:.2f} / {fast['area_cv']:.2f} / {linear['area_cv']:.2f}</td>"
+            f"<td>{residual_fmt(vtk['implicit_vertex_residual_p95'])} / {residual_fmt(fast['implicit_vertex_residual_p95'])} / {residual_fmt(linear['implicit_vertex_residual_p95'])}</td></tr>"
+        )
+    lines.append("</tbody></table></div>")
+    return "".join(lines)
+
+
+def fast_speed_chart() -> str:
+    width, height, left, right = 1060, 95 + 59 * len(SURFACE_CASES), 245, 945
+
+    def xpos(ratio: float) -> float:
+        return left + ratio / 2.5 * (right - left)
+
+    parts = [
+        f'<svg class="plot" viewBox="0 0 {width} {height}" role="img" '
+        'aria-label="Unpolished and linear meshers generation time relative to raw VTK at similar triangle counts">',
+        '<text x="245" y="23" class="axis-title">Generation time / raw VTK time · lower is faster</text>',
+    ]
+    for tick in (0, 0.5, 1, 1.5, 2, 2.5):
+        x = xpos(tick)
+        dash = ' stroke-dasharray="5 5" stroke="#eaf3f3"' if tick == 1 else ""
+        parts.append(
+            f'<line x1="{x:.1f}" x2="{x:.1f}" y1="40" y2="{height - 34}" class="grid"{dash}/>'
+        )
+        parts.append(
+            f'<text x="{x:.1f}" y="{height - 10}" text-anchor="middle" class="tick">{tick:g}×</text>'
+        )
+    for index, (case, name) in enumerate(SURFACE_CASES):
+        y = 68 + index * 59
+        vtk = statistics.median(
+            run["generation_seconds"]
+            for data in (FAST, LINEAR)
+            for run in speed_runs(data, case, "vtk")
+        )
+        fast = speed_time(FAST, case, "meshers_fast") / vtk
+        linear = speed_time(LINEAR, case, "meshers_linear") / vtk
+        parts.append(
+            f'<text x="10" y="{y + 4}" class="row-label">{html.escape(name)}</text>'
+        )
+        parts.append(
+            f'<line x1="{xpos(fast):.1f}" x2="{xpos(linear):.1f}" y1="{y}" y2="{y}" class="pair-line"/>'
+        )
+        parts.append(
+            f'<circle cx="{xpos(fast):.1f}" cy="{y}" r="7" class="meshers-dot"><title>Exact intersections: {fast:.2f}× VTK</title></circle>'
+        )
+        parts.append(
+            f'<circle cx="{xpos(linear):.1f}" cy="{y}" r="7" fill="var(--blue)"><title>Linear intersections: {linear:.2f}× VTK</title></circle>'
+        )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def fast_volume_table() -> str:
+    lines = [
+        '<div class="table-wrap"><table><thead><tr><th>Case</th>'
+        "<th>Raw VTK mixed cells</th><th>Meshers tetrahedra</th>"
+        "<th>Time VTK / meshers</th><th>Meshers / VTK</th>"
+        "<th>Meshers min MMG quality, optimized / unoptimized</th></tr></thead><tbody>"
+    ]
+    for case, name in VOLUME_CASES:
+        if case not in ("gyroid_unit", "split_p_unit", "graded_gyroid_2"):
+            continue
+        vtk = [
+            run
+            for run in FAST_VOLUME["runs"]
+            if run["case"] == case and run["mode"] == "microgen_volume"
+        ]
+        meshers = [
+            run
+            for run in FAST_VOLUME["runs"]
+            if run["case"] == case and run["mode"] == "meshers_volume"
+        ]
+        assert len(vtk) == len(meshers) == 3
+        a = statistics.median(run["runtime_seconds"] for run in vtk)
+        b = statistics.median(run["runtime_seconds"] for run in meshers)
+        optimized = representative("volume", case, "meshers_volume")[
+            "minimum_mmg_quality"
+        ]
+        unoptimized = meshers[0]["minimum_mmg_quality"]
+        lines.append(
+            f"<tr><th>{html.escape(name)}</th><td>{vtk[0]['elements']:,}</td>"
+            f"<td>{meshers[0]['elements']:,}</td><td>{fmt(a)} / {fmt(b)} s</td>"
+            f"<td>{b / a:.1f}×</td><td>{optimized:.3f} / {unoptimized:.3f}</td></tr>"
+        )
+    lines.append("</tbody></table></div>")
+    return "".join(lines)
 
 
 def matched_table() -> str:
@@ -307,6 +449,19 @@ def raw_times(group: str, cases: list[tuple[str, str]]) -> str:
 
 
 def validate_data() -> None:
+    assert (
+        FAST["meshers_commit"]
+        == LINEAR["meshers_commit"]
+        == FAST_VOLUME["meshers_commit"]
+        == TOPOLOGY["meshers_commit"]
+    )
+    assert len(TOPOLOGY["runs"]) == 2 * len(SURFACE_CASES)
+    assert all(
+        run["open_edges"] == 0
+        and not any(run["periodic_node_mismatch"])
+        and not any(run["periodic_triangle_mismatch"])
+        for run in TOPOLOGY["runs"]
+    )
     for group, cases in (("surface", SURFACE_CASES), ("volume", VOLUME_CASES)):
         for case, _ in cases:
             for mode in (f"microgen_{group}", f"meshers_{group}"):
@@ -326,20 +481,17 @@ def validate_data() -> None:
 
 def build() -> str:
     validate_data()
-    two_a = median("volume", "graded_gyroid_2", "microgen_volume")
-    two_b = median("volume", "graded_gyroid_2", "meshers_volume")
     surface_chart = log_chart("surface", SURFACE_CASES, "Surface generation comparison")
     volume_chart = log_chart("volume", VOLUME_CASES, "Raw volume generation comparison")
     surface_table = comparison_table("surface", SURFACE_CASES)
     volume_table = comparison_table("volume", VOLUME_CASES)
+    low_quality_volume_table = fast_volume_table()
     coverage_table = curved_table()
     capability_table = core_table()
     matched_comparison_table = matched_table()
+    fast_comparison_table = fast_surface_table()
+    fast_chart = fast_speed_chart()
     size_chart = matched_size_chart()
-    matched_ratios = [
-        matched_time(case, "meshers") / matched_time(case, "vtk")
-        for case, _ in SURFACE_CASES
-    ]
     matched_gaps = [
         abs(
             matched_result(case, "meshers")["triangle_count"]
@@ -348,12 +500,26 @@ def build() -> str:
         )
         for case, _ in SURFACE_CASES
     ]
+    polished_ratios = [
+        matched_time(case, "meshers") / matched_time(case, "vtk")
+        for case, _ in SURFACE_CASES
+    ]
+    fast_wins = sum(
+        speed_time(FAST, case, "meshers_fast")
+        < statistics.median(
+            run["generation_seconds"]
+            for data in (FAST, LINEAR)
+            for run in speed_runs(data, case, "vtk")
+        )
+        for case, _ in SURFACE_CASES
+    )
     sample_rows = raw_times("surface", SURFACE_CASES) + raw_times(
         "volume", VOLUME_CASES
     )
     date = html.escape(DATA["measured_at_utc"][:10])
     microgen_rev = html.escape(DATA["microgen_commit"][:10])
     meshers_rev = html.escape(DATA["meshers_commit"][:10])
+    prototype_rev = html.escape(FAST["meshers_commit"][:10])
     platform_name = html.escape(DATA["platform"])
     return f"""<!doctype html>
 <html lang="en">
@@ -387,16 +553,25 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 <header>
 <div class="eyebrow">Experimental benchmark report · {date}</div>
 <h1>Three limits to replacing microgen’s mesh paths with meshers</h1>
-<p class="lead">At similar triangle counts, the surface comparison now measures generation time, triangle shape and triangle-size spread. The earlier fixed-resolution comparison confounded speed with different output sizes. Curved volume coverage remains a separate question.</p>
+<p class="lead">Quality-checked volume meshing should compare meshers with microgen’s VTK plus MMG workflow. This surface study asks a different question: can meshers beat raw VTK by relaxing triangle improvement? At similar triangle counts, disabling improvement wins only on the smallest gyroid. A linear-intersection prototype can get closer to VTK speed, but its geometric error rises sharply.</p>
 <div class="meta"><span>Windows · Python {html.escape(DATA["python"])}</span><span>VTK 16 grid points per cell; meshers tuned</span><span>3 fresh-process trials per timed path</span><span>Imports excluded</span></div>
 </header>
-<nav><a href="#matched">01 Similar triangle counts</a><a href="#surface">02 Fixed sampling</a><a href="#coverage">03 Curved coverage</a><a href="#volume">04 Raw volume speed</a><a href="#method">Methods</a></nav>
-<div class="takeaway"><strong>Practical call.</strong> At nearly equal triangle counts, meshers trades generation time for much better triangle angles and a narrower triangle-size spread. VTK remains the faster print-surface path in these tests. Use meshers for supported TPMS tetrahedral volumes when quality and periodic constraints matter. The full-cylinder volume path can be added after its periodic seam and welded output are handled in the adapter. Sphere and Sweep still need a nonsingular chart or another meshing strategy. The direct meshers surface generator is experimental and absent from the published 0.1.0 wheel.</div>
+<nav><a href="#fast">01 Speed vs quality</a><a href="#matched">02 Similar triangle counts</a><a href="#surface">03 Fixed sampling</a><a href="#coverage">04 Curved coverage</a><a href="#volume">05 Raw volume speed</a><a href="#method">Methods</a></nav>
+<div class="takeaway"><strong>Practical call.</strong> Keep the direct meshers path for quality-checked tetrahedral volumes, where VTK plus MMG is the relevant alternative. For print surfaces, dropping meshers’ triangle improvement makes it much faster but does not generally beat VTK. Linear edge intersections are faster still, yet their geometric error is too large in these probes, especially for split-P. The direct meshers surface generator is experimental and absent from the published 0.1.0 wheel.</div>
 <div class="cards">
-<div class="card"><div class="number">{min(matched_ratios):.1f}–{max(matched_ratios):.1f}×</div><div>Meshers / VTK surface generation time at similar triangle counts</div><small>Maximum triangle-count gap {max(matched_gaps) * 100:.1f}%</small></div>
+<div class="card"><div class="number">{fast_wins} / {len(SURFACE_CASES)}</div><div>Cases where unpolished meshers beats raw VTK</div><small>Similar triangle counts; exact edge intersections kept</small></div>
 <div class="card"><div class="number">1 / 3</div><div>Current curved adapter fallbacks with a verified closed meshers volume path</div><small>Full-wrap cylinder passes; sphere and Sweep fail at singular axes</small></div>
-<div class="card"><div class="number">{two_b / two_a:.0f}×</div><div>Meshers volume time over raw VTK for the 2³ graded gyroid</div><small>Different output cell types and quality checks</small></div>
+<div class="card"><div class="number">{min(polished_ratios):.1f}–{max(polished_ratios):.1f}×</div><div>Polished meshers surface time over VTK at similar counts</div><small>Higher triangle quality in every tested case</small></div>
 </div>
+
+<section id="fast"><div class="section-tag">Surface experiment · speed versus quality</div><h2>Turning off improvement rarely beats raw VTK</h2>
+<p>Meshers can skip all smoothing, local topology improvement and periodic polishing while keeping exact analytic edge intersections. That removes most of its surface-mesh work. The linear prototype also replaces exact edge roots with interpolation and reuses one normal per polygon. For each case, both fast modes were tuned independently to the nearest VTK triangle count. VTK used 16 points per cell. Each mode then ran three fresh-process trials; VTK time is the median of six trials across the two batches.</p>
+{fast_comparison_table}
+<div class="chart-card">{fast_chart}<div class="legend"><span><i class="swatch" style="background:var(--mesh)"></i>Unpolished exact intersections</span><span><i class="swatch" style="background:var(--blue)"></i>Linear intersections</span><span>Dashed threshold at 1×: equal to raw VTK time</span></div></div>
+<div class="note">The unpolished exact-root mode beats VTK only for the one-cell gyroid. Linear intersections reduce time in some larger cases but still do not reliably beat VTK. They also lose geometric fidelity: the 95th-percentile residual of | |f| − 1 | at interior surface vertices is several times the VTK value and reaches 0.702 for unit split-P. This residual is dimensionless and compares the same normalized TPMS field. The fast modes mostly give up meshers’ angle and size-distribution advantage, although split-P retains some improvement. All 12 selected fast meshes had zero open edges, and their requested periodic caps matched. The linear path is an experiment, not a recommended microgen backend.</div>
+<p class="muted">The exact-root fast mode retains near-zero residual at the measured interior vertices, while linear interpolation loses that accuracy. Vertex residual does not measure facet-interior deviation, wall thickness or printability.</p>
+<p class="muted">One fast exact-root scan candidate failed at 10 points per cell for graded split-P with an inverted triangle; the selected 12-point setting passed all timed trials. Every selected linear setting also passed all timed trials.</p>
+</section>
 
 <section id="matched"><div class="section-tag">Surface comparison · matched output size</div><h2>Similar triangle counts reveal the real tradeoff</h2>
 <p>For each case, VTK used 16 grid points per cell. The meshers input resolution was chosen from 10 to 15 points per cell to minimize the triangle-count gap. Each selected path then ran three times in a fresh process, with order alternated. Generation time excludes imports and the later metric calculations. The table reports medians for time and one deterministic mesh for shape and size metrics.</p>
@@ -430,13 +605,18 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 <div class="chart-card">{volume_chart}<div class="legend"><span><i class="swatch" style="background:var(--vtk)"></i>microgen raw VTK</span><span><i class="swatch" style="background:var(--mesh)"></i>meshers tetrahedra</span><span>Right-hand number = meshers / VTK time</span></div></div>
 {volume_table}
 <div class="note">At 16 grid points, direct split-P meshers volume reached minimum MMG quality {representative("volume", "split_p_unit", "meshers_volume")["minimum_mmg_quality"]:.3f}, below the 0.1 gate used in the microgen adapter. The adapter refines that case. Earlier full microgen + MMG tests favored meshers for the tested FEM cases, but element counts and surface accuracy were not matched, and MMG failed on some larger cases.</div>
+<h3>Disabling tetrahedral optimization</h3>
+<p>To test the same speed-for-quality tradeoff for volumes, meshers ran with zero optimization passes on three cases. It remains slower than raw VTK’s mixed-cell grid, while its minimum tetrahedral quality falls. Raw VTK cells are not equivalent to FEM-ready tetrahedra, so this is only a lower-bound speed check. The relevant quality-matched volume workflow remains microgen VTK followed by MMG.</p>
+{low_quality_volume_table}
 </section>
 
 <section id="method"><div class="section-tag">Method and scope</div><h2>How to read the numbers</h2>
+<p>The surface speed experiment tests three output paths at similar triangle counts: microgen VTK, meshers without improvement but with exact edge intersections, and an experimental meshers build with linear edge intersections. Its scan considered 10–15 meshers grid points per cell. All timings exclude metric calculations and imports. The linear prototype also uses one field normal per polygon. The fast modes are not the default meshers surface configuration.</p>
+<p>The low-optimization volume check used the same 16 grid points per cell for both paths. It ran three fresh-process trials with alternating order. Meshers used <code>optimize_passes=0</code>; geometry tolerance remained 0.01. Cell counts and quality are not matched between raw VTK mixed cells and meshers tetrahedra.</p>
 <p>The matched-count runner selects the meshers resolution with the smallest triangle-count gap from 10–15 grid points per cell, against VTK at 16. It then runs three fresh-process trials per path, alternating order. Both paths use the same TPMS shape, thickness and grading. Generation timing stops before triangle metrics. Area and angles use every output triangle; equivalent-area diameter is derived from triangle area. Count matching changes input resolution, so the comparison does not establish equal geometric accuracy.</p>
 <p>Each timed path ran in a fresh process, three times, with order alternated. Tables show medians of <code>runtime_seconds</code>, which includes geometry construction and generation but excludes module import and process startup. Both paths used 16 grid points per unit-cell axis. meshers may retry a nearby background resolution for periodic surface quality. Output element counts differ, so these are matched-input-resolution comparisons, not matched-mesh-size or matched-geometric-error comparisons.</p>
 <p>Curved VTK examples used eight points per cell to keep the coverage check small. Their runtime includes shape construction. The adapter fallback was checked once per geometry; it has no meshers generation time. The direct surface build was compiled with <code>experimental-surfaces</code>, and microgen’s branch still uses VTK for <code>generate_surface_mesh()</code>.</p>
-<p class="muted">Host: {platform_name}. microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Source: <a href="matched_surface_benchmark.py">matched-count runner</a>, <a href="matched_surface_data.json">matched-count JSON</a>, <a href="benchmark_limitations.py">fixed-resolution runner</a>, <a href="limitations_data.json">fixed-resolution JSON</a>, <a href="probe_curved_meshers.py">direct curved probe</a>, <a href="curved_core_probe_data.json">curved probe JSON</a>.</p>
+<p class="muted">Host: {platform_name}. Earlier benchmark base: microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Speed-quality probes used experimental meshers revision <code>{prototype_rev}</code>. Source: <a href="fast_surface_benchmark.py">speed-quality runner</a>, <a href="fast_surface_data.json">fast exact JSON</a>, <a href="linear_surface_data.json">linear JSON</a>, <a href="check_fast_surface_topology.py">topology check</a>, <a href="fast_surface_topology.json">topology JSON</a>, <a href="fast_volume_benchmark.py">low-optimization volume runner</a>, <a href="fast_volume_data.json">volume JSON</a>, <a href="matched_surface_benchmark.py">matched-count runner</a>, <a href="matched_surface_data.json">matched-count JSON</a>, <a href="benchmark_limitations.py">fixed-resolution runner</a>, <a href="limitations_data.json">fixed-resolution JSON</a>, <a href="probe_curved_meshers.py">direct curved probe</a>, <a href="curved_core_probe_data.json">curved probe JSON</a>.</p>
 <details><summary>Show all surface and volume timing samples</summary><div class="table-wrap"><table><thead><tr><th>Case</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{sample_rows}</tbody></table></div></details>
 <details><summary>Show curved-geometry timing samples</summary><div class="table-wrap"><table><thead><tr><th>Geometry</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{raw_times("curved", CURVED_CASES)}</tbody></table></div></details>
 </section>

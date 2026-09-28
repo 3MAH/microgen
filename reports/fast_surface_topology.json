@@ -1,0 +1,145 @@
+{
+  "runs": [
+    {
+      "case": "gyroid_unit",
+      "mode": "meshers_fast",
+      "triangles": 7572,
+      "open_edges": 0,
+      "periodic_node_mismatch": [
+        0,
+        0,
+        0
+      ],
+      "periodic_triangle_mismatch": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "split_p_unit",
+      "mode": "meshers_fast",
+      "triangles": 14352,
+      "open_edges": 0,
+      "periodic_node_mismatch": [
+        0,
+        0,
+        0
+      ],
+      "periodic_triangle_mismatch": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "graded_gyroid_2",
+      "mode": "meshers_fast",
+      "triangles": 60930,
+      "open_edges": 0,
+      "periodic_node_mismatch": [],
+      "periodic_triangle_mismatch": []
+    },
+    {
+      "case": "graded_gyroid_3",
+      "mode": "meshers_fast",
+      "triangles": 174006,
+      "open_edges": 0,
+      "periodic_node_mismatch": [],
+      "periodic_triangle_mismatch": []
+    },
+    {
+      "case": "graded_split_p_2",
+      "mode": "meshers_fast",
+      "triangles": 99012,
+      "open_edges": 0,
+      "periodic_node_mismatch": [],
+      "periodic_triangle_mismatch": []
+    },
+    {
+      "case": "lateral_gyroid_2",
+      "mode": "meshers_fast",
+      "triangles": 60976,
+      "open_edges": 0,
+      "periodic_node_mismatch": [
+        0,
+        0
+      ],
+      "periodic_triangle_mismatch": [
+        0,
+        0
+      ]
+    },
+    {
+      "case": "gyroid_unit",
+      "mode": "meshers_linear",
+      "triangles": 7572,
+      "open_edges": 0,
+      "periodic_node_mismatch": [
+        0,
+        0,
+        0
+      ],
+      "periodic_triangle_mismatch": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "split_p_unit",
+      "mode": "meshers_linear",
+      "triangles": 14352,
+      "open_edges": 0,
+      "periodic_node_mismatch": [
+        0,
+        0,
+        0
+      ],
+      "periodic_triangle_mismatch": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "graded_gyroid_2",
+      "mode": "meshers_linear",
+      "triangles": 60930,
+      "open_edges": 0,
+      "periodic_node_mismatch": [],
+      "periodic_triangle_mismatch": []
+    },
+    {
+      "case": "graded_gyroid_3",
+      "mode": "meshers_linear",
+      "triangles": 174006,
+      "open_edges": 0,
+      "periodic_node_mismatch": [],
+      "periodic_triangle_mismatch": []
+    },
+    {
+      "case": "graded_split_p_2",
+      "mode": "meshers_linear",
+      "triangles": 99012,
+      "open_edges": 0,
+      "periodic_node_mismatch": [],
+      "periodic_triangle_mismatch": []
+    },
+    {
+      "case": "lateral_gyroid_2",
+      "mode": "meshers_linear",
+      "triangles": 60976,
+      "open_edges": 0,
+      "periodic_node_mismatch": [
+        0,
+        0
+      ],
+      "periodic_triangle_mismatch": [
+        0,
+        0
+      ]
+    }
+  ],
+  "meshers_commit": "53e35f9897698a8264bbc0dcee0b13e2bdf55a42"
+}

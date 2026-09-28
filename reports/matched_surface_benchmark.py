@@ -106,12 +106,20 @@ def child(case, mode, resolution):
             cells=resolution * repeats - 1,
             band=(-1, 1),
             periodic=periodic,
+            polish_passes=0 if mode != "meshers" else None,
+            improvement_rounds=0 if mode != "meshers" else None,
+            smoothing_iterations=0 if mode != "meshers" else None,
+            refine_edges=mode != "meshers_linear",
         )
         seconds = time.perf_counter() - start
         points = surface.points
         triangles = surface.triangles
         open_edges = None
         actual_cells = surface.diagnostics["background_cells"]
+    interior = ~np.any(
+        np.isclose(np.abs(points), repeats / 2, atol=1e-8, rtol=0), axis=1
+    )
+    residual = np.abs(np.abs(gc.normalized_field(*points[interior].T)) - 1)
     print(
         json.dumps(
             {
@@ -121,6 +129,7 @@ def child(case, mode, resolution):
                 "actual_cells": actual_cells,
                 "generation_seconds": seconds,
                 "open_edges": open_edges,
+                "implicit_vertex_residual_p95": float(np.quantile(residual, 0.95)),
                 **metrics(points, triangles),
             }
         ),
