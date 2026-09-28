@@ -68,7 +68,7 @@ def metrics(points, triangles):
     }
 
 
-def child(case, mode, resolution):
+def child(case, mode, resolution, validate=False):
     import graded_comparison as gc
 
     if mode == "vtk":
@@ -116,6 +116,17 @@ def child(case, mode, resolution):
         triangles = surface.triangles
         open_edges = None
         actual_cells = surface.diagnostics["background_cells"]
+    validation = {}
+    if validate:
+        import pyvista as pv
+
+        poly = pv.PolyData(
+            points, np.column_stack((np.full(len(triangles), 3), triangles))
+        )
+        validation = {
+            "open_edges": poly.n_open_edges,
+            **gc.periodic_mismatch(points, triangles, periodic),
+        }
     interior = ~np.any(
         np.isclose(np.abs(points), repeats / 2, atol=1e-8, rtol=0), axis=1
     )
@@ -131,6 +142,7 @@ def child(case, mode, resolution):
                 "open_edges": open_edges,
                 "implicit_vertex_residual_p95": float(np.quantile(residual, 0.95)),
                 **metrics(points, triangles),
+                **validation,
             }
         ),
         flush=True,

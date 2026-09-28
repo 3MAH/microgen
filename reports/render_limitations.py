@@ -6,6 +6,8 @@ import math
 import statistics
 from pathlib import Path
 
+from table_surface_report import section as table_surface_section
+
 HERE = Path(__file__).resolve().parent
 DATA = json.loads((HERE / "limitations_data.json").read_text(encoding="utf-8"))
 CORE = json.loads((HERE / "curved_core_probe_data.json").read_text(encoding="utf-8"))
@@ -553,18 +555,19 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 <header>
 <div class="eyebrow">Experimental benchmark report · {date}</div>
 <h1>Three limits to replacing microgen’s mesh paths with meshers</h1>
-<p class="lead">Quality-checked volume meshing should compare meshers with microgen’s VTK plus MMG workflow. This surface study asks a different question: can meshers beat raw VTK by relaxing triangle improvement? At similar triangle counts, disabling improvement wins only on the smallest gyroid. A linear-intersection prototype can get closer to VTK speed, but its geometric error rises sharply.</p>
+<p class="lead">Quality-checked volume meshing should compare meshers with microgen’s VTK plus MMG workflow. For raw surfaces, the new table-driven Rust prototype beats the tested microgen VTK path at similar triangle counts. Its remaining limitation is geometric accuracy. The new measurements come first; earlier baselines follow.</p>
 <div class="meta"><span>Windows · Python {html.escape(DATA["python"])}</span><span>VTK 16 grid points per cell; meshers tuned</span><span>3 fresh-process trials per timed path</span><span>Imports excluded</span></div>
 </header>
-<nav><a href="#fast">01 Speed vs quality</a><a href="#matched">02 Similar triangle counts</a><a href="#surface">03 Fixed sampling</a><a href="#coverage">04 Curved coverage</a><a href="#volume">05 Raw volume speed</a><a href="#method">Methods</a></nav>
-<div class="takeaway"><strong>Practical call.</strong> Keep the direct meshers path for quality-checked tetrahedral volumes, where VTK plus MMG is the relevant alternative. For print surfaces, dropping meshers’ triangle improvement makes it much faster but does not generally beat VTK. Linear edge intersections are faster still, yet their geometric error is too large in these probes, especially for split-P. The direct meshers surface generator is experimental and absent from the published 0.1.0 wheel.</div>
+<nav><a href="#table-extractor">New table-driven results</a><a href="#fast">Earlier speed vs quality</a><a href="#matched">Similar triangle counts</a><a href="#surface">Fixed sampling</a><a href="#coverage">Curved coverage</a><a href="#volume">Raw volume speed</a><a href="#method">Methods</a></nav>
+{table_surface_section()}
+<div class="takeaway"><strong>Earlier baseline.</strong> The measurements below predate table-driven extraction and zero-pass setup optimizations. They document why disabling quality passes alone was insufficient. The new linear path beats raw VTK in the cases above, but still has larger geometric error. Quality-checked volume meshing continues to require a VTK plus MMG comparison. The direct surface generator is experimental and absent from the published meshers 0.1.0 wheel.</div>
 <div class="cards">
-<div class="card"><div class="number">{fast_wins} / {len(SURFACE_CASES)}</div><div>Cases where unpolished meshers beats raw VTK</div><small>Similar triangle counts; exact edge intersections kept</small></div>
+<div class="card"><div class="number">{fast_wins} / {len(SURFACE_CASES)}</div><div>Earlier cases where unpolished meshers beat raw VTK</div><small>Historical baseline; exact edge intersections kept</small></div>
 <div class="card"><div class="number">1 / 3</div><div>Current curved adapter fallbacks with a verified closed meshers volume path</div><small>Full-wrap cylinder passes; sphere and Sweep fail at singular axes</small></div>
 <div class="card"><div class="number">{min(polished_ratios):.1f}–{max(polished_ratios):.1f}×</div><div>Polished meshers surface time over VTK at similar counts</div><small>Higher triangle quality in every tested case</small></div>
 </div>
 
-<section id="fast"><div class="section-tag">Surface experiment · speed versus quality</div><h2>Turning off improvement rarely beats raw VTK</h2>
+<section id="fast"><div class="section-tag">Historical surface experiment · before extraction optimizations</div><h2>Turning off improvement alone rarely beat raw VTK</h2>
 <p>Meshers can skip all smoothing, local topology improvement and periodic polishing while keeping exact analytic edge intersections. That removes most of its surface-mesh work. The linear prototype also replaces exact edge roots with interpolation and reuses one normal per polygon. For each case, both fast modes were tuned independently to the nearest VTK triangle count. VTK used 16 points per cell. Each mode then ran three fresh-process trials; VTK time is the median of six trials across the two batches.</p>
 {fast_comparison_table}
 <div class="chart-card">{fast_chart}<div class="legend"><span><i class="swatch" style="background:var(--mesh)"></i>Unpolished exact intersections</span><span><i class="swatch" style="background:var(--blue)"></i>Linear intersections</span><span>Dashed threshold at 1×: equal to raw VTK time</span></div></div>
