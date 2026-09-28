@@ -9,6 +9,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DATA = json.loads((HERE / "limitations_data.json").read_text(encoding="utf-8"))
 CORE = json.loads((HERE / "curved_core_probe_data.json").read_text(encoding="utf-8"))
+MATCHED = json.loads((HERE / "matched_surface_data.json").read_text(encoding="utf-8"))
 RUNS = DATA["runs"]
 SURFACE_CASES = [
     ("gyroid_unit", "Gyroid · 1 cell"),
@@ -52,6 +53,108 @@ def representative(group: str, case: str, mode: str) -> dict:
 
 def fmt(value: float) -> str:
     return f"{value:.3f}" if value < 10 else f"{value:.2f}"
+
+
+def matched_samples(case: str, mode: str) -> list[dict]:
+    return [
+        run
+        for run in MATCHED["runs"]
+        if run["phase"] == "timed"
+        and run["case"] == case
+        and run["mode"] == mode
+        and run["status"] == "ok"
+    ]
+
+
+def matched_result(case: str, mode: str) -> dict:
+    runs = matched_samples(case, mode)
+    assert len(runs) == 3, (case, mode)
+    return runs[0]
+
+
+def matched_time(case: str, mode: str) -> float:
+    return statistics.median(
+        run["generation_seconds"] for run in matched_samples(case, mode)
+    )
+
+
+def matched_table() -> str:
+    lines = [
+        '<div class="table-wrap"><table><thead><tr><th>Case</th><th>Grid points/cell VTK / meshers</th><th>Triangles VTK / meshers</th>'
+        "<th>Count gap</th><th>Time VTK / meshers</th><th>Time ratio</th>"
+        "<th>1st percentile min angle VTK / meshers</th>"
+        "<th>Triangles below 10° VTK / meshers</th>"
+        "<th>Area CV VTK / meshers</th></tr></thead><tbody>"
+    ]
+    for case, name in SURFACE_CASES:
+        a, b = matched_result(case, "vtk"), matched_result(case, "meshers")
+        ta, tb = matched_time(case, "vtk"), matched_time(case, "meshers")
+        gap = 100 * (b["triangle_count"] / a["triangle_count"] - 1)
+        lines.append(
+            f"<tr><th>{html.escape(name)}</th>"
+            f"<td>{a['resolution']} / {b['resolution']}</td>"
+            f"<td>{a['triangle_count']:,} / {b['triangle_count']:,}</td>"
+            f"<td>{gap:+.1f}%</td><td>{fmt(ta)} / {fmt(tb)} s</td>"
+            f"<td>{tb / ta:.1f}×</td>"
+            f"<td>{a['angle_p01_degrees']:.1f}° / {b['angle_p01_degrees']:.1f}°</td>"
+            f"<td>{100 * a['fraction_min_angle_below_10_degrees']:.1f}% / {100 * b['fraction_min_angle_below_10_degrees']:.1f}%</td>"
+            f"<td>{a['area_cv']:.2f} / {b['area_cv']:.2f}</td></tr>"
+        )
+    lines.append("</tbody></table></div>")
+    return "".join(lines)
+
+
+def matched_size_chart() -> str:
+    # Equivalent-area diameter, divided by the VTK median in each case.
+    width, height, left, right = 1060, 85 + 82 * len(SURFACE_CASES), 245, 950
+    maximum = max(
+        matched_result(case, mode)["equivalent_diameter_p99"]
+        / matched_result(case, "vtk")["equivalent_diameter_median"]
+        for case, _ in SURFACE_CASES
+        for mode in ("vtk", "meshers")
+    )
+    xhi = max(2.0, math.ceil(maximum * 2) / 2)
+
+    def xpos(value):
+        return left + value / xhi * (right - left)
+
+    parts = [
+        f'<svg class="plot" viewBox="0 0 {width} {height}" role="img" '
+        'aria-label="Triangle equivalent diameter distributions; first percentile, median and ninety-ninth percentile relative to each VTK median">',
+        '<text x="245" y="22" class="axis-title">Equivalent-area diameter / VTK median within each case</text>',
+    ]
+    for tick in (0, 0.5, 1, 1.5, 2, 2.5, 3):
+        if tick > xhi:
+            break
+        x = xpos(tick)
+        parts.append(
+            f'<line x1="{x:.1f}" x2="{x:.1f}" y1="38" y2="{height - 32}" class="grid"/>'
+        )
+        parts.append(
+            f'<text x="{x:.1f}" y="{height - 9}" text-anchor="middle" class="tick">{tick:g}</text>'
+        )
+    for index, (case, name) in enumerate(SURFACE_CASES):
+        y = 69 + index * 82
+        reference = matched_result(case, "vtk")["equivalent_diameter_median"]
+        parts.append(
+            f'<text x="10" y="{y + 13}" class="row-label">{html.escape(name)}</text>'
+        )
+        for offset, mode, color in (
+            (0, "vtk", "var(--vtk)"),
+            (24, "meshers", "var(--mesh)"),
+        ):
+            run = matched_result(case, mode)
+            lo, mid, hi = (
+                xpos(run[f"equivalent_diameter_{key}"] / reference)
+                for key in ("p01", "median", "p99")
+            )
+            yy = y + offset
+            parts.append(
+                f'<line x1="{lo:.1f}" x2="{hi:.1f}" y1="{yy}" y2="{yy}" stroke="{color}" stroke-width="5"/>'
+            )
+            parts.append(f'<circle cx="{mid:.1f}" cy="{yy}" r="6" fill="{color}"/>')
+    parts.append("</svg>")
+    return "".join(parts)
 
 
 def log_chart(group: str, cases: list[tuple[str, str]], label: str) -> str:
@@ -223,8 +326,6 @@ def validate_data() -> None:
 
 def build() -> str:
     validate_data()
-    three_a = median("surface", "graded_gyroid_3", "microgen_surface")
-    three_b = median("surface", "graded_gyroid_3", "meshers_surface")
     two_a = median("volume", "graded_gyroid_2", "microgen_volume")
     two_b = median("volume", "graded_gyroid_2", "meshers_volume")
     surface_chart = log_chart("surface", SURFACE_CASES, "Surface generation comparison")
@@ -233,6 +334,20 @@ def build() -> str:
     volume_table = comparison_table("volume", VOLUME_CASES)
     coverage_table = curved_table()
     capability_table = core_table()
+    matched_comparison_table = matched_table()
+    size_chart = matched_size_chart()
+    matched_ratios = [
+        matched_time(case, "meshers") / matched_time(case, "vtk")
+        for case, _ in SURFACE_CASES
+    ]
+    matched_gaps = [
+        abs(
+            matched_result(case, "meshers")["triangle_count"]
+            / matched_result(case, "vtk")["triangle_count"]
+            - 1
+        )
+        for case, _ in SURFACE_CASES
+    ]
     sample_rows = raw_times("surface", SURFACE_CASES) + raw_times(
         "volume", VOLUME_CASES
     )
@@ -272,18 +387,27 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 <header>
 <div class="eyebrow">Experimental benchmark report · {date}</div>
 <h1>Three limits to replacing microgen’s mesh paths with meshers</h1>
-<p class="lead">The decision depends on the output. For print-oriented surface meshes, microgen’s VTK path is faster in every matched-resolution Cartesian TPMS test. Meshers can generate a closed, quality-checked full-wrap cylinder volume with explicit seam pairing, although microgen’s current adapter still falls back to VTK for that shape. Spherical poles and Sweep need more work.</p>
-<div class="meta"><span>Windows · Python {html.escape(DATA["python"])}</span><span>16 grid points per cell</span><span>3 fresh-process trials per timed path</span><span>Imports excluded</span></div>
+<p class="lead">At similar triangle counts, the surface comparison now measures generation time, triangle shape and triangle-size spread. The earlier fixed-resolution comparison confounded speed with different output sizes. Curved volume coverage remains a separate question.</p>
+<div class="meta"><span>Windows · Python {html.escape(DATA["python"])}</span><span>VTK 16 grid points per cell; meshers tuned</span><span>3 fresh-process trials per timed path</span><span>Imports excluded</span></div>
 </header>
-<nav><a href="#surface">01 Surface speed</a><a href="#coverage">02 Curved coverage</a><a href="#volume">03 Raw volume speed</a><a href="#method">Methods</a></nav>
-<div class="takeaway"><strong>Practical call.</strong> Keep VTK for additive-manufacturing surface export when triangle shape is not a requirement. Use meshers for supported TPMS tetrahedral volumes when quality and periodic constraints matter. The full-cylinder volume path can be added after its periodic seam and welded output are handled in the adapter. Sphere and Sweep still need a nonsingular chart or another meshing strategy. The direct meshers surface generator is experimental and absent from the published 0.1.0 wheel.</div>
+<nav><a href="#matched">01 Similar triangle counts</a><a href="#surface">02 Fixed sampling</a><a href="#coverage">03 Curved coverage</a><a href="#volume">04 Raw volume speed</a><a href="#method">Methods</a></nav>
+<div class="takeaway"><strong>Practical call.</strong> At nearly equal triangle counts, meshers trades generation time for much better triangle angles and a narrower triangle-size spread. VTK remains the faster print-surface path in these tests. Use meshers for supported TPMS tetrahedral volumes when quality and periodic constraints matter. The full-cylinder volume path can be added after its periodic seam and welded output are handled in the adapter. Sphere and Sweep still need a nonsingular chart or another meshing strategy. The direct meshers surface generator is experimental and absent from the published 0.1.0 wheel.</div>
 <div class="cards">
-<div class="card"><div class="number">{three_b / three_a:.1f}×</div><div>Meshers surface time over VTK for the 3³ graded gyroid</div><small>{fmt(three_b)} s vs {fmt(three_a)} s</small></div>
+<div class="card"><div class="number">{min(matched_ratios):.1f}–{max(matched_ratios):.1f}×</div><div>Meshers / VTK surface generation time at similar triangle counts</div><small>Maximum triangle-count gap {max(matched_gaps) * 100:.1f}%</small></div>
 <div class="card"><div class="number">1 / 3</div><div>Current curved adapter fallbacks with a verified closed meshers volume path</div><small>Full-wrap cylinder passes; sphere and Sweep fail at singular axes</small></div>
 <div class="card"><div class="number">{two_b / two_a:.0f}×</div><div>Meshers volume time over raw VTK for the 2³ graded gyroid</div><small>Different output cell types and quality checks</small></div>
 </div>
 
-<section id="surface"><div class="section-tag">Limit 01 · surface generation</div><h2>For print surfaces, VTK wins on speed</h2>
+<section id="matched"><div class="section-tag">Surface comparison · matched output size</div><h2>Similar triangle counts reveal the real tradeoff</h2>
+<p>For each case, VTK used 16 grid points per cell. The meshers input resolution was chosen from 10 to 15 points per cell to minimize the triangle-count gap. Each selected path then ran three times in a fresh process, with order alternated. Generation time excludes imports and the later metric calculations. The table reports medians for time and one deterministic mesh for shape and size metrics.</p>
+{matched_comparison_table}
+<p class="muted">Angle values are the 1st percentile of each triangle’s smallest interior angle. Area CV is standard deviation divided by mean, so lower means a tighter size distribution. Counts differ by at most {max(matched_gaps) * 100:.1f}%; this is a nearest-count comparison, not a promise of identical geometry error.</p>
+<p class="muted">Two meshers scan candidates failed and were excluded from selection: graded split-P at 10 points per cell produced an inverted triangle; x-graded gyroid at 12 did not satisfy periodic cap matching and the 5° quality gate. All six selected settings succeeded in all three timed trials.</p>
+<div class="chart-card">{size_chart}<div class="legend"><span><i class="swatch" style="background:var(--vtk)"></i>microgen VTK</span><span><i class="swatch" style="background:var(--mesh)"></i>meshers</span><span>Line = 1st to 99th percentile; dot = median</span></div></div>
+<div class="note">The chart compares equivalent-area diameter, √(4A/π), after dividing by the VTK median within each case. A broad line means triangle areas span a broad range. These metrics describe triangle shape and size, not surface-position error, wall thickness or slicer behavior.</div>
+</section>
+
+<section id="surface"><div class="section-tag">Surface comparison · fixed sampling</div><h2>At equal input resolution, meshers emits more triangles</h2>
 <p>microgen clips a 3D VTK grid and extracts its boundary. The meshers experiment extracts and improves triangles directly from a sampled 3D field. At matched grid-point counts, VTK generated fewer triangles and finished first in all six cases. The x-graded case retained matching y/z cap triangles in both outputs.</p>
 <div class="chart-card">{surface_chart}<div class="legend"><span><i class="swatch" style="background:var(--vtk)"></i>microgen VTK</span><span><i class="swatch" style="background:var(--mesh)"></i>meshers direct surface</span><span>Right-hand number = meshers / VTK time</span></div></div>
 {surface_table}
@@ -309,9 +433,10 @@ footer {{ margin-top:80px; padding-top:24px; border-top:1px solid var(--line); c
 </section>
 
 <section id="method"><div class="section-tag">Method and scope</div><h2>How to read the numbers</h2>
+<p>The matched-count runner selects the meshers resolution with the smallest triangle-count gap from 10–15 grid points per cell, against VTK at 16. It then runs three fresh-process trials per path, alternating order. Both paths use the same TPMS shape, thickness and grading. Generation timing stops before triangle metrics. Area and angles use every output triangle; equivalent-area diameter is derived from triangle area. Count matching changes input resolution, so the comparison does not establish equal geometric accuracy.</p>
 <p>Each timed path ran in a fresh process, three times, with order alternated. Tables show medians of <code>runtime_seconds</code>, which includes geometry construction and generation but excludes module import and process startup. Both paths used 16 grid points per unit-cell axis. meshers may retry a nearby background resolution for periodic surface quality. Output element counts differ, so these are matched-input-resolution comparisons, not matched-mesh-size or matched-geometric-error comparisons.</p>
 <p>Curved VTK examples used eight points per cell to keep the coverage check small. Their runtime includes shape construction. The adapter fallback was checked once per geometry; it has no meshers generation time. The direct surface build was compiled with <code>experimental-surfaces</code>, and microgen’s branch still uses VTK for <code>generate_surface_mesh()</code>.</p>
-<p class="muted">Host: {platform_name}. microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Source: <a href="benchmark_limitations.py">benchmark runner</a>, <a href="limitations_data.json">timing JSON</a>, <a href="probe_curved_meshers.py">direct probe</a>, <a href="curved_core_probe_data.json">probe JSON</a>. The raw timing samples are also listed below so this HTML remains readable on its own.</p>
+<p class="muted">Host: {platform_name}. microgen revision <code>{microgen_rev}</code>; meshers revision <code>{meshers_rev}</code>. Source: <a href="matched_surface_benchmark.py">matched-count runner</a>, <a href="matched_surface_data.json">matched-count JSON</a>, <a href="benchmark_limitations.py">fixed-resolution runner</a>, <a href="limitations_data.json">fixed-resolution JSON</a>, <a href="probe_curved_meshers.py">direct curved probe</a>, <a href="curved_core_probe_data.json">curved probe JSON</a>.</p>
 <details><summary>Show all surface and volume timing samples</summary><div class="table-wrap"><table><thead><tr><th>Case</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{sample_rows}</tbody></table></div></details>
 <details><summary>Show curved-geometry timing samples</summary><div class="table-wrap"><table><thead><tr><th>Geometry</th><th>Path</th><th>Trial seconds</th></tr></thead><tbody>{raw_times("curved", CURVED_CASES)}</tbody></table></div></details>
 </section>
