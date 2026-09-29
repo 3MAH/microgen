@@ -71,7 +71,7 @@ These examples establish coverage of particular inputs, not every parameter set.
 | Arbitrary `Sweep` | No validated meshers mapping is implemented here. The existing parametric grid is retained. |
 | Graded infill | A tested case failed the 0.01 sampled geometry limit at resolution 16; a finer callback run exceeded the 90-second probe limit. Broader quality/performance support remains unverified. |
 | Large background grids | Meshers 0.1.0 accepts 4-128 cells per axis, so this integration requires 5-129 grid points per axis after repeats. The default tetrahedron budget is also finite and configurable. |
-| Direct TPMS surface meshes | Kept as the existing surface API. Meshers 0.1.0 returns the boundary of a volume mesh, but has no surface-only Python generator. The [experimental meshers branch](https://github.com/kmarchais/meshers/tree/codex/direct-tpms-surface-experiment) adds native triangle extraction and a feature-gated Python API. Its optimizer does not yet preserve periodic face pairing, so this branch does not use it for periodic microgen surfaces. An open zero-thickness isosurface also needs separate support. |
+| Direct TPMS surface meshes | The published meshers 0.1.0 wheel has no surface-only Python generator. The experimental build now supports paired periodic polishing and this branch exposes `generate_meshers_surface` for plain Cartesian sheets, with fast, accurate and quality work budgets. The existing `generate_surface_mesh` still uses its legacy path. Curved adapters, skeletal parts, density fitting and open zero-thickness isosurfaces need further integration. See the replacement audit below for measured quality and fidelity losses. |
 
 For full wraps, poles/collapsed axes, and sweeps, `generate_volume_mesh()` retains
 the legacy clipped grid and emits an explicit warning that meshers quality and
@@ -150,3 +150,16 @@ This reduces the requested optimization budget without relaxing the acceptance
 threshold. The existing adapter can refine a failed band mesh and increase the
 budget during recovery, so fewer requested passes do not guarantee lower total
 time. Surface presets do not alter volume quality thresholds.
+
+## Replacement audit, 29 September 2026
+
+The current experiment does not meet the full replacement objective. The
+[32-item audit](reports/meshers_replacement_audit.html) separates measured losses,
+integration gaps and unverified behavior, and defines improvements and acceptance
+tests. It adds bidirectional closest-triangle fidelity measurements and new fedoo
+volume checks. Fast surfaces lose fidelity; some optimized surfaces lose angle
+or size uniformity; a graded Split-P surface has a geometric tail regression.
+The new fedoo refinement series is convergent but does not yet establish a
+converged structural reference or comparative superiority over MMG. The MMG
+baseline itself failed an affine patch check and requires a topology diagnosis.
+Exact-count comparisons and genuine shell-FEA validation remain required.

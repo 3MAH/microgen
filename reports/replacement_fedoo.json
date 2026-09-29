@@ -1,0 +1,244 @@
+[
+  {
+    "mode": "meshers",
+    "resolution": 12,
+    "generation_seconds": 0.3241150999965612,
+    "mms": {
+      "tetrahedra": 7213,
+      "points": 2621,
+      "free_dofs": 615,
+      "minimum_quality": 0.17355076455327392,
+      "minimum_signed_volume": 1.637687240914584e-06,
+      "maximum_edge_length": 0.14963782923144356,
+      "l2_displacement_error": 0.0014163463437213226,
+      "energy_error": 0.1180662079114777,
+      "cg_iterations": 15,
+      "relative_residual": 5.93028016454797e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 0.10734730001422577
+    },
+    "patch": {
+      "tetrahedra": 7213,
+      "points": 2621,
+      "free_dofs": 615,
+      "minimum_quality": 0.17355076455327392,
+      "minimum_signed_volume": 1.637687240914584e-06,
+      "maximum_edge_length": 0.14963782923144356,
+      "l2_displacement_error": 3.931652369605778e-12,
+      "energy_error": 3.320424738970422e-10,
+      "cg_iterations": 15,
+      "relative_residual": 6.883545824611889e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 0.09123579997685738
+    },
+    "compression": {
+      "stiffness": 0.15915649498884862,
+      "energy": 7.957824749442431e-08,
+      "reaction": 0.00015915649498772196,
+      "relative_residual": 2.0928404052990792e-08,
+      "cg_iterations": 797,
+      "seconds": 0.18956850000540726
+    },
+    "tetrahedra": 7213,
+    "points": 2621,
+    "minimum_quality": 0.17355076455327392,
+    "status": "ok"
+  },
+  {
+    "mode": "mmg",
+    "resolution": 12,
+    "status": "timeout"
+  },
+  {
+    "mode": "meshers",
+    "resolution": 16,
+    "generation_seconds": 0.7327263000188395,
+    "mms": {
+      "tetrahedra": 15909,
+      "points": 5317,
+      "free_dofs": 2217,
+      "minimum_quality": 0.14403676173531071,
+      "minimum_signed_volume": 8.312507301713071e-07,
+      "maximum_edge_length": 0.11286037886445557,
+      "l2_displacement_error": 0.0008007356035546657,
+      "energy_error": 0.08567186430874867,
+      "cg_iterations": 20,
+      "relative_residual": 3.1287939596375613e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 0.2731895000033546
+    },
+    "patch": {
+      "tetrahedra": 15909,
+      "points": 5317,
+      "free_dofs": 2217,
+      "minimum_quality": 0.14403676173531071,
+      "minimum_signed_volume": 8.312507301713071e-07,
+      "maximum_edge_length": 0.11286037886445557,
+      "l2_displacement_error": 2.7977235258124827e-12,
+      "energy_error": 2.3618170469653654e-10,
+      "cg_iterations": 20,
+      "relative_residual": 3.625926642519494e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 0.2699970999965444
+    },
+    "compression": {
+      "stiffness": 0.14448210726690397,
+      "energy": 7.224105363345199e-08,
+      "reaction": 0.00014448210727016836,
+      "relative_residual": 2.787854403032757e-08,
+      "cg_iterations": 1076,
+      "seconds": 0.37703309999778867
+    },
+    "tetrahedra": 15909,
+    "points": 5317,
+    "minimum_quality": 0.14403676173531071,
+    "status": "ok"
+  },
+  {
+    "mode": "meshers",
+    "resolution": 20,
+    "generation_seconds": 1.2297051000059582,
+    "mms": {
+      "tetrahedra": 27849,
+      "points": 8647,
+      "free_dofs": 5007,
+      "minimum_quality": 0.1800078622836879,
+      "minimum_signed_volume": 3.3057637102310923e-07,
+      "maximum_edge_length": 0.08680814749350728,
+      "l2_displacement_error": 0.0004914473048507418,
+      "energy_error": 0.06523541077452004,
+      "cg_iterations": 28,
+      "relative_residual": 5.218537929429759e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 0.5069779000186827
+    },
+    "patch": {
+      "tetrahedra": 27849,
+      "points": 8647,
+      "free_dofs": 5007,
+      "minimum_quality": 0.1800078622836879,
+      "minimum_signed_volume": 3.3057637102310923e-07,
+      "maximum_edge_length": 0.08680814749350728,
+      "l2_displacement_error": 5.305913484683339e-12,
+      "energy_error": 4.2871808157257847e-10,
+      "cg_iterations": 28,
+      "relative_residual": 6.52440369536755e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 0.4749936999869533
+    },
+    "compression": {
+      "stiffness": 0.1376113987225472,
+      "energy": 6.88056993612736e-08,
+      "reaction": 0.00013761139870196917,
+      "relative_residual": 3.4167075122498406e-08,
+      "cg_iterations": 1299,
+      "seconds": 1.264662200002931
+    },
+    "tetrahedra": 27849,
+    "points": 8647,
+    "minimum_quality": 0.1800078622836879,
+    "status": "ok"
+  },
+  {
+    "mode": "meshers",
+    "resolution": 28,
+    "generation_seconds": 3.0460063999926206,
+    "mms": {
+      "tetrahedra": 70498,
+      "points": 19853,
+      "free_dofs": 16791,
+      "minimum_quality": 0.179596615252335,
+      "minimum_signed_volume": 1.0923760857236873e-07,
+      "maximum_edge_length": 0.06623626434454308,
+      "l2_displacement_error": 0.0002526355129349618,
+      "energy_error": 0.04496818927048231,
+      "cg_iterations": 36,
+      "relative_residual": 8.47742766461521e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 1.2597468000021763
+    },
+    "patch": {
+      "tetrahedra": 70498,
+      "points": 19853,
+      "free_dofs": 16791,
+      "minimum_quality": 0.179596615252335,
+      "minimum_signed_volume": 1.0923760857236873e-07,
+      "maximum_edge_length": 0.06623626434454308,
+      "l2_displacement_error": 8.241221768635786e-12,
+      "energy_error": 6.508487787036009e-10,
+      "cg_iterations": 36,
+      "relative_residual": 9.20813620732626e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 1.2174720999901183
+    },
+    "compression": {
+      "stiffness": 0.12972978062447593,
+      "energy": 6.486489031223796e-08,
+      "reaction": 0.00012972978061850232,
+      "relative_residual": 4.452642254869709e-08,
+      "cg_iterations": 1799,
+      "seconds": 5.387366100010695
+    },
+    "tetrahedra": 70498,
+    "points": 19853,
+    "minimum_quality": 0.179596615252335,
+    "status": "ok"
+  },
+  {
+    "mode": "mmg",
+    "resolution": 16,
+    "status": "error",
+    "error": "C:\\Users\\kevin\\dev\\meshers\\experiments\\microgen-meshers\\.venv\\Lib\\site-packages\\fedoo\\core\\base.py:80: UserWarning: WARNING: no fast direct sparse solver has been found. Consider installing pypardiso (Intel) or python-mumps (any platform) to improve computation performance\n  warnings.warn(\nTraceback (most recent call last):\n  File \"C:\\Users\\kevin\\dev\\meshers\\experiments\\microgen-meshers\\reports\\replacement_fedoo.py\", line 63, in <module>\n    if len(sys.argv)==3: child(sys.argv[1],int(sys.argv[2]))\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\kevin\\dev\\meshers\\experiments\\microgen-meshers\\reports\\replacement_fedoo.py\", line 36, in child\n    patch=solve(mesh,affine=True)\n          ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\kevin\\.codex\\worktrees\\split-p-quality\\meshers\\demos\\solver\\fedoo_convergence.py\", line 109, in solve\n    assert result[\"l2_displacement_error\"] < 1e-8, result\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'minimum_signed_volume': 1.1628960967303952e-07, 'maximum_edge_length': 0.12147418995528693, 'l2_displacement_error': 4.99500919266975e-06, 'energy_error': 0.0016656771485230831}\n"
+  },
+  {
+    "mode": "mmg",
+    "resolution": 20,
+    "status": "error",
+    "error": "C:\\Users\\kevin\\dev\\meshers\\experiments\\microgen-meshers\\.venv\\Lib\\site-packages\\fedoo\\core\\base.py:80: UserWarning: WARNING: no fast direct sparse solver has been found. Consider installing pypardiso (Intel) or python-mumps (any platform) to improve computation performance\n  warnings.warn(\nTraceback (most recent call last):\n  File \"C:\\Users\\kevin\\dev\\meshers\\experiments\\microgen-meshers\\reports\\replacement_fedoo.py\", line 63, in <module>\n    if len(sys.argv)==3: child(sys.argv[1],int(sys.argv[2]))\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\kevin\\dev\\meshers\\experiments\\microgen-meshers\\reports\\replacement_fedoo.py\", line 36, in child\n    patch=solve(mesh,affine=True)\n          ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\kevin\\.codex\\worktrees\\split-p-quality\\meshers\\demos\\solver\\fedoo_convergence.py\", line 109, in solve\n    assert result[\"l2_displacement_error\"] < 1e-8, result\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'minimum_signed_volume': 1.4853918629771502e-08, 'maximum_edge_length': 0.1315857557662306, 'l2_displacement_error': 9.226513293790843e-06, 'energy_error': 0.002276653049987135}\n"
+  },
+  {
+    "mode": "meshers",
+    "resolution": 36,
+    "generation_seconds": 4.670385399978841,
+    "mms": {
+      "tetrahedra": 139935,
+      "points": 36493,
+      "free_dofs": 39633,
+      "minimum_quality": 0.1780118721023798,
+      "minimum_signed_volume": 6.475866685385721e-08,
+      "maximum_edge_length": 0.05506444823090906,
+      "l2_displacement_error": 0.00014954183528186955,
+      "energy_error": 0.034069580443660465,
+      "cg_iterations": 45,
+      "relative_residual": 7.793767965757358e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 2.935896799986949
+    },
+    "patch": {
+      "tetrahedra": 139935,
+      "points": 36493,
+      "free_dofs": 39633,
+      "minimum_quality": 0.1780118721023798,
+      "minimum_signed_volume": 6.475866685385721e-08,
+      "maximum_edge_length": 0.05506444823090906,
+      "l2_displacement_error": 9.999608860459232e-12,
+      "energy_error": 7.508407242873734e-10,
+      "cg_iterations": 45,
+      "relative_residual": 8.540100346557823e-11,
+      "maximum_boundary_error": 0.0,
+      "seconds": 3.065628000011202
+    },
+    "compression": {
+      "stiffness": 0.12564393788475703,
+      "energy": 6.282196894237852e-08,
+      "reaction": 0.0001256439379086531,
+      "relative_residual": 5.5278840838269124e-08,
+      "cg_iterations": 2271,
+      "seconds": 12.835941500001354
+    },
+    "tetrahedra": 139935,
+    "points": 36493,
+    "minimum_quality": 0.1780118721023798,
+    "status": "ok"
+  }
+]

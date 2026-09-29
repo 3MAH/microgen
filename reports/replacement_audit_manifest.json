@@ -1,0 +1,23 @@
+{
+  "measured_at": "2026-09-29T09:01:07.973705+00:00",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "versions": {
+    "fedoo": "1.0.0",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "pyvista": "0.49.0",
+    "mmgpy": "0.16.2"
+  },
+  "microgen_base_commit": "831ea13674a5baf3e92d047907fcd6aec2d58f33",
+  "meshers_commit": "4cf049541f6cd2c7ebab6209fd247bb5b4a62348",
+  "sha256": {
+    "replacement_fedoo.py": "48b963eeae3de337067f866511ea58789f6287f54ec0a70d661e5c587d4b89d4",
+    "replacement_fedoo.json": "8a93d8444211bcd822870127b42d9cd3d72027de4b3385ad3b900b6a9706d706",
+    "replacement_fidelity.py": "daa25b2e486b3ad56fb0817ba70cd191ae5623cb54ad4b3036d829a580138d97",
+    "replacement_fidelity.json": "7d1962346980fa645d5c048d33563eb367060c120ad750e86693e47910ff7ac2",
+    "replacement_baseline_audit.json": "94f78606a09cc049adef3e456cc7bc30b0dc9c92fd1144b3dfcdb26cff02a76b",
+    "fedoo_debug_mmg_16.npz": "d08661f000d2bfb939eb90c3c97c2cfd42c3268fefbed96aedafdb61cd311f86",
+    "replacement_gaps.json": "570600dc1f8dcca1811ad475afd30e1ec3305eb8825d3aec828efbf19c9a9cb3"
+  },
+  "scope": "Diagnostic study, not an exact-count performance acceptance benchmark. Native generation and FEA timings under development load; geometry-distance studies may overlap in wall time."
+}

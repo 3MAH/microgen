@@ -1,0 +1,29 @@
+{
+  "tetrahedra": 9380,
+  "same_side_shared_faces": 4,
+  "shared_face_node_ids": [
+    [
+      710,
+      1111,
+      1114
+    ],
+    [
+      710,
+      1111,
+      1244
+    ],
+    [
+      710,
+      1114,
+      1255
+    ],
+    [
+      710,
+      1244,
+      1255
+    ]
+  ],
+  "minimum_quality": 0.02247664104326235,
+  "independent_affine_l2_error": 4.995009192670007e-06,
+  "fedoo_affine_l2_error": 4.99500919266975e-06
+}

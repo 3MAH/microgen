@@ -1,0 +1,322 @@
+[
+  {
+    "id": "01",
+    "status": "Unproven",
+    "area": "Comparable budgets",
+    "problem": "No exact output-triangle budget control. Prior comparisons have different counts; a smaller mesh is not automatically more efficient.",
+    "evidence": "surface_tradeoffs.json: MMGS relaxed versus quality meshers counts differ by about 0.8%, 23.9%, 2.9%, 38.2% for the four cases.",
+    "improvement": "Add target_triangles and tolerance, then count-neutral flips/vertex motion and paired split-collapse redistribution. Choose reachable common budgets without changing the geometry.",
+    "acceptance": "Same final count for the primary comparison; report any unavoidable count tolerance explicitly and do not call it an exact-count win. Also compare time to equal FEA error and equal geometry error.",
+    "priority": "P0"
+  },
+  {
+    "id": "02",
+    "status": "Measured loss",
+    "area": "Periodic gyroid surfaces",
+    "problem": "Quality mode loses to relaxed MMGS in both angle distribution and size uniformity.",
+    "evidence": "Unit gyroid: minimum angle 7.97 vs 15.53 degrees, p01 21.90 vs 34.24; area CV 0.460 vs 0.261. Counts 7572 vs 7508.",
+    "improvement": "Current periodic polish moves vertices but freezes connectivity. Add orbit-paired edge flips first; then tangential relocation with a size term and strict geometry checks.",
+    "acceptance": "At the same count, improve angle tails and size distribution while keeping cap node/triangle matches, sampled geometry bounds and a time advantage.",
+    "priority": "P0"
+  },
+  {
+    "id": "03",
+    "status": "Measured loss",
+    "area": "Graded gyroid surfaces",
+    "problem": "Quality mode improves the worst angle but loses the first-percentile angle and size uniformity.",
+    "evidence": "Graded gyroid: p01 25.30 vs MMGS 35.34; area CV 0.430 vs 0.280. Minimum angle is better: 14.67 vs 1.22.",
+    "improvement": "Use a combined angle and sizing objective, then local connectivity edits. Track tails separately instead of optimizing only the single worst triangle.",
+    "acceptance": "Same-count quality curves and FEA error; no claim of overall quality superiority from one metric.",
+    "priority": "P0"
+  },
+  {
+    "id": "04",
+    "status": "Measured loss",
+    "area": "Geometric tails after optimization",
+    "problem": "Quality mode can worsen the largest sampled geometric deviation.",
+    "evidence": "replacement_fidelity.json: graded Split-P max sampled distance 0.04118, VTK 0.02254, relaxed MMGS 0.01658. Reference-refinement sampled max 0.00509.",
+    "improvement": "Audit collapse/flip/polish candidates near caps and high curvature. Bound facet-interior error, preserve features and reject moves exceeding the geometry budget.",
+    "acceptance": "Both high quantiles and worst sampled error improve at fixed count; add adaptive error sampling, feature coverage and self-intersection checks.",
+    "priority": "P0"
+  },
+  {
+    "id": "05",
+    "status": "Measured loss",
+    "area": "Fast surface fidelity",
+    "problem": "Linear fast extraction loses geometric fidelity in all four tested cases.",
+    "evidence": "Bidirectional p95 errors are about 2.0-2.5 times VTK, despite similar counts. See replacement_fidelity.json.",
+    "improvement": "Test one and two safeguarded edge-root correction steps; reject or refine cells with excessive facet error. Then test direct hexahedral extraction to reduce tetrahedral-diagonal overhead.",
+    "acceptance": "Same-count fast output must be faster and no worse in sampled distance tails, wall thickness, topology and volume error. Faster extraction alone fails the gate.",
+    "priority": "P0"
+  },
+  {
+    "id": "06",
+    "status": "Measured loss",
+    "area": "Accurate surface fidelity",
+    "problem": "Exact edge roots do not ensure accurate facets at a fixed triangle count.",
+    "evidence": "Bidirectional p95 is worse than VTK for unit gyroid, graded gyroid and graded Split-P; graded Split-P max is 0.04098 vs VTK 0.02254.",
+    "improvement": "Redistribute triangles by curvature and facet error; optimize projection and connectivity together. Avoid spending vertices on the six-tetrahedron grid decomposition.",
+    "acceptance": "Verify interiors and the reverse reference-to-output distance, not just vertices on the implicit zero set.",
+    "priority": "P0"
+  },
+  {
+    "id": "07",
+    "status": "Measured loss",
+    "area": "Accurate surface speed",
+    "problem": "Exact-root mode is slower than raw VTK on the graded cases.",
+    "evidence": "Graded gyroid 0.100 vs 0.085 s; graded Split-P 0.235 vs 0.149 s. Counts are not identical.",
+    "improvement": "Cache field/gradient evaluations, use safeguarded secant steps and analytic gradients, and retain early rejection. Profile extraction separately from metric computation and Python conversion.",
+    "acceptance": "Faster at a common output count AND no worse geometric fidelity.",
+    "priority": "P1"
+  },
+  {
+    "id": "08",
+    "status": "Measured loss",
+    "area": "Raw volume generation",
+    "problem": "Zero-optimization tetrahedra are still slower than raw VTK mixed cells.",
+    "evidence": "fast_volume_data.json; VTK produces tetrahedra, hexahedra, wedges and pyramids, so output contracts differ.",
+    "improvement": "Decide the required output contract first. For tetrahedra, optimize direct clipping and allocation; investigate a separate mixed-cell output only if microgen needs it.",
+    "acceptance": "Compare equivalent output types and validity. Keep the faster VTK path until meshers meets the actual user requirement.",
+    "priority": "P1"
+  },
+  {
+    "id": "09",
+    "status": "Measured cost",
+    "area": "Volume quality recovery",
+    "problem": "A coarse Split-P quality failure can trigger global refinement and greatly inflate output.",
+    "evidence": "MESHERS_EXPERIMENT.md: 20,673 to 175,836 tetrahedra in the quality-recovery example.",
+    "improvement": "Use local sliver repair, local refinement and constraint-aware relocation; expose recovery counts and timings. Avoid resolving one cap sliver by refining the entire background.",
+    "acceptance": "Meet quality and geometry thresholds at comparable tet/DOF budgets, then pass fedoo accuracy checks.",
+    "priority": "P0"
+  },
+  {
+    "id": "10",
+    "status": "Measured failure",
+    "area": "Anisotropic cells",
+    "problem": "Tested anisotropic/repeated configurations fail quality or time out.",
+    "evidence": "experiments/tpms_meshers_results.json: anisotropic quality about 0.065-0.068 and a 90 s timeout.",
+    "improvement": "Use physical-space edge metrics and balanced background spacing; separate chart distortion from element optimization.",
+    "acceptance": "Sweep cell aspect ratios and repeats, with signed volumes, periodic constraints and fedoo convergence.",
+    "priority": "P1"
+  },
+  {
+    "id": "11",
+    "status": "Measured failure",
+    "area": "Coarse density grading",
+    "problem": "Some graded Split-P volumes fail the existing geometry gate.",
+    "evidence": "optimizer_experiments.json / .md: coarse graded Split-P error about 0.02163 versus tolerance 0.01.",
+    "improvement": "Refine where field curvature and thickness require it, with a local error estimator; test gradient-aware sizing across the complete graded domain.",
+    "acceptance": "Pass geometry and solution error at bounded cost without relying on periodic tiling.",
+    "priority": "P1"
+  },
+  {
+    "id": "12",
+    "status": "Measured failure",
+    "area": "Graded infill",
+    "problem": "A graded infill failed geometry acceptance and a finer callback run timed out.",
+    "evidence": "MESHERS_EXPERIMENT.md and experiments/tpms_meshers_results.json.",
+    "improvement": "Compile or cache envelope-distance fields, add native interpolation, and use local refinement near envelope intersections.",
+    "acceptance": "Representative imported envelopes pass geometry/quality and run faster than the existing workflow.",
+    "priority": "P1"
+  },
+  {
+    "id": "13",
+    "status": "Integration gap",
+    "area": "Density targets and sampled offsets",
+    "problem": "Direct surface presets reject density fitting and sampled offsets. Volume density fitting repeatedly meshes while searching.",
+    "evidence": "Tpms.generate_meshers_surface guards; generate_meshers density root search.",
+    "improvement": "Calibrate volume fraction on reusable sampled fields, then validate on the final mesh; add native interpolation and a surface density-fitting adapter.",
+    "acceptance": "Preserve density semantics, quantify achieved density and total calibration cost, and restore inputs on failure.",
+    "priority": "P1"
+  },
+  {
+    "id": "14",
+    "status": "Integration gap",
+    "area": "Full cylindrical wrap",
+    "problem": "Direct mapped output exists, but the wrap probe retained coincident unjoined seam points.",
+    "evidence": "curved_core_probe_data.json; full-wrap volume and surface returned meshes, so this is not proof of native inability.",
+    "improvement": "Weld chart-seam equivalence classes with orientation-aware topology; carry rigid periodic transforms.",
+    "acceptance": "Closed conforming seam, no duplicate seam DOFs, and rotation-aware fedoo constraint checks.",
+    "priority": "P1"
+  },
+  {
+    "id": "15",
+    "status": "Measured failure",
+    "area": "Spherical poles and collapsed axes",
+    "problem": "Full-sphere mapped volume probe failed with inverted background tetrahedra; a direct surface probe returned a mesh.",
+    "evidence": "curved_core_probe_data.json; regular sectors succeeded.",
+    "improvement": "Use nonsingular charts or a Cartesian implicit representation near poles, then join interfaces consistently.",
+    "acceptance": "Positive volume elements, closure and no duplicate pole/seam nodes; validate solution convergence.",
+    "priority": "P1"
+  },
+  {
+    "id": "16",
+    "status": "Integration gap",
+    "area": "Sweeps",
+    "problem": "No validated volume mapping is wired in; surface probe returned a mesh.",
+    "evidence": "curved_core_probe_data.json and Tpms._needs_parametric_clip.",
+    "improvement": "Build a sweep chart with Jacobian checks, curvature limits and robust chart joining, or mesh a native Cartesian swept field.",
+    "acceptance": "Test curved paths, varying radius, closed loops and near self-contact with geometry and fedoo checks.",
+    "priority": "P1"
+  },
+  {
+    "id": "17",
+    "status": "Integration gap",
+    "area": "Surface geometry coverage",
+    "problem": "The new surface method only accepts plain Cartesian Tpms sheets; curved types and Infill are rejected.",
+    "evidence": "Tpms.generate_meshers_surface type guard. Native curved surface probes demonstrate broader possibilities.",
+    "improvement": "Connect validated implicit/chart surface paths to the adapter rather than labeling all these shapes unsupported by meshers.",
+    "acceptance": "Match the legacy API coverage and placement/labels for every enabled geometry.",
+    "priority": "P1"
+  },
+  {
+    "id": "18",
+    "status": "Integration gap",
+    "area": "Surface part types",
+    "problem": "Skeletal surfaces and open zero-thickness midsurfaces are not exposed by the new band-sheet surface method.",
+    "evidence": "The new method fixes band=(-1,1) and has no type_part parameter.",
+    "improvement": "Add one-sided inequalities and a single-isovalue/open-surface extractor; preserve boundary curves and normals.",
+    "acceptance": "This is required before meaningful shell FEA of a TPMS midsurface; do not substitute a closed solid boundary.",
+    "priority": "P0"
+  },
+  {
+    "id": "19",
+    "status": "Integration gap",
+    "area": "Rectangular surface sampling",
+    "problem": "The surface adapter rejects unequal total grid counts; the native surface API accepts one cells value.",
+    "evidence": "triangles.rs extract_with_edge_refinement and Tpms.generate_meshers_surface.",
+    "improvement": "Support per-axis cell counts and physical spacing in indexing, caching and cap extraction.",
+    "acceptance": "Anisotropic cells and repeats use the requested physical resolution without needless refinement.",
+    "priority": "P1"
+  },
+  {
+    "id": "20",
+    "status": "Measured regression",
+    "area": "Automatic CPU selection",
+    "problem": "All-CPU defaults make small meshes slower.",
+    "evidence": "microgen_parallel_results.json: 0.890 s with one worker versus 1.541 s with 24. Earlier graded single mesh: 4.472 / 3.802 / 5.823 s at 1 / 2 / 4 workers.",
+    "improvement": "Use a measured work-size threshold, persistent pools and parallel batches for small jobs. Do not equate maximum CPU use with minimum latency.",
+    "acceptance": "No small-case regression; demonstrate speedup and efficiency on larger single domains across worker counts.",
+    "priority": "P0"
+  },
+  {
+    "id": "21",
+    "status": "Measured limit",
+    "area": "Python callback concurrency",
+    "problem": "Callbacks serialize through Python even though the native mesher releases the GIL.",
+    "evidence": "optimizer_experiments.md: four callback jobs take 2.219 / 2.204 / 2.286 s at 1 / 2 / 4 job threads.",
+    "improvement": "Extend field compilation, native sampled-field interpolation and bulk evaluation. Consider process-based isolation only after measuring transfer and memory costs.",
+    "acceptance": "Benchmark both compiled and unavoidable callback fields; report effective worker use.",
+    "priority": "P1"
+  },
+  {
+    "id": "22",
+    "status": "Implementation gap",
+    "area": "Surface parallelism",
+    "problem": "The direct surface extractor has serial grid sampling and extraction loops and no worker option.",
+    "evidence": "triangles.rs lines around extract_with_edge_refinement; Python generate_surface signature.",
+    "improvement": "Parallel sample blocks and count output first; prefix sums allocate deterministic output ranges. Use local caches and deterministic seam reconciliation; color independent optimization patches.",
+    "acceptance": "Scaling on full graded domains, deterministic topology and periodicity, and no memory explosion or small-case slowdown.",
+    "priority": "P1"
+  },
+  {
+    "id": "23",
+    "status": "Scalability limit",
+    "area": "Grid size and memory",
+    "problem": "Cells per axis are capped at 128. Extraction stores the full 3D point/value grid plus edge maps; large-job peak memory is not established.",
+    "evidence": "triangles.rs allocates n^3 points and values; native API validation; earlier scaling report lacks controlled peak RSS.",
+    "improvement": "Use slab sampling/rolling edge caches or block extraction, reuse allocations, and add explicit memory budgets and failure cleanup.",
+    "acceptance": "Measure peak process memory and time versus physical volume and triangle count beyond unit cells; test graded, untileable geometry.",
+    "priority": "P1"
+  },
+  {
+    "id": "24",
+    "status": "Measured limit",
+    "area": "Periodic tiling scope",
+    "problem": "Tiling cannot accelerate genuinely nonrepeating grading; mapped/intersection constraint metadata limits current tiling.",
+    "evidence": "TPMS_SCALING.md and periodic_tile.py.",
+    "improvement": "Tile only verified identical directions; retain transforms and labels; improve direct whole-domain generation independently.",
+    "acceptance": "Whole-domain graded results must meet targets without presenting tiled periodic speedups as evidence.",
+    "priority": "P1"
+  },
+  {
+    "id": "25",
+    "status": "Measured gap",
+    "area": "WASM latency",
+    "problem": "WASM quality generation remains slower than native; browser timing includes diagnostics and serialization.",
+    "evidence": "optimization_performance.md: gyroid 1.371 s WASM vs 0.649 s native in the recorded adapter experiment.",
+    "improvement": "Profile phases, reuse buffers and compiled fields, use typed-array transfers and test supported SIMD/thread builds separately.",
+    "acceptance": "Record cold/warm module load, meshing, transfer and rendering independently on supported browsers.",
+    "priority": "P2"
+  },
+  {
+    "id": "26",
+    "status": "Unproven",
+    "area": "FEA accuracy at an element budget",
+    "problem": "Good tetrahedron shape does not establish a sufficiently accurate structural response.",
+    "evidence": "New fedoo gyroid compression changes from stiffness 0.15916 at 7,213 tets to 0.12564 at 139,935; the last two levels still differ by about 3.3%.",
+    "improvement": "Drive refinement by solution and geometry error, test tet10 or improved linear-tet sizing, and measure time to accuracy including solve cost.",
+    "acceptance": "Converged displacement, energy, reactions and effective stiffness; compare same tet/DOF budgets and total pipeline time against a valid baseline.",
+    "priority": "P0"
+  },
+  {
+    "id": "27",
+    "status": "Unverified",
+    "area": "Shell and periodic FEA coverage",
+    "problem": "Current surface comparisons have no shell-FEA confirmation, and the new fedoo run is clamped compression plus manufactured solutions, not periodic homogenization.",
+    "evidence": "replacement_fedoo.json; older fedoo_homogenization results use a different specimen/platform.",
+    "improvement": "Run genuine midsurface shell bending/membrane tests; run six bulk periodic strains, graded compression, thin features and stress convergence.",
+    "acceptance": "Preserve material, thickness, loading, formulation and BCs; independently audit energy and force balance. Do not infer shell validity from solid tetrahedra.",
+    "priority": "P0"
+  },
+  {
+    "id": "28",
+    "status": "Baseline defect",
+    "area": "MMG reference validity",
+    "problem": "A failed baseline cannot establish comparative superiority.",
+    "evidence": "New 16-point MMG output has four same-side adjacent-tet face pairs; fedoo and independent affine tests both give L2 error about 5e-6. The 12-point MMG attempt timed out after 180 s.",
+    "improvement": "Check original VTK triangulation, MMG output and boundary snapping separately. Find a conforming reference without dropping failed runs from the record.",
+    "acceptance": "Both baselines pass signed-volume, conforming-adjacency and affine-patch checks before comparison.",
+    "priority": "P0"
+  },
+  {
+    "id": "29",
+    "status": "Validation gap",
+    "area": "Geometry guarantees",
+    "problem": "A p95 implicit residual is neither a distance bound nor a topology/thickness guarantee.",
+    "evidence": "New bidirectional distance checks reveal graded Split-P tail regression missed by average metrics.",
+    "improvement": "Use converged independent references, bidirectional samples with adaptive refinement, topology, intersections, solid volume and minimum wall-thickness checks.",
+    "acceptance": "State sampling limits. Require accuracy margins larger than reference uncertainty, and certify tails before calling a mesh suitable for printing.",
+    "priority": "P0"
+  },
+  {
+    "id": "30",
+    "status": "Integration gap",
+    "area": "Existing mesh remeshing",
+    "problem": "MMG also adapts imported meshes and preserves boundary entities; an implicit generator does not replace that workflow.",
+    "evidence": "microgen.remesh.remesh_keeping_boundaries_for_fem and external.Mmg APIs.",
+    "improvement": "Inventory boundary groups, size fields, existing-mesh adaptation and metadata contracts; implement equivalents or retain the dependency for those paths.",
+    "acceptance": "Every public remeshing operation has tested equivalent behavior before removing MMG.",
+    "priority": "P1"
+  },
+  {
+    "id": "31",
+    "status": "Unverified coverage",
+    "area": "Other microgen geometries",
+    "problem": "Primitive shapes, strut lattices, spinodoids, booleans and imported polyhedra have not been shown to improve through the new TPMS adapter.",
+    "evidence": "microgen.shape public class inventory; Shape.generate_surface_mesh remains its own workflow.",
+    "improvement": "Add a common implicit-generation adapter and representative per-family benchmarks; preserve feature edges, disconnected components and material labels.",
+    "acceptance": "Classify each path as improved, unchanged, failing or untested. CAD/B-rep operations remain separate capabilities.",
+    "priority": "P1"
+  },
+  {
+    "id": "32",
+    "status": "Release gap",
+    "area": "Experimental APIs and presets",
+    "problem": "Direct surface support requires an unreleased feature build; legacy surface API still runs VTK, and preset names are not acceptance guarantees.",
+    "evidence": "MESHERS_EXPERIMENT.md and the new generate_meshers_surface method.",
+    "improvement": "Stabilize a quality/error/budget contract, ship supported wheels, integrate normal API routing only after acceptance tests, and display achieved diagnostics.",
+    "acceptance": "Cross-platform packaging, cancellation/failure behavior, metadata and reproducible versioned benchmarks. No silent quality downgrade or hidden backend choice.",
+    "priority": "P1"
+  }
+]

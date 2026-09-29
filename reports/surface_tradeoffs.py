@@ -74,7 +74,7 @@ def periodic_metrics(points, triangles, periodic, bounds):
     )
 
 
-def child(case, mode, size):
+def child(case, mode, size, *, return_mesh=False):
     import graded_comparison as gc
     import meshio
     import pyvista as pv
@@ -178,6 +178,8 @@ def child(case, mode, size):
         **metrics(points, triangles),
         **periodic_metrics(points, triangles, periodic, bounds),
     )
+    if return_mesh:
+        return points, triangles, row
     print(json.dumps(row), flush=True)
 
 
