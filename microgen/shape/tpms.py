@@ -1276,6 +1276,65 @@ class Tpms(Shape):
             **options,
         )
 
+    def generate_meshers_surface(
+        self, *, optimization="quality", periodic=(False, False, False), **options
+    ):
+        """Generate a sheet surface with the experimental meshers build.
+
+        ``fast`` uses linear intersections without optimization. ``accurate``
+        solves edge intersections but leaves triangle shape unoptimized.
+        ``quality`` uses meshers' periodic polishing or nonperiodic topology
+        improvements. These are work budgets, not printability or FEA guarantees.
+        Explicit meshers options override the preset, including polish_passes.
+
+        Currently supports plain TPMS sheets with scalar or callable offsets,
+        equal grid counts on all axes and no density fitting. Callable offsets
+        must remain positive throughout the domain. Returns a native
+        SurfaceMesh with world-space points; face labels refer to local axes.
+        Requires meshers built with experimental-surfaces, not the 0.1.0 wheel.
+        """
+        if optimization not in ("fast", "accurate", "quality"):
+            raise ValueError("optimization must be 'fast', 'accurate', or 'quality'")
+        if type(self) is not Tpms or self.density is not None:
+            raise NotImplementedError(
+                "Direct surfaces currently require plain Tpms with an explicit offset"
+            )
+        if self._meshers_sampled_offset or (
+            self._offset_func is None and np.ndim(self.offset) > 0
+        ):
+            raise NotImplementedError(
+                "Direct surfaces require a scalar or callable offset"
+            )
+        counts = np.asarray(self.resolution * self.repeat_cell)
+        if not np.all(counts == counts.flat[0]):
+            raise NotImplementedError(
+                "Direct surfaces currently require equal grid counts on all axes"
+            )
+        generate = getattr(meshers, "generate_surface", None)
+        if generate is None:
+            raise NotImplementedError("Install the experimental-surfaces meshers build")
+        raw, offset, scalar = self.raw_field, self._offset_func, self.offset
+        if offset is None and (not np.isfinite(scalar) or scalar <= 0):
+            raise ValueError("Sheet offset must be finite and positive")
+
+        def field(x, y, z):
+            half = 0.5 * (offset(x, y, z) if offset is not None else scalar)
+            return raw(x, y, z) / half
+
+        settings = {"refine_edges": optimization != "fast"}
+        if optimization != "quality":
+            settings.update(
+                polish_passes=0, improvement_rounds=0, smoothing_iterations=0
+            )
+        settings.update(options)
+        result = generate(
+            field, bounds=self._bounds, cells=int(counts.flat[0]) - 1,
+            band=(-1, 1), periodic=periodic, **settings
+        )
+        result.points[:] = self.orientation.apply(result.points) + np.asarray(self.center)
+        result.diagnostics["optimization"] = optimization
+        return result
+
     def generate_meshers(
         self,
         type_part="sheet",

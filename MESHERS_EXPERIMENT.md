@@ -106,3 +106,47 @@ python experiments/verify_tpms_meshers.py
 ```
 
 The OCCT pin reproduces the tested environment; it is not a dependency change.
+
+## Experimental direct surfaces and optimization budgets
+
+With the experimental-surfaces meshers build, plain sheet TPMS can generate
+triangles directly, without first constructing tetrahedra:
+
+```python
+shape = Tpms(surface_functions.gyroid, offset=0.6, resolution=12)
+surface = shape.generate_meshers_surface(
+    optimization="quality", periodic=(True, True, True)
+)
+```
+
+- `fast`: linear edge intersections, no shape optimization.
+- `accurate`: implicit edge roots, no shape optimization.
+- `quality`: implicit edge roots plus meshers' default optimization, currently
+  12 polishing passes for fully periodic surfaces, eight for partially periodic
+  surfaces, or four topology improvement rounds for nonperiodic surfaces.
+
+Meshers-specific options override the preset. For example, `polish_passes=6`
+sets a smaller polishing budget. Periodic quality mode still applies meshers'
+matching-cap and minimum-angle acceptance check and may retry a background
+resolution or raise. More optimization does not guarantee a better mesh for
+all geometries.
+
+The method returns a native `SurfaceMesh` with placed points, triangles, local
+face labels and diagnostics. It currently requires equal grid counts on all
+axes, an explicit scalar or callable positive sheet offset, and a plain `Tpms`
+object. Density fitting, sampled offsets, curved charts and skeletal parts are
+not integrated into this surface method. It does not change the existing
+`generate_surface_mesh` method. The released meshers 0.1.0 wheel lacks this API.
+
+The presets describe work performed, not FEA readiness or printability. Triangle
+shape, geometric approximation and wall thickness are different requirements.
+See [the surface tradeoff report](reports/surface_tradeoffs.html) for timings,
+angle and size metrics, sampled geometric error and periodicity checks against
+microgen VTK followed by MMGS through `microgen.external.Mmg.mmgs`.
+
+Volume generation already accepts `optimize_passes`, for example
+`shape.generate_meshers(optimize_passes=2, minimum_quality=0.1)`.
+This reduces the requested optimization budget without relaxing the acceptance
+threshold. The existing adapter can refine a failed band mesh and increase the
+budget during recovery, so fewer requested passes do not guarantee lower total
+time. Surface presets do not alter volume quality thresholds.
