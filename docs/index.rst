@@ -32,6 +32,7 @@ Table of contents
    :caption: Documentation
 
    Documentation
+   experimental_slicing
 
 .. toctree::
    :maxdepth: 1

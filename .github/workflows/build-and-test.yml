@@ -15,6 +15,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  slicing:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - if: runner.os == 'Linux'
+        run: sudo apt-get install libglu1-mesa
+      - run: uv sync --extra dev --extra slicing
+      - run: uv pip install 'PythonSLM==0.6.1'
+      - run: uv run --no-sync pytest tests/test_slicing.py -q
+
   # --- Core suite: mesh + implicit-field only.  No OCP installed. ---
   # Proves `import microgen` + `.generate_vtk()` + F-rep work on VTK 9.4+
   # with no CAD stack.
