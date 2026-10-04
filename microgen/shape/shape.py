@@ -7,7 +7,7 @@ Basic Geometry (:mod:`microgen.shape.shape`)
 
 from __future__ import annotations
 
-import itertools
+import copy as _copy
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -15,10 +15,13 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.spatial.transform import Rotation
 
+from . import _affine
 from . import implicit_ops as _ops
 from ._types import BoundsType, Field, PeriodType
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
@@ -71,7 +74,8 @@ class Shape:
     """Unified shape with optional implicit (F-rep) and CAD representations.
 
     Every shape has a ``center`` and ``orientation``.  It may also carry an
-    implicit scalar field (``_func``) where ``f(x, y, z) < 0`` means *inside*.
+    implicit scalar field (:attr:`field`), in world coordinates, where
+    ``f(x, y, z) < 0`` means *inside*.
     When the implicit field is present, the default :meth:`generate_surface_mesh` and
     :meth:`generate_cad` produce geometry via marching cubes.  Subclasses
     (e.g. ``Sphere``, ``Tpms``) override these methods with their own
@@ -79,6 +83,15 @@ class Shape:
 
     Boolean operators (``|``, ``&``, ``-``, ``~``) and smooth boolean
     methods operate on the implicit field and return a new :class:`Shape`.
+
+    :meth:`translate`, :meth:`rotate` and :meth:`scale` follow the PyVista
+    convention: ``inplace=False`` (default) returns a new shape,
+    ``inplace=True`` mutates ``self``, and both return the shape.  A
+    subclass keeps its class and updates its native parameters (``radius``,
+    ``dim``, ``cell_size``...) when they can express the transform.  When
+    they cannot (e.g. a per-axis scale of a
+    :class:`~microgen.shape.sphere.Sphere`), ``inplace=False`` returns a
+    generic :class:`Shape` and ``inplace=True`` raises ``ValueError``.
 
     :param center: center of the shape
     :param orientation: orientation of the shape
@@ -110,8 +123,7 @@ class Shape:
         # Cache of sampled structured grids keyed on (bounds, resolution).
         # Shared between generate_surface_mesh and generate_volume_mesh so
         # users calling both on the same instance only pay one N^3 field
-        # evaluation. Cleared lazily — Shape is immutable post-construction
-        # (center/orientation are read-only properties, _func is fixed).
+        # evaluation. Cleared by every in-place transform.
         self._grid_cache: dict[tuple[BoundsType, int], pv.StructuredGrid] = {}
 
     # ------------------------------------------------------------------
@@ -120,24 +132,19 @@ class Shape:
 
     @property
     def center(self: Shape) -> Vector3DType:
-        """Geometric center (set at construction, immutable).
+        """Geometric center (read-only; changed by the transforms).
 
         Subclasses with a native renderer (``Sphere``, ``Tpms``, …) read
-        this in their ``generate_*`` overrides. For an implicit-only
-        :class:`Shape` (built via :func:`microgen.shape.implicit_ops.from_field`
-        or by a boolean composition), use :meth:`translate` to shift the
-        field — assigning to ``.center`` after construction has no effect
-        on a bare ``Shape``, so the attribute is read-only at the base.
+        this in their ``generate_*`` overrides and bake it into the field.
+        Use :meth:`translate`, :meth:`rotate` or :meth:`scale` to move a
+        shape: they keep the field, the native parameters and the
+        renderers coherent.
         """
         return self._center
 
     @property
     def orientation(self: Shape) -> Rotation:
-        """Rotation applied by subclasses' renderers (set at construction, immutable).
-
-        Implicit-only shapes should compose with :meth:`rotate` instead
-        of mutating this attribute.
-        """
+        """Rotation applied by subclasses' renderers (read-only; see :meth:`rotate`)."""
         return self._orientation
 
     @property
@@ -162,7 +169,7 @@ class Shape:
         return self._period
 
     def require_field(self: Shape) -> Field:
-        """Return ``_func`` or raise if not set."""
+        """Return the implicit field or raise ``ValueError`` if it is not set."""
         if self._field is None:
             err_msg = "No implicit scalar field defined on this shape"
             raise ValueError(err_msg)
@@ -180,10 +187,9 @@ class Shape:
     ) -> npt.NDArray[np.float64]:
         """Evaluate the implicit scalar field at the given coordinates.
 
-        Coordinates are in the **field's local frame** — ``center`` and
-        ``orientation`` are NOT applied here (they only affect mesh output
-        in :meth:`generate_surface_mesh`).  Use :meth:`translate` / :meth:`rotate`
-        to bake transforms into the field itself.
+        Coordinates are world coordinates: subclasses bake ``center`` and
+        ``orientation`` into the field, and :meth:`translate`,
+        :meth:`rotate` and :meth:`scale` compose with it.
 
         :param x: x coordinates
         :param y: y coordinates
@@ -202,12 +208,12 @@ class Shape:
         resolution: int,
         caller: str,
     ) -> pv.StructuredGrid:
-        """Build a structured grid over ``bounds`` and sample ``_func`` onto it.
+        """Build a structured grid over ``bounds`` and sample the field onto it.
 
         Shared by :meth:`generate_surface_mesh` and :meth:`generate_volume_mesh`,
         with a per-instance ``(bounds, resolution)`` cache so consecutive calls
         on the same shape only pay one N^3 field evaluation. Raises
-        ``NotImplementedError`` (with a caller-specific message) when ``_func``
+        ``NotImplementedError`` (with a caller-specific message) when the field
         is unset, and ``ValueError`` when bounds can't be resolved.
         """
         if self._field is None:
@@ -255,8 +261,8 @@ class Shape:
         override this.
 
         The implicit field is expected to be in world coordinates (subclasses
-        with non-zero ``center`` / ``orientation`` should bake those into
-        ``_func`` during construction).
+        with non-zero ``center`` / ``orientation`` bake those into the field
+        during construction).
 
         The sampled structured grid is cached per ``(bounds, resolution)``
         on the instance, shared with :meth:`generate_volume_mesh`. The cache
@@ -360,178 +366,292 @@ class Shape:
         return _ops.smooth_difference(self, other, k)
 
     # ------------------------------------------------------------------
-    # Implicit field transforms
+    # Copy and transforms — PyVista convention: imperative verb +
+    # ``inplace=False``.
+    #
+    # Subclasses with native parameters (``center``, ``orientation``,
+    # ``radius``, ``dim``, ``cell_size``…) are the source of truth: a
+    # transform they can express updates those parameters and rebuilds the
+    # field, so field, CAD and meshes stay coherent.  A transform they
+    # cannot express returns a generic :class:`Shape` (``inplace=False``)
+    # or raises (``inplace=True``, the class cannot change in place).
     # ------------------------------------------------------------------
 
+    #: ``True`` on subclasses whose field is rebuilt from native parameters
+    #: by :meth:`_rebuild_field`.
+    _native_params: bool = False
+
+    def copy(self: Shape) -> Shape:
+        """Return a shallow copy that keeps the subclass and its parameters.
+
+        The field callable and immutable parameters are shared; the sampled
+        grid cache and any mutable state listed by the subclass are not, so
+        an ``inplace=True`` transform on the copy never touches ``self``.
+        """
+        new = _copy.copy(self)
+        new._grid_cache = {}  # noqa: SLF001
+        new._post_copy()  # noqa: SLF001
+        return new
+
+    def _post_copy(self: Shape) -> None:
+        """Detach mutable state a shallow copy would share (subclass hook)."""
+
+    def _rebuild_field(self: Shape) -> None:
+        """Rebuild ``_field`` / ``_bounds`` / ``_period`` from native parameters."""
+        self._setup_frep_field()  # type: ignore[attr-defined]
+
+    def _scale_params(self: Shape, factors: npt.NDArray[np.float64]) -> bool:
+        """Rescale native size parameters by world ``factors`` (subclass hook).
+
+        Return ``False``, leaving ``self`` untouched, when the scale cannot be
+        expressed in the native parameters.
+        """
+        return False
+
+    def _local_scale_factors(
+        self: Shape,
+        factors: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64] | None:
+        """World scale factors seen along the local axes, or ``None``.
+
+        Defined when the scale is uniform or when ``orientation`` is a
+        signed permutation (the local axes lie on world axes).
+        """
+        if np.all(factors == factors[0]):
+            return factors.copy()
+        perm = _affine.signed_permutation(self._orientation.as_matrix())
+        if perm is None:
+            return None
+        return np.abs(perm).T @ factors
+
+    def _posed(
+        self: Shape,
+        field: Field,
+        bounds: BoundsType | None,
+    ) -> tuple[Field, BoundsType | None]:
+        """Map a local-frame field and bounds to world through center and orientation."""
+        center = np.asarray(self._center, dtype=np.float64)
+        matrix = self._orientation.as_matrix()
+        if not center.any() and np.array_equal(matrix, np.eye(3)):
+            return field, bounds
+        zero = np.zeros(3)
+        return (
+            _affine.transform_field(field, matrix, zero, center),
+            None
+            if bounds is None
+            else _affine.transform_bounds(bounds, matrix, zero, center),
+        )
+
+    def _set_local_frep(
+        self: Shape,
+        field: Field,
+        bounds: BoundsType | None,
+        period: PeriodType | None,
+    ) -> None:
+        """Store a local-frame field and pose it in world (``Tpms``, ``Spinodoid``).
+
+        Classes whose renderers work in a local frame (a cached grid rotated
+        and translated at the end) keep the local field for those renderers
+        and expose the world field, so ``field`` agrees with the meshes and
+        the CAD for any ``center`` and ``orientation``.
+        """
+        self._local_field = field
+        self._local_bounds = bounds
+        self._local_period = period
+        self._pose_local_frep()
+
+    def _pose_local_frep(self: Shape) -> None:
+        """Set ``_field`` / ``_bounds`` / ``_period`` from the local-frame ones."""
+        self._field, self._bounds = self._posed(self._local_field, self._local_bounds)
+        self._period = _affine.rotate_period(self._local_period, self._orientation)
+
     def translate(
-        self: Shape, offset: tuple[float, float, float], *, inplace: bool = False
+        self: Shape,
+        offset: Sequence[float],
+        *,
+        inplace: bool = False,
     ) -> Shape:
         """Translate the shape by *offset* (PyVista convention).
 
-        ``inplace=False`` (default) returns a new :class:`Shape`;
-        ``inplace=True`` mutates ``self``.  The implicit field is composed so
-        ``evaluate(p) == old.evaluate(p - offset)``; ``center`` shifts by
-        *offset*, ``bounds`` updates, ``orientation`` is preserved.
+        ``evaluate(p) == old.evaluate(p - offset)``; ``center`` and
+        ``bounds`` shift by *offset*, ``orientation`` and ``period`` are
+        kept.
+
+        :param offset: ``(dx, dy, dz)`` world-space shift
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new shape of the same class
+        :return: the translated shape
         """
-        f = self.require_field()
-        dx, dy, dz = offset
+        shift = np.asarray(offset, dtype=np.float64).reshape(3)
+        zero = np.zeros(3)
 
-        def new_field(
-            x: npt.NDArray[np.float64],
-            y: npt.NDArray[np.float64],
-            z: npt.NDArray[np.float64],
-            _f: Field = f,
-            _dx: float = dx,
-            _dy: float = dy,
-            _dz: float = dz,
-        ) -> npt.NDArray[np.float64]:
-            return _f(x - _dx, y - _dy, z - _dz)
-
-        new_bounds = None
-        if self._bounds is not None:
-            b = self._bounds
-            new_bounds = (
-                b[0] + dx,
-                b[1] + dx,
-                b[2] + dy,
-                b[3] + dy,
-                b[4] + dz,
-                b[5] + dz,
+        def _update(target: Shape) -> bool:
+            target._center = _affine.transform_point(  # noqa: SLF001
+                target._center,  # noqa: SLF001
+                np.eye(3),
+                zero,
+                shift,
             )
-        cx, cy, cz = self._center
-        new_center = (cx + dx, cy + dy, cz + dz)
-        if inplace:
-            self._field = new_field
-            self._bounds = new_bounds
-            self._center = new_center
-            self._grid_cache.clear()
-            return self
-        return Shape(
-            field=new_field,
-            bounds=new_bounds,
-            center=new_center,
-            orientation=self._orientation,
+            return True
+
+        return self._transform(
+            np.eye(3),
+            zero,
+            shift,
+            rotation=None,
+            period=self._period,
+            update_params=_update,
+            inplace=inplace,
         )
 
     def rotate(
         self: Shape,
-        rotation: Rotation | npt.NDArray[np.float64],
+        rotation: Rotation | npt.ArrayLike,
+        point: Sequence[float] | None = None,
         *,
         inplace: bool = False,
     ) -> Shape:
-        """Rotate the shape by *rotation* about the world origin (PyVista convention).
+        """Rotate the shape about *point* (PyVista convention).
 
-        :param rotation: a SciPy ``Rotation`` (or a 3x3 matrix). Build it via
-            ``Rotation.from_euler`` / ``from_matrix`` / ``from_quat`` / etc.
+        ``center`` rotates about *point*, ``orientation`` composes on the
+        left with *rotation* and ``bounds`` becomes the AABB of the rotated
+        AABB.  A rotation within ``1e-12`` of a signed permutation (quarter
+        turns about the axes) is snapped to it and permutes ``period``;
+        any other rotation sets ``period`` to ``None``.
+
+        :param rotation: a SciPy ``Rotation`` or a proper 3x3 rotation matrix
+        :param point: pivot; defaults to the world origin
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
-            return a new rotated :class:`Shape`.
-
-        The returned shape's ``center`` is the rotated original center,
-        ``orientation`` composes left with the rotation, and ``bounds`` is
-        the AABB of the rotated original AABB.
+            return a new shape of the same class
+        :return: the rotated shape
         """
-        f = self.require_field()
-        rot = (
-            rotation
-            if isinstance(rotation, Rotation)
-            else Rotation.from_matrix(np.asarray(rotation, dtype=np.float64))
-        )
-        rot_matrix = rot.as_matrix()
-        inv_matrix = rot.inv().as_matrix()
-        new_bounds = None
-        if self._bounds is not None:
-            b = self._bounds
-            corners = np.array(
-                list(itertools.product(b[0:2], b[2:4], b[4:6])),
-            )
-            rotated = (rot_matrix @ corners.T).T
-            new_bounds = (
-                float(rotated[:, 0].min()),
-                float(rotated[:, 0].max()),
-                float(rotated[:, 1].min()),
-                float(rotated[:, 1].max()),
-                float(rotated[:, 2].min()),
-                float(rotated[:, 2].max()),
-            )
-        rotated_center = rot_matrix @ np.asarray(self._center, dtype=np.float64)
+        rot = _affine.as_rotation(rotation)
+        matrix = rot.as_matrix()
+        pivot = _affine.as_point(point)
+        zero = np.zeros(3)
 
-        def new_field(
-            x: npt.NDArray[np.float64],
-            y: npt.NDArray[np.float64],
-            z: npt.NDArray[np.float64],
-            _f: Field = f,
-            _m: npt.NDArray[np.float64] = inv_matrix,
-        ) -> npt.NDArray[np.float64]:
-            return _f(*(_m @ np.array([x, y, z])))
+        def _update(target: Shape) -> bool:
+            target._center = _affine.transform_point(  # noqa: SLF001
+                target._center,  # noqa: SLF001
+                matrix,
+                pivot,
+                zero,
+            )
+            target._orientation = rot * target._orientation  # noqa: SLF001
+            return True
 
-        new_center = tuple(rotated_center.tolist())
-        new_orientation = rot * self._orientation
-        if inplace:
-            self._field = new_field
-            self._bounds = new_bounds
-            self._center = new_center
-            self._orientation = new_orientation
-            self._grid_cache.clear()
-            return self
-        return Shape(
-            field=new_field,
-            bounds=new_bounds,
-            center=new_center,
-            orientation=new_orientation,
+        return self._transform(
+            matrix,
+            pivot,
+            zero,
+            rotation=rot,
+            period=_affine.rotate_period(self._period, rot),
+            update_params=_update,
+            inplace=inplace,
         )
 
-    def scale(self: Shape, factor: float, *, inplace: bool = False) -> Shape:
-        """Uniformly scale by *factor* about the world origin (PyVista convention).
+    def scale(
+        self: Shape,
+        factor: float | Sequence[float],
+        point: Sequence[float] | None = None,
+        *,
+        inplace: bool = False,
+    ) -> Shape:
+        """Scale the shape about *point* (PyVista convention).
 
-        ``center`` is scaled by the same factor; ``orientation`` is
-        preserved; ``bounds`` is scaled (with axis-pair swap for negative
-        factors).
+        A uniform factor keeps a signed-distance field exact
+        (``s * f(x / s)``).  A per-axis factor multiplies the composed field
+        by ``min(s)``: the solid is exact but the field is only a lower
+        bound of the distance.  ``period`` scales with the factors.
 
+        :param factor: uniform factor or ``(sx, sy, sz)``, strictly positive
+        :param point: pivot; defaults to the world origin
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
-            return a new scaled :class:`Shape`.
+            return a new shape (of the same class when its native parameters
+            can express the scale, a generic :class:`Shape` otherwise)
+        :return: the scaled shape
+        :raises ValueError: if a factor is not strictly positive, or if
+            ``inplace=True`` and the native parameters cannot express the
+            scale
         """
-        f = self.require_field()
-        new_bounds = None
-        if self._bounds is not None:
-            b = self._bounds
-            new_bounds = (
-                b[0] * factor,
-                b[1] * factor,
-                b[2] * factor,
-                b[3] * factor,
-                b[4] * factor,
-                b[5] * factor,
+        factors = _affine.scale_factors(factor)
+        matrix = np.diag(factors)
+        pivot = _affine.as_point(point)
+        zero = np.zeros(3)
+
+        def _update(target: Shape) -> bool:
+            if not target._scale_params(factors):  # noqa: SLF001
+                return False
+            target._center = _affine.transform_point(  # noqa: SLF001
+                target._center,  # noqa: SLF001
+                matrix,
+                pivot,
+                zero,
             )
-            if factor < 0:
-                new_bounds = (
-                    new_bounds[1],
-                    new_bounds[0],
-                    new_bounds[3],
-                    new_bounds[2],
-                    new_bounds[5],
-                    new_bounds[4],
+            return True
+
+        return self._transform(
+            matrix,
+            pivot,
+            zero,
+            rotation=None,
+            period=_affine.scale_period(self._period, factors),
+            update_params=_update,
+            inplace=inplace,
+            multiplier=float(factors.min()),
+        )
+
+    def _transform(  # noqa: PLR0913
+        self: Shape,
+        matrix: npt.NDArray[np.float64],
+        point: npt.NDArray[np.float64],
+        shift: npt.NDArray[np.float64],
+        *,
+        rotation: Rotation | None,
+        period: PeriodType | None,
+        update_params: Callable[[Shape], bool],
+        inplace: bool,
+        multiplier: float = 1.0,
+    ) -> Shape:
+        """Apply ``x -> matrix (x - point) + point + shift`` (shared worker)."""
+        field = self.require_field()
+        if self._native_params:
+            target = self if inplace else self.copy()
+            if update_params(target):
+                target._rebuild_field()  # noqa: SLF001
+                target._grid_cache.clear()  # noqa: SLF001
+                return target
+            if inplace:
+                err_msg = (
+                    f"{type(self).__name__} cannot express this transform in "
+                    "its native parameters; use inplace=False to get a "
+                    "generic Shape"
                 )
+                raise ValueError(err_msg)
 
-        def new_field(
-            x: npt.NDArray[np.float64],
-            y: npt.NDArray[np.float64],
-            z: npt.NDArray[np.float64],
-            _f: Field = f,
-            _s: float = factor,
-        ) -> npt.NDArray[np.float64]:
-            return _f(x / _s, y / _s, z / _s) * _s
-
-        cx, cy, cz = self._center
-        new_center = (cx * factor, cy * factor, cz * factor)
-        if inplace:
-            self._field = new_field
-            self._bounds = new_bounds
-            self._center = new_center
-            self._grid_cache.clear()
-            return self
-        return Shape(
-            field=new_field,
-            bounds=new_bounds,
-            center=new_center,
-            orientation=self._orientation,
+        new_field = _affine.transform_field(field, matrix, point, shift, multiplier)
+        new_bounds = (
+            None
+            if self._bounds is None
+            else _affine.transform_bounds(self._bounds, matrix, point, shift)
         )
+        new_center = _affine.transform_point(self._center, matrix, point, shift)
+        new_orientation = (
+            self._orientation if rotation is None else rotation * self._orientation
+        )
+        if self._native_params:
+            return Shape(
+                center=new_center,
+                orientation=new_orientation,
+                field=new_field,
+                bounds=new_bounds,
+                period=period,
+            )
+        target = self if inplace else self.copy()
+        target._field = new_field  # noqa: SLF001
+        target._bounds = new_bounds  # noqa: SLF001
+        target._center = new_center  # noqa: SLF001
+        target._orientation = new_orientation  # noqa: SLF001
+        target._period = period  # noqa: SLF001
+        target._grid_cache.clear()  # noqa: SLF001
+        return target

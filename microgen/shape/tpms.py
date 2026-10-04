@@ -477,18 +477,20 @@ class Tpms(Shape):
         raw_field: Field,
         bounds: tuple[float, float, float, float, float, float],
     ) -> None:
-        """Normalize a raw field to SDF and set ``_func`` / ``_bounds`` / ``_period``."""
+        """Normalize a raw field to SDF and set the local and world fields."""
         from .implicit_ops import from_field, normalize_to_sdf
 
         self._raw_field_func = raw_field
         sdf_shape = normalize_to_sdf(from_field(raw_field))
-        self._field = sdf_shape.field
-        self._bounds = bounds
         # The TPMS field is intrinsically periodic on ``cell_size`` along each
         # axis (the 2π/cell_size wavenumbers in ``_setup_frep_field`` make
         # this a data-structure invariant, not a flag).
         cs = np.asarray(self.cell_size, dtype=float)
-        self._period = (float(cs[0]), float(cs[1]), float(cs[2]))
+        self._set_local_frep(
+            sdf_shape.field,
+            bounds,
+            (float(cs[0]), float(cs[1]), float(cs[2])),
+        )
 
     def _setup_frep_field(self: Tpms) -> None:
         """Build the F-rep implicit field (SDF-normalized) for this TPMS."""
@@ -514,8 +516,54 @@ class Tpms(Shape):
 
     @property
     def raw_field(self: Tpms) -> Field:
-        """The raw (non-SDF-normalized) TPMS field callable."""
+        """The raw (non-SDF-normalized) TPMS field callable, in the local frame."""
         return self._raw_field_func
+
+    # -- Transform hooks (see :meth:`Shape.translate`) ----------------------
+
+    _native_params = True
+
+    def _rebuild_field(self: Tpms) -> None:
+        """Re-pose the local field; the cell grid lives in the local frame."""
+        self._pose_local_frep()
+
+    def _post_copy(self: Tpms) -> None:
+        """Detach ``grid``: the ``offset`` setter writes into it in place."""
+        self.grid = self.grid.copy()
+
+    def _scale_params(self: Tpms, factors: npt.NDArray[np.float64]) -> bool:
+        """Rescale ``cell_size`` and ``phase_shift`` (plain :class:`Tpms` only).
+
+        The raw field satisfies ``F(k (x/s + phi)) = F(k/s (x + s phi))``, so
+        the offset, its limits and the density are unchanged.  Not
+        expressible for the parametric subclasses, the infills, or an
+        offset given as a callable or grading (defined in the old frame).
+        """
+        if type(self) is not Tpms or self._offset_func is not None:
+            return False
+        local = self._local_scale_factors(factors)
+        if local is None:
+            return False
+        self.cell_size = self.cell_size * local
+        self.phase_shift = tuple(
+            float(p) * float(s) for p, s in zip(self.phase_shift, local, strict=True)
+        )
+        self._compute_tpms_field()
+        self._grid_sheet = None
+        self._grid_upper_skeletal = None
+        self._grid_lower_skeletal = None
+        self._surface = None
+        self._setup_frep_field()
+        if self._offset is not None:
+            self.offset = self._offset  # setter: rewrites the grid offsets
+        return True
+
+    def _posed_shape(self: Tpms, local: Shape) -> Shape:
+        """Return a local-frame F-rep part placed at ``center`` / ``orientation``."""
+        from .implicit_ops import from_field
+
+        field, bounds = self._posed(local.require_field(), local.bounds)
+        return from_field(field=field, bounds=bounds)
 
     def as_sheet(self: Tpms, thickness: float | None = None) -> Shape:
         """
@@ -524,8 +572,13 @@ class Tpms(Shape):
         Uses the SDF-normalized field, so *thickness* is in physical units.
         If *thickness* is ``None``, uses ``self.offset`` (which may be a
         scalar, an array sampled on ``self.grid``, or a callable in which
-        case the callable form is used directly).
+        case the callable form is used directly).  The part is placed at
+        ``center`` / ``orientation``, like :attr:`field`.
         """
+        return self._posed_shape(self._local_sheet(thickness))
+
+    def _local_sheet(self: Tpms, thickness: float | None = None) -> Shape:
+        """Sheet F-rep in the local frame (see :meth:`as_sheet`)."""
         from .implicit_ops import shell
         from .shape import Shape
 
@@ -535,7 +588,7 @@ class Tpms(Shape):
             t = self._offset_func
         else:
             t = self._offset
-        return shell(Shape(field=self._field, bounds=self._bounds), t)
+        return shell(Shape(field=self._local_field, bounds=self._local_bounds), t)
 
     def _half_offset_field(self: Tpms) -> Field | float:
         """
@@ -567,9 +620,13 @@ class Tpms(Shape):
         skeletal), matching the historical CadQuery behaviour and the VTK
         grid-clip path.
         """
+        return self._posed_shape(self._local_upper_skeletal())
+
+    def _local_upper_skeletal(self: Tpms) -> Shape:
+        """Upper skeletal F-rep in the local frame."""
         from .implicit_ops import from_field
 
-        f = self._field
+        f = self._local_field
         h = self._half_offset_field()
         if callable(h):
 
@@ -581,13 +638,17 @@ class Tpms(Shape):
             def _upper(x, y, z, _f=f, _h=h):
                 return -_f(x, y, z) + _h
 
-        return from_field(field=_upper, bounds=self._bounds)
+        return from_field(field=_upper, bounds=self._local_bounds)
 
     def as_lower_skeletal(self: Tpms) -> Shape:
         """F-rep Shape for the *lower* skeletal: ``{p : f(p) < -offset/2}``."""
+        return self._posed_shape(self._local_lower_skeletal())
+
+    def _local_lower_skeletal(self: Tpms) -> Shape:
+        """Lower skeletal F-rep in the local frame."""
         from .implicit_ops import from_field
 
-        f = self._field
+        f = self._local_field
         h = self._half_offset_field()
         if callable(h):
 
@@ -599,7 +660,7 @@ class Tpms(Shape):
             def _lower(x, y, z, _f=f, _h=h):
                 return _f(x, y, z) + _h
 
-        return from_field(field=_lower, bounds=self._bounds)
+        return from_field(field=_lower, bounds=self._local_bounds)
 
     def as_surface(self: Tpms) -> Shape:
         """
@@ -630,19 +691,23 @@ class Tpms(Shape):
         """
         from .implicit_ops import intersection
 
-        return intersection(self.as_sheet(), self._cell_box())
+        return self._posed_shape(intersection(self._local_sheet(), self._cell_box()))
 
     def _clipped_upper_skeletal(self: Tpms) -> Shape:
         """Clip the upper skeletal F-rep to the cell box (MC-closed)."""
         from .implicit_ops import intersection
 
-        return intersection(self.as_upper_skeletal(), self._cell_box())
+        return self._posed_shape(
+            intersection(self._local_upper_skeletal(), self._cell_box())
+        )
 
     def _clipped_lower_skeletal(self: Tpms) -> Shape:
         """Clip the lower skeletal F-rep to the cell box (MC-closed)."""
         from .implicit_ops import intersection
 
-        return intersection(self.as_lower_skeletal(), self._cell_box())
+        return self._posed_shape(
+            intersection(self._local_lower_skeletal(), self._cell_box())
+        )
 
     def _update_grid_offset(self: Tpms) -> None:
         self.grid["lower_surface"] = self.grid["surface"] + 0.5 * self.offset
@@ -703,7 +768,7 @@ class Tpms(Shape):
             mesh.triangulate(inplace=True)
         pts = np.asarray(mesh.points, dtype=np.float64)
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
-        return mesh_to_periodic_shell(pts, tris, self._bounds)
+        return mesh_to_periodic_shell(pts, tris, self._local_bounds)
 
     def _mesh_to_shell(self: Tpms, mesh: pv.PolyData) -> CadShape:
         """Convert a triangulated PyVista mesh to an OCCT ``CadShape``.
@@ -807,7 +872,7 @@ class Tpms(Shape):
         :meth:`_envelope_mesh_via_cell_box`.
         """
         return (
-            pv.Box(bounds=self._bounds, level=0, quads=False)
+            pv.Box(bounds=self._local_bounds, level=0, quads=False)
             .extract_surface(algorithm=None)
             .clean()
             .triangulate()
@@ -822,7 +887,7 @@ class Tpms(Shape):
         """
         envelope_shape = self._cell_box()
         return envelope_shape.generate_surface_mesh(
-            bounds=envelope_shape.bounds or self._bounds,
+            bounds=envelope_shape.bounds or self._local_bounds,
             resolution=self._isotropic_resolution(),
         )
 
@@ -1821,8 +1886,7 @@ class Sweep(Tpms):
         # Like Conformal, the field is built around discrete data — skip
         # autograd SDF normalisation (it would FD-fall-back and be slow).
         self._raw_field_func = _raw_field
-        self._field = _raw_field
-        self._bounds = bounds
+        self._set_local_frep(_raw_field, bounds, None)
 
     # -- Cell-box (tube SDF) -----------------------------------------------
 
@@ -1831,8 +1895,8 @@ class Sweep(Tpms):
         from .implicit_ops import from_field
 
         bounds: BoundsType = (
-            self._bounds
-            if self._bounds is not None
+            self._local_bounds
+            if self._local_bounds is not None
             else (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         )
 

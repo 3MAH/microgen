@@ -54,7 +54,7 @@ class Box(Shape):
         self._setup_frep_field()
 
     def _setup_frep_field(self: Box) -> None:
-        """Bake the box SDF and AABB onto ``_func`` / ``_bounds``."""
+        """Bake the box SDF and AABB onto ``_field`` / ``_bounds``."""
         cx, cy, cz = (float(c) for c in self.center)
         hx, hy, hz = (0.5 * float(d) for d in self.dim)
         rot_inv = self.orientation.inv().as_matrix()
@@ -96,6 +96,16 @@ class Box(Shape):
             cz + float(rotated[:, 2].min()) - margin,
             cz + float(rotated[:, 2].max()) + margin,
         )
+
+    _native_params = True
+
+    def _scale_params(self: Box, factors: npt.NDArray[np.float64]) -> bool:
+        """Rescale ``dim`` when the box axes lie on world axes."""
+        local = self._local_scale_factors(factors)
+        if local is None:
+            return False
+        self.dim = tuple(float(d) * float(s) for d, s in zip(self.dim, local))
+        return True
 
     def generate_cad(self: Box, **_: KwargsGenerateType) -> CadShape:
         """Generate a box CAD shape (OCCT).  Requires the ``[cad]`` extra."""
