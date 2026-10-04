@@ -53,7 +53,7 @@ print(f"Pieces: {len(pieces)}  (gyroid 'sheet' part is multiply connected)")
 for i, piece in enumerate(pieces[:3]):
     print(f"  piece[{i}]: volume={piece.volume:.4f}, com={piece.com}")
 
-# %% Immutable transforms return new Phase objects.
+# %% Transforms return a new Phase by default (inplace=False).
 moved = phase.translate((1.0, 0.0, 0.0))
 print(f"\nTranslated phase COM: {moved.center_of_mass}  (shifted by +1 in x)")
 

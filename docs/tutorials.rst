@@ -263,6 +263,58 @@ Create TPMS on a cylindrical coordinate system:
 3D Operations
 -------------
 
+Transforms
+^^^^^^^^^^
+
+Shapes and phases share the PyVista transform convention:
+``translate(offset)``, ``rotate(rotation, point=None)`` and
+``scale(factor, point=None)``.  ``inplace=False`` (the default) returns a new
+object, ``inplace=True`` mutates the object; both return it.  ``rotate`` and
+``scale`` pivot on ``point``, the world origin when it is omitted.  A rotation
+is a SciPy :class:`~scipy.spatial.transform.Rotation` or a 3x3 rotation
+matrix, and scale factors must be strictly positive.
+
+A shape keeps its class when its native parameters can express the
+transform: a uniformly scaled sphere is still a
+:class:`~microgen.shape.sphere.Sphere` with a new ``radius``, and a TPMS
+scaled by 2 has twice its ``cell_size`` and the same offset.  Otherwise the
+result is a generic :class:`~microgen.shape.shape.Shape` carrying the
+transformed field, and the in-place form raises ``ValueError``.
+
+.. jupyter-execute::
+
+   import microgen
+   from scipy.spatial.transform import Rotation
+
+   sphere = microgen.Sphere(radius=0.5, center=(1.0, 0.0, 0.0))
+   bigger = sphere.scale(2.0, point=sphere.center)
+   print(type(bigger).__name__, bigger.radius, bigger.center)
+
+   stretched = sphere.scale((1.0, 2.0, 1.0))  # no native form
+   print(type(stretched).__name__)
+
+   gyroid = microgen.Tpms(
+       surface_function=microgen.surface_functions.gyroid,
+       offset=0.3,
+       resolution=15,
+   )
+   turned = gyroid.rotate(Rotation.from_euler("z", 90, degrees=True))
+   print(turned.period)  # quarter turns keep the period, permuted
+
+   gyroid.scale(2.0).generate_surface_mesh().plot(color='white')
+
+On a :class:`~microgen.Phase`, every representation (field, CAD, surface
+mesh, cached grid) moves together.  ``scale`` multiplies ``iso`` by the same
+factor as the field, so the solid ``{field < iso}`` is exactly the scaled
+solid, and ``period`` follows the transform.
+
+.. jupyter-execute::
+
+   phase = microgen.Phase.from_shape(gyroid, resolution=30)
+   moved = phase.translate((1.0, 0.0, 0.0))
+   doubled = phase.scale(2.0, point=(0.0, 0.0, 0.0))
+   print(moved.period, doubled.period)
+
 Repeat
 ^^^^^^
 

@@ -57,7 +57,7 @@ class Capsule(Shape):
         self._setup_frep_field()
 
     def _setup_frep_field(self: Capsule) -> None:
-        """Bake the capsule SDF and AABB onto ``_func`` / ``_bounds``."""
+        """Bake the capsule SDF and AABB onto ``_field`` / ``_bounds``."""
         cx, cy, cz = (float(c) for c in self.center)
         h = float(self.height)
         r = float(self.radius)
@@ -95,6 +95,17 @@ class Capsule(Shape):
             cz + float(rotated[:, 2].min()) - margin,
             cz + float(rotated[:, 2].max()) + margin,
         )
+
+    _native_params = True
+
+    def _scale_params(self: Capsule, factors: npt.NDArray[np.float64]) -> bool:
+        """Rescale ``height`` and ``radius`` when the cross-section stays circular."""
+        local = self._local_scale_factors(factors)
+        if local is None or local[1] != local[2]:
+            return False
+        self.height = float(self.height) * float(local[0])
+        self.radius = float(self.radius) * float(local[1])
+        return True
 
     def generate_cad(self: Capsule, **_: KwargsGenerateType) -> CadShape:
         """Generate a capsule CAD shape (OCCT).  Requires the ``[cad]`` extra."""

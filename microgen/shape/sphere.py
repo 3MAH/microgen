@@ -49,7 +49,7 @@ class Sphere(Shape):
         self._setup_frep_field()
 
     def _setup_frep_field(self: Sphere) -> None:
-        """Bake the sphere SDF and AABB onto ``_func`` / ``_bounds``."""
+        """Bake the sphere SDF and AABB onto ``_field`` / ``_bounds``."""
         cx, cy, cz = (float(c) for c in self.center)
         r = float(self.radius)
         margin = r * 1.1
@@ -70,6 +70,15 @@ class Sphere(Shape):
             cz - margin,
             cz + margin,
         )
+
+    _native_params = True
+
+    def _scale_params(self: Sphere, factors: npt.NDArray[np.float64]) -> bool:
+        """Uniform scale multiplies ``radius``; a per-axis one is an ellipsoid."""
+        if not np.all(factors == factors[0]):
+            return False
+        self.radius = float(self.radius) * float(factors[0])
+        return True
 
     def generate_cad(self: Sphere, **_: KwargsGenerateType) -> CadShape:
         """Generate a sphere CAD shape (OCCT).  Requires the ``[cad]`` extra."""
