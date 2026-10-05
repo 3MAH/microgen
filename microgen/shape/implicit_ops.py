@@ -5,7 +5,7 @@ Implicit Operations (:mod:`microgen.shape.implicit_ops`)
 ==========================================================
 
 Module-level boolean, blending, and utility operations for shapes
-that carry an implicit scalar field (``_func``).  All functions accept
+that carry an implicit scalar field (:attr:`~microgen.shape.shape.Shape.field`).  All functions accept
 and return :class:`~microgen.shape.shape.Shape` instances.
 """
 

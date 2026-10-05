@@ -97,15 +97,20 @@ class Box(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    _native_params = True
+    _rebuild_field = _setup_frep_field
 
-    def _scale_params(self: Box, factors: npt.NDArray[np.float64]) -> bool:
+    def _scaled_params(
+        self: Box, factors: npt.NDArray[np.float64]
+    ) -> dict[str, tuple[float, ...]] | None:
         """Rescale ``dim`` when the box axes lie on world axes."""
         local = self._local_scale_factors(factors)
         if local is None:
-            return False
-        self.dim = tuple(float(d) * float(s) for d, s in zip(self.dim, local))
-        return True
+            return None
+        return {
+            "dim": tuple(
+                float(d) * float(s) for d, s in zip(self.dim, local, strict=True)
+            )
+        }
 
     def generate_cad(self: Box, **_: KwargsGenerateType) -> CadShape:
         """Generate a box CAD shape (OCCT).  Requires the ``[cad]`` extra."""

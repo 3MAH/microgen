@@ -69,7 +69,7 @@ def test_spinodoid_func_evaluable_and_sign_matches_solid() -> None:
 
 
 def test_spinodoid_field_is_bit_exact_periodic() -> None:
-    """`_func(x + L) == _func(x)` to numerical noise."""
+    """`field(x + L) == field(x)` to numerical noise."""
     sp = Spinodoid(k0=15.0, bandwidth=3.0, resolution=16, density=0.5, seed=0)
     Lx, Ly, Lz = sp.cell_size.tolist()
     rng = np.random.default_rng(1)

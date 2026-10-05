@@ -221,7 +221,7 @@ class TestSmoothBooleans:
 class TestTransforms:
     """Test implicit field transform operations."""
 
-    def test_translated(self):
+    def test_translate(self):
         s = _make_sphere()
         st = s.translate((2, 0, 0))
         x, y, z = np.array([2.0]), np.array([0.0]), np.array([0.0])
@@ -230,7 +230,7 @@ class TestTransforms:
         x0 = np.array([0.0])
         assert st.evaluate(x0, y, z)[0] > 0
 
-    def test_rotated_90(self):
+    def test_rotate_90(self):
         # Elongated box along x, rotated 90° around z -> elongated along y
         func, bounds = _box_field(hx=1.0, hy=0.1, hz=0.1)
         box = Shape(field=func, bounds=bounds)
@@ -244,20 +244,20 @@ class TestTransforms:
             rotated.evaluate(np.array([0.5]), np.array([0.0]), np.array([0.0]))[0] > 0
         )
 
-    def test_scaled(self):
+    def test_scale(self):
         s = _make_sphere()
         ss = s.scale(2.0)
         x, y, z = np.array([1.5]), np.array([0.0]), np.array([0.0])
         assert s.evaluate(x, y, z)[0] > 0
         assert ss.evaluate(x, y, z)[0] < 0
 
-    def test_translated_bounds(self):
+    def test_translate_bounds(self):
         s = _make_sphere()
         st = s.translate((5, 0, 0))
         assert st.bounds is not None
         assert st.bounds[0] > 3.0
 
-    def test_scaled_bounds(self):
+    def test_scale_bounds(self):
         s = _make_sphere()
         ss = s.scale(3.0)
         assert ss.bounds is not None
@@ -602,3 +602,109 @@ class TestTransformContract:
             posed.evaluate(*world.T), local.evaluate(*_PTS), atol=1e-12
         )
         assert posed.period is None
+
+    @pytest.mark.parametrize(
+        "make",
+        [
+            lambda m: m.Box(dim=(1.0, 0.6, 0.4), orientation=(90, 0, 0)),
+            lambda m: m.Cylinder(height=1.0, radius=0.3, orientation=(90, 0, 0)),
+            lambda m: m.Capsule(height=1.0, radius=0.3, orientation=(90, 0, 0)),
+            lambda m: m.Ellipsoid(radii=(1.0, 0.5, 0.25), orientation=(30, 20, 10)),
+        ],
+    )
+    @pytest.mark.parametrize("factor", [2.0, (2.0, 1.0, 1.0), (1.0, 2.0, 3.0)])
+    def test_native_scale_matches_generic_solid(self, make, factor):
+        """Native or generic, a scaled primitive is the scaled solid."""
+        import microgen
+
+        shape = make(microgen)
+        generic = Shape(field=shape.field, bounds=shape.bounds).scale(factor)
+        out = shape.scale(factor)
+        f_out = out.evaluate(*_PTS)
+        f_generic = generic.evaluate(*_PTS)
+        keep = np.abs(f_generic) > 1e-6
+        assert np.array_equal(f_out[keep] < 0, f_generic[keep] < 0)
+
+    def test_capsule_axial_scale_is_not_native(self):
+        from microgen import Capsule
+
+        capsule = Capsule(height=2.0, radius=1.0)
+        assert type(capsule.scale((2.0, 1.0, 1.0))) is Shape
+        assert type(capsule.scale(2.0)) is Capsule
+        with pytest.raises(ValueError, match="inplace=False"):
+            capsule.scale((2.0, 1.0, 1.0), inplace=True)
+
+    def test_rotate_rejects_non_orthogonal_matrix(self):
+        s = _make_sphere()
+        with pytest.raises(ValueError, match="orthogonal"):
+            s.rotate(2.0 * np.eye(3))
+
+    def test_quarter_turn_matrix_is_exact(self):
+        from microgen.shape import _affine
+
+        affine = _affine.rotation_about(_ROT_Z90)
+        np.testing.assert_array_equal(affine.matrix, [[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+
+    def test_tpms_scale_scales_frep_thickness(self):
+        """``tpms.scale(s).as_sheet()`` is the scaled ``as_sheet()``."""
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3)
+        native = tpms.scale(2.0).as_sheet()
+        generic = tpms.as_sheet().scale(2.0)
+        np.testing.assert_allclose(
+            native.evaluate(*_PTS), generic.evaluate(*_PTS), atol=1e-10
+        )
+
+    def test_tpms_surface_mesh_follows_translate(self):
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3).translate((5.0, 0.0, 0.0))
+        for part in ("surface", "sheet"):
+            mesh = tpms.generate_surface_mesh(type_part=part)
+            np.testing.assert_allclose(mesh.center, (5.0, 0.0, 0.0), atol=0.05)
+
+    def test_tpms_inplace_scale_and_copy_independence(self):
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3)
+        before = np.asarray(tpms.grid["lower_surface"]).copy()
+        twin = tpms.copy()
+        twin.offset = 0.5
+        np.testing.assert_array_equal(tpms.grid["lower_surface"], before)
+        assert tpms.scale(2.0, inplace=True) is tpms
+        np.testing.assert_array_equal(tpms.cell_size, (2.0, 2.0, 2.0))
+
+    def test_curvilinear_tpms_has_no_cartesian_period(self):
+        from microgen import CylindricalTpms, Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        cyl = CylindricalTpms(radius=1.0, surface_function=gyroid, offset=0.3)
+        assert cyl.period is None
+        assert type(cyl.scale(2.0)) is Shape
+        assert Tpms(surface_function=gyroid, offset=0.3).period == (1.0, 1.0, 1.0)
+
+    def test_spinodoid_rigid_transforms_keep_class(self):
+        from microgen import Spinodoid
+
+        spin = Spinodoid(density=0.5, resolution=16, seed=0)
+        moved = spin.translate((1.0, 0.0, 0.0))
+        assert type(moved) is Spinodoid
+        x, y, z = _PTS
+        np.testing.assert_allclose(
+            moved.evaluate(x + 1.0, y, z), spin.evaluate(x, y, z)
+        )
+        assert spin.rotate(_ROT_Z90).period == (1.0, 1.0, 1.0)
+        assert type(spin.scale(2.0)) is Shape
+        with pytest.raises(ValueError, match="inplace=False"):
+            spin.scale(2.0, inplace=True)
+
+    def test_shape_without_field_raises(self):
+        from microgen import Polyhedron
+
+        poly = Polyhedron()
+        with pytest.raises(ValueError, match="No implicit scalar field"):
+            poly.translate((1.0, 0.0, 0.0))

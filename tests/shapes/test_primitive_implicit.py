@@ -1,7 +1,7 @@
 """Tests for the implicit (F-rep) field set on primitive shape classes.
 
 Each primitive (`Box`, `Sphere`, `Cylinder`, `Capsule`, `Ellipsoid`) sets
-``_func`` and ``_bounds`` in ``__init__``. These tests verify the SDF sign
+``_field`` and ``_bounds`` in ``__init__``. These tests verify the SDF sign
 inside / on / outside, AABB validity, and composability via the
 operators.
 """

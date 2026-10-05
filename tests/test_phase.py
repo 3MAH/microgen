@@ -2,9 +2,10 @@
 
 Phase is now field-first (implicit-first) with CAD as an optional view.
 Construction goes through ``Phase.from_cad`` for CAD-backed phases and
-``Phase.from_shape`` for field-backed ones.  Transforms are immutable —
-``translated`` / ``scaled`` / ``tiled`` return new :class:`Phase`
-instances rather than mutating in place.
+``Phase.from_shape`` for field-backed ones.  Transforms follow the
+PyVista convention: ``translate`` / ``rotate`` / ``scale`` return a new
+:class:`Phase` by default (``inplace=False``) and mutate it with
+``inplace=True``; ``tile`` always returns a new one.
 """
 
 import numpy as np

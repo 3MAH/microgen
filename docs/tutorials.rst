@@ -271,13 +271,15 @@ Shapes and phases share the PyVista transform convention:
 ``scale(factor, point=None)``.  ``inplace=False`` (the default) returns a new
 object, ``inplace=True`` mutates the object; both return it.  ``rotate`` and
 ``scale`` pivot on ``point``, the world origin when it is omitted.  A rotation
-is a SciPy :class:`~scipy.spatial.transform.Rotation` or a 3x3 rotation
+is a SciPy :class:`~scipy.spatial.transform.Rotation` or an orthogonal 3x3
 matrix, and scale factors must be strictly positive.
 
 A shape keeps its class when its native parameters can express the
 transform: a uniformly scaled sphere is still a
 :class:`~microgen.shape.sphere.Sphere` with a new ``radius``, and a TPMS
-scaled by 2 has twice its ``cell_size`` and the same offset.  Otherwise the
+scaled by 2 has twice its ``cell_size``: its ``offset`` (a level of the raw
+TPMS field) and its density are unchanged, while the thickness of the F-rep
+parts (:meth:`~microgen.shape.tpms.Tpms.as_sheet`) doubles.  Otherwise the
 result is a generic :class:`~microgen.shape.shape.Shape` carrying the
 transformed field, and the in-place form raises ``ValueError``.
 
@@ -303,10 +305,12 @@ transformed field, and the in-place form raises ``ValueError``.
 
    gyroid.scale(2.0).generate_surface_mesh().plot(color='white')
 
-On a :class:`~microgen.Phase`, every representation (field, CAD, surface
-mesh, cached grid) moves together.  ``scale`` multiplies ``iso`` by the same
-factor as the field, so the solid ``{field < iso}`` is exactly the scaled
-solid, and ``period`` follows the transform.
+On a :class:`~microgen.phase.Phase`, every representation (field, CAD,
+surface mesh, cached grid) moves together.  ``scale`` multiplies ``iso`` by
+the same factor as the field, so the solid ``{field < iso}`` is exactly the
+scaled solid, and ``period`` follows the transform.  A rotation that is not a
+quarter turn clips the field to the rotated original bounds, so a periodic
+field does not bring in material from outside the rotated domain.
 
 .. jupyter-execute::
 
