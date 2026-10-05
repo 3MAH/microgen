@@ -7,7 +7,7 @@ End-to-end demonstration of the microgen 2.0 implicit-first pipeline.
 A :class:`microgen.Tpms` exposes a scalar SDF directly; wrapping it in a
 :class:`microgen.Phase` via :meth:`Phase.from_shape` gives access to
 :meth:`phase.surface_mesh`, :attr:`phase.pieces`, :attr:`phase.center_of_mass`,
-and the immutable transforms :meth:`phase.translated` / :meth:`phase.scaled`,
+and the transforms :meth:`Phase.translate` / :meth:`Phase.scale`,
 none of which require the optional ``[cad]`` extra (no OCCT, no STEP, no gmsh).
 
 Run with:

@@ -87,18 +87,25 @@ class Ellipsoid(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    _native_params = True
+    _rebuild_field = _setup_frep_field
 
-    def _scale_params(self: Ellipsoid, factors: npt.NDArray[np.float64]) -> bool:
-        """Rescale ``radii``; any positive scale maps an ellipsoid to an ellipsoid.
+    def _scaled_params(
+        self: Ellipsoid, factors: npt.NDArray[np.float64]
+    ) -> dict[str, object]:
+        r"""Rescale ``radii``; any positive scale maps an ellipsoid to an ellipsoid.
 
         In general the new semi-axes and orientation come from the SVD
-        ``diag(factors) O diag(radii) = U diag(radii') V^T``.
+        :math:`\mathrm{diag}(s)\, O\, \mathrm{diag}(r) = U \Sigma V^\top`:
+        ``radii`` become the singular values (in decreasing order) and
+        ``orientation`` becomes :math:`U`.
         """
         local = self._local_scale_factors(factors)
         if local is not None:
-            self.radii = tuple(float(r) * float(s) for r, s in zip(self.radii, local))
-            return True
+            return {
+                "radii": tuple(
+                    float(r) * float(s) for r, s in zip(self.radii, local, strict=True)
+                )
+            }
         linear = (
             np.diag(factors)
             @ self.orientation.as_matrix()
@@ -107,9 +114,10 @@ class Ellipsoid(Shape):
         u, radii, _ = np.linalg.svd(linear)
         if np.linalg.det(u) < 0.0:
             u[:, 2] *= -1.0
-        self.radii = (float(radii[0]), float(radii[1]), float(radii[2]))
-        self._orientation = Rotation.from_matrix(u)
-        return True
+        return {
+            "radii": (float(radii[0]), float(radii[1]), float(radii[2])),
+            "_orientation": Rotation.from_matrix(u),
+        }
 
     def generate_cad(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
         """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""

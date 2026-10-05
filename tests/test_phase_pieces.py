@@ -68,8 +68,8 @@ def test_pieces_cached() -> None:
     assert phase.pieces is phase.pieces
 
 
-def test_phase_translated_preserves_period_and_invalidates_cache() -> None:
-    """``translated()`` returns a new Phase — pieces and COM are recomputed."""
+def test_phase_translate_preserves_period_and_invalidates_cache() -> None:
+    """``translate()`` returns a new Phase — pieces and COM are recomputed."""
     a = Sphere(center=(-0.6, 0.0, 0.0), radius=0.2)
     b = Sphere(center=(0.6, 0.0, 0.0), radius=0.2)
     merged = union(a, b)

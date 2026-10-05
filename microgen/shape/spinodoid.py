@@ -27,7 +27,6 @@ import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 
-from ..operations import rotate
 from ._frep_grf import _FrepGRF, _normalize_cell_size, compute_threshold_for_porosity
 from .periodic_shell import mesh_to_periodic_shell
 from .shape import Shape
@@ -192,14 +191,8 @@ class Spinodoid(Shape):
             (float(cs[0]), float(cs[1]), float(cs[2])),
         )
 
-    # Transform hooks (see :meth:`Shape.translate`): rigid transforms re-pose
-    # the local field; scaling is not expressed natively (the GRF modes
-    # would have to be redrawn), so it returns a generic Shape.
-    _native_params = True
-
-    def _rebuild_field(self: Spinodoid) -> None:
-        """Re-pose the local field; the GRF modes live in the local frame."""
-        self._pose_local_frep()
+    # Rigid transforms re-pose the local field; a scale gives a generic Shape.
+    _rebuild_field = Shape._pose_local_frep
 
     @cached_property
     def grid(self: Spinodoid) -> pv.StructuredGrid:
@@ -230,8 +223,7 @@ class Spinodoid(Shape):
     ) -> pv.UnstructuredGrid:
         """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
         grid_vol = self.grid_solid.copy()
-        grid_vol = rotate(grid_vol, center=(0, 0, 0), rotation=self.orientation)
-        return grid_vol.translate(xyz=self.center)
+        return self._to_world(grid_vol)
 
     def generate_surface_mesh(
         self: Spinodoid,
@@ -253,8 +245,7 @@ class Spinodoid(Shape):
                 resolution=resolution if resolution is not None else 50,
             )
         polydata = self.surface.copy()
-        polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
-        return polydata.translate(xyz=self.center)
+        return self._to_world(polydata)
 
     def generate_cad(
         self: Spinodoid,
@@ -276,8 +267,7 @@ class Spinodoid(Shape):
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
 
         shape = _try_make_solid(mesh_to_periodic_shell(pts, tris, self._local_bounds))
-        shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
-        shape = shape.translate(self.center)
+        shape = self._to_world(shape)
         # Fallback for OCCT Volume() on solids it flags invalid (rigid transforms preserve volume).
         with contextlib.suppress(AttributeError, ValueError):
             shape._mesh_volume = float(abs(self.grid_solid.volume))

@@ -144,9 +144,9 @@ def make_plane_face(
 def transform_geometry(shape: CadShape, matrix: npt.NDArray[np.float64]) -> CadShape:
     """Apply a 3x4 affine matrix (linear + translation).
 
-    A similarity (rotation times a positive uniform scale, plus translation)
-    goes through ``BRepBuilderAPI_Transform``, which keeps analytic surfaces
-    exact.  Any other linear part goes through ``BRepBuilderAPI_GTransform``,
+    A similarity (a rotation or a reflection times a uniform scale, plus a
+    translation) goes through ``BRepBuilderAPI_Transform``, which keeps
+    analytic surfaces exact.  Any other linear part goes through ``BRepBuilderAPI_GTransform``,
     which converts the surfaces to B-splines.
 
     :param matrix: ``(3, 4)`` array; rows are ``[a b c tx; d e f ty; g h i tz]``.

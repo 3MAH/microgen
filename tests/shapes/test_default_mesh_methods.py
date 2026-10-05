@@ -143,15 +143,15 @@ def test_orientation_is_read_only_on_shape():
 # ---------------------------------------------------------------------------
 
 
-def test_translated_propagates_center():
-    """``translated`` shifts the reported center by the offset."""
+def test_translate_propagates_center():
+    """``translate`` shifts the reported center by the offset."""
     s = Sphere(radius=1.0, center=(1.0, 2.0, 3.0))
     shifted = s.translate((4.0, -1.0, 2.0))
     assert tuple(shifted.center) == pytest.approx((5.0, 1.0, 5.0))
 
 
-def test_translated_preserves_orientation():
-    """``translated`` does not touch orientation."""
+def test_translate_preserves_orientation():
+    """``translate`` does not touch orientation."""
     s = Sphere(radius=1.0, orientation=Rotation.from_euler("z", 30, degrees=True))
     shifted = s.translate((1.0, 0.0, 0.0))
     np.testing.assert_allclose(
@@ -160,16 +160,16 @@ def test_translated_preserves_orientation():
     )
 
 
-def test_rotated_propagates_center_and_orientation():
-    """``rotated`` rotates the reported center about the world origin."""
+def test_rotate_propagates_center_and_orientation():
+    """``rotate`` rotates the reported center about the world origin."""
     s = Sphere(radius=1.0, center=(1.0, 0.0, 0.0))
     rotated = s.rotate(Rotation.from_euler("xyz", (0.0, 0.0, 90.0), degrees=True))
     # Rotation of (1, 0, 0) by 90° about z lands at (0, 1, 0).
     np.testing.assert_allclose(rotated.center, (0.0, 1.0, 0.0), atol=1e-9)
 
 
-def test_scaled_propagates_center():
-    """``scaled`` scales the reported center by the same factor."""
+def test_scale_propagates_center():
+    """``scale`` scales the reported center by the same factor."""
     s = Sphere(radius=1.0, center=(2.0, 0.0, 0.0))
     scaled = s.scale(3.0)
     assert tuple(scaled.center) == pytest.approx((6.0, 0.0, 0.0))
@@ -181,7 +181,7 @@ def test_scaled_propagates_center():
 
 
 def test_volume_mesh_without_func_raises():
-    """Bare ``Shape()`` (no ``_func``) raises a useful error from volume_mesh."""
+    """Bare ``Shape()`` (no field) raises a useful error from volume_mesh."""
     s = Shape()
     with pytest.raises(NotImplementedError, match="No implicit field"):
         s.generate_volume_mesh(bounds=(0, 1, 0, 1, 0, 1))

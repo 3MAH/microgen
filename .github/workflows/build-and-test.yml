@@ -48,7 +48,7 @@ jobs:
         run: |
           uv run python -c "import importlib.util, sys; sys.exit(1 if importlib.util.find_spec('OCP') is not None else 0)"
       - run: |
-          uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py -q
+          uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py tests/test_phase_transforms.py -q
 
   # --- CAD suite: full test run with OCP installed via the [cad] extra. ---
   # The [cad] extra pulls cadquery-ocp-novtk, which ships cp310-cp314 wheels.

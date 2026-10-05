@@ -71,14 +71,15 @@ class Sphere(Shape):
             cz + margin,
         )
 
-    _native_params = True
+    _rebuild_field = _setup_frep_field
 
-    def _scale_params(self: Sphere, factors: npt.NDArray[np.float64]) -> bool:
+    def _scaled_params(
+        self: Sphere, factors: npt.NDArray[np.float64]
+    ) -> dict[str, float] | None:
         """Uniform scale multiplies ``radius``; a per-axis one is an ellipsoid."""
         if not np.all(factors == factors[0]):
-            return False
-        self.radius = float(self.radius) * float(factors[0])
-        return True
+            return None
+        return {"radius": float(self.radius) * float(factors[0])}
 
     def generate_cad(self: Sphere, **_: KwargsGenerateType) -> CadShape:
         """Generate a sphere CAD shape (OCCT).  Requires the ``[cad]`` extra."""

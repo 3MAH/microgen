@@ -21,6 +21,7 @@ from ._types import BoundsType, Field, PeriodType
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+    from typing import Any
 
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
@@ -92,14 +93,16 @@ class Shape:
     they cannot (e.g. a per-axis scale of a
     :class:`~microgen.shape.sphere.Sphere`), ``inplace=False`` returns a
     generic :class:`Shape` and ``inplace=True`` raises ``ValueError``.
+    Shapes without an implicit field (``Polyhedron``, ``ExtrudedPolygon``,
+    strut lattices) cannot be transformed: the verbs raise ``ValueError``.
 
     :param center: center of the shape
     :param orientation: orientation of the shape
     :param field: implicit scalar field ``(x, y, z) -> array``, or ``None``
     :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)`` or ``None``
     :param period: ``(Lx, Ly, Lz)`` if the field is intrinsically periodic
-        (``field(p + L) == field(p)`` along each axis), or ``None``.
-        Set by ``Tpms`` and ``Spinodoid`` from ``cell_size * repeat_cell``.
+        (``field(p + L) == field(p)`` along each axis, up to rounding), or
+        ``None``.  Set by ``Tpms`` and ``Spinodoid`` to ``cell_size``.
     """
 
     def __init__(
@@ -161,10 +164,12 @@ class Shape:
     def period(self: Shape) -> PeriodType | None:
         """The intrinsic period ``(Lx, Ly, Lz)`` if the field is periodic, else ``None``.
 
-        When non-``None``, ``self.evaluate(x + Lx, y, z) == self.evaluate(x, y, z)``
-        (and analogously for y, z) — i.e. periodicity is a data-structure
-        invariant of the field, not a runtime flag.  ``Tpms`` and
-        ``Spinodoid`` set this from ``cell_size * repeat_cell``.
+        When non-``None``, ``self.evaluate(x + Lx, y, z)`` equals
+        ``self.evaluate(x, y, z)`` up to rounding (and analogously for y, z),
+        i.e. periodicity is a data-structure invariant of the field, not a
+        runtime flag.  ``Tpms`` and ``Spinodoid`` set it to ``cell_size``
+        (``None`` for the curvilinear TPMS cells); the transforms keep,
+        permute, scale or reset it.
         """
         return self._period
 
@@ -377,9 +382,11 @@ class Shape:
     # or raises (``inplace=True``, the class cannot change in place).
     # ------------------------------------------------------------------
 
-    #: ``True`` on subclasses whose field is rebuilt from native parameters
-    #: by :meth:`_rebuild_field`.
-    _native_params: bool = False
+    #: Rebuilds ``_field`` / ``_bounds`` / ``_period`` from the native
+    #: parameters.  ``None`` on a generic shape; subclasses with native
+    #: parameters set it, which makes :meth:`translate` and the other
+    #: transforms update those parameters instead of composing the field.
+    _rebuild_field: Callable[[Shape], None] | None = None
 
     def copy(self: Shape) -> Shape:
         """Return a shallow copy that keeps the subclass and its parameters.
@@ -387,6 +394,8 @@ class Shape:
         The field callable and immutable parameters are shared; the sampled
         grid cache and any mutable state listed by the subclass are not, so
         an ``inplace=True`` transform on the copy never touches ``self``.
+
+        :return: the copy
         """
         new = _copy.copy(self)
         new._grid_cache = {}  # noqa: SLF001
@@ -396,17 +405,21 @@ class Shape:
     def _post_copy(self: Shape) -> None:
         """Detach mutable state a shallow copy would share (subclass hook)."""
 
-    def _rebuild_field(self: Shape) -> None:
-        """Rebuild ``_field`` / ``_bounds`` / ``_period`` from native parameters."""
-        self._setup_frep_field()  # type: ignore[attr-defined]
+    def _scaled_params(
+        self: Shape,
+        factors: npt.NDArray[np.float64],
+    ) -> dict[str, Any] | None:
+        """Native parameters after a scale by world ``factors`` (subclass hook).
 
-    def _scale_params(self: Shape, factors: npt.NDArray[np.float64]) -> bool:
-        """Rescale native size parameters by world ``factors`` (subclass hook).
-
-        Return ``False``, leaving ``self`` untouched, when the scale cannot be
+        Must not mutate ``self``.  Return ``None`` when the scale cannot be
         expressed in the native parameters.
         """
-        return False
+        return None
+
+    def _apply_params(self: Shape, params: dict[str, Any]) -> None:
+        """Set native parameters computed by a transform (subclass hook)."""
+        for name, value in params.items():
+            setattr(self, name, value)
 
     def _local_scale_factors(
         self: Shape,
@@ -431,7 +444,7 @@ class Shape:
     ) -> tuple[Field, BoundsType | None]:
         """Map a local-frame field and bounds to world through center and orientation."""
         center = np.asarray(self._center, dtype=np.float64)
-        matrix = self._orientation.as_matrix()
+        matrix = _affine.rotation_matrix(self._orientation)
         if not center.any() and np.array_equal(matrix, np.eye(3)):
             return field, bounds
         zero = np.zeros(3)
@@ -440,6 +453,14 @@ class Shape:
             None
             if bounds is None
             else _affine.transform_bounds(bounds, matrix, zero, center),
+        )
+
+    def _to_world(self: Shape, obj: Any) -> Any:  # noqa: ANN401
+        """Place a local-frame mesh or CAD shape at ``orientation`` then ``center``."""
+        from microgen.operations import rotate  # noqa: PLC0415
+
+        return rotate(obj, center=(0, 0, 0), rotation=self._orientation).translate(
+            self._center
         )
 
     def _set_local_frep(
@@ -463,7 +484,9 @@ class Shape:
     def _pose_local_frep(self: Shape) -> None:
         """Set ``_field`` / ``_bounds`` / ``_period`` from the local-frame ones."""
         self._field, self._bounds = self._posed(self._local_field, self._local_bounds)
-        self._period = _affine.rotate_period(self._local_period, self._orientation)
+        self._period = _affine.rotate_period(
+            self._local_period, _affine.rotation_matrix(self._orientation)
+        )
 
     def translate(
         self: Shape,
@@ -481,28 +504,9 @@ class Shape:
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
             return a new shape of the same class
         :return: the translated shape
+        :raises ValueError: if the shape has no implicit field
         """
-        shift = np.asarray(offset, dtype=np.float64).reshape(3)
-        zero = np.zeros(3)
-
-        def _update(target: Shape) -> bool:
-            target._center = _affine.transform_point(  # noqa: SLF001
-                target._center,  # noqa: SLF001
-                np.eye(3),
-                zero,
-                shift,
-            )
-            return True
-
-        return self._transform(
-            np.eye(3),
-            zero,
-            shift,
-            rotation=None,
-            period=self._period,
-            update_params=_update,
-            inplace=inplace,
-        )
+        return self._transform(_affine.translation(offset), inplace=inplace)
 
     def rotate(
         self: Shape,
@@ -519,36 +523,16 @@ class Shape:
         turns about the axes) is snapped to it and permutes ``period``;
         any other rotation sets ``period`` to ``None``.
 
-        :param rotation: a SciPy ``Rotation`` or a proper 3x3 rotation matrix
+        :param rotation: a SciPy ``Rotation`` or a proper orthogonal 3x3
+            matrix
         :param point: pivot; defaults to the world origin
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
             return a new shape of the same class
         :return: the rotated shape
+        :raises ValueError: if the shape has no implicit field, or if the
+            matrix is not a rotation
         """
-        rot = _affine.as_rotation(rotation)
-        matrix = rot.as_matrix()
-        pivot = _affine.as_point(point)
-        zero = np.zeros(3)
-
-        def _update(target: Shape) -> bool:
-            target._center = _affine.transform_point(  # noqa: SLF001
-                target._center,  # noqa: SLF001
-                matrix,
-                pivot,
-                zero,
-            )
-            target._orientation = rot * target._orientation  # noqa: SLF001
-            return True
-
-        return self._transform(
-            matrix,
-            pivot,
-            zero,
-            rotation=rot,
-            period=_affine.rotate_period(self._period, rot),
-            update_params=_update,
-            inplace=inplace,
-        )
+        return self._transform(_affine.rotation_about(rotation, point), inplace=inplace)
 
     def scale(
         self: Shape,
@@ -557,12 +541,15 @@ class Shape:
         *,
         inplace: bool = False,
     ) -> Shape:
-        """Scale the shape about *point* (PyVista convention).
+        r"""Scale the shape about *point* (PyVista convention).
 
-        A uniform factor keeps a signed-distance field exact
-        (``s * f(x / s)``).  A per-axis factor multiplies the composed field
-        by ``min(s)``: the solid is exact but the field is only a lower
-        bound of the distance.  ``period`` scales with the factors.
+        A subclass whose native parameters express the scale (uniform scale
+        of a sphere, per-axis scale of an axis-aligned box…) keeps its class
+        and rebuilds its own field.  Otherwise the field is composed:
+        :math:`c\, f(p + (x - p) / s)` with :math:`c = \min_i s_i`, exact
+        for a signed distance under a uniform factor and a lower bound of
+        the distance under a per-axis one.  ``period`` scales with the
+        factors.
 
         :param factor: uniform factor or ``(sx, sy, sz)``, strictly positive
         :param point: pivot; defaults to the world origin
@@ -570,54 +557,28 @@ class Shape:
             return a new shape (of the same class when its native parameters
             can express the scale, a generic :class:`Shape` otherwise)
         :return: the scaled shape
-        :raises ValueError: if a factor is not strictly positive, or if
-            ``inplace=True`` and the native parameters cannot express the
-            scale
+        :raises ValueError: if the shape has no implicit field, if a factor
+            is not strictly positive, or if ``inplace=True`` and the native
+            parameters cannot express the scale
         """
-        factors = _affine.scale_factors(factor)
-        matrix = np.diag(factors)
-        pivot = _affine.as_point(point)
-        zero = np.zeros(3)
+        return self._transform(_affine.scaling(factor, point), inplace=inplace)
 
-        def _update(target: Shape) -> bool:
-            if not target._scale_params(factors):  # noqa: SLF001
-                return False
-            target._center = _affine.transform_point(  # noqa: SLF001
-                target._center,  # noqa: SLF001
-                matrix,
-                pivot,
-                zero,
-            )
-            return True
-
-        return self._transform(
-            matrix,
-            pivot,
-            zero,
-            rotation=None,
-            period=_affine.scale_period(self._period, factors),
-            update_params=_update,
-            inplace=inplace,
-            multiplier=float(factors.min()),
-        )
-
-    def _transform(  # noqa: PLR0913
-        self: Shape,
-        matrix: npt.NDArray[np.float64],
-        point: npt.NDArray[np.float64],
-        shift: npt.NDArray[np.float64],
-        *,
-        rotation: Rotation | None,
-        period: PeriodType | None,
-        update_params: Callable[[Shape], bool],
-        inplace: bool,
-        multiplier: float = 1.0,
-    ) -> Shape:
-        """Apply ``x -> matrix (x - point) + point + shift`` (shared worker)."""
+    def _transform(self: Shape, affine: _affine.AffineMap, *, inplace: bool) -> Shape:
+        """Apply ``affine`` (shared worker of the three verbs)."""
         field = self.require_field()
-        if self._native_params:
-            target = self if inplace else self.copy()
-            if update_params(target):
+        pose = {
+            "_center": affine.apply_point(self._center),
+            "_orientation": self._orientation
+            if affine.rotation is None
+            else affine.rotation * self._orientation,
+        }
+        if self._rebuild_field is not None:
+            sizes = (
+                {} if affine.factors is None else self._scaled_params(affine.factors)
+            )
+            if sizes is not None:
+                target = self if inplace else self.copy()
+                target._apply_params({**pose, **sizes})  # noqa: SLF001
                 target._rebuild_field()  # noqa: SLF001
                 target._grid_cache.clear()  # noqa: SLF001
                 return target
@@ -628,30 +589,14 @@ class Shape:
                     "generic Shape"
                 )
                 raise ValueError(err_msg)
-
-        new_field = _affine.transform_field(field, matrix, point, shift, multiplier)
-        new_bounds = (
-            None
-            if self._bounds is None
-            else _affine.transform_bounds(self._bounds, matrix, point, shift)
+            target = Shape()
+        else:
+            target = self if inplace else self.copy()
+        target._apply_params(pose)  # noqa: SLF001
+        target._field = affine.apply_field(field)  # noqa: SLF001
+        target._bounds = (  # noqa: SLF001
+            None if self._bounds is None else affine.apply_bounds(self._bounds)
         )
-        new_center = _affine.transform_point(self._center, matrix, point, shift)
-        new_orientation = (
-            self._orientation if rotation is None else rotation * self._orientation
-        )
-        if self._native_params:
-            return Shape(
-                center=new_center,
-                orientation=new_orientation,
-                field=new_field,
-                bounds=new_bounds,
-                period=period,
-            )
-        target = self if inplace else self.copy()
-        target._field = new_field  # noqa: SLF001
-        target._bounds = new_bounds  # noqa: SLF001
-        target._center = new_center  # noqa: SLF001
-        target._orientation = new_orientation  # noqa: SLF001
-        target._period = period  # noqa: SLF001
+        target._period = affine.apply_period(self._period)  # noqa: SLF001
         target._grid_cache.clear()  # noqa: SLF001
         return target

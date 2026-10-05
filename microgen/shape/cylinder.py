@@ -99,16 +99,19 @@ class Cylinder(Shape):
             cz + float(rotated[:, 2].max()) + margin,
         )
 
-    _native_params = True
+    _rebuild_field = _setup_frep_field
 
-    def _scale_params(self: Cylinder, factors: npt.NDArray[np.float64]) -> bool:
+    def _scaled_params(
+        self: Cylinder, factors: npt.NDArray[np.float64]
+    ) -> dict[str, float] | None:
         """Rescale ``height`` and ``radius`` when the cross-section stays circular."""
         local = self._local_scale_factors(factors)
         if local is None or local[1] != local[2]:
-            return False
-        self.height = float(self.height) * float(local[0])
-        self.radius = float(self.radius) * float(local[1])
-        return True
+            return None
+        return {
+            "height": float(self.height) * float(local[0]),
+            "radius": float(self.radius) * float(local[1]),
+        }
 
     def generate_cad(self: Cylinder, **_: KwargsGenerateType) -> CadShape:
         """Generate a cylinder CAD shape (OCCT).  Requires the ``[cad]`` extra."""

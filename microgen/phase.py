@@ -36,6 +36,7 @@ caches are invalidated.
 
 from __future__ import annotations
 
+import copy as _copy
 import itertools
 from dataclasses import dataclass
 from functools import cached_property
@@ -65,6 +66,11 @@ _PHASE_AUTONAME_COUNTER = itertools.count()
 _IMPLICIT_SCALAR = "implicit"
 
 
+def _bounds_from(lo: npt.ArrayLike, hi: npt.ArrayLike) -> BoundsType:
+    """Return ``(xmin, xmax, ymin, ymax, zmin, zmax)`` from two corners."""
+    return tuple(float(v) for pair in zip(lo, hi, strict=True) for v in pair)  # type: ignore[return-value]
+
+
 def _grid_frame(
     sg: pv.StructuredGrid,
 ) -> tuple[tuple[int, int, int], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
@@ -86,10 +92,6 @@ def _grid_frame(
             index[axis] = 1
             edges[axis] = grid_pts[tuple(index)] - grid_pts[0, 0, 0]
     return (nx, ny, nz), grid_pts, edges
-
-
-# Sentinel: ``_apply_affine`` leaves ``period`` unchanged (translation).
-_KEEP = object()
 
 
 @dataclass(frozen=True)
@@ -271,7 +273,7 @@ class Phase:
     @classmethod
     def from_implicit(
         cls: type[Phase],
-        func: Field,
+        field: Field,
         rve: Rve,
         *,
         iso: float = 0.0,
@@ -284,11 +286,11 @@ class Phase:
         Sugar over the field-first constructor that derives ``bounds``
         from the RVE bounding box.
 
-        :param func: implicit scalar field ``(x, y, z) -> array``
+        :param field: implicit scalar field ``(x, y, z) -> array``
             (negative inside).
         :param rve: domain whose AABB becomes the Phase ``bounds``.
         :param iso: iso-value (default ``0.0``).
-        :param period: ``(Lx, Ly, Lz)`` if ``func`` is intrinsically periodic.
+        :param period: ``(Lx, Ly, Lz)`` if ``field`` is intrinsically periodic.
         :param name: phase name (auto-generated if omitted).
         :param resolution: default sampling resolution.
         """
@@ -301,7 +303,7 @@ class Phase:
             float(rve.max_point[2]),
         )
         return cls(
-            field=func,
+            field=field,
             bounds=bounds,
             iso=iso,
             period=period,
@@ -346,42 +348,31 @@ class Phase:
             )
             raise ValueError(err_msg)
 
-        nx, ny, nz = grid.dimensions
-        pts = np.asarray(grid.points).reshape((nx, ny, nz, 3), order="F")
-        xmin, ymin, zmin = pts[0, 0, 0]
-        xmax, ymax, zmax = pts[-1, -1, -1]
-        bounds = (
-            float(xmin),
-            float(xmax),
-            float(ymin),
-            float(ymax),
-            float(zmin),
-            float(zmax),
-        )
-        scalar = np.asarray(grid[scalars]).reshape((nx, ny, nz), order="F")
-        dx = (xmax - xmin) / (nx - 1) if nx > 1 else 1.0
-        dy = (ymax - ymin) / (ny - 1) if ny > 1 else 1.0
-        dz = (zmax - zmin) / (nz - 1) if nz > 1 else 1.0
+        dims, grid_pts, edges = _grid_frame(grid)
+        scalar = np.asarray(grid[scalars]).reshape(dims, order="F")
+        origin = grid_pts[0, 0, 0].copy()  # a copy: don't keep grid.points alive
+        to_index = np.linalg.inv(edges)
+        upper = np.array(dims) - 1
+        # A regular grid's extreme points are among its 8 corners.
+        corners = grid_pts[np.ix_([0, -1], [0, -1], [0, -1])].reshape(-1, 3)
+        bounds = _bounds_from(corners.min(axis=0), corners.max(axis=0))
 
         def _nearest_field(
             x: np.ndarray,
             y: np.ndarray,
             z: np.ndarray,
         ) -> np.ndarray:
-            xa = np.asarray(x)
-            ya = np.asarray(y)
-            za = np.asarray(z)
-            ix = np.clip(np.round((xa - xmin) / dx).astype(int), 0, nx - 1)
-            iy = np.clip(np.round((ya - ymin) / dy).astype(int), 0, ny - 1)
-            iz = np.clip(np.round((za - zmin) / dz).astype(int), 0, nz - 1)
-            return scalar[ix, iy, iz]
+            # Node (i, j, k) sits at origin + (i, j, k) @ edges.
+            xyz = np.stack(np.broadcast_arrays(x, y, z), axis=-1) - origin
+            idx = np.clip(np.round(xyz @ to_index).astype(int), 0, upper)
+            return scalar[idx[..., 0], idx[..., 1], idx[..., 2]]
 
         instance = cls(
             field=_nearest_field,
             bounds=bounds,
             iso=iso,
             name=name,
-            resolution=max(nx, ny, nz),
+            resolution=max(dims),
         )
         # Seed the grid cache so subsequent .grid() returns the original
         # (avoids resampling the field via nearest-neighbour).  Every reader
@@ -601,7 +592,11 @@ class Phase:
         return out
 
     def _pieces_from_field(self: Phase) -> list[Piece]:
-        from scipy.ndimage import center_of_mass, label  # noqa: PLC0415
+        from scipy.ndimage import (  # noqa: PLC0415
+            center_of_mass,
+            find_objects,
+            label,
+        )
 
         sg = self.grid()
         dims, grid_pts, edges = _grid_frame(sg)
@@ -614,24 +609,19 @@ class Phase:
         cell_volume = float(abs(np.linalg.det(edges)))
         origin = grid_pts[0, 0, 0]
         coms = center_of_mass(inside, labels=labels, index=range(1, n_labels + 1))
+        slices = find_objects(labels)
 
         out: list[Piece] = []
         for label_id in range(1, n_labels + 1):
-            mask = labels == label_id
-            voxel_count = int(mask.sum())
+            sl = slices[label_id - 1]
+            local = labels[sl] == label_id
+            mask = np.zeros(dims, dtype=bool)
+            mask[sl] = local
+            voxel_count = int(local.sum())
             com = origin + np.asarray(coms[label_id - 1]) @ edges
             com_world = (float(com[0]), float(com[1]), float(com[2]))
-            nodes = grid_pts[mask]
-            lo = nodes.min(axis=0)
-            hi = nodes.max(axis=0)
-            piece_bounds = (
-                float(lo[0]),
-                float(hi[0]),
-                float(lo[1]),
-                float(hi[1]),
-                float(lo[2]),
-                float(hi[2]),
-            )
+            nodes = grid_pts[sl][local]
+            piece_bounds = _bounds_from(nodes.min(axis=0), nodes.max(axis=0))
             out.append(
                 Piece(
                     com=com_world,
@@ -710,9 +700,11 @@ class Phase:
 
     @cached_property
     def inertia_matrix(self: Phase) -> npt.NDArray[np.float64]:
-        """Inertia tensor (about the origin) of the phase.
+        """Inertia tensor of the phase about its center of mass (unit density).
 
-        Field-backed: grid quadrature.  CAD-backed: ``BRepGProp``.
+        Field-backed: grid quadrature.  CAD-backed: ``BRepGProp``.  Both
+        use the center of mass as reference point, so the tensor is
+        invariant under :meth:`translate`.
         """
         if self._cad is not None:
             from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
@@ -730,7 +722,7 @@ class Phase:
             )
         if self._field is not None:
             pts, cell_volume = self._inside_nodes("inertia_matrix")
-            x, y, z = pts.T
+            x, y, z = (pts - self.center_of_mass).T
             ixx = float(((y * y + z * z) * cell_volume).sum())
             iyy = float(((x * x + z * z) * cell_volume).sum())
             izz = float(((x * x + y * y) * cell_volume).sum())
@@ -752,18 +744,11 @@ class Phase:
         """Return an independent copy with every live representation duplicated.
 
         The field callable and (immutable) bounds tuple are shared; the CAD
-        (:meth:`CadShape.copy` → ``BRepBuilderAPI_Copy``), the surface mesh
+        (:meth:`CadShape.copy`, i.e. ``BRepBuilderAPI_Copy``), the surface mesh
         and any cached grid are deep-copied, so an ``inplace=False``
         transform on the copy never touches the original.
         """
-        new = Phase(
-            field=self._field,
-            bounds=self._bounds,
-            iso=self._iso,
-            period=self._period,
-            name=self.name,
-            resolution=self._resolution,
-        )
+        new = self._shallow_copy()
         if self._cad is not None:
             new._cad = self._cad.copy()  # noqa: SLF001
         if self._surface_mesh is not None:
@@ -780,11 +765,11 @@ class Phase:
     # ------------------------------------------------------------------
     # Transforms — PyVista convention: imperative verb + ``inplace=False``.
     #
-    # ``inplace=False`` (default) returns a new Phase (operating on a
-    # :meth:`copy`); ``inplace=True`` mutates ``self``.  Both return a
-    # Phase.  The ``_apply_*`` workers mutate every live representation
-    # (field, CAD, surface mesh, cached grid) via ``self`` so the result
-    # stays coherent regardless of which mode the caller picked.
+    # ``inplace=False`` (default) returns a new Phase; ``inplace=True``
+    # mutates ``self``.  Both return the Phase.  ``_apply_affine`` maps
+    # every live representation (field, iso, period, CAD, surface mesh,
+    # cached grid) through the same affine map, so the result stays
+    # coherent whichever mode the caller picked.
     # ------------------------------------------------------------------
 
     def translate(
@@ -798,14 +783,9 @@ class Phase:
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
             return a new translated :class:`Phase`.
         :return: the translated phase.
+        :raises ValueError: if the phase is empty.
         """
-        if self.is_empty:
-            err_msg = "Cannot translate an empty Phase"
-            raise ValueError(err_msg)
-        shift = np.asarray(offset, dtype=np.float64).reshape(3)
-        target = self if inplace else self.copy()
-        target._apply_affine(np.eye(3), np.zeros(3), shift)  # noqa: SLF001
-        return target
+        return self._transform(_affine.translation(offset), "translate", inplace)
 
     def rotate(
         self: Phase,
@@ -819,27 +799,23 @@ class Phase:
         Field, CAD, surface mesh and cached grid rotate together.  A
         rotation within ``1e-12`` of a signed permutation (quarter turns
         about the axes) is snapped to it and permutes ``period``; any other
-        rotation sets ``period`` to ``None``.
+        rotation sets ``period`` to ``None`` and clips the field to the
+        rotated original ``bounds``, so the solid sampled on the new,
+        larger AABB is exactly the rotated solid (no extra material from a
+        periodic or unbounded field).
 
-        :param rotation: a SciPy ``Rotation`` or a proper 3x3 rotation
+        :param rotation: a SciPy ``Rotation`` or a proper orthogonal 3x3
             matrix, following PyVista's ``RotationLike``.
         :param point: pivot; defaults to the world origin.
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
             return a new rotated :class:`Phase`.
         :return: the rotated phase.
+        :raises ValueError: if the phase is empty or the matrix is not a
+            rotation.
         """
-        if self.is_empty:
-            err_msg = "Cannot rotate an empty Phase"
-            raise ValueError(err_msg)
-        rot = _affine.as_rotation(rotation)
-        target = self if inplace else self.copy()
-        target._apply_affine(  # noqa: SLF001
-            rot.as_matrix(),
-            _affine.as_point(point),
-            np.zeros(3),
-            period=_affine.rotate_period(self._period, rot),
+        return self._transform(
+            _affine.rotation_about(rotation, point), "rotate", inplace
         )
-        return target
 
     def scale(
         self: Phase,
@@ -848,82 +824,96 @@ class Phase:
         *,
         inplace: bool = False,
     ) -> Phase:
-        """Scale the phase about ``point``.
+        r"""Scale the phase about ``point``.
 
-        The field becomes ``c * f(p + (x - p) / s)`` with ``c = min(s)`` and
-        ``iso`` is multiplied by ``c``, so the solid is exactly the scaled
-        solid; a signed distance stays exact for a uniform factor and
-        becomes a lower bound for a per-axis one.  ``period`` scales with
-        the factors.  Pass ``point=phase.center_of_mass`` to scale about the
-        phase itself.
+        The field becomes :math:`c\, f(p + (x - p) / s)` with
+        :math:`c = \min_i s_i` and ``iso`` is multiplied by :math:`c`, so the
+        solid is exactly the scaled solid; a signed distance stays exact for
+        a uniform factor and becomes a lower bound of the distance for a
+        per-axis one.  ``period`` scales with the factors.  Pass
+        ``point=phase.center_of_mass`` to scale about the phase itself.
 
         :param factor: uniform factor or ``(sx, sy, sz)``, strictly positive.
         :param point: pivot; defaults to the world origin.
         :param inplace: mutate ``self`` when ``True``; otherwise (default)
             return a new scaled :class:`Phase`.
         :return: the scaled phase.
-        :raises ValueError: if a factor is not strictly positive.
+        :raises ValueError: if the phase is empty or a factor is not
+            strictly positive.
         """
+        return self._transform(_affine.scaling(factor, point), "scale", inplace)
+
+    def _transform(
+        self: Phase, affine: _affine.AffineMap, verb: str, inplace: bool
+    ) -> Phase:
         if self.is_empty:
-            err_msg = "Cannot scale an empty Phase"
+            err_msg = f"Cannot {verb} an empty Phase"
             raise ValueError(err_msg)
-        factors = _affine.scale_factors(factor)
-        target = self if inplace else self.copy()
-        target._apply_affine(  # noqa: SLF001
-            np.diag(factors),
-            _affine.as_point(point),
-            np.zeros(3),
-            period=_affine.scale_period(self._period, factors),
-            multiplier=float(factors.min()),
-        )
+        target = self if inplace else self._shallow_copy()
+        target._apply_affine(affine)  # noqa: SLF001
         return target
 
-    def _apply_affine(  # noqa: PLR0913
-        self: Phase,
-        matrix: npt.NDArray[np.float64],
-        point: npt.NDArray[np.float64],
-        shift: npt.NDArray[np.float64],
-        *,
-        period: PeriodType | None | object = _KEEP,
-        multiplier: float = 1.0,
-    ) -> None:
-        """Map every live representation through ``x -> matrix (x - point) + point + shift``."""
+    def _shallow_copy(self: Phase) -> Phase:
+        """Copy sharing every representation; ``_apply_affine`` replaces them all."""
+        new = _copy.copy(self)
+        new._invalidate_derived()  # noqa: SLF001
+        return new
+
+    def _apply_affine(self: Phase, affine: _affine.AffineMap) -> None:
+        """Map every live representation through ``affine`` (new objects, no mutation)."""
         if self._field is not None and self._bounds is not None:
-            self._field = _affine.transform_field(
-                self._field, matrix, point, shift, multiplier
-            )
-            self._bounds = _affine.transform_bounds(self._bounds, matrix, point, shift)
-            self._iso *= multiplier
-        if period is not _KEEP:
-            self._period = period  # type: ignore[assignment]
+            field = self._field
+            if affine.grows_bounds:
+                field = self._clipped_to_bounds(field)
+            self._field = affine.apply_field(field)
+            self._bounds = affine.apply_bounds(self._bounds)
+            self._iso *= affine.multiplier
+        self._period = affine.apply_period(self._period)
         if self._cad is not None:
             from .cad import transform_geometry  # noqa: PLC0415
 
-            offset = point + shift - matrix @ point
-            self._cad = transform_geometry(self._cad, np.column_stack([matrix, offset]))
-        homogeneous = np.eye(4)
-        homogeneous[:3, :3] = matrix
-        homogeneous[:3, 3] = point + shift - matrix @ point
+            self._cad = transform_geometry(self._cad, affine.homogeneous[:3])
         if self._surface_mesh is not None:
             self._surface_mesh = self._surface_mesh.transform(
-                homogeneous, inplace=False
+                affine.homogeneous, inplace=False
             )
         if self._cached_grid is not None:
-            grid = self._cached_grid.transform(homogeneous, inplace=False)
-            if multiplier != 1.0 and _IMPLICIT_SCALAR in grid.point_data:
-                grid[_IMPLICIT_SCALAR] = multiplier * np.asarray(grid[_IMPLICIT_SCALAR])
+            grid = self._cached_grid.transform(affine.homogeneous, inplace=False)
+            if affine.multiplier != 1.0:
+                grid[_IMPLICIT_SCALAR] = affine.multiplier * np.asarray(
+                    grid[_IMPLICIT_SCALAR]
+                )
             self._cached_grid = grid
         self._invalidate_derived()
 
+    def _clipped_to_bounds(self: Phase, field: Field) -> Field:
+        r"""Restrict the solid ``{field < iso}`` to the current ``bounds`` box.
+
+        Returns :math:`\max(f, d_{box} + \mathrm{iso})`, whose
+        ``iso``-level set is the solid intersected with the box.
+        """
+        from .shape.implicit_ops import box  # noqa: PLC0415
+
+        b = np.asarray(self._bounds, dtype=np.float64).reshape(3, 2)
+        box_field = box(dims=b[:, 1] - b[:, 0], center=b.mean(axis=1)).require_field()
+        iso = self._iso
+
+        def _clipped(x, y, z):  # noqa: ANN001, ANN202
+            return np.maximum(field(x, y, z), box_field(x, y, z) + iso)
+
+        return _clipped
+
     def tile(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
-        """Periodically tile the phase on the RVE over ``grid`` copies.
+        r"""Periodically tile the phase on the RVE over ``grid`` copies.
 
         A **producer**: always returns a new :class:`Phase` (no ``inplace``).
         Builds ``grid[0] * grid[1] * grid[2]`` copies of the current phase,
-        shifted by multiples of ``rve.dim`` symmetric about the original
-        (``grid=(1, 1, 1)`` leaves it in place), and fuses them.  Only implemented for CAD-backed phases today (the
-        field-backed equivalent — domain folding via ``mod`` — lands in
-        a follow-up; the periodic-shape work in
+        translated by :math:`-\mathrm{dim}\,(n/2 - 1/2 - i)` along each axis
+        (:math:`i = 0 \dots n-1`), i.e. a supercell centred on the original:
+        ``grid=(1, 1, 1)`` leaves it in place, and an even count shifts the
+        copies by half a cell.  The copies are fused.  Only implemented for
+        CAD-backed phases today (the field-backed equivalent, domain folding
+        via ``mod``, lands in a follow-up; the periodic-shape work in
         :mod:`microgen.shape.implicit_ops` already covers it for
         :class:`Shape` directly).
 

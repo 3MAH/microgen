@@ -153,3 +153,80 @@ def test_tile_single_copy_stays_in_place() -> None:
     )
     tiled = phase.tile(Rve(dim=1.0), (1, 1, 1))
     np.testing.assert_allclose(tiled.center_of_mass, (0.2, 0.1, 0.0), atol=1e-9)
+
+
+def test_generic_rotation_clips_to_rotated_domain() -> None:
+    """A periodic field rotated by 45 degrees brings no material from outside."""
+    tpms = Tpms(surface_function=surface_functions.gyroid, offset=0.3)
+    phase = Phase.from_shape(tpms)
+    rotated = phase.rotate(Rotation.from_euler("z", 45, degrees=True))
+    # Inside the new AABB but outside the rotated cell [-0.5, 0.5]^3.
+    corner = (np.array([0.6]), np.array([0.3]), np.array([0.0]))
+    assert rotated.field(*corner)[0] >= rotated.iso
+    # Inside the rotated cell the field is the rotated field.
+    p = np.array([[0.1], [0.05], [0.2]])
+    back = Rotation.from_euler("z", -45, degrees=True).apply(p.T).T
+    assert rotated.field(*p)[0] == pytest.approx(phase.field(*back)[0])
+
+
+def test_inertia_is_about_center_of_mass() -> None:
+    phase = Phase.from_shape(Sphere(radius=0.5), resolution=40)
+    moved = phase.translate((1.0, 0.5, 0.0))
+    np.testing.assert_allclose(moved.inertia_matrix, phase.inertia_matrix, atol=1e-12)
+
+
+def test_inertia_field_matches_cad() -> None:
+    pytest.importorskip("OCP")
+    sphere = Sphere(radius=0.5, center=(1.0, 0.0, 0.0))
+    field_phase = Phase.from_shape(sphere, resolution=80)
+    cad_phase = Phase.from_cad(sphere.generate_cad())
+    np.testing.assert_allclose(
+        np.diag(field_phase.inertia_matrix),
+        np.diag(cad_phase.inertia_matrix),
+        rtol=0.05,
+    )
+
+
+def test_from_grid_rotated_grid_nearest_field() -> None:
+    sg = _non_cubic_grid().rotate(
+        Rotation.from_euler("z", 30, degrees=True), inplace=False
+    )
+    phase = Phase.from_grid(sg)
+    pts = np.asarray(sg.points)
+    np.testing.assert_array_equal(phase.field(*pts.T), np.asarray(sg["implicit"]))
+
+
+def test_transform_leaves_original_cad_untouched() -> None:
+    pytest.importorskip("OCP")
+    phase = Phase.from_cad(Sphere(radius=0.5).generate_cad())
+    phase.translate((2.0, 0.0, 0.0))
+    np.testing.assert_allclose(
+        phase.cad.center().to_tuple(), (0.0, 0.0, 0.0), atol=1e-9
+    )
+
+
+def test_mesh_backed_scale_and_rotate() -> None:
+    phase = Phase.from_mesh(
+        pv.Sphere(radius=0.5, theta_resolution=40, phi_resolution=40)
+    )
+    scaled = phase.scale(2.0)
+    assert abs(scaled.surface_mesh().volume) == pytest.approx(
+        8.0 * abs(phase.surface_mesh().volume), rel=1e-9
+    )
+    rotated = phase.rotate(_ROT_GENERIC, point=(1.0, 0.0, 0.0))
+    np.testing.assert_allclose(
+        rotated.surface_mesh().center,
+        _ROT_GENERIC.apply((-1.0, 0.0, 0.0)) + (1.0, 0.0, 0.0),
+        atol=1e-6,
+    )
+
+
+def test_cad_reflection_keeps_positive_volume() -> None:
+    pytest.importorskip("OCP")
+    from microgen.cad import transform_geometry
+
+    box = Box(dim=(1.0, 2.0, 3.0)).generate_cad()
+    mirrored = transform_geometry(
+        box, np.hstack([np.diag([-1.0, 1.0, 1.0]), np.zeros((3, 1))])
+    )
+    assert mirrored.volume() == pytest.approx(6.0, rel=1e-9)

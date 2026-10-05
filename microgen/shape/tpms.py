@@ -17,14 +17,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.operations import fuse_shapes, rotate
+from microgen.operations import fuse_shapes
 
 from ._types import BoundsType, Field
 from .shape import Shape, ShellCreationError
@@ -489,7 +489,9 @@ class Tpms(Shape):
         self._set_local_frep(
             sdf_shape.field,
             bounds,
-            (float(cs[0]), float(cs[1]), float(cs[2])),
+            (float(cs[0]), float(cs[1]), float(cs[2]))
+            if self._cartesian_cell
+            else None,
         )
 
     def _setup_frep_field(self: Tpms) -> None:
@@ -521,42 +523,71 @@ class Tpms(Shape):
 
     # -- Transform hooks (see :meth:`Shape.translate`) ----------------------
 
-    _native_params = True
+    #: Factor from ``offset`` to the F-rep thickness used by
+    #: :meth:`as_sheet` and the skeletal parts.  ``offset`` is a level of the
+    #: raw field, unchanged by :meth:`scale`; the F-rep thickness is a
+    #: distance and scales with the cell.
+    _frep_thickness_scale: float = 1.0
+
+    #: ``False`` on subclasses whose cell lives in curvilinear coordinates:
+    #: their field is not periodic along x, y, z, and a scale does not map
+    #: to ``cell_size``.
+    _cartesian_cell: bool = True
+
+    def _frep_thickness(self: Tpms, offset: Any) -> Any:  # noqa: ANN401
+        """F-rep thickness (a distance) for a scalar or array ``offset``."""
+        return self._frep_thickness_scale * offset
 
     def _rebuild_field(self: Tpms) -> None:
-        """Re-pose the local field; the cell grid lives in the local frame."""
-        self._pose_local_frep()
+        """Re-pose the local field, rebuilding it first after a scale."""
+        if self._local_field is None:
+            self._setup_frep_field()
+        else:
+            self._pose_local_frep()
 
     def _post_copy(self: Tpms) -> None:
-        """Detach ``grid``: the ``offset`` setter writes into it in place."""
-        self.grid = self.grid.copy()
+        """Detach ``grid`` (shallow): the ``offset`` setter assigns new arrays."""
+        self.grid = self.grid.copy(deep=False)
 
-    def _scale_params(self: Tpms, factors: npt.NDArray[np.float64]) -> bool:
-        """Rescale ``cell_size`` and ``phase_shift`` (plain :class:`Tpms` only).
+    def _scaled_params(
+        self: Tpms, factors: npt.NDArray[np.float64]
+    ) -> dict[str, object] | None:
+        r"""Rescale ``cell_size`` and ``phase_shift``.
 
-        The raw field satisfies ``F(k (x/s + phi)) = F(k/s (x + s phi))``, so
-        the offset, its limits and the density are unchanged.  Not
-        expressible for the parametric subclasses, the infills, or an
-        offset given as a callable or grading (defined in the old frame).
+        The raw field satisfies
+        :math:`F(k (x/s + \varphi)) = F(\tfrac{k}{s} (x + s \varphi))`, so the
+        offset, its limits and the density are unchanged; the F-rep
+        thickness scales by :math:`\min_i s_i`.  Not expressible for an
+        offset given as a callable or a grading (defined in the old frame),
+        nor for a cell without Cartesian period.
         """
-        if type(self) is not Tpms or self._offset_func is not None:
-            return False
+        if self._offset_func is not None or self._local_period is None:
+            return None
         local = self._local_scale_factors(factors)
         if local is None:
-            return False
-        self.cell_size = self.cell_size * local
-        self.phase_shift = tuple(
-            float(p) * float(s) for p, s in zip(self.phase_shift, local, strict=True)
-        )
+            return None
+        return {
+            "cell_size": self.cell_size * local,
+            "phase_shift": tuple(
+                float(p) * float(s)
+                for p, s in zip(self.phase_shift, local, strict=True)
+            ),
+            "_frep_thickness_scale": self._frep_thickness_scale * float(local.min()),
+        }
+
+    def _apply_params(self: Tpms, params: dict[str, object]) -> None:
+        """Set the parameters and, after a scale, rebuild the cell grid."""
+        super()._apply_params(params)
+        if "cell_size" not in params:
+            return
         self._compute_tpms_field()
         self._grid_sheet = None
         self._grid_upper_skeletal = None
         self._grid_lower_skeletal = None
         self._surface = None
-        self._setup_frep_field()
+        self._local_field = None  # rebuilt by _rebuild_field
         if self._offset is not None:
             self.offset = self._offset  # setter: rewrites the grid offsets
-        return True
 
     def _posed_shape(self: Tpms, local: Shape) -> Shape:
         """Return a local-frame F-rep part placed at ``center`` / ``orientation``."""
@@ -587,7 +618,7 @@ class Tpms(Shape):
         elif self._offset_func is not None:
             t = self._offset_func
         else:
-            t = self._offset
+            t = self._frep_thickness(self._offset)
         return shell(Shape(field=self._local_field, bounds=self._local_bounds), t)
 
     def _half_offset_field(self: Tpms) -> Field | float:
@@ -608,7 +639,7 @@ class Tpms(Shape):
 
             return _half
         if isinstance(self._offset, (int, float)):
-            return 0.5 * float(self._offset)
+            return 0.5 * self._frep_thickness(float(self._offset))
         # array — no safe re-evaluation; degenerate to zero (skeletal at f=0).
         return 0.0
 
@@ -970,8 +1001,7 @@ class Tpms(Shape):
         # and skip the Solid-upgrade / volume-stash.
         if type_part == "surface":
             shape = self._mesh_to_shell(mesh)
-            shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
-            return shape.translate(self.center)
+            return self._to_world(shape)
 
         # Periodic-aware shell, upgraded to a Solid where possible so
         # :meth:`CadShape.volume` reads the enclosed volume rather than a
@@ -981,8 +1011,7 @@ class Tpms(Shape):
         # non-manifold from raw marching-cubes — happens for skeletals at
         # offset=0 where the iso-surface coincides with the cell boundary).
         shape = self._try_make_solid(self._mesh_to_periodic_shell(mesh))
-        shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
-        shape = shape.translate(self.center)
+        shape = self._to_world(shape)
         with contextlib.suppress(AttributeError, ValueError):
             shape._mesh_volume = float(abs(mesh.volume))
         return shape
@@ -1056,7 +1085,7 @@ class Tpms(Shape):
             search (only used when ``self.density`` is set)
         """
         if type_part == "surface":
-            return self.surface
+            return self._to_world(self.surface)
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = (
                 f"type_part ({type_part}) must be 'sheet', 'lower skeletal', "
@@ -1066,12 +1095,7 @@ class Tpms(Shape):
 
         if self.density == 1.0:
             envelope_mesh = self._envelope_mesh_at_full_density()
-            envelope_mesh = rotate(
-                envelope_mesh,
-                center=(0, 0, 0),
-                rotation=self.orientation,
-            )
-            return envelope_mesh.translate(xyz=self.center)
+            return self._to_world(envelope_mesh)
 
         if self.density is not None:
             self._compute_offset_to_fit_density(
@@ -1117,8 +1141,7 @@ class Tpms(Shape):
             polydata = polydata.clean()
         polydata = polydata.triangulate()
 
-        polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
-        return polydata.translate(xyz=self.center)
+        return self._to_world(polydata)
 
     def generate_volume_mesh(
         self: Tpms,
@@ -1146,12 +1169,13 @@ class Tpms(Shape):
             )
 
         grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
-        grid = rotate(grid, center=(0, 0, 0), rotation=self.orientation)
-        return grid.translate(xyz=self.center)
+        return self._to_world(grid)
 
 
 class CylindricalTpms(Tpms):
     """Class used to generate cylindrical TPMS geometries (sheet or skeletals parts)."""
+
+    _cartesian_cell = False  # curvilinear cell
 
     # Use the parametric structured-grid clip for ``generate_surface_mesh`` instead of
     # F-rep marching cubes.  An isotropic Cartesian MC grid samples the
@@ -1372,6 +1396,8 @@ class CylindricalTpms(Tpms):
 
 class SphericalTpms(Tpms):
     """Class used to generate spherical TPMS geometries (sheet or skeletals parts)."""
+
+    _cartesian_cell = False  # curvilinear cell
 
     # Same rationale as :class:`CylindricalTpms` — the parametric (ρ, θ, φ)
     # grid stretches naturally in Cartesian space, sampling poles and equator
@@ -1987,6 +2013,9 @@ class Sweep(Tpms):
 
 class Infill(Tpms):
     """Generate a TPMS infill inside a given object."""
+
+    # A scale would also have to scale the envelope object.
+    _scaled_params = Shape._scaled_params
 
     _envelope_mesh_at_full_density = Tpms._envelope_mesh_via_cell_box
 
