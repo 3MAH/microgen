@@ -220,10 +220,10 @@ class Spinodoid(Shape):
     ) -> pv.UnstructuredGrid:
         """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
         if backend == "meshers":
-            from microgen._meshers import generate_volume, spinodoid_field
+            from microgen._meshers import generate_volume
 
             return generate_volume(
-                spinodoid_field(self._frep),
+                self.require_func(),
                 self.bounds,
                 options,
                 default_cells=tuple(self.resolution * self.repeat_cell),

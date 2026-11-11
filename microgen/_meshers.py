@@ -13,33 +13,7 @@ import pyvista as pv
 if TYPE_CHECKING:
     from scipy.spatial.transform import Rotation
 
-    from microgen.shape._frep_grf import _FrepGRF
     from microgen.shape._types import BoundsType, Field
-
-
-def spinodoid_field(frep: _FrepGRF) -> Field:
-    """Snapshot the existing Fourier realization in a traceable negative field.
-
-    This changes evaluation, not modes, amplitudes, phases, threshold or FFT
-    resolution. Coordinates stay in Spinodoid's existing local [0, L] frame.
-    """
-    coefficients = [
-        (*map(float, mode / frep.cell_size), float(amplitude), float(phase))
-        for mode, amplitude, phase in zip(
-            frep.modes, frep.amplitudes, frep.phases, strict=True
-        )
-    ]
-    threshold = float(frep.threshold)
-
-    def field(x, y, z):
-        value = threshold
-        for a, b, c, amplitude, phase in coefficients:
-            value = value - amplitude * np.cos(
-                2 * np.pi * (a * x + b * y + c * z) + phase
-            )
-        return value
-
-    return field
 
 
 def generate_volume(

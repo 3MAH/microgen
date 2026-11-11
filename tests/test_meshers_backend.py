@@ -117,9 +117,7 @@ def test_tpms_part_units_placement_and_periodic_facets(native_backend, part, ord
     np.testing.assert_array_equal(original.cells, unchanged.cells)
 
 
-def test_spinodoid_snapshot_matches_existing_field_and_freezes_coefficients():
-    from microgen._meshers import spinodoid_field
-
+def test_spinodoid_compiles_its_existing_field(native_backend):
     shape = Spinodoid(
         k0=4 * np.pi,
         bandwidth=3,
@@ -131,15 +129,31 @@ def test_spinodoid_snapshot_matches_existing_field_and_freezes_coefficients():
     )
     points = np.random.default_rng(4).uniform(0, 1, (4096, 3))
     points *= shape.cell_size * shape.repeat_cell
-    field = spinodoid_field(shape._frep)
+    field = native_backend.compile_field(shape.require_func())
     expected = shape.evaluate(*points.T)
-    np.testing.assert_allclose(field(*points.T), expected, atol=1e-12, rtol=1e-12)
-    np.testing.assert_array_equal(field(*points.T) < 0, expected < 0)
+    np.testing.assert_allclose(field.values(points), expected, atol=1e-12, rtol=1e-12)
+    np.testing.assert_array_equal(field.values(points) < 0, expected < 0)
     shape._frep.amplitudes *= 2
-    np.testing.assert_allclose(field(*points.T), expected, atol=1e-12, rtol=1e-12)
+    np.testing.assert_allclose(field.values(points), expected, atol=1e-12, rtol=1e-12)
+    assert not np.allclose(shape.evaluate(*points.T), expected)
+
+    # Empty expansions still broadcast in NumPy and compile to a constant.
+    shape._frep.modes = np.empty((0, 3), dtype=np.int64)
+    shape._frep.amplitudes = np.empty(0)
+    shape._frep.phases = np.empty(0)
+    np.testing.assert_array_equal(
+        shape.evaluate(np.ones((3, 1)), np.arange(4), 0.3),
+        np.full((3, 4), shape._frep.threshold),
+    )
+    empty = native_backend.compile_field(shape.require_func())
+    np.testing.assert_array_equal(
+        empty.values(points), np.full(len(points), shape._frep.threshold)
+    )
 
 
-def test_spinodoid_meshing_keeps_fft_realization_and_local_origin(native_backend):
+def test_spinodoid_meshing_keeps_fft_realization_and_local_origin(
+    native_backend, monkeypatch
+):
     rotation = Rotation.from_euler("z", 31, degrees=True)
     shape = Spinodoid(
         k0=4 * np.pi,
@@ -156,6 +170,13 @@ def test_spinodoid_meshing_keeps_fft_realization_and_local_origin(native_backend
         (shape._frep.modes, shape._frep.amplitudes, shape._frep.phases)
     ).copy()
     assert "grid" not in shape.__dict__
+    generate = native_backend.generate
+
+    def same_field(field, **options):
+        assert field is shape.require_func()
+        return generate(field, **options)
+
+    monkeypatch.setattr(native_backend, "generate", same_field)
     grid = shape.generate_volume_mesh(
         backend="meshers",
         cells=16,

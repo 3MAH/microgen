@@ -79,9 +79,11 @@ mesh = shape.generate_volume_mesh(
 ```
 
 `Spinodoid.resolution` defines the Fourier realization. Meshing `cells` is
-independent. The adapter snapshots the existing modes, amplitudes, phases and
-threshold, preserving the local `[0, L]` origin. It then applies the shape's
-rotation and center to the mesh. It does not regenerate the random field.
+independent. Both backends use the shape's existing field evaluator. Meshers
+compiles that callable, including its current modes, amplitudes, phases and
+threshold. The adapter preserves the local `[0, L]` origin and then applies the
+shape's rotation and center to the mesh. It does not regenerate the random field
+or maintain a separate spinodoid formula.
 These settings are a tested specimen, not universal defaults for every field.
 
 ## Inspect the output
@@ -136,3 +138,8 @@ python -m pytest tests/test_meshers_backend.py \
 
 The existing CI does not install the optional SDK. Native meshing coverage
 requires installing the candidate and running the command above.
+
+The shared-evaluator follow-up also ran `tests/test_spinodoid.py` with the two
+confirmed upstream CAD failures deselected. All 148 selected tests passed.
+NumPy evaluation retained bit-identical values against upstream on the six
+fixed resolution and point-count controls, using the existing matrix path.
