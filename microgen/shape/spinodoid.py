@@ -218,7 +218,17 @@ class Spinodoid(Shape):
         backend: str = "vtk",
         **options: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
-        """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
+        """Generate the volumetric solid grid with center+rotation applied.
+
+        ``backend="mmg"`` remeshes this VTK grid with the existing boundary-
+        preserving remesher, retaining its options and ``periodic=True`` default.
+        """
+        if backend == "mmg":
+            from microgen.remesh import remesh_keeping_boundaries_for_fem
+
+            return remesh_keeping_boundaries_for_fem(
+                self.generate_volume_mesh(backend="vtk"), **options
+            )
         if backend == "meshers":
             from microgen._meshers import generate_volume
 

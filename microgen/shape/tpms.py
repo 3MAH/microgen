@@ -1070,6 +1070,10 @@ class Tpms(Shape):
         Applies ``center`` and ``orientation`` to the cached grid so the
         returned mesh lands at the declared world position — matching the
         contract of :meth:`generate_surface_mesh`.
+
+        ``backend="mmg"`` remeshes this VTK grid with
+        :func:`microgen.remesh.remesh_keeping_boundaries_for_fem`; options and
+        its ``periodic=True`` default pass through unchanged.
         """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = (
@@ -1078,6 +1082,13 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        if backend == "mmg":
+            from microgen.remesh import remesh_keeping_boundaries_for_fem
+
+            return remesh_keeping_boundaries_for_fem(
+                self.generate_volume_mesh(type_part, algo_resolution, backend="vtk"),
+                **options,
+            )
         if backend not in ("vtk", "meshers"):
             raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
         if backend == "meshers" and type(self) is not Tpms:
