@@ -48,10 +48,6 @@ gmsh `setPeriodic`) is materialised lazily and only needs the `[cad]` extra.
 
 ## Installation
 
-This experimental branch also provides an optional Meshers volume backend.
-See [the integration guide](MESHERS_INTEGRATION.md) for installation, examples
-and the currently supported shapes.
-
 **Core (mesh + implicit-field / F-rep, no CAD kernel)** — lighter, works with VTK 9.4+:
 
 ```bash

@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import importlib
-import importlib.metadata
-import json
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -26,12 +24,7 @@ def generate_volume(
     rotation: Rotation | None = None,
     center=(0.0, 0.0, 0.0),
 ) -> pv.UnstructuredGrid:
-    """Generate Tet4/Tet10 without MMG, fallback, retries or relaxed guards.
-
-    Generic Shape fields are already in world coordinates. TPMS and Spinodoid
-    supply their local field and an explicit placement. Periodic pairs refer to
-    returned point IDs; periodic shifts are expressed in world coordinates.
-    """
+    """Convert native Tet4/Tet10 output, preserving placement and periodic pairs."""
     if bounds is None:
         raise ValueError("Bounds are required for Meshers volume meshing")
     options = dict(options)
@@ -63,19 +56,6 @@ def generate_volume(
         shifts = rotation.apply(shifts)
     grid = pv.UnstructuredGrid({cell_type: native.tetrahedra.copy()}, points)
 
-    # These are corner metrics for either order. They are not curved Tet10
-    # volumes or a replacement for its sampled-Jacobian/FEA checks.
-    corners = native.points[native.tetrahedra[:, :4]]
-    determinants = np.linalg.det(corners[:, 1:] - corners[:, :1])
-    edge_sum = sum(
-        np.sum((corners[:, i] - corners[:, j]) ** 2, axis=1)
-        for i in range(4)
-        for j in range(i + 1, 4)
-    )
-    grid.cell_data["MMGQuality"] = np.sqrt(432 * determinants**2 / edge_sum**3)
-    grid.cell_data["CornerSignedVolume"] = determinants / 6
-    grid.field_data["meshers_diagnostics"] = [json.dumps(native.diagnostics)]
-    grid.field_data["meshers_version"] = [importlib.metadata.version("meshers")]
     if len(native.surface):
         grid.field_data["meshers_boundary_faces"] = native.surface.copy()
         grid.field_data["meshers_boundary_tags"] = native.boundary_tags.copy()

@@ -1,6 +1,5 @@
 """Opt-in volume meshing preserves fields, placement and periodic connectivity."""
 
-import json
 import sys
 
 import numpy as np
@@ -23,12 +22,16 @@ def assert_native_grid(grid, order=1):
     assert isinstance(grid, pv.UnstructuredGrid) and grid.n_cells > 0
     cell_type = pv.CellType.TETRA if order == 1 else pv.CellType.QUADRATIC_TETRA
     assert np.all(grid.celltypes == cell_type)
-    assert grid.cell_data["MMGQuality"].min() >= 0.1
-    assert grid.cell_data["CornerSignedVolume"].min() > 0
+    corners = grid.points[grid.cells_dict[cell_type][:, :4]]
+    determinants = np.linalg.det(corners[:, 1:] - corners[:, :1])
+    edge_sum = sum(
+        np.sum((corners[:, i] - corners[:, j]) ** 2, axis=1)
+        for i in range(4)
+        for j in range(i + 1, 4)
+    )
+    assert np.sqrt(432 * determinants**2 / edge_sum**3).min() >= 0.1
+    assert determinants.min() > 0
     assert grid.extract_surface(algorithm=None).n_open_edges == 0
-    diagnostics = json.loads(grid.field_data["meshers_diagnostics"][0])
-    assert diagnostics["evaluator"] == "compiled"
-    assert diagnostics["threads"] == 1
 
 
 def assert_periodic_faces(grid, rotation, lengths):
