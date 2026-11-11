@@ -214,9 +214,24 @@ class Spinodoid(Shape):
 
     def generate_volume_mesh(
         self: Spinodoid,
-        **_: KwargsGenerateType,
+        *,
+        backend: str = "vtk",
+        **options: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
         """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
+        if backend == "meshers":
+            from microgen._meshers import generate_volume, spinodoid_field
+
+            return generate_volume(
+                spinodoid_field(self._frep),
+                self.bounds,
+                options,
+                default_cells=tuple(self.resolution * self.repeat_cell),
+                rotation=self.orientation,
+                center=self.center,
+            )
+        if backend != "vtk":
+            raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
         grid_vol = self.grid_solid.copy()
         grid_vol = rotate(grid_vol, center=(0, 0, 0), rotation=self.orientation)
         return grid_vol.translate(xyz=self.center)

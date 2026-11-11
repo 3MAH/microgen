@@ -279,7 +279,9 @@ class Shape:
         self: Shape,
         bounds: BoundsType | None = None,
         resolution: int = 50,
-        **_: KwargsGenerateType,
+        *,
+        backend: str = "vtk",
+        **options: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
         """Generate a volumetric VTK mesh of the shape's interior.
 
@@ -293,8 +295,22 @@ class Shape:
 
         :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
         :param resolution: number of grid points per axis
+        :param backend: ``"vtk"`` (default) or the optional ``"meshers"`` backend.
+            Meshers options such as ``cells``, ``adapt`` and ``periodic`` pass
+            through unchanged. Explicit ``cells`` overrides ``resolution - 1``.
         :return: clipped ``pv.UnstructuredGrid`` covering the shape's interior
         """
+        if backend == "meshers":
+            from microgen._meshers import generate_volume
+
+            return generate_volume(
+                self.require_func(),
+                self.bounds if bounds is None else bounds,
+                options,
+                default_cells=resolution - 1,
+            )
+        if backend != "vtk":
+            raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
         grid = self._sample_implicit_grid(bounds, resolution, "generate_volume_mesh")
         return grid.clip_scalar(scalars=_IMPLICIT_SCALAR, value=0.0, invert=True)
 

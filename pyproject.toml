@@ -35,6 +35,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+meshers = ["meshers>=0.1.0,<0.2"]
 # CAD backend: OCCT via cadquery-ocp-novtk (no cadquery, no bundled VTK; we
 # use VTK via PyVista already).  Installing this extra unlocks
 # Shape.generate(), Phase, fuse_shapes, lattice CAD, etc., and ships cp314

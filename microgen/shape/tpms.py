@@ -160,6 +160,7 @@ class Tpms(Shape):
 
         self.surface_function = surface_function
         self._offset = offset if offset is not None else 0.0
+        self._offset_is_sampled = False
         # Stores the offset callable when one is provided, so the F-rep path
         # can re-evaluate variable thickness on its own marching-cubes grid.
         self._offset_func: Field | None = (
@@ -659,6 +660,7 @@ class Tpms(Shape):
         offset: float | npt.NDArray[np.float64] | OffsetGrading | Field,
     ) -> None:
         # Reset cached callable form on every assignment.
+        self._offset_is_sampled = isinstance(offset, (np.ndarray, OffsetGrading))
         self._offset_func = None
         if isinstance(offset, (int, float, np.ndarray)):
             self._offset = offset
@@ -1059,7 +1061,9 @@ class Tpms(Shape):
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
-        **_: KwargsGenerateType,
+        *,
+        backend: str = "vtk",
+        **options: KwargsGenerateType,
     ) -> pv.UnstructuredGrid:
         """Generate VTK UnstructuredGrid object of the required TPMS part.
 
@@ -1074,10 +1078,54 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        if backend not in ("vtk", "meshers"):
+            raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
+        if backend == "meshers" and type(self) is not Tpms:
+            raise NotImplementedError(
+                "The Meshers backend currently supports Cartesian Tpms. "
+                "Mapped and clipped TPMS require a separate domain adapter."
+            )
+
         if self.density is not None:
             self._compute_offset_to_fit_density(
                 part_type=type_part,
                 resolution=algo_resolution,
+            )
+
+        if backend == "meshers":
+            from microgen._meshers import generate_volume
+
+            if self._offset_is_sampled:
+                raise NotImplementedError(
+                    "Meshers requires a scalar offset or pointwise offset callable; "
+                    "sampled arrays and OffsetGrading need an interpolation policy."
+                )
+            raw, offset = self.raw_field, self._offset_func
+            scalar = self.offset
+
+            def field(x, y, z):
+                half = 0.5 * (offset(x, y, z) if offset is not None else scalar)
+                value = raw(x, y, z)
+                if type_part == "sheet":
+                    return np.abs(value) - half
+                if type_part == "upper skeletal":
+                    return half - value
+                return value + half
+
+            band = None
+            if self.density == 1.0:
+                field = lambda x, y, z: -1.0 + 0.0 * x
+            elif type_part == "sheet" and offset is None and scalar > 0:
+                band = (-0.5 * scalar, 0.5 * scalar)
+                field = raw
+            return generate_volume(
+                field,
+                self.bounds,
+                options,
+                default_cells=tuple(n - 1 for n in self.grid.dimensions),
+                band=band,
+                rotation=self.orientation,
+                center=self.center,
             )
 
         grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
