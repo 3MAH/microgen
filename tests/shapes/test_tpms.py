@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from inspect import getmembers, isfunction, signature
+from inspect import getmembers, isfunction
 from typing import Literal
 
 import numpy as np
@@ -21,15 +21,11 @@ TEST_DEFAULT_SURFACE_FUNCTION = microgen.surface_functions.gyroid
 
 
 def _get_microgen_surface_functions() -> list[str]:
-    """List the actual TPMS surface functions in microgen.surface_functions.
-
-    Filters out non-TPMS callables exposed via re-import (autograd ``cos``/``sin``)
-    that take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
-    """
+    """List TPMS functions defined here, excluding imported NumPy helpers."""
     return [
         name
         for name, fn in getmembers(microgen.surface_functions, isfunction)
-        if len(signature(fn).parameters) == 3
+        if fn.__module__ == microgen.surface_functions.__name__
     ]
 
 
