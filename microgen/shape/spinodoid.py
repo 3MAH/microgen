@@ -222,6 +222,10 @@ class Spinodoid(Shape):
 
         ``backend="mmg"`` remeshes this VTK grid with the existing boundary-
         preserving remesher, retaining its options and ``periodic=True`` default.
+
+        ``backend="meshers"`` requires ``microgen[meshers]`` and evaluates the
+        existing Fourier field directly. Meshers options pass through, including
+        one ``periodic`` flag per axis and optional ``order=2`` quadratic cells.
         """
         if backend == "mmg":
             from microgen.remesh import remesh_keeping_boundaries_for_fem

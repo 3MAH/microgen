@@ -1074,6 +1074,11 @@ class Tpms(Shape):
         ``backend="mmg"`` remeshes this VTK grid with
         :func:`microgen.remesh.remesh_keeping_boundaries_for_fem`; options and
         its ``periodic=True`` default pass through unchanged.
+
+        ``backend="meshers"`` requires ``microgen[meshers]`` and evaluates the
+        existing field directly. Cartesian TPMS with scalar or pointwise callable
+        offsets are supported. Meshers options pass through, including one
+        ``periodic`` flag per axis and optional ``order=2`` quadratic cells.
         """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = (
