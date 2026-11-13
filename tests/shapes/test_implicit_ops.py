@@ -703,8 +703,5 @@ class TestTransformContract:
             spin.scale(2.0, inplace=True)
 
     def test_shape_without_field_raises(self):
-        from microgen import Polyhedron
-
-        poly = Polyhedron()
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            poly.translate((1.0, 0.0, 0.0))
+            Shape().translate((1.0, 0.0, 0.0))
