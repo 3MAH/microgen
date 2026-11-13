@@ -8,8 +8,11 @@ carrying the actual cap-wire trace, and sews them together with the
 interior triangles into a closed shell suitable for boolean ops, STEP
 export, and gmsh ``setPeriodic`` constraints.
 
+:func:`try_make_solid` then upgrades the sewn shell (or compound of
+shells) to closed, outward-oriented solids.
+
 Shared by :class:`microgen.shape.tpms.Tpms` and
-:class:`microgen.shape.spinodoid.Spinodoid` — the two TPMS/F-rep shapes
+:class:`microgen.shape.spinodoid.Spinodoid`, the two TPMS/F-rep shapes
 that produce periodic meshes that need this cap-aware sewing.
 
 Requires the optional ``[cad]`` install extra.
@@ -121,4 +124,67 @@ def mesh_to_periodic_shell(
     return _CadShape(sewing.SewedShape())
 
 
-__all__ = ["mesh_to_periodic_shell"]
+def try_make_solid(shape: CadShape) -> CadShape:
+    """Upgrade a sewn shell (or compound of shells) to solids, best effort.
+
+    For each closed shell, builds a ``TopoDS_Solid`` with OCCT's
+    ``BRepBuilderAPI_MakeSolid`` and reorients it with
+    ``BRepLib::OrientClosedSolid`` so the volume encloses the right region
+    (without this, sewing from a mesh can give an inside-out solid whose
+    ``VolumeProperties`` reads ``cube_volume - actual_volume``).
+
+    - A single ``TopoDS_Shell`` is upgraded to a Solid, or returned
+      unchanged if OCCT refuses the conversion.
+    - A Compound of disjoint shells (one per closed component of the
+      periodic mesh) gives one Solid per shell; several solids are fused
+      into one ``TopoDS_Compound``, and a Compound with no closable shell
+      is returned unchanged.
+
+    Requires the optional ``[cad]`` install extra.
+
+    :param shape: output of :func:`mesh_to_periodic_shell`
+    :return: a Solid, a Compound of Solids, or ``shape`` unchanged when no
+        shell can be closed (never raises for an unclosable shell)
+    """
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid  # noqa: PLC0415
+    from OCP.BRepLib import BRepLib  # noqa: PLC0415
+    from OCP.TopAbs import TopAbs_SHELL  # noqa: PLC0415
+    from OCP.TopExp import TopExp_Explorer  # noqa: PLC0415
+
+    from microgen.cad import CadShape as _CadShape  # noqa: PLC0415
+    from microgen.cad.shape import _topods_cast  # noqa: PLC0415
+    from microgen.operations import fuse_shapes  # noqa: PLC0415
+
+    cast_shell = _topods_cast("Shell")
+    cast_solid = _topods_cast("Solid")
+
+    def _make_solid(shell_shape) -> CadShape | None:
+        try:
+            solid = BRepBuilderAPI_MakeSolid(shell_shape).Solid()
+        except (ValueError, RuntimeError):
+            return None
+        BRepLib.OrientClosedSolid_s(cast_solid(solid))
+        return _CadShape(solid)
+
+    wrapped = shape.wrapped
+    if wrapped.ShapeType() == TopAbs_SHELL:
+        built = _make_solid(cast_shell(wrapped))
+        return built if built is not None else shape
+
+    # Compound: extract shells, build one Solid per closed shell, fuse.
+    exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
+    solids: list[CadShape] = []
+    while exp.More():
+        built = _make_solid(cast_shell(exp.Current()))
+        if built is not None:
+            solids.append(built)
+        exp.Next()
+
+    if not solids:
+        return shape
+    if len(solids) == 1:
+        return solids[0]
+    return fuse_shapes(solids, retain_edges=False)
+
+
+__all__ = ["mesh_to_periodic_shell", "try_make_solid"]

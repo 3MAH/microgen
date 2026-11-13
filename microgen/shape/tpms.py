@@ -15,6 +15,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, Literal
@@ -24,15 +25,13 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-from microgen.operations import fuse_shapes
-
 from ._types import BoundsType, Field
+from .periodic_shell import mesh_to_periodic_shell, try_make_solid
 from .shape import Shape, ShellCreationError
 
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
-import contextlib
 
 from .tpms_grading import OffsetGrading
 
@@ -793,8 +792,6 @@ class Tpms(Shape):
         which sews TPMS-interior triangles with per-face cap planes into a
         single closed shell (see that function's docstring for details).
         """
-        from .periodic_shell import mesh_to_periodic_shell  # noqa: PLC0415
-
         if not mesh.is_all_triangles:
             mesh.triangulate(inplace=True)
         pts = np.asarray(mesh.points, dtype=np.float64)
@@ -1010,61 +1007,11 @@ class Tpms(Shape):
         # a fallback when OCCT flags the solid invalid (self-intersecting or
         # non-manifold from raw marching-cubes — happens for skeletals at
         # offset=0 where the iso-surface coincides with the cell boundary).
-        shape = self._try_make_solid(self._mesh_to_periodic_shell(mesh))
+        shape = try_make_solid(self._mesh_to_periodic_shell(mesh))
         shape = self._to_world(shape)
         with contextlib.suppress(AttributeError, ValueError):
             shape._mesh_volume = float(abs(mesh.volume))
         return shape
-
-    @staticmethod
-    def _try_make_solid(shape: CadShape) -> CadShape:
-        """Best-effort upgrade of a sewn shell into a closed Solid.
-
-        Returns the original shape unchanged if the sewn result is a Compound
-        (multiple disjoint shells, can't be a single solid) or if OCCT refuses
-        the conversion. Reorients via :func:`BRepLib.OrientClosedSolid_s` so
-        that the resulting Solid encloses the right region (without this,
-        sewing-from-mesh can produce an inside-out solid whose
-        ``VolumeProperties`` reads ``cube_volume - actual_volume``).
-        """
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid
-        from OCP.BRepLib import BRepLib
-        from OCP.TopAbs import TopAbs_SHELL
-        from OCP.TopExp import TopExp_Explorer
-
-        from microgen.cad import CadShape as _CadShape
-        from microgen.cad.shape import _topods_cast
-
-        cast_shell = _topods_cast("Shell")
-        cast_solid = _topods_cast("Solid")
-
-        def _make_solid(shell_shape) -> CadShape | None:
-            try:
-                solid = BRepBuilderAPI_MakeSolid(shell_shape).Solid()
-            except (ValueError, RuntimeError):
-                return None
-            BRepLib.OrientClosedSolid_s(cast_solid(solid))
-            return _CadShape(solid)
-
-        wrapped = shape.wrapped
-        if wrapped.ShapeType() == TopAbs_SHELL:
-            built = _make_solid(cast_shell(wrapped))
-            return built if built is not None else shape
-
-        # Compound: extract Shells, build a Solid per closed shell, fuse.
-        exp = TopExp_Explorer(wrapped, TopAbs_SHELL)
-        solids: list[CadShape] = []
-        while exp.More():
-            built = _make_solid(cast_shell(exp.Current()))
-            if built is not None:
-                solids.append(built)
-            exp.Next()
-
-        if not solids:
-            return shape
-        if len(solids) == 1:
-            return solids[0]
-        return fuse_shapes(solids, retain_edges=False)
 
     def generate_surface_mesh(
         self: Tpms,
