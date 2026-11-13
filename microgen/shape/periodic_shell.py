@@ -8,8 +8,11 @@ carrying the actual cap-wire trace, and sews them together with the
 interior triangles into a closed shell suitable for boolean ops, STEP
 export, and gmsh ``setPeriodic`` constraints.
 
+:func:`try_make_solid` then upgrades the sewn shell (or compound of
+shells) to closed, outward-oriented solids.
+
 Shared by :class:`microgen.shape.tpms.Tpms` and
-:class:`microgen.shape.spinodoid.Spinodoid` — the two TPMS/F-rep shapes
+:class:`microgen.shape.spinodoid.Spinodoid`, the two TPMS/F-rep shapes
 that produce periodic meshes that need this cap-aware sewing.
 
 Requires the optional ``[cad]`` install extra.
@@ -122,27 +125,26 @@ def mesh_to_periodic_shell(
 
 
 def try_make_solid(shape: CadShape) -> CadShape:
-    """Best-effort upgrade of a sewn shell (or compound of shells) to a Solid.
+    """Upgrade a sewn shell (or compound of shells) to solids, best effort.
 
-    For each closed shell, builds a ``TopoDS_Solid`` via
-    :class:`OCP.BRepBuilderAPI.BRepBuilderAPI_MakeSolid` and reorients via
-    :func:`OCP.BRepLib.BRepLib.OrientClosedSolid_s` so the volume encloses
-    the right region (without this, sewing-from-mesh can produce an
-    inside-out solid whose ``VolumeProperties`` reads
-    ``cube_volume - actual_volume``).
+    For each closed shell, builds a ``TopoDS_Solid`` with OCCT's
+    ``BRepBuilderAPI_MakeSolid`` and reorients it with
+    ``BRepLib::OrientClosedSolid`` so the volume encloses the right region
+    (without this, sewing from a mesh can give an inside-out solid whose
+    ``VolumeProperties`` reads ``cube_volume - actual_volume``).
 
-    The input is the output of :func:`mesh_to_periodic_shell`; it may be:
-
-    - a single ``TopoDS_Shell`` — upgraded directly to a Solid (or returned
-      unchanged if OCCT refuses the conversion).
-    - a Compound of disjoint shells (one per closed component of the
-      periodic mesh) — each shell becomes its own Solid; multiple solids
-      are fused into one ``TopoDS_Compound``.
-
-    Shared by :class:`microgen.shape.tpms.Tpms` and
-    :class:`microgen.shape.spinodoid.Spinodoid`.
+    - A single ``TopoDS_Shell`` is upgraded to a Solid, or returned
+      unchanged if OCCT refuses the conversion.
+    - A Compound of disjoint shells (one per closed component of the
+      periodic mesh) gives one Solid per shell; several solids are fused
+      into one ``TopoDS_Compound``, and a Compound with no closable shell
+      is returned unchanged.
 
     Requires the optional ``[cad]`` install extra.
+
+    :param shape: output of :func:`mesh_to_periodic_shell`
+    :return: a Solid, a Compound of Solids, or ``shape`` unchanged when no
+        shell can be closed (never raises for an unclosable shell)
     """
     from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeSolid  # noqa: PLC0415
     from OCP.BRepLib import BRepLib  # noqa: PLC0415

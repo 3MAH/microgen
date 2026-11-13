@@ -15,6 +15,7 @@ TPMS (:mod:`microgen.shape.tpms`)
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, Literal
@@ -24,7 +25,6 @@ import numpy.typing as npt
 import pyvista as pv
 from scipy.optimize import root_scalar
 
-
 from ._types import BoundsType, Field
 from .periodic_shell import mesh_to_periodic_shell, try_make_solid
 from .shape import Shape, ShellCreationError
@@ -32,7 +32,6 @@ from .shape import Shape, ShellCreationError
 if TYPE_CHECKING:
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
-import contextlib
 
 from .tpms_grading import OffsetGrading
 
