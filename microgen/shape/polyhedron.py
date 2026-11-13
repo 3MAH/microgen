@@ -89,7 +89,7 @@ class Polyhedron(Shape):
         """Build the convex-polyhedron half-space SDF in world coordinates.
 
         Bakes the ``center`` translation and ``orientation`` rotation into
-        the cached face normals/centroids so the implicit ``_func`` does no
+        the cached face normals/centroids so the implicit ``_field`` does no
         per-call transform.  Also derives ``_bounds`` from the world-frame
         vertex AABB.
         """
@@ -125,7 +125,7 @@ class Polyhedron(Shape):
             centroids.append(face_centroid)
 
         if not normals:
-            return  # degenerate polyhedron — leave _func unset
+            return  # degenerate polyhedron — leave _field unset
 
         normals_arr = np.asarray(normals, dtype=np.float64)
         centroids_arr = np.asarray(centroids, dtype=np.float64)
@@ -146,7 +146,7 @@ class Polyhedron(Shape):
             sd = p @ normals_arr.T - n_dot_c
             return sd.max(axis=1).reshape(shape)
 
-        self._func = _field
+        self._field = _field
         margin = (
             0.1
             * float(np.linalg.norm(verts_world.max(axis=0) - verts_world.min(axis=0)))

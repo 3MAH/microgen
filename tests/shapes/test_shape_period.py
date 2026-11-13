@@ -19,8 +19,8 @@ from microgen.shape.shape import Shape
 
 
 def test_bare_shape_period_is_none() -> None:
-    """A free ``Shape(func=...)`` has no intrinsic period."""
-    s = Shape(func=lambda x, y, z: x * x + y * y + z * z - 1.0)
+    """A free ``Shape(field=...)`` has no intrinsic period."""
+    s = Shape(field=lambda x, y, z: x * x + y * y + z * z - 1.0)
     assert s.period is None
 
 

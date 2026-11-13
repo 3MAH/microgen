@@ -27,7 +27,6 @@ import numpy as np
 import numpy.typing as npt
 import pyvista as pv
 
-from ..operations import rotate
 from ._frep_grf import _FrepGRF, _normalize_cell_size, compute_threshold_for_porosity
 from .periodic_shell import mesh_to_periodic_shell
 from .shape import Shape
@@ -81,9 +80,10 @@ class Spinodoid(Shape):
     :param mode_amplitude_threshold: keep FFT modes with
         ``|F̂| > threshold * max(|F̂|)``.
     :param seed: RNG seed; ``None`` for non-deterministic behavior.
-    :param center: geometry center after construction (translation applied
-        in :meth:`generate_surface_mesh` / :meth:`generate_cad`).
-    :param orientation: rotation angles (Euler) applied at the end.
+    :param center: translation of the cell, applied to :attr:`field` and to
+        every generated mesh and CAD shape.
+    :param orientation: rotation (Euler angles, ``ZXZ`` in degrees) of the
+        cell about its local origin, applied before ``center``.
     """
 
     def __init__(  # noqa: PLR0913
@@ -150,7 +150,7 @@ class Spinodoid(Shape):
             raise ValueError(err_msg)
 
     def _setup_frep_field(self: Spinodoid) -> None:
-        """Build the F-rep modes, resolve the iso-value, wire ``_func``/``_bounds``."""
+        """Build the F-rep modes, resolve the iso-value, set the local and world fields."""
         self._frep = _FrepGRF.from_fft_grf(
             k0=self.k0,
             bandwidth=self.bandwidth,
@@ -180,14 +180,19 @@ class Spinodoid(Shape):
         ) -> npt.NDArray[np.float64]:
             return -frep.evaluate(x, y, z)
 
-        self._func = _signed_field
         lx, ly, lz = (self.cell_size * self.repeat_cell).tolist()
-        self._bounds = (0.0, float(lx), 0.0, float(ly), 0.0, float(lz))
         # Spinodoid's field is *bit-exact* periodic on ``cell_size`` along each
         # axis — every kept Fourier mode lives on the reciprocal lattice, so
         # ``frep.evaluate(p + cell_size) == frep.evaluate(p)`` (see _frep_grf.py).
         cs = np.asarray(self.cell_size, dtype=float)
-        self._period = (float(cs[0]), float(cs[1]), float(cs[2]))
+        self._set_local_frep(
+            _signed_field,
+            (0.0, float(lx), 0.0, float(ly), 0.0, float(lz)),
+            (float(cs[0]), float(cs[1]), float(cs[2])),
+        )
+
+    # Rigid transforms re-pose the local field; a scale gives a generic Shape.
+    _rebuild_field = Shape._pose_local_frep
 
     @cached_property
     def grid(self: Spinodoid) -> pv.StructuredGrid:
@@ -218,8 +223,7 @@ class Spinodoid(Shape):
     ) -> pv.UnstructuredGrid:
         """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
         grid_vol = self.grid_solid.copy()
-        grid_vol = rotate(grid_vol, center=(0, 0, 0), rotation=self.orientation)
-        return grid_vol.translate(xyz=self.center)
+        return self._to_world(grid_vol)
 
     def generate_surface_mesh(
         self: Spinodoid,
@@ -241,8 +245,7 @@ class Spinodoid(Shape):
                 resolution=resolution if resolution is not None else 50,
             )
         polydata = self.surface.copy()
-        polydata = rotate(polydata, center=(0, 0, 0), rotation=self.orientation)
-        return polydata.translate(xyz=self.center)
+        return self._to_world(polydata)
 
     def generate_cad(
         self: Spinodoid,
@@ -263,9 +266,8 @@ class Spinodoid(Shape):
         pts = np.asarray(mesh.points, dtype=np.float64)
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
 
-        shape = _try_make_solid(mesh_to_periodic_shell(pts, tris, self._bounds))
-        shape = rotate(obj=shape, center=(0, 0, 0), rotation=self.orientation)
-        shape = shape.translate(self.center)
+        shape = _try_make_solid(mesh_to_periodic_shell(pts, tris, self._local_bounds))
+        shape = self._to_world(shape)
         # Fallback for OCCT Volume() on solids it flags invalid (rigid transforms preserve volume).
         with contextlib.suppress(AttributeError, ValueError):
             shape._mesh_volume = float(abs(self.grid_solid.volume))
