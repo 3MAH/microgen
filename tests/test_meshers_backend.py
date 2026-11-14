@@ -7,7 +7,7 @@ import pytest
 import pyvista as pv
 from scipy.spatial.transform import Rotation
 
-from microgen import CylindricalTpms, Sphere, Spinodoid, Tpms
+from microgen import CylindricalTpms, Sphere, SphericalTpms, Spinodoid, Tpms
 from microgen.shape.implicit_ops import from_field
 from microgen.shape.surface_functions import gyroid, schwarz_p
 from microgen.shape.tpms_grading import OffsetGrading
@@ -248,6 +248,31 @@ def test_nonperiodic_grading_is_not_canonicalized(native_backend):
         shape.generate_volume_mesh(backend="meshers", cells=12, periodic=(True,) * 3)
 
 
+def test_linear_offset_grading_uses_the_existing_callable(native_backend, monkeypatch):
+    def grading(x, y, z):
+        return 1.1 + 0.2 * z
+
+    shape = Tpms(gyroid, offset=grading, resolution=24)
+    points = np.random.default_rng(4).uniform(-0.5, 0.5, (128, 3))
+    generate = native_backend.generate
+
+    def checked(field, **options):
+        expected = np.abs(shape.raw_field(*points.T)) - 0.5 * grading(*points.T)
+        np.testing.assert_allclose(
+            native_backend.compile_field(field).values(points), expected, atol=1e-12
+        )
+        return generate(field, **options)
+
+    monkeypatch.setattr(native_backend, "generate", checked)
+    grid = shape.generate_volume_mesh(
+        backend="meshers", cells=16, geometry_tolerance=0.005, optimize_passes=1
+    )
+    assert_native_grid(grid)
+    assert grid.volume == pytest.approx(
+        abs(shape.generate_volume_mesh().volume), abs=0.015
+    )
+
+
 def test_existing_density_calibration_is_reused(native_backend):
     shape = Tpms(gyroid, density=0.3, resolution=16)
     shape.generate_volume_mesh()
@@ -294,8 +319,9 @@ def test_sampled_offsets_require_an_explicit_policy():
         shape.generate_volume_mesh(backend="meshers", cells=8)
 
 
-def test_mapped_tpms_are_explicitly_unsupported():
-    shape = CylindricalTpms(radius=2, surface_function=gyroid, offset=1.1, resolution=8)
+@pytest.mark.parametrize("tpms_class", [CylindricalTpms, SphericalTpms])
+def test_mapped_tpms_are_explicitly_unsupported(tpms_class):
+    shape = tpms_class(radius=2, surface_function=gyroid, offset=1.1, resolution=8)
     with pytest.raises(NotImplementedError, match="domain adapter"):
         shape.generate_volume_mesh(backend="meshers", cells=8)
 
