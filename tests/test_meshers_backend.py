@@ -308,21 +308,22 @@ def test_repeated_full_cell_and_saved_periodic_metadata(native_backend, tmp_path
         np.testing.assert_array_equal(restored.field_data[name], grid.field_data[name])
 
 
-def test_sampled_offsets_require_an_explicit_policy():
+def test_sampled_offsets_use_the_original_grid(native_backend):
     class SampledOffset(OffsetGrading):
         def compute_offset(self, grid):
             return np.full(grid.n_points, 1.1)
 
     shape = Tpms(gyroid, offset=SampledOffset(), resolution=8)
     assert shape.generate_volume_mesh().n_cells
-    with pytest.raises(NotImplementedError, match="interpolation policy"):
-        shape.generate_volume_mesh(backend="meshers", cells=8)
+    grid = shape.generate_volume_mesh(backend="meshers", cells=12, optimize_passes=1)
+    assert_native_grid(grid)
+    np.testing.assert_array_equal(shape.offset, np.full(shape.grid.n_points, 1.1))
 
 
 @pytest.mark.parametrize("tpms_class", [CylindricalTpms, SphericalTpms])
-def test_mapped_tpms_are_explicitly_unsupported(tpms_class):
-    shape = tpms_class(radius=2, surface_function=gyroid, offset=1.1, resolution=8)
-    with pytest.raises(NotImplementedError, match="domain adapter"):
+def test_collapsed_mapped_domains_are_explicitly_rejected(tpms_class):
+    shape = tpms_class(radius=0.5, surface_function=gyroid, offset=1.1, resolution=8)
+    with pytest.raises(ValueError, match="singular axis|poles and the origin"):
         shape.generate_volume_mesh(backend="meshers", cells=8)
 
 
