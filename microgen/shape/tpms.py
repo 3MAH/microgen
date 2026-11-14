@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -30,6 +30,8 @@ from ._types import BoundsType, Field
 from .shape import Shape, ShellCreationError
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
 import contextlib
@@ -1061,9 +1063,7 @@ class Tpms(Shape):
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
-        *,
-        backend: str = "vtk",
-        **options: KwargsGenerateType,
+        **options: Any,
     ) -> pv.UnstructuredGrid:
         """Generate VTK UnstructuredGrid object of the required TPMS part.
 
@@ -1087,6 +1087,7 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
+        backend = options.pop("backend", "vtk")
         if backend == "mmg":
             from microgen.remesh import remesh_keeping_boundaries_for_fem
 
@@ -1117,7 +1118,7 @@ class Tpms(Shape):
                     "sampled arrays and OffsetGrading need an interpolation policy."
                 )
             raw, offset = self.raw_field, self._offset_func
-            scalar = self.offset
+            scalar = cast("float", self.offset) if offset is None else 0.0
 
             def field(x, y, z):
                 half = 0.5 * (offset(x, y, z) if offset is not None else scalar)
@@ -1128,14 +1129,19 @@ class Tpms(Shape):
                     return half - value
                 return value + half
 
+            mesh_field: Field = field
             band = None
             if self.density == 1.0:
-                field = lambda x, y, z: -1.0 + 0.0 * x
+
+                def full_field(x, y, z):
+                    return -1.0 + 0.0 * x
+
+                mesh_field = full_field
             elif type_part == "sheet" and offset is None and scalar > 0:
                 band = (-0.5 * scalar, 0.5 * scalar)
-                field = raw
+                mesh_field = raw
             return generate_volume(
-                field,
+                mesh_field,
                 self.bounds,
                 options,
                 default_cells=tuple(n - 1 for n in self.grid.dimensions),

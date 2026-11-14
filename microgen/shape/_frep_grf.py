@@ -105,9 +105,7 @@ class _FrepGRF:
         flat = np.broadcast_arrays(x_arr, y_arr, z_arr)
         points = np.stack([a.ravel() for a in flat], axis=-1)
         if self.modes.size == 0:
-            return (
-                0.0 if points.dtype == object else np.zeros(out_shape, dtype=np.float64)
-            )
+            return np.zeros(out_shape, dtype=np.float64)
         # Single (M, K) buffer reused for angles → cos(angles+phase) → amplitude-weighted contribs.
         scaled = points / self.cell_size
         angles = scaled @ self.modes.T

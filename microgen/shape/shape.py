@@ -19,6 +19,8 @@ from . import implicit_ops as _ops
 from ._types import BoundsType, Field, PeriodType
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
@@ -281,7 +283,7 @@ class Shape:
         resolution: int = 50,
         *,
         backend: str = "vtk",
-        **options: KwargsGenerateType,
+        **options: Any,
     ) -> pv.UnstructuredGrid:
         """Generate a volumetric VTK mesh of the shape's interior.
 

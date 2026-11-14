@@ -33,6 +33,8 @@ from .periodic_shell import mesh_to_periodic_shell
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
@@ -214,9 +216,7 @@ class Spinodoid(Shape):
 
     def generate_volume_mesh(
         self: Spinodoid,
-        *,
-        backend: str = "vtk",
-        **options: KwargsGenerateType,
+        **options: Any,
     ) -> pv.UnstructuredGrid:
         """Generate the volumetric solid grid with center+rotation applied.
 
@@ -227,6 +227,7 @@ class Spinodoid(Shape):
         existing Fourier field directly. Meshers options pass through, including
         one ``periodic`` flag per axis and optional ``order=2`` quadratic cells.
         """
+        backend = options.pop("backend", "vtk")
         if backend == "mmg":
             from microgen.remesh import remesh_keeping_boundaries_for_fem
 
