@@ -14,7 +14,7 @@ dependencies:
   - scipy
   - python-gmsh
   - meshio
-  - ocp               # OCP (OCCT Python binding) — enables the CAD path
+  - ocp<8            # OCP (OCCT Python binding) — enables the CAD path
   - pip:
     - autograd
   - mmg
