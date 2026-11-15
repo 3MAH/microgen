@@ -24,18 +24,20 @@ def generate_tpms(shape, part, options):
             raise NotImplementedError(
                 "Closed swept curves require longitudinal seam welding"
             )
+    adaptive_field = None
+    inverse_map = None
     if isinstance(shape, Sweep) and options.get("adapt", False):
         if any(options.get("periodic", (False, False, False))):
             raise NotImplementedError(
                 "Adaptive Cartesian sweeps do not support mapped periodic ends"
             )
-        raw, envelope = shape.raw_field, shape._cell_box().require_func()
+        physical_raw, envelope = shape.raw_field, shape._cell_box().require_func()
         thickness = shape._offset_func
         scalar = float(shape.offset) if thickness is None else 0.0
 
         def solid(x, y, z):
             half = (thickness(x, y, z) if thickness is not None else scalar) / 2
-            value = raw(x, y, z)
+            value = physical_raw(x, y, z)
             # Keep both sheet walls distinct during adaptive curvature sizing.
             material = (
                 np.maximum(value - half, -value - half)
@@ -46,13 +48,9 @@ def generate_tpms(shape, part, options):
             )
             return np.maximum(material, envelope(x, y, z))
 
-        return generate_volume(
-            solid,
-            shape.bounds,
-            options,
-            rotation=shape.orientation,
-            center=shape.center,
-        )
+        adaptive_field = (solid, shape.bounds)
+        if np.allclose(shape._curve_T, shape._curve_T[0], rtol=0, atol=1e-12):
+            inverse_map = shape._inverse_coordinates
     mapped = isinstance(shape, (CylindricalTpms, SphericalTpms, Sweep))
     if not mapped and not isinstance(shape, Infill):
         raise NotImplementedError("This TPMS subclass has no Meshers domain adapter")
@@ -172,6 +170,8 @@ def generate_tpms(shape, part, options):
         coordinate_map=mapping,
         periodic_transforms=transforms or None,
         weld_axis=weld_axis,
+        adaptive_field=adaptive_field,
+        inverse_map=inverse_map,
         rotation=shape.orientation,
         center=shape.center,
     )

@@ -2024,6 +2024,17 @@ class Sweep(Tpms):
         ang_extent = float(self.cell_size[2]) * float(self.repeat_cell[2])
         theta = (z + ang_extent / 2) / max(ang_extent, 1e-12) * 2.0 * np.pi
 
+        if np.allclose(self._curve_T, self._curve_T[0], rtol=0, atol=1e-12):
+            c, normal, tangent = self._curve_frame_at(np.array([0.0]))
+            binormal = np.cross(tangent[0], normal[0])
+            s = np.clip(s, 0.0, self._curve_total_length)
+            return tuple(
+                c[0, axis]
+                + s * tangent[0, axis]
+                + r * (np.cos(theta) * normal[0, axis] + np.sin(theta) * binormal[axis])
+                for axis in range(3)
+            )
+
         # Interpolate curve position + (N, T) frames at each parametric s.
         s_flat = s.ravel(order="F")
         s_clipped = np.clip(s_flat, 0.0, self._curve_total_length)

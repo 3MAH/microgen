@@ -59,7 +59,7 @@ def test_mapped_mesh_has_positive_tetrahedra_and_retains_parameters(kind):
     shape = kind(radius=2, surface_function=gyroid, offset=1.1, resolution=8)
     mesh = shape.generate_volume_mesh(backend="meshers", cells=16)
     assert mesh.n_cells > 0
-    corners = mesh.points[mesh.cells_dict[pv.CellType.TETRA]]
+    corners = mesh.points[mesh.cells_dict[np.uint8(pv.CellType.TETRA)]]
     assert np.linalg.det(corners[:, 1:] - corners[:, :1]).min() > 0
     assert "meshers_parameters" in mesh.point_data
     assert mesh.extract_surface(algorithm=None).n_open_edges == 0
@@ -123,6 +123,8 @@ def test_annular_sweep_map_and_field_agree():
 @pytest.mark.parametrize("graded", [False, True])
 def test_adaptive_sweep_keeps_both_sheet_constraints(monkeypatch, graded):
     meshers = pytest.importorskip("meshers")
+    # Keep the legacy Cartesian compiler contract covered with newer wheels.
+    monkeypatch.setattr(meshers, "ADAPTIVE_MAPPED_INTERSECTIONS", False, raising=False)
     shape = Sweep(
         curve_points=np.array([[0.0, 0, 0], [0.0, 0, 1]]),
         surface_function=gyroid,
@@ -222,3 +224,92 @@ def test_grading_as_field_requires_a_fixed_reference():
     field = grading.as_field(shape.grid)
     points = shape.grid.points[[5, 17, 25]]
     np.testing.assert_allclose(field(*points[:1].T), field(*points.T)[:1])
+
+
+@pytest.mark.parametrize(
+    "cells, passes", [((16, 8, 48), 4), ((24, 12, 64), 4), (16, 1)]
+)
+def test_annular_sweep_sheet_adapts_with_named_physical_constraints(cells, passes):
+    meshers = pytest.importorskip("meshers")
+    if not getattr(meshers, "ADAPTIVE_MAPPED_INTERSECTIONS", False):
+        pytest.skip("requires named seed adaptation support")
+    shape = Sweep(
+        curve_points=np.array([[0.0, 0, 0], [0.0, 0, 0.5], [0.0, 0, 1]]),
+        surface_function=gyroid,
+        radial_max=0.4,
+        radial_min=0.2,
+        offset=1.1,
+        resolution=8,
+    )
+    mesh = shape.generate_volume_mesh(
+        backend="meshers",
+        cells=cells,
+        adapt=True,
+        adapt_tolerance=0.0018,
+        geometry_tolerance=0.002,
+        min_length=0.002,
+        max_length=0.08,
+        gradation=0.6,
+        max_tetrahedra=250_000,
+        optimize_passes=passes,
+    )
+    assert mesh.n_cells <= 250_000 and mesh.n_points <= 250_000
+    assert mesh.extract_surface(algorithm=None).n_open_edges == 0
+    assert mesh.volume == pytest.approx(0.13433935, rel=0.01)
+    corners = mesh.points[mesh.cells_dict[np.uint8(pv.CellType.TETRA)]]
+    det = np.linalg.det(corners[:, 1:] - corners[:, :1])
+    edges = sum(
+        np.sum((corners[:, a] - corners[:, b]) ** 2, axis=1)
+        for a in range(4)
+        for b in range(a + 1, 4)
+    )
+    assert np.all(det > 0) and np.sqrt(432 * det**2 / edges**3).min() >= 0.1
+    assert len(mesh.field_data["meshers_constraint_names"]) == 6
+
+
+@pytest.mark.parametrize("direction", [(0, 0, 1), (1, 2, 3), (-2, 0.3, 1), (1, 0, 0)])
+def test_straight_sweep_map_matches_frames_and_compiles(direction):
+    meshers = pytest.importorskip("meshers")
+    curve = np.array([0.2, -0.4, 0.7]) + np.array([0, 0.13, 1])[:, None] * direction
+    shape = Sweep(
+        curve_points=curve,
+        surface_function=gyroid,
+        radial_min=0.2,
+        radial_max=0.4,
+        cell_size=(0.8, 1.2, 0.9),
+        repeat_cell=(2, 1, 3),
+        offset=1.1,
+        resolution=8,
+    )
+    extent = shape.cell_size * shape.repeat_cell
+    query = (
+        np.random.default_rng(423).uniform(-0.7, 0.7, (3, 3, 7)) * extent[:, None, None]
+    )
+    s = np.clip(
+        (query[0] / extent[0] + 0.5) * shape._curve_total_length,
+        0,
+        shape._curve_total_length,
+    )
+    r = shape.radial_min + (query[1] / extent[1] + 0.5) * (
+        shape.radial_max - shape.radial_min
+    )
+    theta = (query[2] / extent[2] + 0.5) * 2 * np.pi
+    c, normal, tangent = shape._curve_frame_at(s.ravel(order="F"))
+    expected = c + r.ravel(order="F")[:, None] * (
+        np.cos(theta.ravel(order="F"))[:, None] * normal
+        + np.sin(theta.ravel(order="F"))[:, None] * np.cross(tangent, normal)
+    )
+    actual = np.column_stack(
+        [a.ravel(order="F") for a in shape._map_coordinates(*query)]
+    )
+    np.testing.assert_allclose(actual, expected, atol=2e-13, rtol=5e-14)
+    points = np.column_stack([a.ravel(order="F") for a in query])
+    for component in range(3):
+
+        def coordinate(x, y, z, component=component):
+            return shape._map_coordinates(x, y, z)[component]
+
+        compiled = meshers.compile_field(coordinate)
+        np.testing.assert_allclose(
+            compiled.values(points), expected[:, component], atol=2e-13, rtol=5e-14
+        )

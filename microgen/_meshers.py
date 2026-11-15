@@ -27,6 +27,8 @@ def generate_volume(
     coordinate_map=None,
     periodic_transforms=None,
     weld_axis=None,
+    adaptive_field=None,
+    inverse_map=None,
 ) -> pv.UnstructuredGrid:
     """Convert native Tet4/Tet10 output, preserving placement and periodic pairs."""
     if bounds is None:
@@ -46,6 +48,30 @@ def generate_volume(
             "Install a tested Meshers wheel or microgen[meshers]."
         ) from error
 
+    if (
+        constraints is not None
+        and options.get("adapt", False)
+        and adaptive_field is not None
+    ):
+        seeded = (
+            getattr(meshers, "ADAPTIVE_MAPPED_INTERSECTIONS", False)
+            and inverse_map is not None
+            and options.get("order", 1) == 1
+            and options.get("threads", 1) == 1
+            and not options.get("curved_fit", False)
+            and not options.get("interior_refine_nodes", 0)
+            and not any(key in options for key in ("gradient", "size_field", "layers"))
+        )
+        if not seeded:
+            field, field_bounds = adaptive_field
+            return generate_volume(
+                field,
+                field_bounds,
+                options,
+                default_cells=default_cells,
+                rotation=rotation,
+                center=center,
+            )
     options.setdefault("cells", default_cells)
     options.setdefault("threads", 1)
     options.setdefault("minimum_quality", 0.1)
@@ -56,12 +82,21 @@ def generate_volume(
             raise NotImplementedError(
                 "Mapped and clipped TPMS currently require Tet4 and one thread"
             )
-        if options.pop("adapt", False) or options.pop("curved_fit", False):
+        adaptive = options.pop("adapt", False)
+        if (adaptive and adaptive_field is None) or options.pop("curved_fit", False):
             raise NotImplementedError(
                 "Mapped intersections do not support adaptive or quadratic fitting options"
             )
         options.setdefault("geometry_tolerance", 0.01)
         options.setdefault("max_tetrahedra", 250_000)
+        if weld_axis is not None and getattr(meshers, "CLOSED_MAPPED_SEAMS", False):
+            options["closed_axes"] = tuple(axis == weld_axis for axis in range(3))
+            weld_axis = None
+        if adaptive and adaptive_field is not None:
+            options.pop("interior_refine_nodes", None)
+            options.update(
+                adapt=True, inverse_map=inverse_map, physical_bounds=adaptive_field[1]
+            )
         native = meshers.generate_intersection(
             constraints,
             bounds=bounds,
@@ -69,6 +104,8 @@ def generate_volume(
             periodic_transforms=periodic_transforms,
             **options,
         )
+        if adaptive and adaptive_field is not None:
+            bounds = adaptive_field[1]
     width = native.tetrahedra.shape[1]
     cell_type = {4: pv.CellType.TETRA, 10: pv.CellType.QUADRATIC_TETRA}[width]
     points = native.points.copy()
