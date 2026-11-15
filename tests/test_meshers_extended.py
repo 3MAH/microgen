@@ -1,8 +1,8 @@
 """Field and domain controls for sampled, mapped and clipped TPMS."""
 
 import numpy as np
-import pyvista as pv
 import pytest
+import pyvista as pv
 
 from microgen import CylindricalTpms, Infill, NormedDistance, SphericalTpms, Sweep, Tpms
 from microgen.shape.surface_functions import gyroid
@@ -118,6 +118,44 @@ def test_annular_sweep_map_and_field_agree():
     assert mesh.extract_surface(algorithm=None).n_open_edges == 0
     assert np.linalg.norm(mesh.points[:, :2], axis=1).min() >= 0.199
     assert mesh.volume == pytest.approx(np.pi * (0.4**2 - 0.2**2), rel=0.01)
+
+
+@pytest.mark.parametrize("graded", [False, True])
+def test_adaptive_sweep_keeps_both_sheet_constraints(monkeypatch, graded):
+    meshers = pytest.importorskip("meshers")
+    shape = Sweep(
+        curve_points=np.array([[0.0, 0, 0], [0.0, 0, 1]]),
+        surface_function=gyroid,
+        radial_max=0.4,
+        radial_min=0.2,
+        offset=(lambda x, y, z: 1.1 + 0.1 * z) if graded else 1.1,
+        resolution=8,
+    )
+    points = np.random.default_rng(15).uniform(
+        np.asarray(shape.bounds)[::2], np.asarray(shape.bounds)[1::2], (128, 3)
+    )
+
+    def checked(field, **options):
+        compiled = meshers.compile_field(field)
+        # Retention is the native compiler contract used by adaptive meshing.
+        branches = compiled._intersection_fields()
+        assert branches is not None and len(branches) == 6
+        half = (1.1 + 0.1 * points[:, 2] if graded else 1.1) / 2
+        expected = np.maximum(
+            np.abs(shape.raw_field(*points.T)) - half,
+            shape._cell_box().require_func()(*points.T),
+        )
+        np.testing.assert_allclose(compiled.values(points), expected, atol=1e-12)
+        np.testing.assert_allclose(
+            np.max([branch.values(points) for branch in branches], axis=0),
+            expected,
+            atol=1e-12,
+        )
+        raise RuntimeError("checked adaptive constraints")
+
+    monkeypatch.setattr(meshers, "generate", checked)
+    with pytest.raises(RuntimeError, match="checked adaptive constraints"):
+        shape.generate_volume_mesh(backend="meshers", adapt=True)
 
 
 def test_spherical_poles_are_not_silently_excised():

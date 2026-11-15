@@ -36,8 +36,9 @@ def generate_tpms(shape, part, options):
         def solid(x, y, z):
             half = (thickness(x, y, z) if thickness is not None else scalar) / 2
             value = raw(x, y, z)
+            # Keep both sheet walls distinct during adaptive curvature sizing.
             material = (
-                np.abs(value) - half
+                np.maximum(value - half, -value - half)
                 if part == "sheet"
                 else value + half
                 if part == "lower skeletal"
