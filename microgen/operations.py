@@ -183,8 +183,17 @@ def fuse_shapes(shapes: list[CadShape], *, retain_edges: bool) -> CadShape:
     from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse  # noqa: PLC0415
 
     fused = shapes[0].wrapped
-    for i in range(1, len(shapes)):
-        fused = BRepAlgoAPI_Fuse(fused, shapes[i].wrapped).Shape()
+    if len(shapes) > 1:
+        # One union avoids order-dependent failures with thin overlapping solids.
+        operation = BRepAlgoAPI_Fuse()
+        arguments, tools = operation.Arguments(), operation.Tools()
+        arguments.Append(fused)
+        for shape in shapes[1:]:
+            tools.Append(shape.wrapped)
+        operation.SetArguments(arguments)
+        operation.SetTools(tools)
+        operation.Build()
+        fused = operation.Shape()
 
     if retain_edges:
         return CadShape(fused)

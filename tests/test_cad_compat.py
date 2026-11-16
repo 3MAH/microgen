@@ -35,3 +35,11 @@ def test_split_shape_retains_all_arguments_and_tools(multiple_tools):
     centers = sorted(solid_center(solid)[0] for solid in solids)
     expected = [-1, 0, 1] if multiple_tools else [-1, 0.5]
     assert centers == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("cell_size", [1.0, 2.0])
+def test_thin_lattice_fusion_preserves_small_solid_volume(cell_size):
+    from microgen.shape.strut_lattice import Diamond
+
+    lattice = Diamond(strut_radius=0.001, cell_size=cell_size)
+    assert 0 < lattice.volume < 0.001 * cell_size**3
