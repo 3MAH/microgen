@@ -59,6 +59,13 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.10", "3.14"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.12"
+            ocp-version: "7.9.3.1.1"
+          - os: ubuntu-latest
+            python-version: "3.12"
+            ocp-version: "8.0.1.1.0"
 
     steps:
       - uses: actions/checkout@v4
@@ -72,4 +79,6 @@ jobs:
 
       - run: uv sync --extra dev --extra cad
       - run: uv pip install '.[cad]'
-      - run: uv run pytest --numprocesses=auto
+      - if: matrix.ocp-version
+        run: uv pip install "cadquery-ocp-novtk==${{ matrix.ocp-version }}"
+      - run: uv run --no-sync pytest --numprocesses=auto
