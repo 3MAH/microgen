@@ -43,3 +43,13 @@ def test_thin_lattice_fusion_preserves_small_solid_volume(cell_size):
 
     lattice = Diamond(strut_radius=0.001, cell_size=cell_size)
     assert 0 < lattice.volume < 0.001 * cell_size**3
+
+
+@pytest.mark.parametrize(("retain_edges", "face_count"), [(True, 10), (False, 6)])
+def test_fusion_preserves_requested_intersecting_edges(retain_edges, face_count):
+    from microgen.operations import fuse_shapes
+
+    boxes = [make_box((1, 1, 1), center) for center in [(0, 0, 0), (1, 0, 0)]]
+    fused = fuse_shapes(boxes, retain_edges=retain_edges)
+    assert fused.volume() == pytest.approx(2)
+    assert len(fused.faces()) == face_count
