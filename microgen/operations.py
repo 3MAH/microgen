@@ -181,14 +181,19 @@ def fuse_shapes(shapes: list[CadShape], *, retain_edges: bool) -> CadShape:
     """
     require_cad()
     from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse  # noqa: PLC0415
+    from OCP.Standard import Standard_Failure  # noqa: PLC0415
 
     fused = shapes[0].wrapped
     for shape in shapes[1:]:
         operation = BRepAlgoAPI_Fuse(fused, shape.wrapped)
-        if not retain_edges:
-            # Remove split faces before the next union of overlapping solids.
-            operation.SimplifyResult()
         fused = operation.Shape()
+        if not retain_edges:
+            try:
+                operation.SimplifyResult()
+                fused = operation.Shape()
+            except Standard_Failure:
+                # Keep the Boolean result if optional curve cleanup fails.
+                pass
 
     if retain_edges:
         return CadShape(fused)

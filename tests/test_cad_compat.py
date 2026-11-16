@@ -53,3 +53,13 @@ def test_fusion_preserves_requested_intersecting_edges(retain_edges, face_count)
     fused = fuse_shapes(boxes, retain_edges=retain_edges)
     assert fused.volume() == pytest.approx(2)
     assert len(fused.faces()) == face_count
+
+
+def test_lattice_fusion_survives_curve_simplification_failure():
+    from OCP.BRepCheck import BRepCheck_Analyzer
+
+    from microgen.shape.strut_lattice import Cuboctahedron
+
+    lattice = Cuboctahedron(strut_radius=0.1).generate_cad()
+    assert 0 < lattice.volume() < 1
+    assert BRepCheck_Analyzer(lattice.wrapped).IsValid()
