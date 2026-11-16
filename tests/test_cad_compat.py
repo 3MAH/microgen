@@ -42,7 +42,7 @@ def test_thin_lattice_fusion_preserves_small_solid_volume(cell_size):
     from microgen.shape.strut_lattice import Diamond
 
     lattice = Diamond(strut_radius=0.001, cell_size=cell_size)
-    assert 0 < lattice.volume < 0.001 * cell_size**3
+    assert 1e-5 * cell_size < lattice.volume < 3e-5 * cell_size
 
 
 @pytest.mark.parametrize(("retain_edges", "face_count"), [(True, 10), (False, 6)])
@@ -55,11 +55,31 @@ def test_fusion_preserves_requested_intersecting_edges(retain_edges, face_count)
     assert len(fused.faces()) == face_count
 
 
-def test_lattice_fusion_survives_curve_simplification_failure():
+@pytest.mark.parametrize(
+    "name",
+    [
+        "BodyCenteredCubic",
+        "Cubic",
+        "Cuboctahedron",
+        "Diamond",
+        "FaceCenteredCubic",
+        "Octahedron",
+        "OctetTruss",
+        "RhombicCuboctahedron",
+        "RhombicDodecahedron",
+        "TruncatedCube",
+        "TruncatedCuboctahedron",
+        "TruncatedOctahedron",
+    ],
+)
+def test_builtin_lattice_fusion_produces_exportable_solid(name, tmp_path):
     from OCP.BRepCheck import BRepCheck_Analyzer
 
-    from microgen.shape.strut_lattice import Cuboctahedron
+    import microgen.shape.strut_lattice as lattices
 
-    lattice = Cuboctahedron(strut_radius=0.1).generate_cad()
+    lattice = getattr(lattices, name)(strut_radius=0.1).generate_cad()
     assert 0 < lattice.volume() < 1
     assert BRepCheck_Analyzer(lattice.wrapped).IsValid()
+    path = tmp_path / "lattice.step"
+    lattice.export_step(path)
+    assert path.stat().st_size > 0
