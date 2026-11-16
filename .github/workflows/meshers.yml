@@ -1,0 +1,62 @@
+name: Meshers backend
+
+on:
+  pull_request:
+  push:
+    branches: ["*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meshers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  meshers:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+    env:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      RAYON_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - if: runner.os == 'Linux'
+        run: sudo apt-get install libglu1-mesa
+      - run: uv sync --extra dev --extra meshers
+      - name: Require the released native capabilities
+        run: uv run --no-sync python -c "import meshers; assert meshers.ADAPTIVE_MAPPED_INTERSECTIONS and meshers.CLOSED_MAPPED_SEAMS"
+      - name: Test the installed Meshers backend
+        run: uv run --no-sync pytest tests/test_meshers_backend.py tests/test_meshers_extended.py tests/test_mmg_backend.py -q -rs --junitxml=meshers-tests.xml
+      - name: Reject skipped native regressions
+        shell: bash
+        run: |
+          uv run --no-sync python - <<'PY'
+          import xml.etree.ElementTree as ET
+          cases = ET.parse('meshers-tests.xml').findall('.//testcase')
+          skipped = [c.attrib['name'] for c in cases if c.find('skipped') is not None]
+          assert all(name == 'test_mmg_backend_runs_the_real_pipeline' for name in skipped), skipped
+          annular = [c for c in cases if c.attrib['name'].startswith('test_annular_sweep_sheet_adapts_with_named_physical_constraints[')]
+          assert len(annular) == 3 and all(len(c) == 0 for c in annular)
+          PY
+      - name: Run native examples
+        shell: bash
+        run: |
+          uv run --no-sync python examples/TPMS/meshers/gyroid.py
+          uv run --no-sync python examples/TPMS/meshers/graded_gyroid.py
+          uv run --no-sync python examples/TPMS/meshers/extended_tpms.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: meshers-tests-${{ matrix.os }}
+          path: meshers-tests.xml

@@ -162,7 +162,6 @@ class Tpms(Shape):
 
         self.surface_function = surface_function
         self._offset = offset if offset is not None else 0.0
-        self._offset_is_sampled = False
         # Stores the offset callable when one is provided, so the F-rep path
         # can re-evaluate variable thickness on its own marching-cubes grid.
         self._offset_func: Field | None = (
@@ -695,7 +694,6 @@ class Tpms(Shape):
             err_msg = "offset must be a float, a numpy array or a callable"
             raise TypeError(err_msg)
 
-        self._offset_is_sampled = sampled
         self._offset_func = func
         self._parameter_offset_func = parameter_func
         self._update_grid_offset()
@@ -1718,9 +1716,7 @@ class Sweep(Tpms):
           ``_curve_s``       arc length per sample, shape (M,)
           ``_curve_T``       unit tangent per sample, shape (M, 3)
           ``_curve_N``       unit normal (parallel-transported), shape (M, 3)
-          ``_curve_kdtree``  scipy cKDTree on the curve points
         """
-        from scipy.spatial import cKDTree
 
         pts = self.curve
         m = pts.shape[0]
@@ -1803,8 +1799,6 @@ class Sweep(Tpms):
             N_rot = N * cos_a + np.cross(T, N) * sin_a + T * kdotv * (1.0 - cos_a)
             N = N_rot / np.linalg.norm(N_rot, axis=1, keepdims=True)
         self._curve_N = N
-
-        self._curve_kdtree = cKDTree(pts)
 
         # Self-intersection guard.
         if m >= 3:
@@ -1946,7 +1940,7 @@ class Sweep(Tpms):
     # -- Cell-box (tube SDF) -----------------------------------------------
 
     def _cell_box(self: Sweep) -> Shape:
-        """Tube SDF: ``dist_to_curve(p) − radial_max``."""
+        """Annular tube field with caps local to the curve endpoints."""
         from .implicit_ops import from_field
 
         bounds: BoundsType = (
@@ -1968,9 +1962,16 @@ class Sweep(Tpms):
                 )
             shape = x.shape
             pts = np.column_stack([x.ravel(), y.ravel(), z.ravel()])
-            _, r, _ = self._local_coords(x, y, z)
-            low = -(pts - self.curve[0]) @ self._curve_T[0]
-            high = (pts - self.curve[-1]) @ self._curve_T[-1]
+            s, r, _ = self._local_coords(x, y, z)
+            s = s.ravel()
+            # Endpoint tangent planes cap only their local end of the tube.
+            # Applying them globally cuts through long curved sweeps.
+            low = np.where(s > 0, -s, -(pts - self.curve[0]) @ self._curve_T[0])
+            high = np.where(
+                s < self._curve_total_length,
+                s - self._curve_total_length,
+                (pts - self.curve[-1]) @ self._curve_T[-1],
+            )
             return np.maximum(
                 np.maximum(r.ravel() - self.radial_max, self.radial_min - r.ravel()),
                 np.maximum(low, high),

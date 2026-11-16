@@ -313,3 +313,58 @@ def test_straight_sweep_map_matches_frames_and_compiles(direction):
         np.testing.assert_allclose(
             compiled.values(points), expected[:, component], atol=2e-13, rtol=5e-14
         )
+
+
+def test_curved_sweep_envelope_retains_interior_and_local_end_caps():
+    theta = np.linspace(0, 1.5 * np.pi, 61)
+    curve = np.column_stack(
+        (3 * np.cos(theta), 3 * np.sin(theta), np.zeros_like(theta))
+    )
+    shape = Sweep(
+        curve, gyroid, radial_min=0.1, radial_max=0.2, offset=1.1, resolution=4
+    )
+    parameter = np.column_stack(
+        (np.linspace(-0.45, 0.45, 13), np.zeros(13), np.zeros(13))
+    )
+    points = np.column_stack(shape._map_coordinates(*parameter.T))
+    envelope = shape._cell_box().require_func()
+    assert np.all(envelope(*points.T) < 0)
+    centers, normals, tangents = shape._curve_frame_at(
+        np.array([0.0, shape._curve_total_length])
+    )
+    caps = centers + 0.15 * normals
+    outside = caps + np.array([-0.05, 0.05])[:, None] * tangents
+    inside = caps - np.array([-0.05, 0.05])[:, None] * tangents
+    assert np.all(envelope(*outside.T) > 0)
+    assert np.all(envelope(*inside.T) < 0)
+    radial_outside = centers + 0.25 * normals
+    assert np.all(envelope(*radial_outside.T) > 0)
+
+
+@pytest.mark.parametrize("part", ["sheet", "lower skeletal", "upper skeletal"])
+def test_full_density_sweep_adaptive_fallback_uses_only_envelope(monkeypatch, part):
+    meshers = pytest.importorskip("meshers")
+    shape = Sweep(
+        np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0]]),
+        gyroid,
+        radial_min=0.1,
+        radial_max=0.2,
+        density=1,
+        resolution=4,
+    )
+    parameter = np.array([[0.125, 0.125, 0.125]])
+    points = np.column_stack(shape._map_coordinates(*parameter.T))
+
+    def checked(field, **options):
+        assert options["adapt"] and options["order"] == 2
+        envelope = shape._cell_box().require_func()
+        expected = envelope(*points.T)
+        assert np.all(expected < 0)
+        np.testing.assert_array_equal(field(*points.T), expected)
+        raise RuntimeError("checked full-density fallback")
+
+    monkeypatch.setattr(meshers, "generate", checked)
+    with pytest.raises(RuntimeError, match="checked full-density fallback"):
+        shape.generate_volume_mesh(
+            type_part=part, backend="meshers", adapt=True, order=2, cells=4
+        )

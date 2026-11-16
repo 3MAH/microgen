@@ -36,6 +36,8 @@ def generate_tpms(shape, part, options):
         scalar = float(shape.offset) if thickness is None else 0.0
 
         def solid(x, y, z):
+            if shape.density == 1:
+                return envelope(x, y, z)
             half = (thickness(x, y, z) if thickness is not None else scalar) / 2
             value = physical_raw(x, y, z)
             # Keep both sheet walls distinct during adaptive curvature sizing.

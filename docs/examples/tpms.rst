@@ -45,21 +45,24 @@ Cylindrical and spherical patches use their original parameter fields and
 coordinate maps. Full angular turns are welded at the seam; sector periodicity
 exports a rigid ``periodic_transform_*`` matrix instead of a constant shift.
 Parameter coordinates and named constraint masks are retained in the VTU file.
-Mapped meshes currently require Tet4 and one thread; adaptive options belong
-to the Cartesian field route. Spherical domains containing poles or the origin
+Mapped intersections require Tet4 and one thread. Straight nonperiodic sweeps
+can adapt their named physical constraints with Meshers 0.2.1. Spherical domains containing poles or the origin
 and cylindrical domains touching their axis are rejected.
 
 ``Infill`` and ``GradedInfill`` retain the input object's signed-distance
 envelope, which must be closed and manifold. Swept annuli require
 ``0 < radial_min < radial_max`` and an open regular curve. The forward and
-inverse curve maps use the same interpolated frames. ``adapt=True`` uses the
-Cartesian field route for sweeps, without mapped periodic ends. Closed curves
-and collapsed axes remain unsupported. Quality failures propagate without
-changing the requested threshold or falling back to VTK/MMG.
-An annular Gyroid sweep has not yet passed the retained quality/resource
-controls: mapped attempts reached minimum quality 0.0284 and 0.0493, and the
-strict adaptive attempt exceeded 250,000 tetrahedra. Domain-map support is
-tested separately; these results do not establish general sweep readiness.
+inverse curve maps use the same interpolated frames. Straight Tet4 sweeps use
+named-seed adaptation when its options are supported; curved sweeps and other
+adaptive options use the Cartesian field route, without mapped periodic ends.
+Closed curves and collapsed axes remain unsupported. Quality failures propagate
+without changing the requested threshold or falling back to VTK/MMG.
+
+The annular Gyroid regressions cover cell counts ``(16, 8, 48)`` and
+``(24, 12, 64)`` with four optimization passes, and scalar ``16`` with one
+pass. They check positive tetrahedra, minimum quality 0.1, volume within 1%,
+closed surfaces, named constraints and a 250,000-node/tetrahedron limit.
+These qualified cases do not establish readiness for arbitrary sweep curves.
 
 .. literalinclude:: ../../examples/TPMS/meshers/extended_tpms.py
    :language: python
