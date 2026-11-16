@@ -72,5 +72,4 @@ jobs:
 
       - run: uv sync --extra dev --extra cad
       - run: uv pip install '.[cad]'
-      - run: uv pip install "cadquery-ocp-novtk>=8,<9"
-      - run: uv run --no-sync pytest --numprocesses=auto
+      - run: uv run pytest --numprocesses=auto
