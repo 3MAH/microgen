@@ -92,18 +92,17 @@ def split_shape(
     """
     require_cad()
     from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter  # noqa: PLC0415
-    from OCP.TopTools import TopTools_ListOfShape  # noqa: PLC0415
 
-    args = TopTools_ListOfShape()
+    splitter = BRepAlgoAPI_Splitter()
+    args = splitter.Arguments()
     args.Append(shape.wrapped)
-    tools = TopTools_ListOfShape()
+    tools = splitter.Tools()
     if isinstance(tool, CadShape):
         tools.Append(tool.wrapped)
     else:
         for t in tool:
             tools.Append(t.wrapped)
 
-    splitter = BRepAlgoAPI_Splitter()
     splitter.SetArguments(args)
     splitter.SetTools(tools)
     if fuzzy_value > 0:

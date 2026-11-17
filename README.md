@@ -67,7 +67,7 @@ conda install conda-forge::microgen          # core
 conda install conda-forge::microgen ocp      # core + CAD
 ```
 
-**Python version notes:** Python 3.10 to 3.14 is supported on Linux, macOS (Apple Silicon), and Windows, for both core and `[cad]`, on both PyPI and conda-forge.
+**Python version notes:** Python 3.11 to 3.14 is supported on Linux, macOS (Apple Silicon), and Windows, for both core and `[cad]`, on both PyPI and conda-forge.
 
 What you can do in each mode:
 
