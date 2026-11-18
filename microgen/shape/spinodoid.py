@@ -262,7 +262,9 @@ class Spinodoid(Shape):
 
         Requires the optional ``[cad]`` install extra.
         """
-        mesh = self.surface
+        mesh = self.surface.compute_normals(
+            consistent_normals=True, auto_orient_normals=True
+        )
         pts = np.asarray(mesh.points, dtype=np.float64)
         tris = mesh.faces.reshape(-1, 4)[:, 1:].astype(np.int64)
 

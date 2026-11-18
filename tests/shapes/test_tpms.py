@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from inspect import getmembers, isfunction, signature
+from inspect import getmembers, isfunction
 from typing import Literal
 
 import numpy as np
@@ -29,7 +29,7 @@ def _get_microgen_surface_functions() -> list[str]:
     return [
         name
         for name, fn in getmembers(microgen.surface_functions, isfunction)
-        if len(signature(fn).parameters) == 3
+        if fn.__module__ == microgen.surface_functions.__name__
     ]
 
 
