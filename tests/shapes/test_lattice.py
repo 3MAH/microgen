@@ -62,15 +62,27 @@ def test_lattice_vertices_strut_centers_and_directions_must_correspond_to_preset
     )
 
 
-@pytest.mark.parametrize("shape", [Diamond, Cubic, OctetTruss])
-@pytest.mark.parametrize("cell_size", [0.5, 1.0, 2.0])
-@pytest.mark.parametrize("expected_density", [0.25, 0.8])
+# Each density fit runs ~10 root-finding steps, each a full CAD fusion of the
+# lattice, so keep the grid small: the relative density does not depend on
+# cell_size (checked on the cheap Cubic only), and OctetTruss (~1 min per fit)
+# is covered by the fusion tests of test_cad_compat.py.
+@pytest.mark.parametrize(
+    ("shape", "expected_density", "cell_size"),
+    [
+        (Cubic, 0.25, 1.0),
+        (Cubic, 0.8, 1.0),
+        (Diamond, 0.25, 1.0),
+        (Diamond, 0.8, 1.0),
+        (Cubic, 0.25, 0.5),
+        (Cubic, 0.25, 2.0),
+    ],
+)
 def test_lattice_given_density_and_cell_size_must_match_computed_density(
-    shape: Literal[Diamond, Cubic, OctetTruss],
+    shape: Literal[Diamond, Cubic],
     expected_density: float,
     cell_size: float,
 ) -> None:
-    """Test for the density of lattice shapes generated with CadQuery and VTK."""
+    """The radius fitted to ``density`` gives that density (CAD volume)."""
     # Arrange
     shape_fit_to_density = shape(density=expected_density, cell_size=cell_size)
 
