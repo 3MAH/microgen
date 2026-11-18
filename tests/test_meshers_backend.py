@@ -132,7 +132,7 @@ def test_spinodoid_compiles_its_existing_field(native_backend):
     )
     points = np.random.default_rng(4).uniform(0, 1, (4096, 3))
     points *= shape.cell_size * shape.repeat_cell
-    field = native_backend.compile_field(shape.require_func())
+    field = native_backend.compile_field(shape.require_field())
     expected = shape.evaluate(*points.T)
     np.testing.assert_allclose(field.values(points), expected, atol=1e-12, rtol=1e-12)
     np.testing.assert_array_equal(field.values(points) < 0, expected < 0)
@@ -148,7 +148,7 @@ def test_spinodoid_compiles_its_existing_field(native_backend):
         shape.evaluate(np.ones((3, 1)), np.arange(4), 0.3),
         np.full((3, 4), shape._frep.threshold),
     )
-    empty = native_backend.compile_field(shape.require_func())
+    empty = native_backend.compile_field(shape.require_field())
     np.testing.assert_array_equal(
         empty.values(points), np.full(len(points), shape._frep.threshold)
     )
@@ -176,7 +176,7 @@ def test_spinodoid_meshing_keeps_fft_realization_and_local_origin(
     generate = native_backend.generate
 
     def same_field(field, **options):
-        assert field is shape.require_func()
+        assert field is shape._local_field
         return generate(field, **options)
 
     monkeypatch.setattr(native_backend, "generate", same_field)

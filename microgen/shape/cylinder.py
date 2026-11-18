@@ -57,7 +57,7 @@ class Cylinder(Shape):
         self._setup_frep_field()
 
     def _setup_frep_field(self: Cylinder) -> None:
-        """Bake the cylinder SDF and AABB onto ``_func`` / ``_bounds``."""
+        """Bake the cylinder SDF and AABB onto ``_field`` / ``_bounds``."""
         cx, cy, cz = (float(c) for c in self.center)
         h = float(self.height)
         r = float(self.radius)
@@ -89,7 +89,7 @@ class Cylinder(Shape):
         )
         rotated = corners @ rot.T
         margin = max(r, half_h) * 0.1
-        self._func = _field
+        self._field = _field
         self._bounds = (
             cx + float(rotated[:, 0].min()) - margin,
             cx + float(rotated[:, 0].max()) + margin,
@@ -98,6 +98,20 @@ class Cylinder(Shape):
             cz + float(rotated[:, 2].min()) - margin,
             cz + float(rotated[:, 2].max()) + margin,
         )
+
+    _rebuild_field = _setup_frep_field
+
+    def _scaled_params(
+        self: Cylinder, factors: npt.NDArray[np.float64]
+    ) -> dict[str, float] | None:
+        """Rescale ``height`` and ``radius`` when the cross-section stays circular."""
+        local = self._local_scale_factors(factors)
+        if local is None or local[1] != local[2]:
+            return None
+        return {
+            "height": float(self.height) * float(local[0]),
+            "radius": float(self.radius) * float(local[1]),
+        }
 
     def generate_cad(self: Cylinder, **_: KwargsGenerateType) -> CadShape:
         """Generate a cylinder CAD shape (OCCT).  Requires the ``[cad]`` extra."""

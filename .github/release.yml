@@ -1,0 +1,30 @@
+# Groups pull requests by label in GitHub's auto-generated release notes.
+# The curated, user-facing history lives in CHANGELOG.md.
+changelog:
+  exclude:
+    labels:
+      - duplicate
+      - invalid
+      - wontfix
+  categories:
+    - title: New features
+      labels:
+        - enhancement
+    - title: Bug fixes
+      labels:
+        - bug
+        - bugfix
+    - title: Refactoring
+      labels:
+        - refactor
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Dependencies
+      labels:
+        - dependencies
+        - python
+        - "python:uv"
+    - title: Other changes
+      labels:
+        - "*"

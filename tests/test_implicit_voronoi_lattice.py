@@ -66,7 +66,7 @@ def test_cubic_lattice_implicit_returns_shape() -> None:
     lat = Cubic(strut_radius=0.05)
     implicit = lat.generate_implicit()
     assert isinstance(implicit, Shape)
-    assert implicit.func is not None
+    assert implicit.field is not None
     assert implicit.bounds is not None
 
 

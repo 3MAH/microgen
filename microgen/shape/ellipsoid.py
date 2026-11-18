@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 import pyvista as pv
+from scipy.spatial.transform import Rotation
 
 from microgen.operations import rotate
 
@@ -54,7 +55,7 @@ class Ellipsoid(Shape):
         self._setup_frep_field()
 
     def _setup_frep_field(self: Ellipsoid) -> None:
-        """Bake the ellipsoid field and AABB onto ``_func`` / ``_bounds``."""
+        """Bake the ellipsoid field and AABB onto ``_field`` / ``_bounds``."""
         cx, cy, cz = (float(c) for c in self.center)
         rx, ry, rz = (float(r) for r in self.radii)
         rot_inv = self.orientation.inv().as_matrix()
@@ -76,7 +77,7 @@ class Ellipsoid(Shape):
         corners = np.array(list(itertools.product([-rx, rx], [-ry, ry], [-rz, rz])))
         rotated = corners @ rot.T
         margin = max(rx, ry, rz) * 0.1
-        self._func = _field
+        self._field = _field
         self._bounds = (
             cx + float(rotated[:, 0].min()) - margin,
             cx + float(rotated[:, 0].max()) + margin,
@@ -85,6 +86,38 @@ class Ellipsoid(Shape):
             cz + float(rotated[:, 2].min()) - margin,
             cz + float(rotated[:, 2].max()) + margin,
         )
+
+    _rebuild_field = _setup_frep_field
+
+    def _scaled_params(
+        self: Ellipsoid, factors: npt.NDArray[np.float64]
+    ) -> dict[str, object]:
+        r"""Rescale ``radii``; any positive scale maps an ellipsoid to an ellipsoid.
+
+        In general the new semi-axes and orientation come from the SVD
+        :math:`\mathrm{diag}(s)\, O\, \mathrm{diag}(r) = U \Sigma V^\top`:
+        ``radii`` become the singular values (in decreasing order) and
+        ``orientation`` becomes :math:`U`.
+        """
+        local = self._local_scale_factors(factors)
+        if local is not None:
+            return {
+                "radii": tuple(
+                    float(r) * float(s) for r, s in zip(self.radii, local, strict=True)
+                )
+            }
+        linear = (
+            np.diag(factors)
+            @ self.orientation.as_matrix()
+            @ np.diag(np.asarray(self.radii, dtype=np.float64))
+        )
+        u, radii, _ = np.linalg.svd(linear)
+        if np.linalg.det(u) < 0.0:
+            u[:, 2] *= -1.0
+        return {
+            "radii": (float(radii[0]), float(radii[1]), float(radii[2])),
+            "_orientation": Rotation.from_matrix(u),
+        }
 
     def generate_cad(self: Ellipsoid, **_: KwargsGenerateType) -> CadShape:
         """Generate an ellipsoid CAD shape (OCCT).  Requires the ``[cad]`` extra."""
