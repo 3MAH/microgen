@@ -53,6 +53,8 @@ Changes since 2.0.0b1, on the way to 2.0.0.
 - **Breaking:** `Rve` is an immutable (frozen) dataclass ([#140]).
 - The shared `try_make_solid` helper of `microgen.shape.periodic_shell` upgrades
   sewn shells to solids for both `Tpms` and `Spinodoid` ([#145]).
+- The `honeycomb_*` surface functions are annotated with array inputs and
+  outputs, like the other TPMS surface functions ([#147]).
 
 ### Removed
 
@@ -164,3 +166,4 @@ Releases before 2.0 are listed on the
 [#143]: https://github.com/3MAH/microgen/pull/143
 [#144]: https://github.com/3MAH/microgen/pull/144
 [#145]: https://github.com/3MAH/microgen/pull/145
+[#147]: https://github.com/3MAH/microgen/pull/147
