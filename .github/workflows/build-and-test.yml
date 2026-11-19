@@ -71,8 +71,9 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get install libglu1-mesa
 
-      - run: uv sync --extra dev --extra cad
-      - run: uv pip install '.[cad]'
+      # [meshers] ships abi3 wheels for all three runners (no Linux aarch64).
+      - run: uv sync --extra dev --extra cad --extra meshers
+      - run: uv pip install '.[cad,meshers]'
       # worksteal: idle workers take queued tests from busy ones, so a few
       # long CAD tests do not leave the other workers waiting at the end.
       - run: uv run pytest --numprocesses=auto --dist=worksteal --durations=15

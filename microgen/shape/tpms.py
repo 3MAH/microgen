@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -30,8 +30,6 @@ from ._types import BoundsType, Field
 from .shape import Shape, ShellCreationError
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, TpmsPartType, Vector3DType
 import contextlib
@@ -1151,6 +1149,8 @@ class Tpms(Shape):
         self: Tpms,
         type_part: TpmsPartType = "sheet",
         algo_resolution: int | None = None,
+        *,
+        backend: str = "vtk",
         **options: Any,
     ) -> pv.UnstructuredGrid:
         """Generate VTK UnstructuredGrid object of the required TPMS part.
@@ -1159,14 +1159,37 @@ class Tpms(Shape):
         returned mesh lands at the declared world position — matching the
         contract of :meth:`generate_surface_mesh`.
 
-        ``backend="mmg"`` remeshes this VTK grid with
-        :func:`microgen.remesh.remesh_keeping_boundaries_for_fem`; options and
-        its ``periodic=True`` default pass through unchanged.
+        The backends and the Meshers output are those of
+        :meth:`Shape.generate_volume_mesh`. ``"meshers"`` meshes the part
+        directly from the raw TPMS field on the local cell (sheet
+        :math:`|f| < o/2`, upper skeletal :math:`f > o/2`, lower skeletal
+        :math:`f < -o/2`, with :math:`o` the offset), then applies
+        ``orientation`` and ``center``. Its defaults here:
+        ``cells=resolution * repeat_cell - 1`` per axis, ``periodic`` on the
+        three axes unless the offset is a callable (a graded offset is in
+        general not periodic: set ``periodic`` explicitly), and a
+        ``"relative"`` ``geometry_tolerance`` taken as a fraction of the
+        smallest ``cell_size``.
 
-        ``backend="meshers"`` requires ``microgen[meshers]`` and evaluates the
-        existing field directly. Cartesian TPMS with scalar or pointwise callable
-        offsets are supported. Meshers options pass through, including one
-        ``periodic`` flag per axis and optional ``order=2`` quadratic cells.
+        .. note::
+            With ``density``, the offset is fitted on the VTK grid
+            (``algo_resolution``), so the Meshers mesh, closer to the exact
+            level set, can differ from ``density`` by the VTK discretization
+            error (about 1 % at the default resolution). Increase
+            ``algo_resolution`` to reduce it.
+
+        :param type_part: ``"sheet"``, ``"lower skeletal"`` or
+            ``"upper skeletal"``
+        :param algo_resolution: grid resolution of the ``density`` fit
+        :param backend: ``"vtk"`` (default), ``"mmg"`` or ``"meshers"``
+        :param options: options of the ``"mmg"`` or ``"meshers"`` backend
+        :return: tetrahedral mesh of the part
+        :raises ValueError: if ``type_part`` or ``backend`` is unknown
+        :raises NotImplementedError: with ``backend="meshers"``, for a TPMS
+            subclass (mapped, swept or clipped cell) or an offset given as a
+            sampled array or an :class:`OffsetGrading`
+        :raises ImportError: if ``backend="meshers"`` and Meshers is not
+            installed
         """
         if type_part not in ["sheet", "lower skeletal", "upper skeletal"]:
             err_msg = (
@@ -1175,38 +1198,32 @@ class Tpms(Shape):
             )
             raise ValueError(err_msg)
 
-        backend = options.pop("backend", "vtk")
-        if backend == "mmg":
-            from microgen.remesh import remesh_keeping_boundaries_for_fem
+        def fit_density() -> None:
+            if self.density is not None:
+                self._compute_offset_to_fit_density(
+                    part_type=type_part,
+                    resolution=algo_resolution,
+                )
 
-            return remesh_keeping_boundaries_for_fem(
-                self.generate_volume_mesh(type_part, algo_resolution, backend="vtk"),
-                **options,
-            )
-        if backend not in ("vtk", "meshers"):
-            raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
-        if backend == "meshers" and type(self) is not Tpms:
-            raise NotImplementedError(
-                "The Meshers backend currently supports Cartesian Tpms. "
-                "Mapped and clipped TPMS require a separate domain adapter."
-            )
+        def vtk_mesh() -> pv.UnstructuredGrid:
+            fit_density()
+            grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
+            return self._to_world(grid)
 
-        if self.density is not None:
-            self._compute_offset_to_fit_density(
-                part_type=type_part,
-                resolution=algo_resolution,
-            )
-
-        if backend == "meshers":
-            from microgen._meshers import generate_volume
-
+        def meshers_mesh(generate_volume):
+            if type(self) is not Tpms:
+                raise NotImplementedError(
+                    "The Meshers backend currently supports Cartesian Tpms. "
+                    "Mapped and clipped TPMS require a separate domain adapter."
+                )
+            fit_density()
             if self._offset_is_sampled:
                 raise NotImplementedError(
                     "Meshers requires a scalar offset or pointwise offset callable; "
                     "sampled arrays and OffsetGrading need an interpolation policy."
                 )
             raw, offset = self.raw_field, self._offset_func
-            scalar = cast("float", self.offset) if offset is None else 0.0
+            scalar = float(self._offset) if offset is None else 0.0
 
             def field(x, y, z):
                 half = 0.5 * (offset(x, y, z) if offset is not None else scalar)
@@ -1220,11 +1237,8 @@ class Tpms(Shape):
             mesh_field: Field = field
             band = None
             if self.density == 1.0:
-
-                def full_field(x, y, z):
-                    return -1.0 + 0.0 * x
-
-                mesh_field = full_field
+                # Written with x so the Meshers tracer sees an expression.
+                mesh_field = lambda x, y, z: -1.0 + 0.0 * x  # noqa: E731
             elif type_part == "sheet" and offset is None and scalar > 0:
                 band = (-0.5 * scalar, 0.5 * scalar)
                 mesh_field = raw
@@ -1232,14 +1246,18 @@ class Tpms(Shape):
                 mesh_field,
                 self._local_bounds,
                 options,
-                default_cells=tuple(n - 1 for n in self.grid.dimensions),
+                default_cells=tuple(
+                    int(self.resolution * n) - 1 for n in self.repeat_cell
+                ),
+                # A pointwise offset callable may break the cell periodicity.
+                default_periodic=(offset is None,) * 3,
+                length_scale=float(np.min(self.cell_size)),
                 band=band,
                 rotation=self.orientation,
                 center=self.center,
             )
 
-        grid = getattr(self, f"grid_{type_part.replace(' ', '_')}").copy()
-        return self._to_world(grid)
+        return self._volume_mesh_with_backend(backend, vtk_mesh, meshers_mesh, options)
 
 
 class CylindricalTpms(Tpms):

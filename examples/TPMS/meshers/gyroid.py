@@ -1,5 +1,7 @@
 """Generate a periodic Gyroid volume mesh with microgen[meshers]."""
 
+from pathlib import Path
+
 from microgen import Tpms
 from microgen.shape.surface_functions import gyroid
 
@@ -12,5 +14,5 @@ mesh = geometry.generate_volume_mesh(
     periodic=(True, True, True),
     threads=1,
 )
-mesh.save("gyroid_meshers.vtu")
+mesh.save(Path(__file__).parent / "gyroid_meshers.vtu")
 print(f"Gyroid: {mesh.n_cells} tetrahedra, {mesh.n_points} nodes")

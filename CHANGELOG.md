@@ -14,6 +14,12 @@ Changes since 2.0.0b1, on the way to 2.0.0.
 
 ### Added
 
+- `generate_volume_mesh(backend=...)` on `Shape`, `Tpms` and `Spinodoid`:
+  `"vtk"` (default), `"mmg"` (VTK grid remeshed by
+  `remesh_keeping_boundaries_for_fem`) or `"meshers"`, which meshes Tet4/Tet10
+  directly from the implicit field and stores periodic node pairs and boundary
+  facets in `field_data`; new `[meshers]` install extra and
+  `examples/TPMS/meshers/` ([#150]).
 - `Phase.from_implicit` and `Phase.from_grid` constructors; `Phase` caches its
   sampled grid ([#144]).
 - `Phase.translate`, `Phase.rotate` and `Phase.scale` act on the implicit field,
@@ -164,3 +170,4 @@ Releases before 2.0 are listed on the
 [#143]: https://github.com/3MAH/microgen/pull/143
 [#144]: https://github.com/3MAH/microgen/pull/144
 [#145]: https://github.com/3MAH/microgen/pull/145
+[#150]: https://github.com/3MAH/microgen/pull/150

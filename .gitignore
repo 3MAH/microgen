@@ -14,6 +14,7 @@
 
 *.stl
 *.vtk
+*.vtu
 *.step
 *.msh
 !examples/Mesh/mmg/Mesh.msh

@@ -60,6 +60,12 @@ pip install microgen
 pip install 'microgen[cad]'
 ```
 
+**With the Meshers volume-mesh backend** (`generate_volume_mesh(backend="meshers")`: tetrahedra meshed directly from the implicit field, with periodic node pairs; wheels for Linux x86-64, macOS and Windows):
+
+```bash
+pip install 'microgen[meshers]'
+```
+
 With conda:
 
 ```bash

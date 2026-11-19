@@ -12,11 +12,18 @@ Gyroid
 .. image:: ../_static/examples/gyroid.png
 
 Volume meshes with Meshers
--------------------------
+--------------------------
 
 Install the optional backend with ``pip install 'microgen[meshers]'``.
 These examples export tetrahedral volume meshes as VTU files, retaining
 periodic node pairs and boundary facets.
+
+For a ``Tpms`` with a constant offset, the mesh is periodic on the three axes
+by default, and ``geometry_tolerance`` is relative to the smallest
+``cell_size`` (pass ``geometry_tolerance_mode="absolute"`` for a tolerance in
+length units). With ``density``, the offset is fitted on the VTK grid, so the
+meshed volume fraction can differ from ``density`` by about 1 %; a larger
+``algo_resolution`` reduces the gap.
 
 The uniform Gyroid unit cell is periodic along all three axes:
 
