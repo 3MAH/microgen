@@ -425,4 +425,3 @@ def honeycomb_lidinoid(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarra
     return 1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y)) - (
         cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
-
