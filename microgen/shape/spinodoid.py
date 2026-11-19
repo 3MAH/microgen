@@ -32,6 +32,8 @@ from .periodic_shell import mesh_to_periodic_shell
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
@@ -219,9 +221,37 @@ class Spinodoid(Shape):
 
     def generate_volume_mesh(
         self: Spinodoid,
-        **_: KwargsGenerateType,
+        **options: Any,
     ) -> pv.UnstructuredGrid:
-        """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
+        """Generate the volumetric solid grid with center+rotation applied.
+
+        ``backend="mmg"`` remeshes this VTK grid with the existing boundary-
+        preserving remesher, retaining its options and ``periodic=True`` default.
+
+        ``backend="meshers"`` requires ``microgen[meshers]`` and evaluates the
+        existing Fourier field directly. Meshers options pass through, including
+        one ``periodic`` flag per axis and optional ``order=2`` quadratic cells.
+        """
+        backend = options.pop("backend", "vtk")
+        if backend == "mmg":
+            from microgen.remesh import remesh_keeping_boundaries_for_fem
+
+            return remesh_keeping_boundaries_for_fem(
+                self.generate_volume_mesh(backend="vtk"), **options
+            )
+        if backend == "meshers":
+            from microgen._meshers import generate_volume
+
+            return generate_volume(
+                self._local_field,
+                self._local_bounds,
+                options,
+                default_cells=tuple(self.resolution * self.repeat_cell),
+                rotation=self.orientation,
+                center=self.center,
+            )
+        if backend != "vtk":
+            raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
         grid_vol = self.grid_solid.copy()
         return self._to_world(grid_vol)
 

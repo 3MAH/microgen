@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+from importlib.util import find_spec
 from pathlib import Path
 
 GREEN = "\033[32m"
@@ -133,6 +134,9 @@ if __name__ == "__main__":
     PARENT_DIR = Path(__file__).parent
 
     EXCLUDE = parser.parse_args().exclude
+    if find_spec("meshers") is None:
+        EXCLUDE.append("TPMS/meshers")
+        print("Skipping Meshers examples; install microgen[meshers] to run them.")
     if parser.parse_args().no_mmg:
         EXCLUDE.extend(
             [

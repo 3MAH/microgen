@@ -21,11 +21,7 @@ TEST_DEFAULT_SURFACE_FUNCTION = microgen.surface_functions.gyroid
 
 
 def _get_microgen_surface_functions() -> list[str]:
-    """List the actual TPMS surface functions in microgen.surface_functions.
-
-    Filters out non-TPMS callables exposed via re-import (autograd ``cos``/``sin``)
-    that take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
-    """
+    """List TPMS functions defined here, excluding imported NumPy helpers."""
     return [
         name
         for name, fn in getmembers(microgen.surface_functions, isfunction)
