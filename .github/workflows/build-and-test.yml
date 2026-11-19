@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches:
-      - "*"
+    # PR branches are already covered by `pull_request`; pushing to them
+    # must not run the whole matrix a second time.
+    branches: [main]
 
   schedule:
     - cron: "0 0 * * *"
@@ -24,7 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -48,17 +49,17 @@ jobs:
         run: |
           uv run python -c "import importlib.util, sys; sys.exit(1 if importlib.util.find_spec('OCP') is not None else 0)"
       - run: |
-          uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py -q
+          uv run pytest tests/test_cad_optional.py tests/shapes/test_implicit_ops.py tests/shapes/test_tpms_frep.py tests/test_phase_transforms.py -q
 
   # --- CAD suite: full test run with OCP installed via the [cad] extra. ---
-  # The [cad] extra pulls cadquery-ocp-novtk, which ships cp310-cp314 wheels.
+  # The [cad] extra pulls cadquery-ocp-novtk, which ships cp311-cp314 wheels.
   cad:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -72,4 +73,6 @@ jobs:
 
       - run: uv sync --extra dev --extra cad
       - run: uv pip install '.[cad]'
-      - run: uv run pytest --numprocesses=auto
+      # worksteal: idle workers take queued tests from busy ones, so a few
+      # long CAD tests do not leave the other workers waiting at the end.
+      - run: uv run pytest --numprocesses=auto --dist=worksteal --durations=15

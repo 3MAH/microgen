@@ -3,8 +3,6 @@
 import autograd.numpy as np
 from autograd.numpy import cos, sin
 
-from ._types import Field
-
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     """Gyroid.
@@ -428,22 +426,3 @@ def honeycomb_lidinoid(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarra
         cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
 
-
-BUILTIN_SURFACES: tuple[Field, ...] = (
-    gyroid,
-    schwarz_p,
-    schwarz_d,
-    neovius,
-    schoen_iwp,
-    schoen_frd,
-    fischer_koch_s,
-    pmy,
-    honeycomb,
-    lidinoid,
-    split_p,
-    honeycomb_gyroid,
-    honeycomb_schwarz_p,
-    honeycomb_schwarz_d,
-    honeycomb_schoen_iwp,
-    honeycomb_lidinoid,
-)

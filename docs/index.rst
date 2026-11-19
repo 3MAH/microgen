@@ -32,6 +32,7 @@ Table of contents
    :caption: Documentation
 
    Documentation
+   changelog
 
 .. toctree::
    :maxdepth: 1
