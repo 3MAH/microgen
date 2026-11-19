@@ -22,33 +22,23 @@ if TYPE_CHECKING:
 class OffsetGrading(ABC):
     """Base class for offset grading functions."""
 
-    def as_field(self: OffsetGrading) -> Field:
+    def as_field(
+        self: OffsetGrading, reference_grid: pv.StructuredGrid | pv.UnstructuredGrid
+    ) -> Field:
         """Return a ``(x, y, z) -> array`` callable form of this grading.
 
         Used by the F-rep marching-cubes path to re-evaluate the offset on
         an arbitrary grid (the one chosen by marching cubes is *not* the
         same as the structured grid used by the legacy clip-scalar path).
 
-        The default implementation builds a transient :class:`pv.PolyData`
-        of the queried points and forwards to :meth:`compute_offset`, which
-        works for any grading whose ``compute_offset`` only consults point
-        coordinates (it does for :class:`NormedDistance`).  Subclasses that
-        depend on cell connectivity should override this method.
+        Samples and normalization are frozen on ``reference_grid``. This also
+        supports gradings that depend on connectivity or the reference grid's
+        maximum distance: queries never recompute those quantities per batch.
         """
 
-        def _field(
-            x: npt.NDArray[np.float64],
-            y: npt.NDArray[np.float64],
-            z: npt.NDArray[np.float64],
-            _self: OffsetGrading = self,
-        ) -> npt.NDArray[np.float64]:
-            shape = x.shape
-            pts = np.column_stack([x.ravel(), y.ravel(), z.ravel()])
-            polydata = pv.PolyData(pts)
-            values = _self.compute_offset(polydata)
-            return np.asarray(values).reshape(shape)
+        from ._sampled_field import sampled_field
 
-        return _field
+        return sampled_field(reference_grid.points, self.compute_offset(reference_grid))
 
     @abstractmethod
     def compute_offset(
