@@ -318,7 +318,8 @@ class CadShape:
         box = Bnd_Box()
         # AddOptimal uses exact geometric bounds (not cached triangulation).
         BRepBndLib.AddOptimal_s(self.wrapped, box, True, True)
-        xmin, ymin, zmin, xmax, ymax, zmax = box.Get()
+        xmin, ymin, zmin = box.CornerMin().Coord()
+        xmax, ymax, zmax = box.CornerMax().Coord()
         return _BBox(xmin, ymin, zmin, xmax, ymax, zmax)
 
     # -- exports -----------------------------------------------------------

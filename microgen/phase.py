@@ -24,13 +24,19 @@ The CAD seam is isolated in :meth:`_materialise_cad`. Switching from
 ``microgen.cad`` to ``pyvista-cad`` later means swapping that one method;
 no other code in microgen needs to change.
 
-A :class:`Phase` is **immutable**: transforms (:meth:`translated`,
-:meth:`scaled`, :meth:`rotated`, :meth:`tiled`) return a new instance.
-This makes cache invalidation impossible by construction.
+Transforms follow the PyVista convention — :meth:`translate`,
+:meth:`rotate` and :meth:`scale` take ``inplace=False`` (default; returns
+a new :class:`Phase`) or ``inplace=True`` (mutates ``self``); both return
+the phase.  :meth:`rotate` and :meth:`scale` pivot on ``point``, the world
+origin by default.  :meth:`tile` is a producer (always a new instance).
+Every live representation (field, ``iso``, ``period``, CAD, surface mesh,
+cached grid) is transformed together so the result stays coherent; derived
+caches are invalidated.
 """
 
 from __future__ import annotations
 
+import copy as _copy
 import itertools
 from dataclasses import dataclass
 from functools import cached_property
@@ -38,11 +44,14 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from .shape import _affine
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy.typing as npt
     import pyvista as pv
+    from scipy.spatial.transform import Rotation
 
     from .rve import Rve
     from .shape._types import BoundsType, Field, PeriodType
@@ -55,6 +64,34 @@ _PHASE_AUTONAME_COUNTER = itertools.count()
 
 
 _IMPLICIT_SCALAR = "implicit"
+
+
+def _bounds_from(lo: npt.ArrayLike, hi: npt.ArrayLike) -> BoundsType:
+    """Return ``(xmin, xmax, ymin, ymax, zmin, zmax)`` from two corners."""
+    return tuple(float(v) for pair in zip(lo, hi, strict=True) for v in pair)  # type: ignore[return-value]
+
+
+def _grid_frame(
+    sg: pv.StructuredGrid,
+) -> tuple[tuple[int, int, int], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Return the dimensions, ``(nx, ny, nz, 3)`` points and edge vectors of a grid.
+
+    The rows of the edge matrix are the steps along ``i``, ``j``, ``k``, so
+    node ``(i, j, k)`` sits at ``origin + (i, j, k) @ edges`` for any regular
+    grid, including a rotated or scaled one.  A single-node axis gets a unit
+    step.
+    """
+    nx, ny, nz = sg.dimensions
+    grid_pts = np.asarray(sg.points, dtype=np.float64).reshape(
+        (nx, ny, nz, 3), order="F"
+    )
+    edges = np.eye(3)
+    for axis, n in enumerate((nx, ny, nz)):
+        if n > 1:
+            index = [0, 0, 0]
+            index[axis] = 1
+            edges[axis] = grid_pts[tuple(index)] - grid_pts[0, 0, 0]
+    return (nx, ny, nz), grid_pts, edges
 
 
 @dataclass(frozen=True)
@@ -137,6 +174,10 @@ class Phase:
         # ``_surface_mesh`` at construction.
         self._cad: Any | None = None
         self._surface_mesh: pv.PolyData | None = None
+        # Set by ``from_grid`` to short-circuit lazy field-sampling in
+        # :meth:`grid`; ``None`` for shapes where the field is the source of
+        # truth and the grid is regenerated per (bounds, resolution) call.
+        self._cached_grid: pv.StructuredGrid | None = None
 
         self.name: str = (
             name if name is not None else f"Phase_{next(_PHASE_AUTONAME_COUNTER)}"
@@ -162,13 +203,13 @@ class Phase:
         ``bounds`` may be overridden (e.g., to clip a periodic field to a
         sub-region).
 
-        :param shape: source implicit shape; must have ``func is not None``.
+        :param shape: source implicit shape; its ``field`` must be set.
         :param bounds: override the shape's bounds; defaults to ``shape.bounds``.
         :param iso: iso-value (default ``0.0``).
         :param name: phase name (auto-generated if omitted).
         :param resolution: default sampling resolution.
         """
-        if shape.func is None:
+        if shape.field is None:
             err_msg = "Cannot build Phase from a Shape without an implicit field"
             raise ValueError(err_msg)
         actual_bounds = bounds if bounds is not None else shape.bounds
@@ -179,7 +220,7 @@ class Phase:
             )
             raise ValueError(err_msg)
         return cls(
-            field=shape.func,
+            field=shape.field,
             bounds=actual_bounds,
             iso=iso,
             period=shape.period,
@@ -227,6 +268,119 @@ class Phase:
         """
         instance = cls(name=name)
         instance._surface_mesh = mesh  # noqa: SLF001
+        return instance
+
+    @classmethod
+    def from_implicit(
+        cls: type[Phase],
+        field: Field,
+        rve: Rve,
+        *,
+        iso: float = 0.0,
+        period: PeriodType | None = None,
+        name: str | None = None,
+        resolution: int = 50,
+    ) -> Phase:
+        """Construct a field-backed :class:`Phase` from a callable + :class:`Rve`.
+
+        Sugar over the field-first constructor that derives ``bounds``
+        from the RVE bounding box.
+
+        :param field: implicit scalar field ``(x, y, z) -> array``
+            (negative inside).
+        :param rve: domain whose AABB becomes the Phase ``bounds``.
+        :param iso: iso-value (default ``0.0``).
+        :param period: ``(Lx, Ly, Lz)`` if ``field`` is intrinsically periodic.
+        :param name: phase name (auto-generated if omitted).
+        :param resolution: default sampling resolution.
+        """
+        bounds = (
+            float(rve.min_point[0]),
+            float(rve.max_point[0]),
+            float(rve.min_point[1]),
+            float(rve.max_point[1]),
+            float(rve.min_point[2]),
+            float(rve.max_point[2]),
+        )
+        return cls(
+            field=field,
+            bounds=bounds,
+            iso=iso,
+            period=period,
+            name=name,
+            resolution=resolution,
+        )
+
+    @classmethod
+    def from_grid(
+        cls: type[Phase],
+        grid: pv.StructuredGrid,
+        *,
+        scalars: str = "implicit",
+        iso: float = 0.0,
+        name: str | None = None,
+    ) -> Phase:
+        """Construct a field-backed :class:`Phase` from a pre-sampled grid.
+
+        Useful when the implicit field is expensive to evaluate (GRF,
+        FFT-based fields) and the caller already has a
+        :class:`pyvista.StructuredGrid` whose points carry the scalar
+        sample. The Phase wraps the grid as its native representation;
+        :attr:`grid` returns it untouched, and downstream operations
+        (``pieces``, ``surface_mesh``, ``volume_mesh``,
+        ``center_of_mass``) read from it directly.
+
+        The Phase's ``field`` is a nearest-neighbour lookup against the
+        grid samples — usable for ``Phase.from_shape``-style composition,
+        but inexact between sample points.
+
+        :param grid: structured grid whose point data contains the scalar
+            field samples.
+        :param scalars: name of the scalar array on the grid; copied to
+            ``implicit`` on the cached grid when it has another name.
+        :param iso: iso-value (default ``0.0``).
+        :param name: phase name (auto-generated if omitted).
+        """
+        if scalars not in grid.point_data:
+            err_msg = (
+                f"Grid has no point scalar named {scalars!r}. "
+                f"Available: {list(grid.point_data.keys())}"
+            )
+            raise ValueError(err_msg)
+
+        dims, grid_pts, edges = _grid_frame(grid)
+        scalar = np.asarray(grid[scalars]).reshape(dims, order="F")
+        origin = grid_pts[0, 0, 0].copy()  # a copy: don't keep grid.points alive
+        to_index = np.linalg.inv(edges)
+        upper = np.array(dims) - 1
+        # A regular grid's extreme points are among its 8 corners.
+        corners = grid_pts[np.ix_([0, -1], [0, -1], [0, -1])].reshape(-1, 3)
+        bounds = _bounds_from(corners.min(axis=0), corners.max(axis=0))
+
+        def _nearest_field(
+            x: np.ndarray,
+            y: np.ndarray,
+            z: np.ndarray,
+        ) -> np.ndarray:
+            # Node (i, j, k) sits at origin + (i, j, k) @ edges.
+            xyz = np.stack(np.broadcast_arrays(x, y, z), axis=-1) - origin
+            idx = np.clip(np.round(xyz @ to_index).astype(int), 0, upper)
+            return scalar[idx[..., 0], idx[..., 1], idx[..., 2]]
+
+        instance = cls(
+            field=_nearest_field,
+            bounds=bounds,
+            iso=iso,
+            name=name,
+            resolution=max(dims),
+        )
+        # Seed the grid cache so subsequent .grid() returns the original
+        # (avoids resampling the field via nearest-neighbour).  Every reader
+        # (moments, surface mesh, transforms) uses the ``implicit`` array.
+        if scalars != _IMPLICIT_SCALAR:
+            grid = grid.copy()
+            grid[_IMPLICIT_SCALAR] = np.asarray(grid[scalars])
+        instance._cached_grid = grid  # noqa: SLF001
         return instance
 
     # ------------------------------------------------------------------
@@ -300,7 +454,7 @@ class Phase:
             from .cad import shape_to_cad  # noqa: PLC0415
             from .shape.shape import Shape  # noqa: PLC0415
 
-            transient = Shape(func=self._field, bounds=self._bounds)
+            transient = Shape(field=self._field, bounds=self._bounds)
             return shape_to_cad(
                 transient, bounds=self._bounds, resolution=self._resolution
             )
@@ -338,8 +492,12 @@ class Phase:
     def grid(self: Phase, resolution: int | None = None) -> pv.StructuredGrid:
         """Return a structured grid sampling of the field.
 
-        Only meaningful for field-backed phases.
+        Only meaningful for field-backed phases. When the Phase was built
+        via :meth:`from_grid`, the cached input grid is returned untouched
+        (regardless of the ``resolution`` argument).
         """
+        if self._cached_grid is not None:
+            return self._cached_grid
         if self._field is None or self._bounds is None:
             err_msg = "grid() requires a field-backed Phase"
             raise ValueError(err_msg)
@@ -442,8 +600,8 @@ class Phase:
         )
 
         sg = self.grid()
-        res = self._resolution
-        scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape((res, res, res), order="F")
+        dims, grid_pts, edges = _grid_frame(sg)
+        scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape(dims, order="F")
         inside = scalar < self._iso
         # 26-connectivity (faces + edges + corners) — the physically correct
         # notion of "connected solid region" for a sampled continuous field.
@@ -458,34 +616,22 @@ class Phase:
         if n_labels == 0:
             return []
 
-        xmin, xmax, ymin, ymax, zmin, zmax = self._bounds  # type: ignore[misc]
-        dx = (xmax - xmin) / (res - 1)
-        dy = (ymax - ymin) / (res - 1)
-        dz = (zmax - zmin) / (res - 1)
-        cell_volume = dx * dy * dz
-
+        cell_volume = float(abs(np.linalg.det(edges)))
+        origin = grid_pts[0, 0, 0]
         coms = center_of_mass(inside, labels=labels, index=range(1, n_labels + 1))
         slices = find_objects(labels)
 
         out: list[Piece] = []
         for label_id in range(1, n_labels + 1):
-            mask = labels == label_id
-            voxel_count = int(mask.sum())
-            com_voxel = coms[label_id - 1]
-            com_world = (
-                xmin + com_voxel[0] * dx,
-                ymin + com_voxel[1] * dy,
-                zmin + com_voxel[2] * dz,
-            )
             sl = slices[label_id - 1]
-            piece_bounds = (
-                xmin + sl[0].start * dx,
-                xmin + (sl[0].stop - 1) * dx,
-                ymin + sl[1].start * dy,
-                ymin + (sl[1].stop - 1) * dy,
-                zmin + sl[2].start * dz,
-                zmin + (sl[2].stop - 1) * dz,
-            )
+            local = labels[sl] == label_id
+            mask = np.zeros(dims, dtype=bool)
+            mask[sl] = local
+            voxel_count = int(local.sum())
+            com = origin + np.asarray(coms[label_id - 1]) @ edges
+            com_world = (float(com[0]), float(com[1]), float(com[2]))
+            nodes = grid_pts[sl][local]
+            piece_bounds = _bounds_from(nodes.min(axis=0), nodes.max(axis=0))
             out.append(
                 Piece(
                     com=com_world,
@@ -540,32 +686,35 @@ class Phase:
             com = props.CentreOfMass()
             return np.array([com.X(), com.Y(), com.Z()])
         if self._field is not None:
-            sg = self.grid()
-            res = self._resolution
-            scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape(
-                (res, res, res), order="F"
-            )
-            inside = scalar < self._iso
-            if not inside.any():
-                err_msg = "center_of_mass: field is positive everywhere on the grid"
-                raise ValueError(err_msg)
-            pts = np.asarray(sg.points).reshape((res, res, res, 3), order="F")
-            mask = inside.astype(np.float64)
-            denom = float(mask.sum())
-            com = (
-                float((mask * pts[..., 0]).sum() / denom),
-                float((mask * pts[..., 1]).sum() / denom),
-                float((mask * pts[..., 2]).sum() / denom),
-            )
-            return np.array(com)
+            pts, _ = self._inside_nodes("center_of_mass")
+            return pts.mean(axis=0)
         err_msg = "Cannot compute center_of_mass on an empty Phase"
         raise ValueError(err_msg)
 
+    def _inside_nodes(
+        self: Phase, caller: str
+    ) -> tuple[npt.NDArray[np.float64], float]:
+        """Return the grid nodes inside the solid and the volume of one grid cell.
+
+        The cell volume is ``|det(e_i, e_j, e_k)|`` of the grid's edge vectors,
+        so it stays right for a non-cubic, rotated or scaled cached grid.
+        """
+        sg = self.grid()
+        inside = np.asarray(sg[_IMPLICIT_SCALAR]) < self._iso
+        if not inside.any():
+            err_msg = f"{caller}: field is positive everywhere on the grid"
+            raise ValueError(err_msg)
+        _, _, edges = _grid_frame(sg)
+        pts = np.asarray(sg.points, dtype=np.float64)
+        return pts[inside], float(abs(np.linalg.det(edges)))
+
     @cached_property
     def inertia_matrix(self: Phase) -> npt.NDArray[np.float64]:
-        """Inertia tensor (about the origin) of the phase.
+        """Inertia tensor of the phase about its center of mass (unit density).
 
-        Field-backed: grid quadrature.  CAD-backed: ``BRepGProp``.
+        Field-backed: grid quadrature.  CAD-backed: ``BRepGProp``.  Both
+        use the center of mass as reference point, so the tensor is
+        invariant under :meth:`translate`.
         """
         if self._cad is not None:
             from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
@@ -582,24 +731,8 @@ class Phase:
                 ]
             )
         if self._field is not None:
-            sg = self.grid()
-            res = self._resolution
-            scalar = np.asarray(sg[_IMPLICIT_SCALAR]).reshape(
-                (res, res, res), order="F"
-            )
-            inside = scalar < self._iso
-            if not inside.any():
-                err_msg = "inertia_matrix: field is positive everywhere on the grid"
-                raise ValueError(err_msg)
-            pts = np.asarray(sg.points).reshape((res, res, res, 3), order="F")
-            x = pts[..., 0][inside]
-            y = pts[..., 1][inside]
-            z = pts[..., 2][inside]
-            xmin, xmax, ymin, ymax, zmin, zmax = self._bounds  # type: ignore[misc]
-            dx = (xmax - xmin) / (res - 1)
-            dy = (ymax - ymin) / (res - 1)
-            dz = (zmax - zmin) / (res - 1)
-            cell_volume = dx * dy * dz
+            pts, cell_volume = self._inside_nodes("inertia_matrix")
+            x, y, z = (pts - self.center_of_mass).T
             ixx = float(((y * y + z * z) * cell_volume).sum())
             iyy = float(((x * x + z * z) * cell_volume).sum())
             izz = float(((x * x + y * y) * cell_volume).sum())
@@ -614,117 +747,194 @@ class Phase:
         raise ValueError(err_msg)
 
     # ------------------------------------------------------------------
-    # Immutable transforms
+    # Copy
     # ------------------------------------------------------------------
 
-    def translated(self: Phase, offset: Sequence[float]) -> Phase:
-        """Return a new :class:`Phase` translated by ``offset``."""
-        dx, dy, dz = float(offset[0]), float(offset[1]), float(offset[2])
+    def copy(self: Phase) -> Phase:
+        """Return an independent copy with every live representation duplicated.
 
-        if self._field is not None and self._bounds is not None:
-            f = self._field
-            new_bounds = (
-                self._bounds[0] + dx,
-                self._bounds[1] + dx,
-                self._bounds[2] + dy,
-                self._bounds[3] + dy,
-                self._bounds[4] + dz,
-                self._bounds[5] + dz,
-            )
-            return Phase(
-                field=lambda x, y, z, _f=f, _dx=dx, _dy=dy, _dz=dz: _f(
-                    x - _dx, y - _dy, z - _dz
-                ),
-                bounds=new_bounds,
-                iso=self._iso,
-                period=self._period,
-                name=self.name,
-                resolution=self._resolution,
-            )
-        if self._cad is not None:
-            new = Phase(name=self.name, resolution=self._resolution)
-            new._cad = self._cad.translate((dx, dy, dz))  # noqa: SLF001
-            return new
-        err_msg = "Cannot translate an empty Phase"
-        raise ValueError(err_msg)
-
-    def scaled(self: Phase, factor: float | tuple[float, float, float]) -> Phase:
-        """Return a new :class:`Phase` scaled by ``factor`` about its center of mass.
-
-        CAD-backed phases use OCCT ``BRepBuilderAPI_GTransform`` about
-        the BRep center.  Field-backed phases compose the field via
-        ``f'(p) = f((p - c) / s + c) * s_min`` (uniform scale only; a
-        per-axis scale is not exact for an SDF, so non-uniform factors
-        rescale the bbox only and leave the field's iso-distance
-        approximate — caller's responsibility).
+        The field callable and (immutable) bounds tuple are shared; the CAD
+        (:meth:`CadShape.copy`, i.e. ``BRepBuilderAPI_Copy``), the surface mesh
+        and any cached grid are deep-copied, so an ``inplace=False``
+        transform on the copy never touches the original.
         """
+        new = self._shallow_copy()
+        if self._cad is not None:
+            new._cad = self._cad.copy()  # noqa: SLF001
+        if self._surface_mesh is not None:
+            new._surface_mesh = self._surface_mesh.copy()  # noqa: SLF001
+        if self._cached_grid is not None:
+            new._cached_grid = self._cached_grid.copy()  # noqa: SLF001
+        return new
+
+    def _invalidate_derived(self: Phase) -> None:
+        """Drop cached ``@cached_property`` results after a mutation."""
+        for key in ("cad", "pieces", "center_of_mass", "inertia_matrix"):
+            self.__dict__.pop(key, None)
+
+    # ------------------------------------------------------------------
+    # Transforms — PyVista convention: imperative verb + ``inplace=False``.
+    #
+    # ``inplace=False`` (default) returns a new Phase; ``inplace=True``
+    # mutates ``self``.  Both return the Phase.  ``_apply_affine`` maps
+    # every live representation (field, iso, period, CAD, surface mesh,
+    # cached grid) through the same affine map, so the result stays
+    # coherent whichever mode the caller picked.
+    # ------------------------------------------------------------------
+
+    def translate(
+        self: Phase, offset: Sequence[float], *, inplace: bool = False
+    ) -> Phase:
+        """Translate the phase by ``offset``.
+
+        ``period`` and ``iso`` are kept.
+
+        :param offset: ``(dx, dy, dz)`` world-space shift.
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new translated :class:`Phase`.
+        :return: the translated phase.
+        :raises ValueError: if the phase is empty.
+        """
+        return self._transform(_affine.translation(offset), "translate", inplace)
+
+    def rotate(
+        self: Phase,
+        rotation: Rotation | npt.ArrayLike,
+        point: Sequence[float] | None = None,
+        *,
+        inplace: bool = False,
+    ) -> Phase:
+        """Rotate the phase about ``point``.
+
+        Field, CAD, surface mesh and cached grid rotate together.  A
+        rotation within ``1e-12`` of a signed permutation (quarter turns
+        about the axes) is snapped to it and permutes ``period``; any other
+        rotation sets ``period`` to ``None`` and clips the field to the
+        rotated original ``bounds``, so the solid sampled on the new,
+        larger AABB is exactly the rotated solid (no extra material from a
+        periodic or unbounded field).
+
+        :param rotation: a SciPy ``Rotation`` or a proper orthogonal 3x3
+            matrix, following PyVista's ``RotationLike``.
+        :param point: pivot; defaults to the world origin.
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new rotated :class:`Phase`.
+        :return: the rotated phase.
+        :raises ValueError: if the phase is empty or the matrix is not a
+            rotation.
+        """
+        return self._transform(
+            _affine.rotation_about(rotation, point), "rotate", inplace
+        )
+
+    def scale(
+        self: Phase,
+        factor: float | Sequence[float],
+        point: Sequence[float] | None = None,
+        *,
+        inplace: bool = False,
+    ) -> Phase:
+        r"""Scale the phase about ``point``.
+
+        The field becomes :math:`c\, f(p + (x - p) / s)` with
+        :math:`c = \min_i s_i` and ``iso`` is multiplied by :math:`c`, so the
+        solid is exactly the scaled solid; a signed distance stays exact for
+        a uniform factor and becomes a lower bound of the distance for a
+        per-axis one.  ``period`` scales with the factors.  Pass
+        ``point=phase.center_of_mass`` to scale about the phase itself.
+
+        :param factor: uniform factor or ``(sx, sy, sz)``, strictly positive.
+        :param point: pivot; defaults to the world origin.
+        :param inplace: mutate ``self`` when ``True``; otherwise (default)
+            return a new scaled :class:`Phase`.
+        :return: the scaled phase.
+        :raises ValueError: if the phase is empty or a factor is not
+            strictly positive.
+        """
+        return self._transform(_affine.scaling(factor, point), "scale", inplace)
+
+    def _transform(
+        self: Phase, affine: _affine.AffineMap, verb: str, inplace: bool
+    ) -> Phase:
+        if self.is_empty:
+            err_msg = f"Cannot {verb} an empty Phase"
+            raise ValueError(err_msg)
+        target = self if inplace else self._shallow_copy()
+        target._apply_affine(affine)  # noqa: SLF001
+        return target
+
+    def _shallow_copy(self: Phase) -> Phase:
+        """Copy sharing every representation; ``_apply_affine`` replaces them all."""
+        new = _copy.copy(self)
+        new._invalidate_derived()  # noqa: SLF001
+        return new
+
+    def _apply_affine(self: Phase, affine: _affine.AffineMap) -> None:
+        """Map every live representation through ``affine`` (new objects, no mutation)."""
+        if self._field is not None and self._bounds is not None:
+            field = self._field
+            if affine.grows_bounds:
+                field = self._clipped_to_bounds(field)
+            self._field = affine.apply_field(field)
+            self._bounds = affine.apply_bounds(self._bounds)
+            self._iso *= affine.multiplier
+        self._period = affine.apply_period(self._period)
         if self._cad is not None:
             from .cad import transform_geometry  # noqa: PLC0415
 
-            if isinstance(factor, (int, float)):
-                sx = sy = sz = float(factor)
-            else:
-                sx, sy, sz = (float(s) for s in factor)
-            c = self._cad.center()
-            cx, cy, cz = c.x, c.y, c.z
-            matrix = np.array(
-                [
-                    [sx, 0.0, 0.0, cx - sx * cx],
-                    [0.0, sy, 0.0, cy - sy * cy],
-                    [0.0, 0.0, sz, cz - sz * cz],
-                ],
-                dtype=np.float64,
+            self._cad = transform_geometry(self._cad, affine.homogeneous[:3])
+        if self._surface_mesh is not None:
+            self._surface_mesh = self._surface_mesh.transform(
+                affine.homogeneous, inplace=False
             )
-            new = Phase(name=self.name, resolution=self._resolution)
-            new._cad = transform_geometry(self._cad, matrix)  # noqa: SLF001
-            return new
-        if self._field is not None and self._bounds is not None:
-            if isinstance(factor, (int, float)):
-                sx = sy = sz = float(factor)
-            else:
-                sx, sy, sz = (float(s) for s in factor)
-            cx, cy, cz = self.center_of_mass.tolist()
-            f = self._field
-            new_bounds = (
-                cx + (self._bounds[0] - cx) * sx,
-                cx + (self._bounds[1] - cx) * sx,
-                cy + (self._bounds[2] - cy) * sy,
-                cy + (self._bounds[3] - cy) * sy,
-                cz + (self._bounds[4] - cz) * sz,
-                cz + (self._bounds[5] - cz) * sz,
-            )
-            s_min = min(sx, sy, sz)
-            return Phase(
-                field=lambda x, y, z, _f=f, _sx=sx, _sy=sy, _sz=sz, _cx=cx, _cy=cy, _cz=cz, _sm=s_min: (
-                    _f(
-                        (x - _cx) / _sx + _cx,
-                        (y - _cy) / _sy + _cy,
-                        (z - _cz) / _sz + _cz,
-                    )
-                    * _sm
-                ),
-                bounds=new_bounds,
-                iso=self._iso,
-                period=self._period,
-                name=self.name,
-                resolution=self._resolution,
-            )
-        err_msg = "Cannot scale an empty Phase"
-        raise ValueError(err_msg)
+        if self._cached_grid is not None:
+            grid = self._cached_grid.transform(affine.homogeneous, inplace=False)
+            if affine.multiplier != 1.0:
+                grid[_IMPLICIT_SCALAR] = affine.multiplier * np.asarray(
+                    grid[_IMPLICIT_SCALAR]
+                )
+            self._cached_grid = grid
+        self._invalidate_derived()
 
-    def tiled(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
-        """Return a new :class:`Phase` periodically tiled on the RVE.
+    def _clipped_to_bounds(self: Phase, field: Field) -> Field:
+        r"""Restrict the solid ``{field < iso}`` to the current ``bounds`` box.
 
-        Builds ``∏ grid`` translated copies of the current phase and
-        fuses them.  Only implemented for CAD-backed phases today (the
-        field-backed equivalent — domain folding via ``mod`` — lands in
-        a follow-up; the periodic-shape work in
+        Returns :math:`\max(f, d_{box} + \mathrm{iso})`, whose
+        ``iso``-level set is the solid intersected with the box.
+        """
+        from .shape.implicit_ops import box  # noqa: PLC0415
+
+        b = np.asarray(self._bounds, dtype=np.float64).reshape(3, 2)
+        box_field = box(dims=b[:, 1] - b[:, 0], center=b.mean(axis=1)).require_field()
+        iso = self._iso
+
+        def _clipped(x, y, z):  # noqa: ANN001, ANN202
+            return np.maximum(field(x, y, z), box_field(x, y, z) + iso)
+
+        return _clipped
+
+    def tile(self: Phase, rve: Rve, grid: tuple[int, int, int]) -> Phase:
+        r"""Periodically tile the phase on the RVE over ``grid`` copies.
+
+        A **producer**: always returns a new :class:`Phase` (no ``inplace``).
+        Builds ``grid[0] * grid[1] * grid[2]`` copies of the current phase,
+        translated by :math:`-\mathrm{dim}\,(n/2 - 1/2 - i)` along each axis
+        (:math:`i = 0 \dots n-1`), i.e. a supercell centred on the original:
+        ``grid=(1, 1, 1)`` leaves it in place, and an even count shifts the
+        copies by half a cell.  The copies are fused.  Only implemented for
+        CAD-backed phases today (the field-backed equivalent, domain folding
+        via ``mod``, lands in a follow-up; the periodic-shape work in
         :mod:`microgen.shape.implicit_ops` already covers it for
         :class:`Shape` directly).
+
+        :param rve: RVE whose ``dim`` sets the tiling step.
+        :param grid: number of copies along x, y and z.
+        :return: a new CAD-backed :class:`Phase` holding the fused copies.
+        :raises NotImplementedError: if the phase is not CAD-backed.
         """
         if self._cad is None:
             err_msg = (
-                "Phase.tiled is implemented for CAD-backed phases today; "
+                "Phase.tile is implemented for CAD-backed phases today; "
                 "field-backed tiling lives on the source Shape (use "
                 "microgen.shape.implicit_ops.repeat there)."
             )
@@ -734,11 +944,12 @@ class Phase:
             translate_solid,
         )
 
-        center = np.array(self._cad.center().to_tuple())
         copies = []
         for idx in np.ndindex(*grid):
-            pos = center - rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
-            copies.append(translate_solid(self._cad.wrapped, pos))
+            # Copies are centred on the original: offsets are multiples of
+            # ``rve.dim`` symmetric about zero (``grid=(1, 1, 1)`` is a copy).
+            offset = -rve.dim * (0.5 * np.array(grid) - 0.5 - np.array(idx))
+            copies.append(translate_solid(self._cad.wrapped, offset))
         new = Phase(name=self.name, resolution=self._resolution)
         new._cad = make_compound_from_solids(copies)  # noqa: SLF001
         return new

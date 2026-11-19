@@ -7,7 +7,7 @@ End-to-end demonstration of the microgen 2.0 implicit-first pipeline.
 A :class:`microgen.Tpms` exposes a scalar SDF directly; wrapping it in a
 :class:`microgen.Phase` via :meth:`Phase.from_shape` gives access to
 :meth:`phase.surface_mesh`, :attr:`phase.pieces`, :attr:`phase.center_of_mass`,
-and the immutable transforms :meth:`phase.translated` / :meth:`phase.scaled`,
+and the transforms :meth:`Phase.translate` / :meth:`Phase.scale`,
 none of which require the optional ``[cad]`` extra (no OCCT, no STEP, no gmsh).
 
 Run with:
@@ -53,11 +53,11 @@ print(f"Pieces: {len(pieces)}  (gyroid 'sheet' part is multiply connected)")
 for i, piece in enumerate(pieces[:3]):
     print(f"  piece[{i}]: volume={piece.volume:.4f}, com={piece.com}")
 
-# %% Immutable transforms return new Phase objects.
-moved = phase.translated((1.0, 0.0, 0.0))
+# %% Transforms return a new Phase by default (inplace=False).
+moved = phase.translate((1.0, 0.0, 0.0))
 print(f"\nTranslated phase COM: {moved.center_of_mass}  (shifted by +1 in x)")
 
-scaled = phase.scaled(2.0)
+scaled = phase.scale(2.0)
 print(f"Scaled phase bounds:  {scaled.bounds}  (cell doubled)")
 
 # %% Compose with another implicit Shape via F-rep boolean ops.

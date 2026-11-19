@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pyvista as pv
+from scipy.spatial.transform import Rotation
 
 from microgen.shape.implicit_ops import (
     batch_smooth_union,
@@ -67,12 +68,12 @@ def _box_field(cx=0.0, cy=0.0, cz=0.0, hx=0.5, hy=0.5, hz=0.5):
 
 def _make_sphere(cx=0.0, cy=0.0, cz=0.0, r=1.0):
     func, bounds = _sphere_field(cx, cy, cz, r)
-    return Shape(func=func, bounds=bounds)
+    return Shape(field=func, bounds=bounds)
 
 
 def _make_box(cx=0.0, cy=0.0, cz=0.0, hx=0.5, hy=0.5, hz=0.5):
     func, bounds = _box_field(cx, cy, cz, hx, hy, hz)
-    return Shape(func=func, bounds=bounds)
+    return Shape(field=func, bounds=bounds)
 
 
 # ---------------------------------------------------------------------------
@@ -230,10 +231,10 @@ class TestTransforms:
         assert st.evaluate(x0, y, z)[0] > 0
 
     def test_rotate_90(self):
-        # Elongated box along x, rotate 90 around z -> elongated along y
+        # Elongated box along x, rotated 90° around z -> elongated along y
         func, bounds = _box_field(hx=1.0, hy=0.1, hz=0.1)
-        box = Shape(func=func, bounds=bounds)
-        rotated = box.rotate((0, 0, 90), convention="xyz")
+        box = Shape(field=func, bounds=bounds)
+        rotated = box.rotate(Rotation.from_euler("xyz", (0, 0, 90), degrees=True))
         # Point along y axis should be inside
         assert (
             rotated.evaluate(np.array([0.0]), np.array([0.5]), np.array([0.0]))[0] < 0
@@ -297,7 +298,7 @@ class TestGenerateVtk:
             s.generate_surface_mesh()
 
     def test_no_bounds_raises(self):
-        s = Shape(func=lambda x, y, z: x**2 + y**2 + z**2 - 1)
+        s = Shape(field=lambda x, y, z: x**2 + y**2 + z**2 - 1)
         with pytest.raises(ValueError, match="Bounds must be provided"):
             s.generate_surface_mesh()
 
@@ -331,7 +332,7 @@ class TestBoundsPropagation:
 
     def test_none_bounds(self):
         f = lambda x, y, z: x  # noqa: E731
-        p = Shape(func=f, bounds=None)
+        p = Shape(field=f, bounds=None)
         s = _make_sphere()
         u = p | s
         assert u.bounds == s.bounds
@@ -370,7 +371,7 @@ class TestUtilities:
 
     def test_from_field(self):
         shape = from_field(
-            func=lambda x, y, z: x**2 + y**2 + z**2 - 1,
+            field=lambda x, y, z: x**2 + y**2 + z**2 - 1,
             bounds=(-2, 2, -2, 2, -2, 2),
         )
         assert shape.evaluate(np.array([0.0]), np.array([0.0]), np.array([0.0]))[0] < 0
@@ -406,7 +407,7 @@ class TestErrorHandling:
         with pytest.raises(ValueError, match="No implicit scalar field"):
             s.translate((1, 0, 0))
         with pytest.raises(ValueError, match="No implicit scalar field"):
-            s.rotate((0, 0, 45))
+            s.rotate(Rotation.from_euler("ZXZ", (0, 0, 45), degrees=True))
         with pytest.raises(ValueError, match="No implicit scalar field"):
             s.scale(2.0)
 
@@ -417,3 +418,290 @@ class TestErrorHandling:
             s | other  # noqa: B015
         with pytest.raises(ValueError, match="No implicit scalar field"):
             ~s  # noqa: B015
+
+
+# ---------------------------------------------------------------------------
+# Transform contract: inplace, pivot, subclass, native params, period
+# ---------------------------------------------------------------------------
+
+
+_RNG = np.random.default_rng(0)
+_PTS = _RNG.uniform(-3.0, 3.0, size=(3, 1000))
+_ROT_Z90 = Rotation.from_euler("z", 90, degrees=True)
+_ROT_GENERIC = Rotation.from_euler("xyz", (30, 20, 10), degrees=True)
+
+
+def _transforms():
+    return [
+        ("translate", ((1.0, -0.5, 0.25),), {}),
+        ("rotate", (_ROT_GENERIC,), {"point": (0.5, 0.0, 0.0)}),
+        ("scale", (2.0,), {"point": (0.5, 0.0, 0.0)}),
+    ]
+
+
+class TestTransformContract:
+    """``translate`` / ``rotate`` / ``scale`` on ``Shape`` and its primitives."""
+
+    @pytest.mark.parametrize(("verb", "args", "kwargs"), _transforms())
+    def test_inplace_matches_copy(self, verb, args, kwargs):
+        from microgen import Sphere
+
+        ref = getattr(Sphere(radius=1.0), verb)(*args, **kwargs)
+        shape = Sphere(radius=1.0)
+        out = getattr(shape, verb)(*args, inplace=True, **kwargs)
+        assert out is shape
+        np.testing.assert_allclose(out.evaluate(*_PTS), ref.evaluate(*_PTS))
+
+    @pytest.mark.parametrize(("verb", "args", "kwargs"), _transforms())
+    def test_copy_leaves_original_untouched(self, verb, args, kwargs):
+        from microgen import Box
+
+        shape = Box(dim=(1.0, 2.0, 0.5), center=(0.1, 0.2, 0.3))
+        before = shape.evaluate(*_PTS).copy()
+        bounds = shape.bounds
+        out = getattr(shape, verb)(*args, **kwargs)
+        assert out is not shape
+        np.testing.assert_array_equal(shape.evaluate(*_PTS), before)
+        assert shape.bounds == bounds
+        assert shape.dim == (1.0, 2.0, 0.5)
+
+    @pytest.mark.parametrize(("verb", "args", "kwargs"), _transforms())
+    def test_generic_shape_matches_primitive(self, verb, args, kwargs):
+        """Native-parameter path and generic composition give the same field."""
+        from microgen import Sphere
+
+        sphere = Sphere(radius=1.0, center=(0.2, 0.0, 0.0))
+        generic = Shape(field=sphere.field, bounds=sphere.bounds)
+        native = getattr(sphere, verb)(*args, **kwargs)
+        composed = getattr(generic, verb)(*args, **kwargs)
+        assert type(native) is Sphere
+        assert type(composed) is Shape
+        np.testing.assert_allclose(
+            native.evaluate(*_PTS), composed.evaluate(*_PTS), atol=1e-12
+        )
+
+    def test_sphere_uniform_scale_updates_radius(self):
+        from microgen import Sphere
+
+        out = Sphere(radius=1.0, center=(1.0, 0.0, 0.0)).scale(2.0)
+        assert type(out) is Sphere
+        assert out.radius == 2.0
+        assert out.center == (2.0, 0.0, 0.0)
+        expected = np.linalg.norm(_PTS.T - (2.0, 0.0, 0.0), axis=1) - 2.0
+        np.testing.assert_allclose(out.evaluate(*_PTS), expected, atol=1e-12)
+
+    def test_sphere_anisotropic_scale_degrades_or_raises(self):
+        from microgen import Sphere
+
+        sphere = Sphere(radius=1.0)
+        out = sphere.scale((1.0, 2.0, 3.0))
+        assert type(out) is Shape
+        assert out.evaluate(np.array([0.0]), np.array([0.0]), np.array([2.9]))[0] < 0
+        with pytest.raises(ValueError, match="inplace=False"):
+            sphere.scale((1.0, 2.0, 3.0), inplace=True)
+        assert sphere.radius == 1.0
+
+    def test_box_anisotropic_scale_after_quarter_turn(self):
+        from microgen import Box
+
+        box = Box(dim=(1.0, 2.0, 3.0)).rotate(_ROT_Z90).scale((2.0, 1.0, 1.0))
+        assert type(box) is Box
+        # Local y (dim 2) lies on world x after the quarter turn.
+        assert box.dim == (1.0, 4.0, 3.0)
+
+    def test_ellipsoid_general_scale_stays_ellipsoid(self):
+        from microgen import Ellipsoid
+
+        ell = Ellipsoid(radii=(1.0, 0.5, 0.25), orientation=(30, 20, 10))
+        generic = Shape(field=ell.field, bounds=ell.bounds).scale((1.0, 2.0, 3.0))
+        out = ell.scale((1.0, 2.0, 3.0))
+        assert type(out) is Ellipsoid
+        # Same solid (the field normalisations differ).
+        f_native = out.evaluate(*_PTS)
+        f_generic = generic.evaluate(*_PTS)
+        keep = np.abs(f_generic) > 1e-6
+        assert np.array_equal(f_native[keep] < 0, f_generic[keep] < 0)
+
+    def test_scale_rejects_non_positive(self):
+        s = _make_sphere()
+        with pytest.raises(ValueError, match="strictly positive"):
+            s.scale(-1.0)
+        with pytest.raises(ValueError, match="strictly positive"):
+            s.scale((1.0, 0.0, 1.0))
+
+    def test_rotate_rejects_improper_matrix(self):
+        s = _make_sphere()
+        with pytest.raises(ValueError):
+            s.rotate(np.diag([1.0, 1.0, -1.0]))
+
+    def test_scale_pivot_is_fixed_point(self):
+        s = _make_sphere()
+        p = np.array([[0.3], [-0.2], [0.7]])
+        out = s.scale((2.0, 3.0, 0.5), point=p.ravel())
+        np.testing.assert_allclose(out.evaluate(*p), s.evaluate(*p) * 0.5)
+
+    def test_period_rules(self):
+        s = Shape(
+            field=_make_sphere().field,
+            bounds=(-1, 1, -1, 1, -1, 1),
+            period=(1.0, 2.0, 3.0),
+        )
+        assert s.translate((1.0, 0.0, 0.0)).period == (1.0, 2.0, 3.0)
+        assert s.scale((2.0, 1.0, 0.5)).period == (2.0, 2.0, 1.5)
+        assert s.rotate(_ROT_Z90).period == (2.0, 1.0, 3.0)
+        assert s.rotate(_ROT_GENERIC).period is None
+        s.rotate(_ROT_GENERIC, inplace=True)
+        assert s.period is None
+
+    def test_quarter_turn_is_snapped(self):
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3, cell_size=(1.0, 2.0, 1.0))
+        out = tpms.rotate(_ROT_Z90)
+        assert out.period == (2.0, 1.0, 1.0)
+        x, y, z = _PTS
+        np.testing.assert_allclose(
+            out.evaluate(x + 2.0, y, z), out.evaluate(x, y, z), atol=1e-12
+        )
+        np.testing.assert_allclose(
+            out.orientation.as_matrix(),
+            [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+            atol=1e-15,
+        )
+
+    def test_tpms_uniform_scale_updates_cell(self):
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3, phase_shift=(0.1, 0.0, 0.0))
+        out = tpms.scale(2.0)
+        assert type(out) is Tpms
+        np.testing.assert_array_equal(out.cell_size, (2.0, 2.0, 2.0))
+        assert out.period == (2.0, 2.0, 2.0)
+        assert out.offset == tpms.offset
+        np.testing.assert_allclose(
+            out.evaluate(*(2.0 * _PTS)), 2.0 * tpms.evaluate(*_PTS), atol=1e-10
+        )
+        np.testing.assert_array_equal(tpms.cell_size, (1.0, 1.0, 1.0))
+
+    def test_tpms_field_follows_center_and_orientation(self):
+        """The world field is the local field placed at center / orientation."""
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        local = Tpms(surface_function=gyroid, offset=0.3)
+        posed = Tpms(
+            surface_function=gyroid,
+            offset=0.3,
+            center=(0.2, -0.1, 0.4),
+            orientation=_ROT_GENERIC,
+        )
+        world = _ROT_GENERIC.apply(_PTS.T) + (0.2, -0.1, 0.4)
+        np.testing.assert_allclose(
+            posed.evaluate(*world.T), local.evaluate(*_PTS), atol=1e-12
+        )
+        assert posed.period is None
+
+    @pytest.mark.parametrize(
+        "make",
+        [
+            lambda m: m.Box(dim=(1.0, 0.6, 0.4), orientation=(90, 0, 0)),
+            lambda m: m.Cylinder(height=1.0, radius=0.3, orientation=(90, 0, 0)),
+            lambda m: m.Capsule(height=1.0, radius=0.3, orientation=(90, 0, 0)),
+            lambda m: m.Ellipsoid(radii=(1.0, 0.5, 0.25), orientation=(30, 20, 10)),
+        ],
+    )
+    @pytest.mark.parametrize("factor", [2.0, (2.0, 1.0, 1.0), (1.0, 2.0, 3.0)])
+    def test_native_scale_matches_generic_solid(self, make, factor):
+        """Native or generic, a scaled primitive is the scaled solid."""
+        import microgen
+
+        shape = make(microgen)
+        generic = Shape(field=shape.field, bounds=shape.bounds).scale(factor)
+        out = shape.scale(factor)
+        f_out = out.evaluate(*_PTS)
+        f_generic = generic.evaluate(*_PTS)
+        keep = np.abs(f_generic) > 1e-6
+        assert np.array_equal(f_out[keep] < 0, f_generic[keep] < 0)
+
+    def test_capsule_axial_scale_is_not_native(self):
+        from microgen import Capsule
+
+        capsule = Capsule(height=2.0, radius=1.0)
+        assert type(capsule.scale((2.0, 1.0, 1.0))) is Shape
+        assert type(capsule.scale(2.0)) is Capsule
+        with pytest.raises(ValueError, match="inplace=False"):
+            capsule.scale((2.0, 1.0, 1.0), inplace=True)
+
+    def test_rotate_rejects_non_orthogonal_matrix(self):
+        s = _make_sphere()
+        with pytest.raises(ValueError, match="orthogonal"):
+            s.rotate(2.0 * np.eye(3))
+
+    def test_quarter_turn_matrix_is_exact(self):
+        from microgen.shape import _affine
+
+        affine = _affine.rotation_about(_ROT_Z90)
+        np.testing.assert_array_equal(affine.matrix, [[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+
+    def test_tpms_scale_scales_frep_thickness(self):
+        """``tpms.scale(s).as_sheet()`` is the scaled ``as_sheet()``."""
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3)
+        native = tpms.scale(2.0).as_sheet()
+        generic = tpms.as_sheet().scale(2.0)
+        np.testing.assert_allclose(
+            native.evaluate(*_PTS), generic.evaluate(*_PTS), atol=1e-10
+        )
+
+    def test_tpms_surface_mesh_follows_translate(self):
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3).translate((5.0, 0.0, 0.0))
+        for part in ("surface", "sheet"):
+            mesh = tpms.generate_surface_mesh(type_part=part)
+            np.testing.assert_allclose(mesh.center, (5.0, 0.0, 0.0), atol=0.05)
+
+    def test_tpms_inplace_scale_and_copy_independence(self):
+        from microgen import Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        tpms = Tpms(surface_function=gyroid, offset=0.3)
+        before = np.asarray(tpms.grid["lower_surface"]).copy()
+        twin = tpms.copy()
+        twin.offset = 0.5
+        np.testing.assert_array_equal(tpms.grid["lower_surface"], before)
+        assert tpms.scale(2.0, inplace=True) is tpms
+        np.testing.assert_array_equal(tpms.cell_size, (2.0, 2.0, 2.0))
+
+    def test_curvilinear_tpms_has_no_cartesian_period(self):
+        from microgen import CylindricalTpms, Tpms
+        from microgen.shape.surface_functions import gyroid
+
+        cyl = CylindricalTpms(radius=1.0, surface_function=gyroid, offset=0.3)
+        assert cyl.period is None
+        assert type(cyl.scale(2.0)) is Shape
+        assert Tpms(surface_function=gyroid, offset=0.3).period == (1.0, 1.0, 1.0)
+
+    def test_spinodoid_rigid_transforms_keep_class(self):
+        from microgen import Spinodoid
+
+        spin = Spinodoid(density=0.5, resolution=16, seed=0)
+        moved = spin.translate((1.0, 0.0, 0.0))
+        assert type(moved) is Spinodoid
+        x, y, z = _PTS
+        np.testing.assert_allclose(
+            moved.evaluate(x + 1.0, y, z), spin.evaluate(x, y, z)
+        )
+        assert spin.rotate(_ROT_Z90).period == (1.0, 1.0, 1.0)
+        assert type(spin.scale(2.0)) is Shape
+        with pytest.raises(ValueError, match="inplace=False"):
+            spin.scale(2.0, inplace=True)
+
+    def test_shape_without_field_raises(self):
+        with pytest.raises(ValueError, match="No implicit scalar field"):
+            Shape().translate((1.0, 0.0, 0.0))

@@ -108,7 +108,7 @@ def shape_to_cad(
     :return: :class:`CadShape` wrapping the tessellated ``TopoDS_Shell``
     """
     require_cad()
-    if shape.func is None:
+    if shape.field is None:
         err_msg = "No implicit field defined — cannot build BREP from an empty Shape"
         raise NotImplementedError(err_msg)
 

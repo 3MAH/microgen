@@ -181,10 +181,17 @@ def fuse_shapes(shapes: list[CadShape], *, retain_edges: bool) -> CadShape:
     """
     require_cad()
     from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse  # noqa: PLC0415
+    from OCP.BRepCheck import BRepCheck_Analyzer  # noqa: PLC0415
 
     fused = shapes[0].wrapped
-    for i in range(1, len(shapes)):
-        fused = BRepAlgoAPI_Fuse(fused, shapes[i].wrapped).Shape()
+    for shape in shapes[1:]:
+        result = BRepAlgoAPI_Fuse(fused, shape.wrapped).Shape()
+        if not retain_edges and not BRepCheck_Analyzer(result).IsValid():
+            # Retry from a clean input before invalid topology reaches the next union.
+            result = BRepAlgoAPI_Fuse(
+                _unify_solids(fused).wrapped, shape.wrapped
+            ).Shape()
+        fused = result
 
     if retain_edges:
         return CadShape(fused)

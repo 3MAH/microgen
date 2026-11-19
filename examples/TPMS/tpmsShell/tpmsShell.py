@@ -15,7 +15,7 @@ geometry = Tpms(
     surface_function=surface_functions.gyroid,
     offset=0.5,
     repeat_cell=3,
-    resolution=15,
+    resolution=8,  # 27 cells: res 15 takes minutes in the triangle-by-triangle CAD build
 )
 shape = geometry.generate_cad(type_part="sheet", smoothing=0)
 

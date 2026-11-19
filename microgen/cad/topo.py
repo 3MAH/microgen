@@ -92,18 +92,17 @@ def split_shape(
     """
     require_cad()
     from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter  # noqa: PLC0415
-    from OCP.TopTools import TopTools_ListOfShape  # noqa: PLC0415
 
-    args = TopTools_ListOfShape()
+    splitter = BRepAlgoAPI_Splitter()
+    args = splitter.Arguments()
     args.Append(shape.wrapped)
-    tools = TopTools_ListOfShape()
+    tools = splitter.Tools()
     if isinstance(tool, CadShape):
         tools.Append(tool.wrapped)
     else:
         for t in tool:
             tools.Append(t.wrapped)
 
-    splitter = BRepAlgoAPI_Splitter()
     splitter.SetArguments(args)
     splitter.SetTools(tools)
     if fuzzy_value > 0:
@@ -144,15 +143,29 @@ def make_plane_face(
 def transform_geometry(shape: CadShape, matrix: npt.NDArray[np.float64]) -> CadShape:
     """Apply a 3x4 affine matrix (linear + translation).
 
-    Wraps OCCT ``BRepBuilderAPI_GTransform``.
+    A similarity (a rotation or a reflection times a uniform scale, plus a
+    translation) goes through ``BRepBuilderAPI_Transform``, which keeps
+    analytic surfaces exact.  Any other linear part goes through ``BRepBuilderAPI_GTransform``,
+    which converts the surfaces to B-splines.
 
     :param matrix: ``(3, 4)`` array; rows are ``[a b c tx; d e f ty; g h i tz]``.
     """
     require_cad()
-    from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform  # noqa: PLC0415
-    from OCP.gp import gp_GTrsf, gp_Mat, gp_XYZ  # noqa: PLC0415
+    from OCP.BRepBuilderAPI import (  # noqa: PLC0415
+        BRepBuilderAPI_GTransform,
+        BRepBuilderAPI_Transform,
+    )
+    from OCP.gp import gp_GTrsf, gp_Mat, gp_Trsf, gp_XYZ  # noqa: PLC0415
 
     m = np.asarray(matrix, dtype=np.float64)
+    linear = m[:, :3]
+    gram = linear.T @ linear
+    if gram[0, 0] > 0.0 and np.allclose(
+        gram, gram[0, 0] * np.eye(3), rtol=0.0, atol=1e-12 * gram[0, 0]
+    ):
+        trsf = gp_Trsf()
+        trsf.SetValues(*(float(v) for v in m.ravel()))
+        return CadShape(BRepBuilderAPI_Transform(shape.wrapped, trsf, True).Shape())
     gtrsf = gp_GTrsf()
     gtrsf.SetVectorialPart(
         gp_Mat(
