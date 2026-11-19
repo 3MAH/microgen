@@ -128,12 +128,13 @@ def test_cad_uniform_scale_keeps_analytic_surface() -> None:
     from OCP.BRep import BRep_Tool
     from OCP.TopAbs import TopAbs_FACE
     from OCP.TopExp import TopExp_Explorer
-    from OCP.TopoDS import TopoDS
+
+    from microgen.cad.shape import _topods_cast
 
     phase = Phase.from_cad(Sphere(radius=0.5, center=(1.0, 0.0, 0.0)).generate_cad())
     out = phase.scale(2.0)
     face = TopExp_Explorer(out.cad.wrapped, TopAbs_FACE).Current()
-    surface = BRep_Tool.Surface_s(TopoDS.Face_s(face))
+    surface = BRep_Tool.Surface_s(_topods_cast("Face")(face))
     assert surface.DynamicType().Name() == "Geom_SphericalSurface"
     assert out.cad.volume() == pytest.approx(8.0 * phase.cad.volume(), rel=1e-9)
     np.testing.assert_allclose(out.center_of_mass, (2.0, 0.0, 0.0), atol=1e-9)
