@@ -42,7 +42,8 @@ Changes since 2.0.0b1, on the way to 2.0.0.
   scenes (PyVista), a new landing page with cards (sphinx-design), and the
   microgen colours on the `sphinx_rtd_theme` shared with fedoo and simcoon.
 - New examples: spinodoids (`examples/Spinodoids/spinodoid.py`), periodic RVEs
-  of random spheres and short fibres (`examples/RVE/`), and boolean operations
+  of random spheres and short fibres (`examples/RVE/`, with rounded or sharp
+  fibres, periodic or cut by the cell), and boolean operations
   on implicit fields (`examples/ImplicitShapes/implicit_booleans.py`). The
   short fibre example draws its fibres with PyVista instead of exporting a CAD
   compound, and the preset lattices and gyroid-in-a-shell examples use the

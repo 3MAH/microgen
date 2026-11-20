@@ -86,10 +86,14 @@ particle_surface.save("spheres_rve.stl")
 # %%
 # The particles in the cell.
 pl = pv.Plotter()
-pl.add_mesh(particle_surface, color="#ef7d2d", smooth_shading=True, split_sharp_edges=True)
+pl.add_mesh(
+    particle_surface, color="#ef7d2d", smooth_shading=True, split_sharp_edges=True
+)
 pl.add_mesh(pv.Box(bounds=(0, 1, 0, 1, 0, 1)), style="wireframe", color="black")
 pl.show()
 
 # %%
 # The matrix, with the holes left by the particles on its faces.
-surface_in_cell(matrix_phase).plot(color="#6a8caf", smooth_shading=True, split_sharp_edges=True)
+surface_in_cell(matrix_phase).plot(
+    color="#6a8caf", smooth_shading=True, split_sharp_edges=True
+)

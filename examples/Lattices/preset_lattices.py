@@ -49,7 +49,9 @@ bounds = (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 N_COL = 4
 pl = pv.Plotter(shape=(3, N_COL), window_size=(1200, 900), border=False)
 for i, lattice in enumerate(preset_lattice_list):
-    mesh = lattice.generate_implicit().generate_surface_mesh(bounds=bounds, resolution=80)
+    mesh = lattice.generate_implicit().generate_surface_mesh(
+        bounds=bounds, resolution=80
+    )
     pl.subplot(i // N_COL, i % N_COL)
     pl.add_text(type(lattice).__name__, font_size=8)
     pl.add_mesh(mesh, color="#ef7d2d", smooth_shading=True)

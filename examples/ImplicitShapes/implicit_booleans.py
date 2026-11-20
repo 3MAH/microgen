@@ -63,7 +63,9 @@ smooth_mesh.plot(color="#ef7d2d", smooth_shading=True)
 # clipped by a sphere and joined to a solid core with a smooth union.
 # :func:`microgen.implicit_ops.shell` turns a solid into a hollow wall of
 # given thickness.
-gyroid = Tpms(surface_function=surface_functions.gyroid, offset=0.6, cell_size=0.5, repeat_cell=3)
+gyroid = Tpms(
+    surface_function=surface_functions.gyroid, offset=0.6, cell_size=0.5, repeat_cell=3
+)
 gyroid_ball = (gyroid & Sphere(radius=0.7)).smooth_union(Sphere(radius=0.25), k=0.1)
 gyroid_ball_mesh = gyroid_ball.generate_surface_mesh(
     bounds=(-0.75, 0.75, -0.75, 0.75, -0.75, 0.75), resolution=150

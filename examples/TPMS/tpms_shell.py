@@ -11,8 +11,6 @@ The result is meshed by marching cubes, without the CAD backend. With
 OCCT shape for a STEP export.
 """
 
-import pyvista as pv
-
 from microgen import Box, Tpms, implicit_ops, surface_functions
 
 # %%
