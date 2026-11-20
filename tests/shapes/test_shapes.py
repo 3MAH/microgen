@@ -39,7 +39,7 @@ from microgen.shape import (
             Polyhedron,
             {
                 "dic": microgen.shape.polyhedron.read_obj(
-                    "examples/BasicShapes/platon/tetrahedron.obj",
+                    "examples/BasicShapes/tetrahedron.obj",
                 ),
             },
         ),

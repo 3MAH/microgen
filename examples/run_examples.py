@@ -51,8 +51,10 @@ def launch_test_examples(
     if n_procs == 1:
         for i, example in enumerate(examples):
             print(dashed_line(f"[{i}/{len(examples)}] {example}"))
-            cmd = [sys.executable, example]
-            process = subprocess.run(cmd, check=True)
+            cmd = [sys.executable, Path(example).name]
+            # Examples read and write their files in their own directory,
+            # as when they are run by sphinx-gallery.
+            process = subprocess.run(cmd, check=True, cwd=Path(example).parent)
             if process.returncode != 0:
                 failed.append(example)
 
@@ -62,8 +64,12 @@ def launch_test_examples(
         results: dict[str, multiprocessing.pool.AsyncResult] = {}
         with multiprocessing.Pool(processes=n_procs) as pool:
             for example in examples:
-                cmd = [sys.executable, example]
-                result = pool.apply_async(subprocess.run, (cmd,), {"check": True})
+                cmd = [sys.executable, Path(example).name]
+                result = pool.apply_async(
+                    subprocess.run,
+                    (cmd,),
+                    {"check": True, "cwd": Path(example).parent},
+                )
                 results[example] = result
 
             pool.close()
@@ -134,15 +140,7 @@ if __name__ == "__main__":
 
     EXCLUDE = parser.parse_args().exclude
     if parser.parse_args().no_mmg:
-        EXCLUDE.extend(
-            [
-                "Mesh/mmg",
-                "Mesh/mmg-voro",
-                "Mesh/remesh",
-                "Mesh/gyroid",
-            ]
-        )
-    EXCLUDE.append("Fibers")
+        EXCLUDE.append("Mesh")
     EXCLUDE = [str(PARENT_DIR / exclude) for exclude in EXCLUDE]
 
     display_results(
