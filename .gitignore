@@ -16,8 +16,14 @@
 *.vtk
 *.step
 *.msh
-!examples/Mesh/mmg/Mesh.msh
-!examples/Mesh/mmg-voro/Mesh.msh
+!examples/Mesh/mmg3d.msh
+!examples/Mesh/mmg_voronoi.msh
+# Example outputs and Sphinx-Gallery generated pages
+*.vtm
+examples/**/*_data/
+examples/TPMS/tpms_surfaces/
+docs/examples/
+docs/sg_execution_times.rst
 .vscode
 data/
 _build/

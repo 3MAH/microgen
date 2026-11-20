@@ -54,6 +54,10 @@ docs = [
     "jupyter-sphinx>=0.5.3",
     "mock>=5.1.0",
     "myst-parser>=3.0.1",
+    "sphinx-design>=0.6",
+    "sphinx-gallery>=0.17",
+    # Interactive 3D scenes of the gallery (pyvista DynamicScraper)
+    "trame-pyvista>=0.3",
 ]
 ray = [
     "trimesh",
