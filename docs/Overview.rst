@@ -42,8 +42,8 @@ Here are the main features:
 .. raw:: html
 
    <p align="center">
-      <img src="_static/gyroid.gif" alt="Gyroid" width="49%"/>
-      <img src="_static/fischerKoch.gif" alt="TPMS" width="49%"/>
+      <a href="examples/TPMS/graded_cell_type.html"><img src="_images/sphx_glr_graded_cell_type_001.png" alt="Morphing between TPMS types" width="49%"/></a>
+      <a href="examples/TPMS/infill_bunny.html"><img src="_images/sphx_glr_infill_bunny_001.png" alt="Gyroid infill of a mesh" width="49%"/></a>
    </p>
 
 Brief examples
