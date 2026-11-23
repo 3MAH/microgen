@@ -42,7 +42,7 @@ Here are the main features:
 .. raw:: html
 
    <p align="center">
-      <a href="examples/TPMS/graded_cell_type.html"><img src="_static/tpms_morphing.png" alt="Morphing between TPMS types" width="49%"/></a>
+      <a href="examples/index.html"><img src="_static/microgen_showcase.png" alt="TPMS, spinodoids and strut lattices generated with microgen" width="49%"/></a>
       <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_morph.gif" alt="Wireframe spinodoid morphing between two random realisations" width="49%"/></a>
    </p>
 

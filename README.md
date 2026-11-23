@@ -17,7 +17,7 @@ Generation of 3D objects is achievable through functions that utilize Open CASCA
 The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic split, lattice CAD) is **optional** — install with `pip install 'microgen[cad]'`. The default `pip install microgen` gives you mesh + implicit-field (F-rep) workflows only, which is sufficient for many applications and has a much lighter dependency footprint (no OCCT, no VTK version pin).
 
 <p align="center">
-    <a href="https://3mah.github.io/microgen-docs/examples/TPMS/graded_cell_type.html"><img src="docs/_static/tpms_morphing.png" alt="Morphing between TPMS types" title="Morphing between TPMS types" width="49%"></a>
+    <a href="https://3mah.github.io/microgen-docs/examples/index.html"><img src="docs/_static/microgen_showcase.png" alt="TPMS, spinodoids and strut lattices generated with microgen" title="TPMS, spinodoids and strut lattices" width="49%"></a>
     <a href="https://3mah.github.io/microgen-docs/examples/Spinodoids/spinodoid.html"><img src="docs/_static/spinodoid_morph.gif" alt="Wireframe spinodoid morphing between two random realisations" title="Spinodoid" width="49%"></a>
 </p>
 
