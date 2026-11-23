@@ -136,7 +136,7 @@ Export to VTK:
 Next Steps
 ----------
 
-- Explore the :ref:`RST Geometries` for more shape examples
-- Check the :ref:`RST Tpms` for all available TPMS surfaces
-- Learn about :ref:`RST 3Dop` for repeating and rastering
-- See :ref:`RST Mesh` for meshing capabilities
+- Explore the :ref:`basic shape examples <examples_basic_shapes>`
+- Check the :ref:`TPMS examples <examples_tpms>` for all available surfaces and gradings
+- Learn about :ref:`3D operations <examples_3d_operations>` for repeating and rastering
+- See the :ref:`meshing examples <examples_mesh>`

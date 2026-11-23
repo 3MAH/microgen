@@ -44,9 +44,23 @@ Changes since 2.0.0b1, on the way to 2.0.0.
   `microgen` package.
 - `examples/ImplicitShapes/gyroid_implicit_phase.py`, a tour of the
   implicit-first workflow.
+- Sphinx-Gallery example gallery in the documentation, with interactive 3D
+  scenes (PyVista), a new landing page with cards (sphinx-design), and the
+  microgen colours on the `sphinx_rtd_theme` shared with fedoo and simcoon.
+- New examples: spinodoids (`examples/Spinodoids/spinodoid.py`), periodic RVEs
+  of random spheres and short fibres (`examples/RVE/`, with rounded or sharp
+  fibres, periodic or cut by the cell), and boolean operations
+  on implicit fields (`examples/ImplicitShapes/implicit_booleans.py`). The
+  short fibre example draws its fibres with PyVista instead of exporting a CAD
+  compound, and the preset lattices and gyroid-in-a-shell examples use the
+  implicit path instead of CAD; all three now run at each documentation build.
 
 ### Changed
 
+- The examples are grouped in one folder per gallery section
+  (`examples/<Section>/<name>.py`), read and write their files in their own
+  directory, and end with a PyVista figure. `run_examples.py` runs each one
+  from its directory.
 - **Breaking:** `Shape.func` is renamed `Shape.field` ([#144]).
 - **Breaking:** affine transforms follow the PyVista convention:
   `translate`, `rotate` and `scale` return a new object by default and modify the
@@ -59,6 +73,8 @@ Changes since 2.0.0b1, on the way to 2.0.0.
 - **Breaking:** `Rve` is an immutable (frozen) dataclass ([#140]).
 - The shared `try_make_solid` helper of `microgen.shape.periodic_shell` upgrades
   sewn shells to solids for both `Tpms` and `Spinodoid` ([#145]).
+- The `honeycomb_*` surface functions are annotated with array inputs and
+  outputs, like the other TPMS surface functions ([#147]).
 
 ### Removed
 
@@ -170,4 +186,5 @@ Releases before 2.0 are listed on the
 [#143]: https://github.com/3MAH/microgen/pull/143
 [#144]: https://github.com/3MAH/microgen/pull/144
 [#145]: https://github.com/3MAH/microgen/pull/145
+[#147]: https://github.com/3MAH/microgen/pull/147
 [#150]: https://github.com/3MAH/microgen/pull/150
