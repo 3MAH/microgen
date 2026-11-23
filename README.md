@@ -4,19 +4,21 @@
 
 **microgen** is a Python library designed to facilitate microstructure generation and meshing. Here are its core features:
 
-- **Repeated cells**: Generation of lattice structures such as octet trusses and honeycombs.
-- **Triply Periodic Minimal Surfaces (TPMS)**: TPMS-based lattice generation known for favorable physical (mechanical, thermal, ...) properties like low density and large surface area.
-- **Virtual composites microstructures**: Generation of basic reinforcement geometries, including spheres, cylinders, ellipsoids, and more.
-- **3D Voronoi tessellation**: Simulation of granular materials and polycrystalline metals.
-- **Meshing**: Regular and **periodic** meshing using Gmsh, **remeshing** using Mmg.
+- **Triply Periodic Minimal Surfaces (TPMS)**: gyroid, Schwarz, Schoen, Neovius, Fischer-Koch… as sheets or skeletons, graded in density, cell size or cell type, in Cartesian, cylindrical or spherical frames, and as infill of any mesh.
+- **Spinodoids**: random, anisotropic bicontinuous microstructures from Gaussian random fields.
+- **Lattices**: octet-truss, honeycomb, preset and custom (e.g. auxetic) strut lattices.
+- **Virtual composites**: periodic RVEs of spheres, short fibres, ellipsoids and other inclusions.
+- **3D Voronoi tessellation**: granular materials and polycrystalline metals, also combined with TPMS.
+- **Implicit workflow**: shapes as implicit fields (F-rep), with boolean operations and blending.
+- **Meshing**: regular and **periodic** meshing using Gmsh, level-set **remeshing** using Mmg.
 
 Generation of 3D objects is achievable through functions that utilize Open CASCADE (via [cadquery-ocp-novtk](https://github.com/CadQuery/ocp-build-system), the direct OCCT Python binding) or VTK (using PyVista). Neper offers tools for 3D tessellation, while Gmsh handles the generation of both regular and periodic meshes, with Mmg handling remeshing tasks.
 
 The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic split, lattice CAD) is **optional** — install with `pip install 'microgen[cad]'`. The default `pip install microgen` gives you mesh + implicit-field (F-rep) workflows only, which is sufficient for many applications and has a much lighter dependency footprint (no OCCT, no VTK version pin).
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/gyroid.gif" alt="Gyroid" width="49%"/>
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/fischerKoch.gif" alt="TPMS" width="49%"/>
+    <a href="https://3mah.github.io/microgen-docs/examples/index.html"><img src="docs/_static/microgen_showcase.png" alt="TPMS, spinodoids and strut lattices generated with microgen" title="TPMS, spinodoids and strut lattices" width="49%"></a>
+    <a href="https://3mah.github.io/microgen-docs/examples/Spinodoids/spinodoid.html"><img src="docs/_static/spinodoid_morph.webp" alt="Wireframe spinodoid morphing between two random realisations" title="Spinodoid" width="49%"></a>
 </p>
 
 ## Hello, gyroid (implicit-first, no CAD needed)
@@ -102,80 +104,92 @@ pytest tests -n auto
 
 ## Examples
 
-Click on an image to open the example in the [gallery](https://3mah.github.io/microgen-docs/examples/index.html) of **microgen**'s documentation.
-
-### Basic shapes
-
-<a href="https://3mah.github.io/microgen-docs/examples/BasicShapes/shapes.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/shapes.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/BasicShapes/platonic_solids.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/platon.png" height="250">
-</a>
-
-### Repeated cells
-
-<a href="https://3mah.github.io/microgen-docs/examples/Lattices/octet_truss.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/octettruss.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/Lattices/honeycomb.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/honeycomb.png" height="250">
-</a>
-
-### Strut-based Lattices
-
-<a href="https://3mah.github.io/microgen-docs/examples/Lattices/preset_lattices.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/lattices.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/Lattices/custom_auxetic_lattice.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/auxetic_custom_lattice.png" height="250">
-</a>
+Click on an image to open the example in the [gallery](https://3mah.github.io/microgen-docs/examples/index.html) of **microgen**'s documentation. The images are rendered by the documentation build, so they always show the current version of each example.
 
 ### Triply Periodic Minimal Surfaces (TPMS)
 
-<a href="https://3mah.github.io/microgen-docs/examples/TPMS/gyroid.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/gyroid.png"height="250"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/TPMS/tpms_surfaces.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/tpms.png" height="250"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/TPMS/tpms_sphere.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/tpms_sphere.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/TPMS/tpms_shell.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/tpms_shell.png" height="250">
-</a>
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/tpms_surfaces.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_tpms_surfaces_001.png" alt="Available TPMS" title="Available TPMS" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/gyroid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_gyroid_001.png" alt="Gyroid" title="Gyroid" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/fischer_koch_s.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_fischer_koch_s_001.png" alt="Fischer-Koch S surface" title="Fischer-Koch S surface" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/tpms_shell.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_tpms_shell_001.png" alt="Gyroid in a shell" title="Gyroid in a shell" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/tpms_sphere.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_tpms_sphere_001.png" alt="Spherical gyroid" title="Spherical gyroid" height="200"></a>
+</p>
 
-### 3D operations
+### Graded TPMS
 
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/repeat_shape.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/repeated_geometry.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/raster_ellipsoid.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/rasterEllipsoid.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Voronoi.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi_gyroid.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Gyroid-voro.png" height="250">
-</a>
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/graded_density.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_graded_density_001.png" alt="Density grading" title="Density grading" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/graded_cell_size.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_graded_cell_size_001.png" alt="Cell size grading" title="Cell size grading" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/graded_cell_type.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_graded_cell_type_001.png" alt="Morphing between TPMS types" title="Morphing between TPMS types" height="200"></a>
+</p>
 
-### Mesh
+### Cylindrical and spherical TPMS
 
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/Mesh.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/Lattices/octet_truss.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/mesh_periodic.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg3d.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/mmg.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg_voronoi.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/mmg-voro.png" height="250">
-</a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/remesh.html">
-    <img src="https://raw.githubusercontent.com/3MAH/microgen/main/docs/_static/examples/remeshed_mesh.png" height="250">
-</a>
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/cylindrical.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_cylindrical_001.png" alt="Cylindrical gyroid" title="Cylindrical gyroid" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/cylindrical_graded.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_cylindrical_graded_001.png" alt="Radially graded cylindrical gyroid" title="Radially graded cylindrical gyroid" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/spherical.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_spherical_001.png" alt="Spherical gyroid shell" title="Spherical gyroid shell" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/coordinate_frames.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_coordinate_frames_001.png" alt="Spherical, cylindrical and swept frames" title="Spherical, cylindrical and swept frames" height="200"></a>
+</p>
+
+### TPMS infill
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/infill_bunny.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_infill_bunny_001.png" alt="Gyroid infill of a mesh" title="Gyroid infill of a mesh" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/infill_graded_distance.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_infill_graded_distance_001.png" alt="Infill graded by the distance to the surface" title="Infill graded by the distance to the surface" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/TPMS/infill_gyroid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_infill_gyroid_001.png" alt="Gyroid infilled by a gyroid" title="Gyroid infilled by a gyroid" height="200"></a>
+</p>
+
+### Spinodoids
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/Spinodoids/spinodoid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_spinodoid_001.png" alt="Spinodoid" title="Spinodoid" height="200"></a>
+</p>
+
+### Lattices
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/Lattices/octet_truss.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_octet_truss_001.png" alt="Periodic octet-truss mesh" title="Periodic octet-truss mesh" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Lattices/honeycomb.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_honeycomb_001.png" alt="Honeycomb" title="Honeycomb" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Lattices/preset_lattices.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_preset_lattices_001.png" alt="Preset strut lattices" title="Preset strut lattices" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Lattices/custom_auxetic_lattice.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_custom_auxetic_lattice_001.png" alt="Custom auxetic lattice" title="Custom auxetic lattice" height="200"></a>
+</p>
+
+### Particle and fibre RVEs
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/RVE/spheres_rve.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_spheres_rve_001.png" alt="Periodic RVE of spheres" title="Periodic RVE of spheres" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/RVE/fibres_rve.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_fibres_rve_001.png" alt="Periodic RVE of short fibres" title="Periodic RVE of short fibres" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Fibers/fibers.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_fibers_001.png" alt="Short fibre composite" title="Short fibre composite" height="200"></a>
+</p>
+
+### Implicit workflow
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/ImplicitShapes/gyroid_implicit_phase.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_gyroid_implicit_phase_001.png" alt="Gyroid as an implicit Phase" title="Gyroid as an implicit Phase" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/ImplicitShapes/implicit_booleans.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_implicit_booleans_001.png" alt="Boolean operations on implicit fields" title="Boolean operations on implicit fields" height="200"></a>
+</p>
+
+### Basic shapes and 3D operations
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/BasicShapes/shapes.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_shapes_001.png" alt="Basic shapes" title="Basic shapes" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/BasicShapes/platonic_solids.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_platonic_solids_001.png" alt="Platonic solids" title="Platonic solids" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/repeat_shape.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_repeat_shape_001.png" alt="Repeat a unit cell" title="Repeat a unit cell" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/raster_ellipsoid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_raster_ellipsoid_001.png" alt="Rasterized ellipsoid" title="Rasterized ellipsoid" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_voronoi_001.png" alt="Voronoi polycrystal" title="Voronoi polycrystal" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi_gyroid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_voronoi_gyroid_thumb.png" alt="Voronoi gyroid" title="Voronoi gyroid" height="200"></a>
+</p>
+
+### Meshing and remeshing
+
+<p>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/periodic_gyroid_remesh.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_periodic_gyroid_remesh_thumb.png" alt="Periodic gyroid mesh from a STEP file" title="Periodic gyroid mesh from a STEP file" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/remesh.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_remesh_thumb.png" alt="Periodic remeshing" title="Periodic remeshing" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg3d.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_mmg3d_thumb.png" alt="Level-set remeshing with mmg" title="Level-set remeshing with mmg" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg_voronoi.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_mmg_voronoi_thumb.png" alt="Level-set remeshing of a Voronoi mesh" title="Level-set remeshing of a Voronoi mesh" height="200"></a>
+</p>
 
 ## Citation
 
