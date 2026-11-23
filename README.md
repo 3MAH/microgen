@@ -185,7 +185,7 @@ Click on an image to open the example in the [gallery](https://3mah.github.io/mi
 ### Meshing and remeshing
 
 <p>
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_voronoi_002.png" alt="Tetrahedral mesh of a Voronoi polycrystal" title="Tetrahedral mesh of a Voronoi polycrystal" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html"><img src="docs/_static/examples/voronoi_mesh.png" alt="Tetrahedral mesh of a Voronoi polycrystal" title="Tetrahedral mesh of a Voronoi polycrystal" height="200"></a>
 <a href="https://3mah.github.io/microgen-docs/examples/Mesh/periodic_gyroid_remesh.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_periodic_gyroid_remesh_thumb.png" alt="Periodic gyroid mesh from a STEP file" title="Periodic gyroid mesh from a STEP file" height="200"></a>
 <a href="https://3mah.github.io/microgen-docs/examples/Mesh/remesh.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_remesh_thumb.png" alt="Periodic remeshing" title="Periodic remeshing" height="200"></a>
 <a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg3d.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_mmg3d_thumb.png" alt="Level-set remeshing with mmg" title="Level-set remeshing with mmg" height="200"></a>
