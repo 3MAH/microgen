@@ -20,7 +20,7 @@ gyroid = Tpms(
     surface_function=surface_functions.gyroid,
     offset=0.2,
 )
-gyroid = gyroid.generate_cad(type_part="sheet").translate((0.5, 0.5, 0.5))
+gyroid = gyroid.generate_cad(type_part="sheet")
 
 phases = []
 for polyhedron in polyhedra:
