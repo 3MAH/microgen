@@ -43,7 +43,7 @@ Here are the main features:
 
    <p align="center">
       <a href="examples/TPMS/graded_cell_type.html"><img src="_images/sphx_glr_graded_cell_type_001.png" alt="Morphing between TPMS types" width="49%"/></a>
-      <a href="examples/TPMS/infill_bunny.html"><img src="_images/sphx_glr_infill_bunny_001.png" alt="Gyroid infill of a mesh" width="49%"/></a>
+      <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_wireframe.png" alt="Wireframe surface mesh of a spinodoid" width="45%"/></a>
    </p>
 
 Brief examples

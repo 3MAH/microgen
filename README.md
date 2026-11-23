@@ -18,7 +18,7 @@ The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic spli
 
 <p align="center">
     <a href="https://3mah.github.io/microgen-docs/examples/TPMS/graded_cell_type.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_graded_cell_type_001.png" alt="Morphing between TPMS types" title="Morphing between TPMS types" width="49%"></a>
-    <a href="https://3mah.github.io/microgen-docs/examples/TPMS/infill_bunny.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_infill_bunny_001.png" alt="Gyroid infill of a mesh" title="Gyroid infill of a mesh" width="49%"></a>
+    <a href="https://3mah.github.io/microgen-docs/examples/Spinodoids/spinodoid.html"><img src="docs/_static/spinodoid_wireframe.png" alt="Wireframe surface mesh of a spinodoid" title="Spinodoid" width="45%"></a>
 </p>
 
 ## Hello, gyroid (implicit-first, no CAD needed)
