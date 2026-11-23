@@ -43,7 +43,7 @@ Here are the main features:
 
    <p align="center">
       <a href="examples/index.html"><img src="_static/microgen_showcase.png" alt="TPMS, spinodoids and strut lattices generated with microgen" width="49%"/></a>
-      <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_morph.gif" alt="Wireframe spinodoid morphing between two random realisations" width="49%"/></a>
+      <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_morph.webp" alt="Wireframe spinodoid morphing between two random realisations" width="49%"/></a>
    </p>
 
 Brief examples

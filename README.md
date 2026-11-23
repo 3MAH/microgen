@@ -18,7 +18,7 @@ The CAD path (`.generate_cad()` on shapes, `Phase`, `fuse_shapes`, periodic spli
 
 <p align="center">
     <a href="https://3mah.github.io/microgen-docs/examples/index.html"><img src="docs/_static/microgen_showcase.png" alt="TPMS, spinodoids and strut lattices generated with microgen" title="TPMS, spinodoids and strut lattices" width="49%"></a>
-    <a href="https://3mah.github.io/microgen-docs/examples/Spinodoids/spinodoid.html"><img src="docs/_static/spinodoid_morph.gif" alt="Wireframe spinodoid morphing between two random realisations" title="Spinodoid" width="49%"></a>
+    <a href="https://3mah.github.io/microgen-docs/examples/Spinodoids/spinodoid.html"><img src="docs/_static/spinodoid_morph.webp" alt="Wireframe spinodoid morphing between two random realisations" title="Spinodoid" width="49%"></a>
 </p>
 
 ## Hello, gyroid (implicit-first, no CAD needed)
