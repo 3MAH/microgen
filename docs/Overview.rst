@@ -42,8 +42,8 @@ Here are the main features:
 .. raw:: html
 
    <p align="center">
-      <a href="examples/TPMS/graded_cell_type.html"><img src="_images/sphx_glr_graded_cell_type_001.png" alt="Morphing between TPMS types" width="49%"/></a>
-      <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_wireframe.png" alt="Wireframe surface mesh of a spinodoid" width="45%"/></a>
+      <a href="examples/TPMS/graded_cell_type.html"><img src="_static/tpms_morphing.png" alt="Morphing between TPMS types" width="49%"/></a>
+      <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_morph.gif" alt="Wireframe spinodoid morphing between two random realisations" width="49%"/></a>
    </p>
 
 Brief examples
