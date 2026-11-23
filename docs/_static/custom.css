@@ -1,0 +1,73 @@
+/* microgen documentation: sphinx_rtd_theme, shared with fedoo and simcoon,
+   with the microgen orange as accent colour. */
+:root {
+  --mg-orange: #ef7d2d;
+  --mg-orange-dark: #c9611a;
+  --mg-navy: #24445c;
+  --sd-color-primary: #ef7d2d;
+  --sd-color-primary-highlight: #c9611a;
+  --sd-color-primary-text: #ffffff;
+  --sd-color-secondary: #24445c;
+  --sd-color-secondary-highlight: #1a3346;
+  --sd-color-secondary-text: #ffffff;
+}
+
+/* Logo on the navy side bar header */
+.wy-side-nav-search .wy-dropdown > a img.logo,
+.wy-side-nav-search > a img.logo {
+  max-width: 85%;
+  padding: 0.4em 0;
+}
+
+/* Links */
+.rst-content a:not(.sd-btn):not(.sd-stretched-link) { color: #1f6fa8; }
+.rst-content a:not(.sd-btn):not(.sd-stretched-link):hover { color: var(--mg-orange-dark); }
+
+/* Landing page */
+.mg-tagline {
+  font-size: 1.25em;
+  color: #555;
+  margin-top: -0.6em;
+}
+img.mg-hero {
+  width: 100%;
+  max-height: 340px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 0.5em 0 1.2em;
+}
+.mg-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  margin-bottom: 1.5em;
+}
+.mg-buttons p { margin: 0; }
+
+/* Cards */
+.sd-card.mg-card {
+  border-radius: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.sd-card.mg-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--mg-orange);
+  box-shadow: 0 6px 18px rgba(36, 68, 92, 0.18);
+}
+.sd-card.mg-card .sd-card-img-top {
+  height: 170px;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 0.5em;
+}
+.sd-card.mg-card .sd-card-title { color: var(--mg-navy); }
+.sd-card.mg-card--current { border-top: 4px solid var(--mg-orange); }
+
+/* Sphinx-Gallery thumbnails */
+.sphx-glr-thumbcontainer {
+  border-radius: 8px;
+}
+.sphx-glr-thumbcontainer:hover {
+  border-color: var(--mg-orange) !important;
+  box-shadow: 0 0 10px rgba(239, 125, 45, 0.45) !important;
+}
