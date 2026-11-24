@@ -145,6 +145,8 @@ The following TPMS surface functions are available in ``microgen.surface_functio
      - Lidinoid surface
    * - ``split_p``
      - Split P surface
+   * - ``fourier_series(modes, amplitudes, phases)``
+     - Generic triply periodic surface from a truncated Fourier series
 
 .. list-table:: 2D Honeycomb Functions
    :widths: 30 70

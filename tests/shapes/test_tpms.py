@@ -24,12 +24,14 @@ def _get_microgen_surface_functions() -> list[str]:
     """List the actual TPMS surface functions in microgen.surface_functions.
 
     Filters out non-TPMS callables exposed via re-import (autograd ``cos``/``sin``)
-    that take fewer than 3 args and would crash when invoked as ``f(x,y,z)``.
+    that take fewer than 3 args and would crash when invoked as ``f(x,y,z)``,
+    and ``fourier_series``, a factory returning a surface function.
     """
     return [
         name
         for name, fn in getmembers(microgen.surface_functions, isfunction)
         if fn.__module__ == microgen.surface_functions.__name__
+        and name != "fourier_series"
     ]
 
 
