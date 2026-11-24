@@ -39,13 +39,7 @@ mesh(
 # One color per rasterized piece.
 grid = pv.read(vtk_file)
 pieces = grid.cell_data.keys()[0]
-grid.plot(
-    scalars=pieces,
-    cmap="tab20",
-    smooth_shading=True,
-    split_sharp_edges=True,
-    show_scalar_bar=False,
-)
+grid.plot(scalars=pieces, cmap="tab20", show_scalar_bar=False)
 
 # %%
 # The tetrahedral mesh: each piece is a separate physical volume.
