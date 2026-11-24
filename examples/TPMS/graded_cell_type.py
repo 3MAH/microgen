@@ -106,7 +106,7 @@ sheet = geometry.sheet
 # %%
 plotter = pv.Plotter()
 plotter.add_mesh(sheet, smooth_shading=True, color="#ef7d2d")
-plotter.view_xy()
-plotter.enable_parallel_projection()
+plotter.camera_position = "iso"
+plotter.camera.zoom(1.1)
 plotter.show_axes()
 plotter.show()

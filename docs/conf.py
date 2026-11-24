@@ -95,12 +95,22 @@ _not_executed = [
     "Mesh/periodic_gyroid_remesh.py",
 ]
 
+_executed_pattern = (
+    r"^(?!.*/(?:"
+    + "|".join(path.replace(".", r"\.") for path in _not_executed)
+    + r")$).*\.py$"
+)
+# Optional: run only the examples whose path matches this regular expression,
+# e.g. MICROGEN_GALLERY_FILTER="3Doperations/(voronoi|raster_ellipsoid)\.py".
+# The other example pages show their code without being executed.
+_gallery_filter = os.environ.get("MICROGEN_GALLERY_FILTER")
+if _gallery_filter:
+    _executed_pattern = rf"(?=.*(?:{_gallery_filter})){_executed_pattern}"
+
 sphinx_gallery_conf = {
     "examples_dirs": ["../examples/"],
     "gallery_dirs": ["examples"],
-    "filename_pattern": r"^(?!.*/(?:"
-    + "|".join(path.replace(".", r"\.") for path in _not_executed)
-    + r")$).*\.py$",
+    "filename_pattern": _executed_pattern,
     "ignore_pattern": r"run_examples\.py",
     "subsection_order": ExplicitOrder(
         [
