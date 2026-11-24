@@ -38,8 +38,9 @@ mesh(
 # One color per grain.
 grid = pv.read(vtk_file)
 grains = grid.cell_data.keys()[0]
-grid.plot(
+grid.extract_surface(algorithm="dataset_surface").plot(
     scalars=grains,
+    preference="cell",
     cmap="tab20",
     smooth_shading=True,
     split_sharp_edges=True,
