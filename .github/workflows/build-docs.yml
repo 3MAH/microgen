@@ -21,6 +21,11 @@ jobs:
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
+      # Render through OSMesa: Ubuntu's libosmesa6 ships Mesa 25.1, whereas the
+      # Mesa 26.0 of the runner image renders surfaces colored by cell data
+      # (scalars without edges) as blank images with VTK 9.7. See the
+      # gallery-render-diagnosis workflow.
+      VTK_DEFAULT_OPENGL_WINDOW: vtkOSOpenGLRenderWindow
 
     steps:
       - uses: actions/checkout@v4
@@ -32,8 +37,8 @@ jobs:
 
       - uses: pyvista/setup-headless-display-action@v3
 
-      - name: Install libGLU
-        run: sudo apt-get install -y libglu1-mesa
+      - name: Install libGLU and OSMesa
+        run: sudo apt-get install -y libglu1-mesa libosmesa6
 
       - name: Install package with docs and CAD dependencies
         # Sphinx jupyter-execute cells render Shape.generate() / Tpms.generate()
