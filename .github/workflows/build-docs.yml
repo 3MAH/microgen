@@ -23,8 +23,7 @@ jobs:
       ALLOW_PLOTTING: true
       # Render through OSMesa: Ubuntu's libosmesa6 ships Mesa 25.1, whereas the
       # Mesa 26.0 of the runner image renders surfaces colored by cell data
-      # (scalars without edges) as blank images with VTK 9.7. See the
-      # gallery-render-diagnosis workflow.
+      # (scalars without edges) as blank images with VTK 9.7.
       VTK_DEFAULT_OPENGL_WINDOW: vtkOSOpenGLRenderWindow
 
     steps:
