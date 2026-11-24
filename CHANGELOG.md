@@ -75,12 +75,17 @@ Changes since 2.0.0b1, on the way to 2.0.0.
   sewn shells to solids for both `Tpms` and `Spinodoid` ([#145]).
 - The `honeycomb_*` surface functions are annotated with array inputs and
   outputs, like the other TPMS surface functions ([#147]).
+- The `[all]` extra installs every optional feature (`cad`, `meshers`, `ray`)
+  and no longer the development and documentation tools: contributors install
+  `.[all,dev,docs]` ([#150]).
 
 ### Removed
 
 - `rotate_pv_euler` ([#139]).
 - The Jupyter notebooks of `examples/jupyter_notebooks/` (v1 code) and the
   Binder badge.
+- The `[jupyter]` install extra and the Binder `Dockerfile`, which only served
+  those notebooks ([#150]).
 
 ## [2.0.0b1] - 2026-05-13
 

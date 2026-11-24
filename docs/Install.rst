@@ -12,6 +12,10 @@ Core or CAD install
 The core install covers implicit fields (F-rep), TPMS and surface meshes. The
 ``[cad]`` extra adds the OCCT kernel (through ``cadquery-ocp-novtk``), needed
 for BREP solids, STEP export, Phase CAD operations and periodic gmsh meshes.
+The ``[meshers]`` extra adds the Meshers backend of
+``generate_volume_mesh(backend="meshers")``, which meshes tetrahedra directly
+from the implicit field (wheels for Linux x86-64, macOS and Windows). ``[all]``
+installs every optional feature; on Linux aarch64 it skips Meshers.
 
 .. tab-set::
 
@@ -19,8 +23,10 @@ for BREP solids, STEP export, Phase CAD operations and periodic gmsh meshes.
 
       .. code-block:: bash
 
-         pip install microgen            # core
-         pip install "microgen[cad]"     # core + CAD
+         pip install microgen              # core
+         pip install "microgen[cad]"       # core + CAD
+         pip install "microgen[meshers]"   # core + Meshers volume meshing
+         pip install "microgen[all]"       # core + CAD + Meshers + ray tracing
 
    .. tab-item:: conda
 
@@ -59,13 +65,13 @@ Development install
 -------------------
 
 To modify the sources, clone the repository and install microgen in editable
-mode with the development dependencies:
+mode with every optional feature and the development and documentation tools:
 
 .. code-block:: bash
 
    git clone https://github.com/3MAH/microgen.git
    cd microgen
-   pip install -e ".[all]"
+   pip install -e ".[all,dev,docs]"
    pre-commit install
 
 Run the tests with ``pytest tests -n auto``. To build this documentation

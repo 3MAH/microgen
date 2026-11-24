@@ -66,6 +66,12 @@ pip install 'microgen[cad]'
 pip install 'microgen[meshers]'
 ```
 
+**Everything** (CAD, Meshers and ray tracing; Meshers is skipped on Linux aarch64, where it has no wheel):
+
+```bash
+pip install 'microgen[all]'
+```
+
 With conda:
 
 ```bash
@@ -93,11 +99,11 @@ To modify the sources, clone this repository and install microgen:
 ```bash
 git clone https://github.com/3MAH/microgen.git
 cd microgen
-pip install -e .[all]
+pip install -e '.[all,dev,docs]'
 pre-commit install
 ```
 
-The `-e` or `--editable` option allows to modify the sources without having to reinstall the package and `[all]` installs the optional development dependencies.
+The `-e` or `--editable` option allows to modify the sources without having to reinstall the package; `[all]` installs every optional feature (CAD, Meshers, ray tracing) and `[dev,docs]` the development and documentation tools.
 
 
 Run tests with pytest:
