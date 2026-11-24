@@ -25,6 +25,12 @@ def generate_volume(
     band=None,
     rotation: Rotation | None = None,
     center=(0.0, 0.0, 0.0),
+    constraints=None,
+    coordinate_map=None,
+    periodic_transforms=None,
+    weld_axis=None,
+    adaptive_field=None,
+    inverse_map=None,
 ) -> pv.UnstructuredGrid:
     """Mesh ``field < 0`` (or ``band``) on ``bounds`` with Meshers.
 
@@ -77,26 +83,126 @@ def generate_volume(
             "Install a tested Meshers wheel or microgen[meshers]."
         ) from error
 
+    if (
+        constraints is not None
+        and options.get("adapt", False)
+        and adaptive_field is not None
+    ):
+        seeded = (
+            getattr(meshers, "ADAPTIVE_MAPPED_INTERSECTIONS", False)
+            and inverse_map is not None
+            and options.get("order", 1) == 1
+            and options.get("threads", 1) == 1
+            and not options.get("curved_fit", False)
+            and not options.get("interior_refine_nodes", 0)
+            and not any(key in options for key in ("gradient", "size_field", "layers"))
+        )
+        if not seeded:
+            field, field_bounds = adaptive_field
+            return generate_volume(
+                field,
+                field_bounds,
+                {**options, "geometry_tolerance_mode": "absolute"},
+                default_cells=default_cells,
+                rotation=rotation,
+                center=center,
+            )
     options.setdefault("cells", default_cells)
     options.setdefault("periodic", default_periodic)
     options.setdefault("threads", 1)
     options.setdefault("minimum_quality", 0.1)
-    native = meshers.generate(field, bounds=bounds, band=band, **options)
+    if constraints is None:
+        native = meshers.generate(field, bounds=bounds, band=band, **options)
+    else:
+        if options.pop("order", 1) != 1 or options.pop("threads", 1) != 1:
+            raise NotImplementedError(
+                "Mapped and clipped TPMS currently require Tet4 and one thread"
+            )
+        adaptive = options.pop("adapt", False)
+        if (adaptive and adaptive_field is None) or options.pop("curved_fit", False):
+            raise NotImplementedError(
+                "Mapped intersections do not support adaptive or quadratic fitting options"
+            )
+        options.setdefault("geometry_tolerance", 0.01)
+        options.setdefault("max_tetrahedra", 250_000)
+        if weld_axis is not None and getattr(meshers, "CLOSED_MAPPED_SEAMS", False):
+            options["closed_axes"] = tuple(axis == weld_axis for axis in range(3))
+            weld_axis = None
+        if adaptive and adaptive_field is not None:
+            options.pop("interior_refine_nodes", None)
+            options.update(
+                adapt=True, inverse_map=inverse_map, physical_bounds=adaptive_field[1]
+            )
+        native = meshers.generate_intersection(
+            constraints,
+            bounds=bounds,
+            coordinate_map=coordinate_map,
+            periodic_transforms=periodic_transforms,
+            **options,
+        )
     width = native.tetrahedra.shape[1]
     cell_type = {4: pv.CellType.TETRA, 10: pv.CellType.QUADRATIC_TETRA}[width]
     points, shifts = native.points, np.diag(lengths)
     if rotation is not None:
         points, shifts = rotation.apply(points), rotation.apply(shifts)
-    # The sum also detaches the points from the native buffer.
+    points = points + np.asarray(center)
+    indices = np.arange(len(points))
+    faces = native.surface.copy()
+    tags = native.boundary_tags.copy()
+    if weld_axis is not None:
+        pairs = native.periodic_pairs[weld_axis]
+        if len(pairs):
+            if not np.allclose(
+                points[pairs[:, 0]], points[pairs[:, 1]], rtol=0, atol=1e-10
+            ):
+                raise ValueError("Full-turn seam nodes do not coincide")
+            indices[pairs[:, 1]] = pairs[:, 0]
+        retained, indices = np.unique(indices, return_inverse=True)
+        keep = (tags != 2 * weld_axis + 1) & (tags != 2 * weld_axis + 2)
+        faces, tags = faces[keep], tags[keep]
+    else:
+        retained = np.arange(len(points))
     grid = pv.UnstructuredGrid(
-        {cell_type: native.tetrahedra}, points + np.asarray(center)
+        {cell_type: indices[native.tetrahedra]}, points[retained]
     )
 
-    if len(native.surface):
-        grid.field_data["meshers_boundary_faces"] = native.surface.copy()
-        grid.field_data["meshers_boundary_tags"] = native.boundary_tags.copy()
+    if native.parameters is not None:
+        grid.point_data["meshers_parameters"] = native.parameters[retained].copy()
+    if native.constraint_masks is not None:
+        grid.point_data["meshers_constraint_masks"] = native.constraint_masks[
+            retained
+        ].copy()
+        grid.field_data["meshers_constraint_names"] = np.asarray(
+            native.constraint_names
+        )
+        edges = indices[native.feature_edges]
+        if len(edges):
+            grid.field_data["meshers_feature_edges"] = np.unique(
+                np.sort(edges, axis=1), axis=0
+            )
+
+    if len(faces):
+        grid.field_data["meshers_boundary_faces"] = indices[faces]
+        grid.field_data["meshers_boundary_tags"] = tags
     for axis, pairs, shift in zip("xyz", native.periodic_pairs, shifts, strict=True):
-        if len(pairs):
-            grid.field_data[f"periodic_pairs_{axis}"] = pairs.copy()
-            grid.field_data[f"periodic_shift_{axis}"] = shift[None, :].copy()
+        if len(pairs) and (weld_axis is None or "xyz".index(axis) != weld_axis):
+            grid.field_data[f"periodic_pairs_{axis}"] = indices[pairs]
+            if native.periodic_transforms is None:
+                transform = np.eye(4)
+                transform[:3, 3] = shift
+            else:
+                placement = np.eye(4)
+                if rotation is not None:
+                    placement[:3, :3] = rotation.as_matrix()
+                placement[:3, 3] = center
+                transform = (
+                    placement
+                    @ native.periodic_transforms["xyz".index(axis)]
+                    @ np.linalg.inv(placement)
+                )
+            grid.field_data[f"periodic_transform_{axis}"] = transform
+            if np.allclose(transform[:3, :3], np.eye(3), atol=1e-12):
+                grid.field_data[f"periodic_shift_{axis}"] = transform[:3, 3][
+                    None, :
+                ].copy()
     return grid
