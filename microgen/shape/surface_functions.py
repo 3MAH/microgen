@@ -1,7 +1,14 @@
 """TPMS surface functions."""
 
+from __future__ import annotations
+
+from collections.abc import Callable, Sequence
+
 import autograd.numpy as np
+import numpy as onp
 from autograd.numpy import cos, sin
+
+from ._frep_grf import _FrepGRF
 
 
 def gyroid(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -425,3 +432,80 @@ def honeycomb_lidinoid(x: np.ndarray, y: np.ndarray, _: np.ndarray) -> np.ndarra
     return 1.1 * (sin(2 * x) * cos(y) + sin(2 * y) * sin(x) + cos(x) * sin(y)) - (
         cos(2 * x) * cos(2 * y) + cos(2 * y) + cos(2 * x)
     )
+
+
+def fourier_series(
+    modes: Sequence[Sequence[int]],
+    amplitudes: Sequence[float],
+    phases: Sequence[float] | None = None,
+    constant: float = 0.0,
+) -> Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]:
+    r"""Triply periodic surface function defined by a truncated Fourier series.
+
+    .. math::
+       \sum_i A_i \cos(h_i x + k_i y + l_i z + \varphi_i) + c = 0
+
+    Every mode :math:`(h_i, k_i, l_i)` is a triplet of integers, so the field
+    is :math:`2\pi`-periodic along each axis and the returned function can be
+    used as the ``surface_function`` of :class:`~microgen.shape.tpms.Tpms`,
+    like the closed-form functions of this module.  The surface is triply
+    periodic but, in general, not minimal.
+
+    A sine term is a cosine of phase :math:`-\pi/2`, and a product of
+    harmonics expands into sum and difference modes, e.g.
+    :math:`\sin(x) \cos(y) = \tfrac{1}{2} \sin(x + y) + \tfrac{1}{2} \sin(x - y)`.
+
+    :param modes: ``(K, 3)`` integer reciprocal-lattice indices
+        :math:`(h_i, k_i, l_i)`
+    :param amplitudes: ``(K,)`` amplitudes :math:`A_i`
+    :param phases: ``(K,)`` phases :math:`\varphi_i` in radians (default: 0)
+    :param constant: constant term :math:`c`
+    :return: surface function ``f(x, y, z)``
+    :raises ValueError: if a mode is not an integer triplet, or if the number
+        of amplitudes or phases differs from the number of modes
+
+    .. jupyter-execute::
+       :hide-code:
+
+       import microgen
+
+       geometry = microgen.Tpms(
+           surface_function=microgen.surface_functions.fourier_series(
+               modes=[(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1), (2, 1, 0)],
+               amplitudes=[1.0, 1.0, 1.0, 0.8, 0.5],
+               phases=[0.0, 0.0, 0.0, 1.0, -1.5],
+           ),
+           offset=0.3,
+           resolution=30,
+       )
+       shape = geometry.sheet
+
+       shape.plot(color='white')
+    """
+    modes_arr = onp.asarray(modes, dtype=float)
+    if modes_arr.ndim != 2 or modes_arr.shape[1] != 3:  # noqa: PLR2004
+        err_msg = f"modes must have shape (K, 3), got {modes_arr.shape}"
+        raise ValueError(err_msg)
+    if not onp.array_equal(modes_arr, onp.round(modes_arr)):
+        err_msg = "modes must be integers for the field to be periodic"
+        raise ValueError(err_msg)
+    amplitudes_arr = onp.asarray(amplitudes, dtype=float)
+    phases_arr = (
+        onp.zeros(len(modes_arr))
+        if phases is None
+        else onp.asarray(phases, dtype=float)
+    )
+    for name, arr in (("amplitudes", amplitudes_arr), ("phases", phases_arr)):
+        if arr.shape != (len(modes_arr),):
+            err_msg = f"{name} must have shape ({len(modes_arr)},), got {arr.shape}"
+            raise ValueError(err_msg)
+
+    # Tpms feeds the surface function with 2*pi/cell_size-scaled coordinates,
+    # hence the 2*pi period here.
+    return _FrepGRF(
+        modes=modes_arr.astype(onp.int64),
+        amplitudes=amplitudes_arr,
+        phases=phases_arr,
+        threshold=-float(constant),
+        cell_size=onp.full(3, 2.0 * onp.pi),
+    ).evaluate

@@ -38,6 +38,9 @@ Changes since 2.0.0b1, on the way to 2.0.0.
   `microgen` package.
 - `examples/ImplicitShapes/gyroid_implicit_phase.py`, a tour of the
   implicit-first workflow.
+- `surface_functions.fourier_series` builds a triply periodic surface function
+  from integer Fourier modes, amplitudes and phases, usable as the
+  `surface_function` of `Tpms`; two examples in `examples/TPMS`.
 - Sphinx-Gallery example gallery in the documentation, with interactive 3D
   scenes (PyVista), a new landing page with cards (sphinx-design), and the
   microgen colours on the `sphinx_rtd_theme` shared with fedoo and simcoon.
