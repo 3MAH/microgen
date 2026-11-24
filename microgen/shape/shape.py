@@ -290,7 +290,9 @@ class Shape:
         self: Shape,
         bounds: BoundsType | None = None,
         resolution: int = 50,
-        **_: KwargsGenerateType,
+        *,
+        backend: str = "vtk",
+        **options: Any,
     ) -> pv.UnstructuredGrid:
         """Generate a volumetric VTK mesh of the shape's interior.
 
@@ -302,12 +304,87 @@ class Shape:
         The implicit field is expected to be in world coordinates (same
         contract as :meth:`generate_surface_mesh`).
 
+        Backends:
+
+        - ``"vtk"`` (default): the clipped structured grid described above;
+          ``options`` are ignored.
+        - ``"mmg"``: the VTK grid remeshed by
+          :func:`~microgen.remesh.remesh_keeping_boundaries_for_fem`, which
+          receives ``options`` (its default is ``periodic=True``; pass
+          ``periodic=False`` for a non-periodic specimen).
+        - ``"meshers"``: tetrahedra meshed directly from the implicit field by
+          the optional Meshers package (``pip install 'microgen[meshers]'``).
+          ``options`` go to ``meshers.generate`` (``cells``, ``periodic`` as one
+          flag per axis, ``order=2`` for Tet10 cells, ``adapt``, ...), with
+          these microgen defaults: ``cells=resolution - 1``,
+          ``periodic=(False, False, False)``, ``minimum_quality=0.1``,
+          ``threads=1``. The extra option ``geometry_tolerance_mode`` is
+          ``"relative"`` (default: ``geometry_tolerance``, ``0.01`` if unset,
+          is a fraction of the smallest extent of ``bounds``) or
+          ``"absolute"`` (``geometry_tolerance`` in length units).
+
+        The Meshers mesh stores in ``field_data`` the boundary facets
+        (``meshers_boundary_faces``, ``(M, 3)`` node indices) and their tags
+        (``meshers_boundary_tags``) and, for each periodic axis ``a`` in
+        ``x``, ``y``, ``z``, the node pairs ``periodic_pairs_a`` (``(P, 2)``,
+        lower then upper face) and the translation ``periodic_shift_a``
+        (``(1, 3)``) from the lower to the upper node.
+
         :param bounds: ``(xmin, xmax, ymin, ymax, zmin, zmax)``
         :param resolution: number of grid points per axis
-        :return: clipped ``pv.UnstructuredGrid`` covering the shape's interior
+        :param backend: ``"vtk"``, ``"mmg"`` or ``"meshers"``
+        :param options: options of the ``"mmg"`` or ``"meshers"`` backend
+        :return: ``pv.UnstructuredGrid`` covering the shape's interior
+        :raises ValueError: if ``backend`` is unknown
+        :raises ImportError: if ``backend="meshers"`` and Meshers is not
+            installed
         """
-        grid = self._sample_implicit_grid(bounds, resolution, "generate_volume_mesh")
-        return grid.clip_scalar(scalars=_IMPLICIT_SCALAR, value=0.0, invert=True)
+
+        def vtk_mesh() -> pv.UnstructuredGrid:
+            grid = self._sample_implicit_grid(
+                bounds, resolution, "generate_volume_mesh"
+            )
+            return grid.clip_scalar(scalars=_IMPLICIT_SCALAR, value=0.0, invert=True)
+
+        def meshers_mesh(generate_volume: Callable[..., pv.UnstructuredGrid]):
+            return generate_volume(
+                self.require_field(),
+                self.bounds if bounds is None else bounds,
+                options,
+                default_cells=resolution - 1,
+            )
+
+        return self._volume_mesh_with_backend(backend, vtk_mesh, meshers_mesh, options)
+
+    @staticmethod
+    def _volume_mesh_with_backend(
+        backend: str,
+        vtk_mesh: Callable[[], pv.UnstructuredGrid],
+        meshers_mesh: Callable[..., pv.UnstructuredGrid],
+        options: dict[str, Any],
+    ) -> pv.UnstructuredGrid:
+        """Dispatch :meth:`generate_volume_mesh` to its ``backend``.
+
+        :param backend: ``"vtk"``, ``"mmg"`` or ``"meshers"``
+        :param vtk_mesh: builds the VTK grid (also the input of ``"mmg"``)
+        :param meshers_mesh: receives :func:`microgen._meshers.generate_volume`
+            and builds the Meshers grid
+        :param options: backend options (``"mmg"``: those of
+            :func:`~microgen.remesh.remesh_keeping_boundaries_for_fem`)
+        :return: the volume mesh
+        :raises ValueError: if ``backend`` is unknown
+        """
+        if backend == "vtk":
+            return vtk_mesh()
+        if backend == "mmg":
+            from microgen.remesh import remesh_keeping_boundaries_for_fem
+
+            return remesh_keeping_boundaries_for_fem(vtk_mesh(), **options)
+        if backend == "meshers":
+            from microgen._meshers import generate_volume
+
+            return meshers_mesh(generate_volume)
+        raise ValueError(f"Unknown volume-mesh backend: {backend!r}")
 
     def generate_cad(
         self: Shape,

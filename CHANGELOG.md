@@ -14,6 +14,12 @@ Changes since 2.0.0b1, on the way to 2.0.0.
 
 ### Added
 
+- `generate_volume_mesh(backend=...)` on `Shape`, `Tpms` and `Spinodoid`:
+  `"vtk"` (default), `"mmg"` (VTK grid remeshed by
+  `remesh_keeping_boundaries_for_fem`) or `"meshers"`, which meshes Tet4/Tet10
+  directly from the implicit field and stores periodic node pairs and boundary
+  facets in `field_data`; new `[meshers]` install extra and
+  `examples/TPMS/meshers/` ([#150]).
 - `Phase.from_implicit` and `Phase.from_grid` constructors; `Phase` caches its
   sampled grid ([#144]).
 - `Phase.translate`, `Phase.rotate` and `Phase.scale` act on the implicit field,
@@ -69,12 +75,17 @@ Changes since 2.0.0b1, on the way to 2.0.0.
   sewn shells to solids for both `Tpms` and `Spinodoid` ([#145]).
 - The `honeycomb_*` surface functions are annotated with array inputs and
   outputs, like the other TPMS surface functions ([#147]).
+- The `[all]` extra installs every optional feature (`cad`, `meshers`, `ray`)
+  and no longer the development and documentation tools: contributors install
+  `.[all,dev,docs]` ([#150]).
 
 ### Removed
 
 - `rotate_pv_euler` ([#139]).
 - The Jupyter notebooks of `examples/jupyter_notebooks/` (v1 code) and the
   Binder badge.
+- The `[jupyter]` install extra and the Binder `Dockerfile`, which only served
+  those notebooks ([#150]).
 
 ## [2.0.0b1] - 2026-05-13
 
@@ -181,3 +192,4 @@ Releases before 2.0 are listed on the
 [#144]: https://github.com/3MAH/microgen/pull/144
 [#145]: https://github.com/3MAH/microgen/pull/145
 [#147]: https://github.com/3MAH/microgen/pull/147
+[#150]: https://github.com/3MAH/microgen/pull/150

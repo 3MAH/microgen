@@ -32,6 +32,8 @@ from .periodic_shell import mesh_to_periodic_shell
 from .shape import Shape
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from microgen.cad import CadShape
     from microgen.shape import KwargsGenerateType, Vector3DType
 
@@ -219,11 +221,46 @@ class Spinodoid(Shape):
 
     def generate_volume_mesh(
         self: Spinodoid,
-        **_: KwargsGenerateType,
+        *,
+        backend: str = "vtk",
+        **options: Any,
     ) -> pv.UnstructuredGrid:
-        """Generate the volumetric solid grid (3D cells) with center+rotation applied."""
-        grid_vol = self.grid_solid.copy()
-        return self._to_world(grid_vol)
+        """Generate the volumetric solid grid with center+rotation applied.
+
+        The backends and the Meshers output are those of
+        :meth:`Shape.generate_volume_mesh`. ``"meshers"`` meshes the Fourier
+        field itself on the local cell, then applies ``orientation`` and
+        ``center``. Its defaults here: ``cells=resolution * repeat_cell``,
+        ``periodic=(True, True, True)`` (the field is periodic on the cell),
+        and a ``"relative"`` ``geometry_tolerance`` taken as a fraction of the
+        smallest ``cell_size``.
+
+        :param backend: ``"vtk"`` (default), ``"mmg"`` or ``"meshers"``
+        :param options: options of the ``"mmg"`` or ``"meshers"`` backend
+        :return: tetrahedral mesh of the solid phase
+        :raises ValueError: if ``backend`` is unknown
+        :raises ImportError: if ``backend="meshers"`` and Meshers is not
+            installed
+        """
+
+        def meshers_mesh(generate_volume):
+            return generate_volume(
+                self._local_field,
+                self._local_bounds,
+                options,
+                default_cells=tuple(self.resolution * self.repeat_cell),
+                default_periodic=(True, True, True),
+                length_scale=float(np.min(self.cell_size)),
+                rotation=self.orientation,
+                center=self.center,
+            )
+
+        return self._volume_mesh_with_backend(
+            backend,
+            lambda: self._to_world(self.grid_solid.copy()),
+            meshers_mesh,
+            options,
+        )
 
     def generate_surface_mesh(
         self: Spinodoid,

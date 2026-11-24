@@ -89,9 +89,19 @@ class _FrepGRF:
         z: npt.NDArray[np.float64],
     ) -> npt.NDArray[np.float64]:
         """Evaluate the raw field ``Σᵢ Aᵢ cos(kᵢ·x + φᵢ)`` (no threshold)."""
-        x_arr = np.asarray(x, dtype=np.float64)
-        y_arr = np.asarray(y, dtype=np.float64)
-        z_arr = np.asarray(z, dtype=np.float64)
+
+        # Keep symbolic scalars as objects instead of coercing them to floats.
+        # This lets expression compilers use the same Fourier evaluation as
+        # NumPy, without a second geometry formula or an optional dependency.
+        def coordinate_array(value):
+            try:
+                return np.asarray(value, dtype=np.float64)
+            except TypeError:  # symbolic scalar (tracers refuse float conversion)
+                array = np.empty((), dtype=object)
+                array[()] = value
+                return array
+
+        x_arr, y_arr, z_arr = map(coordinate_array, (x, y, z))
         out_shape = np.broadcast_shapes(x_arr.shape, y_arr.shape, z_arr.shape)
         flat = np.broadcast_arrays(x_arr, y_arr, z_arr)
         points = np.stack([a.ravel() for a in flat], axis=-1)
@@ -102,9 +112,15 @@ class _FrepGRF:
         angles = scaled @ self.modes.T
         angles *= 2.0 * np.pi
         angles += self.phases
-        np.cos(angles, out=angles)
+        if angles.dtype == object:
+            # Object-array ufuncs look for an object's .cos() method. Scalar
+            # np.cos dispatch also supports symbolic __array_ufunc__ methods.
+            angles = np.frompyfunc(np.cos, 1, 1)(angles)
+        else:
+            np.cos(angles, out=angles)
         angles *= self.amplitudes
-        return angles.sum(axis=1).reshape(out_shape)
+        values = angles.sum(axis=1).reshape(out_shape)
+        return values.item() if values.dtype == object and values.ndim == 0 else values
 
     def evaluate(
         self,

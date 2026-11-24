@@ -217,6 +217,7 @@ GPL-3.0 license.
    :caption: Examples
 
    examples/index
+   meshers_backend
 
 .. toctree::
    :hidden:
