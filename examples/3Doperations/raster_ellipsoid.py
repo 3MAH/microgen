@@ -39,9 +39,8 @@ mesh(
 # One color per rasterized piece.
 grid = pv.read(vtk_file)
 pieces = grid.cell_data.keys()[0]
-grid.extract_surface(algorithm="dataset_surface").plot(
+grid.plot(
     scalars=pieces,
-    preference="cell",
     cmap="tab20",
     smooth_shading=True,
     split_sharp_edges=True,
