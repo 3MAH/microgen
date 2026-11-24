@@ -145,7 +145,7 @@ def test_adaptive_sweep_keeps_both_sheet_constraints(monkeypatch, graded):
         half = (1.1 + 0.1 * points[:, 2] if graded else 1.1) / 2
         expected = np.maximum(
             np.abs(shape.raw_field(*points.T)) - half,
-            shape._cell_box().require_func()(*points.T),
+            shape._cell_box().require_field()(*points.T),
         )
         np.testing.assert_allclose(compiled.values(points), expected, atol=1e-12)
         np.testing.assert_allclose(
@@ -327,7 +327,7 @@ def test_curved_sweep_envelope_retains_interior_and_local_end_caps():
         (np.linspace(-0.45, 0.45, 13), np.zeros(13), np.zeros(13))
     )
     points = np.column_stack(shape._map_coordinates(*parameter.T))
-    envelope = shape._cell_box().require_func()
+    envelope = shape._cell_box().require_field()
     assert np.all(envelope(*points.T) < 0)
     centers, normals, tangents = shape._curve_frame_at(
         np.array([0.0, shape._curve_total_length])
@@ -357,7 +357,7 @@ def test_full_density_sweep_adaptive_fallback_uses_only_envelope(monkeypatch, pa
 
     def checked(field, **options):
         assert options["adapt"] and options["order"] == 2
-        envelope = shape._cell_box().require_func()
+        envelope = shape._cell_box().require_field()
         expected = envelope(*points.T)
         assert np.all(expected < 0)
         np.testing.assert_array_equal(field(*points.T), expected)

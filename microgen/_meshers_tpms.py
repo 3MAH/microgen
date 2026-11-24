@@ -11,6 +11,7 @@ from .shape.tpms import CylindricalTpms, Infill, SphericalTpms, Sweep
 def generate_tpms(shape, part, options):
     """Retain the original parameter field and the actual physical envelope."""
     options = dict(options)
+    options.setdefault("geometry_tolerance_mode", "absolute")
     if isinstance(shape, Infill) and not shape.obj.is_manifold:
         raise ValueError(
             "Infill requires a closed manifold envelope for signed distance"
@@ -31,7 +32,7 @@ def generate_tpms(shape, part, options):
             raise NotImplementedError(
                 "Adaptive Cartesian sweeps do not support mapped periodic ends"
             )
-        physical_raw, envelope = shape.raw_field, shape._cell_box().require_func()
+        physical_raw, envelope = shape.raw_field, shape._cell_box().require_field()
         thickness = shape._offset_func
         scalar = float(shape.offset) if thickness is None else 0.0
 
@@ -50,7 +51,7 @@ def generate_tpms(shape, part, options):
             )
             return np.maximum(material, envelope(x, y, z))
 
-        adaptive_field = (solid, shape.bounds)
+        adaptive_field = (solid, shape._local_bounds)
         if np.allclose(shape._curve_T, shape._curve_T[0], rtol=0, atol=1e-12):
             inverse_map = shape._inverse_coordinates
     mapped = isinstance(shape, (CylindricalTpms, SphericalTpms, Sweep))
@@ -74,7 +75,7 @@ def generate_tpms(shape, part, options):
             def offset(x, y, z):
                 return float(shape.offset) + 0 * x
     else:
-        bounds, mapping = shape.bounds, None
+        bounds, mapping = shape._local_bounds, None
         if shape._offset_func is not None:
             offset = shape._offset_func
         else:
@@ -100,7 +101,7 @@ def generate_tpms(shape, part, options):
                 offset(x, y, z) / 2 - raw(x, y, z)
             )
     if not mapped:
-        constraints["envelope"] = shape._cell_box().require_func()
+        constraints["envelope"] = shape._cell_box().require_field()
     periodic = list(options.get("periodic", (False, False, False)))
     transforms = {}
     weld_axis = None

@@ -1,5 +1,7 @@
 """Generate a Gyroid with callable thickness grading using microgen[meshers]."""
 
+from pathlib import Path
+
 from microgen import Tpms
 from microgen.shape.surface_functions import gyroid
 
@@ -18,5 +20,5 @@ mesh = geometry.generate_volume_mesh(
     periodic=(True, True, False),  # Thickness varies along z, so z is not periodic.
     threads=1,
 )
-mesh.save("graded_gyroid_meshers.vtu")
+mesh.save(Path(__file__).parent / "graded_gyroid_meshers.vtu")
 print(f"Graded Gyroid: {mesh.n_cells} tetrahedra, {mesh.n_points} nodes")

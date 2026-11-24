@@ -94,11 +94,12 @@ class _FrepGRF:
         # This lets expression compilers use the same Fourier evaluation as
         # NumPy, without a second geometry formula or an optional dependency.
         def coordinate_array(value):
-            if isinstance(value, (int, float, np.number, np.ndarray, list, tuple)):
+            try:
                 return np.asarray(value, dtype=np.float64)
-            array = np.empty((), dtype=object)
-            array[()] = value
-            return array
+            except TypeError:  # symbolic scalar (tracers refuse float conversion)
+                array = np.empty((), dtype=object)
+                array[()] = value
+                return array
 
         x_arr, y_arr, z_arr = map(coordinate_array, (x, y, z))
         out_shape = np.broadcast_shapes(x_arr.shape, y_arr.shape, z_arr.shape)
@@ -114,8 +115,7 @@ class _FrepGRF:
         if angles.dtype == object:
             # Object-array ufuncs look for an object's .cos() method. Scalar
             # np.cos dispatch also supports symbolic __array_ufunc__ methods.
-            for index in np.ndindex(angles.shape):
-                angles[index] = np.cos(angles[index])
+            angles = np.frompyfunc(np.cos, 1, 1)(angles)
         else:
             np.cos(angles, out=angles)
         angles *= self.amplitudes

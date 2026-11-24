@@ -1,10 +1,12 @@
 name: Integration Tests
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
-    branches:
-      - "*"
+    # PR branches are already covered by `pull_request`; pushing to them
+    # must not run the whole matrix a second time.
+    branches: [main]
 
   schedule:
     - cron: "0 0 * * *"
@@ -23,7 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -36,12 +38,14 @@ jobs:
           create-args: python=${{ matrix.python-version }}
           init-shell: powershell bash
           download-micromamba: true
-          cache-environment: false
-          post-cleanup: "all"
+          cache-environment: true
+          post-cleanup: "shell-init"
 
-      - name: Install libglu1-mesa for Linux
+      # libosmesa6 gives VTK an off-screen fallback when a parallel example
+      # cannot connect to the Xvfb display ("bad X server connection").
+      - name: Install libglu1-mesa and libosmesa6 for Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get install libglu1-mesa
+        run: sudo apt-get install -y libglu1-mesa libosmesa6
 
       - name: Install microgen for Linux and macOS
         if: runner.os != 'Windows'

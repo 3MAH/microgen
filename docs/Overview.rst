@@ -42,8 +42,8 @@ Here are the main features:
 .. raw:: html
 
    <p align="center">
-      <img src="_static/gyroid.gif" alt="Gyroid" width="49%"/>
-      <img src="_static/fischerKoch.gif" alt="TPMS" width="49%"/>
+      <a href="examples/index.html"><img src="_static/microgen_showcase.png" alt="TPMS, spinodoids and strut lattices generated with microgen" width="49%"/></a>
+      <a href="examples/Spinodoids/spinodoid.html"><img src="_static/spinodoid_morph.webp" alt="Wireframe spinodoid morphing between two random realisations" width="49%"/></a>
    </p>
 
 Brief examples
