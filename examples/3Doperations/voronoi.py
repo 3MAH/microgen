@@ -38,7 +38,14 @@ mesh(
 # One color per grain.
 grid = pv.read(vtk_file)
 grains = grid.cell_data.keys()[0]
-grid.plot(scalars=grains, cmap="tab20", show_scalar_bar=False)
+grid.extract_surface(algorithm="dataset_surface").plot(
+    scalars=grains,
+    preference="cell",
+    cmap="tab20",
+    smooth_shading=True,
+    split_sharp_edges=True,
+    show_scalar_bar=False,
+)
 
 # %%
 # The tetrahedral mesh: each grain is a separate physical volume, with
