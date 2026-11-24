@@ -179,17 +179,17 @@ Click on an image to open the example in the [gallery](https://3mah.github.io/mi
 <a href="https://3mah.github.io/microgen-docs/examples/3Doperations/repeat_shape.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_repeat_shape_001.png" alt="Repeat a unit cell" title="Repeat a unit cell" height="200"></a>
 <a href="https://3mah.github.io/microgen-docs/examples/3Doperations/raster_ellipsoid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_raster_ellipsoid_001.png" alt="Rasterized ellipsoid" title="Rasterized ellipsoid" height="200"></a>
 <a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_voronoi_001.png" alt="Voronoi polycrystal" title="Voronoi polycrystal" height="200"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi_gyroid.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_voronoi_gyroid_thumb.png" alt="Voronoi gyroid" title="Voronoi gyroid" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi_gyroid.html"><img src="docs/_static/examples/Gyroid-voro.png" alt="Voronoi gyroid" title="Voronoi gyroid" height="200"></a>
 </p>
 
 ### Meshing and remeshing
 
 <p>
 <a href="https://3mah.github.io/microgen-docs/examples/3Doperations/voronoi.html"><img src="docs/_static/examples/voronoi_mesh.png" alt="Tetrahedral mesh of a Voronoi polycrystal" title="Tetrahedral mesh of a Voronoi polycrystal" height="200"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/periodic_gyroid_remesh.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_periodic_gyroid_remesh_thumb.png" alt="Periodic gyroid mesh from a STEP file" title="Periodic gyroid mesh from a STEP file" height="200"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/remesh.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_remesh_thumb.png" alt="Periodic remeshing" title="Periodic remeshing" height="200"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg3d.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_mmg3d_thumb.png" alt="Level-set remeshing with mmg" title="Level-set remeshing with mmg" height="200"></a>
-<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg_voronoi.html"><img src="https://3mah.github.io/microgen-docs/_images/sphx_glr_mmg_voronoi_thumb.png" alt="Level-set remeshing of a Voronoi mesh" title="Level-set remeshing of a Voronoi mesh" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/periodic_gyroid_remesh.html"><img src="docs/_static/examples/periodic_gyroid_remeshed.png" alt="Periodic gyroid mesh from a STEP file" title="Periodic gyroid mesh from a STEP file" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/remesh.html"><img src="docs/_static/examples/remeshed_mesh.png" alt="Periodic remeshing" title="Periodic remeshing" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg3d.html"><img src="docs/_static/examples/mmg.png" alt="Level-set remeshing with mmg" title="Level-set remeshing with mmg" height="200"></a>
+<a href="https://3mah.github.io/microgen-docs/examples/Mesh/mmg_voronoi.html"><img src="docs/_static/examples/mmg-voro.png" alt="Level-set remeshing of a Voronoi mesh" title="Level-set remeshing of a Voronoi mesh" height="200"></a>
 </p>
 
 ## Citation

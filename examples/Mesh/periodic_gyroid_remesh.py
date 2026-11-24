@@ -71,6 +71,6 @@ remeshed_vtk_file = "periodic_gyroid_remeshed.vtk"
 remeshed_gyroid.save(remeshed_vtk_file)
 
 # %%
-# .. image:: /_static/examples/remeshed_mesh.png
+# .. image:: /_static/examples/periodic_gyroid_remeshed.png
 #
-# sphinx_gallery_thumbnail_path = "_static/examples/remeshed_mesh.png"
+# sphinx_gallery_thumbnail_path = "_static/examples/periodic_gyroid_remeshed.png"
