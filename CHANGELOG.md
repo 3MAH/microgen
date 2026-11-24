@@ -40,7 +40,7 @@ Changes since 2.0.0b1, on the way to 2.0.0.
   implicit-first workflow.
 - `surface_functions.fourier_series` builds a triply periodic surface function
   from integer Fourier modes, amplitudes and phases, usable as the
-  `surface_function` of `Tpms`; two examples in `examples/TPMS`.
+  `surface_function` of `Tpms`; two examples in `examples/TPMS` ([#159]).
 - Sphinx-Gallery example gallery in the documentation, with interactive 3D
   scenes (PyVista), a new landing page with cards (sphinx-design), and the
   microgen colours on the `sphinx_rtd_theme` shared with fedoo and simcoon.
@@ -184,3 +184,4 @@ Releases before 2.0 are listed on the
 [#144]: https://github.com/3MAH/microgen/pull/144
 [#145]: https://github.com/3MAH/microgen/pull/145
 [#147]: https://github.com/3MAH/microgen/pull/147
+[#159]: https://github.com/3MAH/microgen/pull/159
